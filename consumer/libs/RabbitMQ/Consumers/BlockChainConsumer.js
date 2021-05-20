@@ -74,7 +74,7 @@ amqp_1["default"]
             msg.ack();
           })
           .catch((err) => {
-            console.log(err.message);
+            console.log(err);
             msg.nack();
           });
       })
