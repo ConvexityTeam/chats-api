@@ -121,6 +121,7 @@ class AuthController {
         nfc: "string",
         campaign: "required|numeric",
       };
+
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
         util.setError(400, validation.errors);

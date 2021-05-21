@@ -13,7 +13,6 @@ class Utils {
     this.statusCode = statusCode;
     this.message = message;
     this.data = data;
-    // this.data = this.encryptResponse(data);
     this.type = "success";
   }
 
@@ -31,13 +30,15 @@ class Utils {
       data: this.data,
     };
     if (this.type === "success") {
-      return res.status(this.statusCode).json(result);
+      return res.status(this.statusCode).json(this.encryptResponse(result));
     }
-    return res.status(this.statusCode).json({
-      code: this.statusCode,
-      status: this.type,
-      message: this.message,
-    });
+    return res.status(this.statusCode).json(
+      this.encryptResponse({
+        code: this.statusCode,
+        status: this.type,
+        message: this.message,
+      })
+    );
   }
 
   generatePassword(passLength = 8) {
@@ -61,8 +62,7 @@ class Utils {
     return otp;
   }
 
-  encryptResponse(data = [{ id: 1 }, { id: 2 }]) {
-    // Encrypt
+  encryptResponse(data) {
     return CryptoJS.AES.encrypt(
       JSON.stringify(data),
       process.env.PRIVATE_KEY
@@ -72,8 +72,6 @@ class Utils {
   decryptRequest(payload) {
     let bytes = CryptoJS.AES.decrypt(payload, process.env.PRIVATE_KEY);
     return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-    // let bytes = CryptoJS.AES.decrypt(payload, process.env.PRIVATE_KEY);
-    // return bytes.toString(CryptoJS.enc.Utf8);
   }
 }
 

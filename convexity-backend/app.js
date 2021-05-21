@@ -10,9 +10,20 @@ const morgan = require("morgan");
 app.use(helmet());
 app.use(morgan("combined"));
 app.use(express.json());
-
-// for parsing application/xwww-
 app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+  const method = String(req.method).toLowerCase();
+  const requiresBody = ["post", "put"];
+  const length = Object.values(req.body).length;
+
+  if (requiresBody.includes(method) && length) {
+    const decrypt = util.decryptRequest(req.body.data);
+    req.body = decrypt;
+  }
+
+  next();
+});
 
 //Routers link
 const usersRoute = require("./routers/users");
@@ -27,6 +38,7 @@ const vendorsRouter = require("./routers/vendors");
 const beneficiariesRouter = require("./routers/beneficiaries");
 const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
+const { decryptRequest } = require("./libs/Utils");
 
 // Routing endpoint
 app.get("/", (req, res) => {
