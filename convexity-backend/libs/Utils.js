@@ -23,22 +23,33 @@ class Utils {
   }
 
   send(res) {
-    const result = {
-      code: this.statusCode,
-      status: this.type,
-      message: this.message,
-      data: this.data,
-    };
+    let result;
     if (this.type === "success") {
-      return res.status(this.statusCode).json(this.encryptResponse(result));
-    }
-    return res.status(this.statusCode).json(
-      this.encryptResponse({
+      result = {
         code: this.statusCode,
         status: this.type,
         message: this.message,
-      })
-    );
+        data: this.data,
+      };
+    } else {
+      result = {
+        code: this.statusCode,
+        status: this.type,
+        message: this.message,
+      };
+    }
+    const environ = process.env.NODE_ENV;
+    let finalResponse;
+
+    // if (environ === "production") {
+    //   finalResponse = this.encryptResponse(result);
+    // } else {
+    //   finalResponse = result;
+    // }
+
+    finalResponse = this.encryptResponse(result);
+
+    return res.status(this.statusCode).json(finalResponse);
   }
 
   generatePassword(passLength = 8) {

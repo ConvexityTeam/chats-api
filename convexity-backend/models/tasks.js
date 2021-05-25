@@ -1,7 +1,5 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+"use strict";
+const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Tasks extends Model {
     /**
@@ -11,21 +9,32 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Tasks.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' });
-      // Campaign.belongsTo(models.Organisations, { foreignKey: 'OrganisationId', as: 'Organisation' });
+      Tasks.hasMany(models.Transaction, {
+        as: "Transaction",
+        foreignKey: "TransactionalId",
+        constraints: false,
+        scope: {
+          TransactionalType: "wage",
+        },
+      });
+      Tasks.hasMany(models.TaskUsers, { as: "AssociatedWorkers" });
+      Tasks.belongsTo(models.Campaign, {
+        foreignKey: "CampaignId",
+        as: "Campaign",
+      });
     }
-  };
-  Tasks.init({
-    UserId: DataTypes.STRING,
-    CampaignId: DataTypes.STRING,
-    task: DataTypes.STRING,
-    assignee: DataTypes.STRING,
-    supervisor: DataTypes.STRING,
-    completion_evidence: DataTypes.STRING,
-    status: DataTypes.INTEGER,
-  }, {
-    sequelize,
-    modelName: 'Tasks',
-  });
+  }
+  Tasks.init(
+    {
+      CampaignId: DataTypes.INTEGER,
+      name: DataTypes.STRING,
+      description: DataTypes.STRING,
+      amount: DataTypes.INTEGER,
+    },
+    {
+      sequelize,
+      modelName: "Tasks",
+    }
+  );
   return Tasks;
 };

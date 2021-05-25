@@ -379,9 +379,15 @@ class UsersController {
       where: { id: req.user.id },
       include: ["Wallet"],
     });
+    const wallets = wallet.Wallet.map((element) => {
+      return element.uuid;
+    });
+
     const income = await db.Transaction.findAll({
       where: {
-        walletRecieverId: wallet.Wallet.uuid,
+        walletRecieverId: {
+          [Op.in]: wallets,
+        },
         createdAt: {
           [Op.gte]: firstDay,
           [Op.lte]: lastDay,
@@ -392,7 +398,9 @@ class UsersController {
     });
     const expense = await db.Transaction.findAll({
       where: {
-        walletSenderId: wallet.Wallet.uuid,
+        walletSenderId: {
+          [Op.in]: wallets,
+        },
         createdAt: {
           [Op.gte]: firstDay,
           [Op.lte]: lastDay,

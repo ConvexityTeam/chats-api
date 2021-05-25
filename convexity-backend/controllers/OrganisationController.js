@@ -9,8 +9,12 @@ const uploadFile = require("./AmazonController");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const { transferToken } = require("../services/Bantu");
-var queue = amqp_1["default"].declareQueue("createWallet", { durable: true });
-var queue1 = amqp_1["default"].declareQueue("mintToken", { durable: true });
+var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
+  durable: true,
+});
+var mintTokenQueue = amqp_1["default"].declareQueue("mintToken", {
+  durable: true,
+});
 
 class OrganisationController {
   static async register(req, res) {
@@ -130,7 +134,7 @@ class OrganisationController {
             end_date: data.end_date,
           };
           await req.member.createCampaign(campaign).then((response) => {
-            queue.send(
+            createWalletQueue.send(
               new Message(
                 {
                   id: req.organisation.id,
@@ -352,7 +356,7 @@ class OrganisationController {
                   amount: data.xbnAmount,
                   campaign: data.campaignId,
                 };
-                queue1.send(
+                mintTokenQueue.send(
                   new Message(messageBody, { contentType: "application/json" })
                 );
                 util.setSuccess(200, "Token Minting Initiated");
@@ -406,7 +410,7 @@ class OrganisationController {
             amount: data.amount,
             campaign: data.campaign,
           };
-          queue1.send(
+          mintTokenQueue.send(
             new Message(messageBody, { contentType: "application/json" })
           );
           util.setSuccess(200, "Mint Action Initiated");

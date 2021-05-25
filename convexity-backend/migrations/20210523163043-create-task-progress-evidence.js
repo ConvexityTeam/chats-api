@@ -1,38 +1,37 @@
-'use strict';
+"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('FingerPrints', {
+    await queryInterface.createTable("TaskProgressEvidences", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
-      },
-      UserId: {
-        allowNull: false,
         type: Sequelize.INTEGER,
+      },
+      TaskProgressId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: {
-            tableName: 'Users',
+            tableName: "TaskProgresses",
           },
-          key: 'id'
-        }
+          key: "id",
+        },
       },
-      url: {
-        allowNull: false,
-        type: Sequelize.STRING
+      imageUrl: {
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('FingerPrints');
-  }
+    await queryInterface.dropTable("TaskProgressEvidences");
+  },
 };

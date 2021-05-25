@@ -2,14 +2,14 @@ const CampaignService = require("../services/CampaignService");
 const db = require("../models");
 const util = require("../libs/Utils");
 const { Op } = require("sequelize");
-const sequelize = require("sequelize");
-const campaign = require("../models/campaign");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
-var queue = amqp_1["default"].declareQueue("approveToSpend", {
+var approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
   durable: true,
 });
-var queue1 = amqp_1["default"].declareQueue("createWallet", { durable: true });
+var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
+  durable: true,
+});
 
 class CampaignsController {
   static async getAllCampaigns(req, res) {
@@ -89,7 +89,9 @@ class CampaignsController {
   }
   static async beneficiariesToCampaign(req, res) {
     try {
-      const campaign_exist = await db.Campaign.findByPk(req.params.campaignId);
+      const campaign_exist = await db.Campaign.findOne({
+        where: { id: req.params.campaignId, type: "campaign" },
+      });
       if (campaign_exist) {
         let beneficiaries = req.body.users;
 
@@ -113,7 +115,7 @@ class CampaignsController {
               UserId: element,
               CampaignId: req.params.campaignId,
             }).then(() => {
-              queue1.send(
+              createWalletQueue.send(
                 new Message(
                   {
                     id: element,
@@ -196,7 +198,7 @@ class CampaignsController {
                   user.last_name,
               })
               .then((transaction) => {
-                queue.send(
+                approveToSpendQueue.send(
                   new Message(
                     {
                       reciever: user_wallet[0].address,

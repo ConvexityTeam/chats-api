@@ -8,10 +8,14 @@ const uploadFile = require("./AmazonController");
 const { Op } = require("sequelize");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
-var queue = amqp_1["default"].declareQueue("nin_verification", {
+var ninVerificationQueue = amqp_1["default"].declareQueue("nin_verification", {
   durable: true,
 });
-var queue1 = amqp_1["default"].declareQueue("createWallet", { durable: true });
+var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
+  durable: true,
+});
+
+const environ = process.env.NODE_ENV == "development" ? "d" : "p";
 
 class AuthController {
   constructor() {
@@ -78,12 +82,21 @@ class AuthController {
               dob: fields.dob,
             })
               .then(async (user) => {
+                createWalletQueue.send(
+                  new Message(
+                    {
+                      id: user.id,
+                      type: "user",
+                    },
+                    { contentType: "application/json" }
+                  )
+                );
                 const extension = files.profile_pic.name.substring(
                   files.profile_pic.name.lastIndexOf(".") + 1
                 );
                 await uploadFile(
                   files.profile_pic,
-                  "u-" + user.id + "-i." + extension,
+                  "u-" + environ + "-" + user.id + "-i." + extension,
                   "convexity-profile-images"
                 ).then((url) => {
                   user.update({ profile_pic: url });
@@ -181,35 +194,46 @@ class AuthController {
               dob: fields.dob,
             })
               .then(async (user) => {
+                createWalletQueue.send(
+                  new Message(
+                    {
+                      id: user.id,
+                      type: "user",
+                    },
+                    { contentType: "application/json" }
+                  )
+                );
+
                 const extension = files.profile_pic.name.substring(
                   files.profile_pic.name.lastIndexOf(".") + 1
                 );
                 await uploadFile(
                   files.profile_pic,
-                  "u-" + user.id + "-i." + extension,
+                  "u-" + environ + "-" + user.id + "-i." + extension,
                   "convexity-profile-images"
                 ).then((url) => {
                   user.update({ profile_pic: url });
                 });
 
-                queue.send(
+                ninVerificationQueue.send(
                   new Message(user, { contentType: "application/json" })
                 );
-
-                await user
-                  .createBeneficiary({ CampaignId: fields.campaign })
-                  .then(() => {
-                    queue1.send(
-                      new Message(
-                        {
-                          id: user.id,
-                          campaign: fields.campaign,
-                          type: "user",
-                        },
-                        { contentType: "application/json" }
-                      )
-                    );
-                  });
+                if (campaignExist.type === "campaign") {
+                  await user
+                    .createBeneficiary({ CampaignId: fields.campaign })
+                    .then(() => {
+                      createWalletQueue.send(
+                        new Message(
+                          {
+                            id: user.id,
+                            campaign: fields.campaign,
+                            type: "user",
+                          },
+                          { contentType: "application/json" }
+                        )
+                      );
+                    });
+                }
                 util.setSuccess(201, "Account Onboarded Successfully", user.id);
                 return util.send(res);
               })
@@ -304,6 +328,16 @@ class AuthController {
                     dob: fields.dob,
                   })
                     .then(async (user) => {
+                      createWalletQueue.send(
+                        new Message(
+                          {
+                            id: user.id,
+                            type: "user",
+                          },
+                          { contentType: "application/json" }
+                        )
+                      );
+
                       var i = 0;
                       files.fingerprints.forEach(async (fingerprint) => {
                         let ext = fingerprint.name.substring(
@@ -312,7 +346,14 @@ class AuthController {
                         uploadFilePromises.push(
                           uploadFile(
                             fingerprint,
-                            "u-" + user.id + "-fp-" + ++i + "." + ext,
+                            "u-" +
+                              environ +
+                              "-" +
+                              user.id +
+                              "-fp-" +
+                              ++i +
+                              "." +
+                              ext,
                             "convexity-fingerprints"
                           )
                         );
@@ -322,7 +363,7 @@ class AuthController {
                       );
                       await uploadFile(
                         files.profile_pic,
-                        "u-" + user.id + "-i." + extension,
+                        "u-" + environ + "-" + user.id + "-i." + extension,
                         "convexity-profile-images"
                       ).then((url) => {
                         user.update({ profile_pic: url });
@@ -332,22 +373,24 @@ class AuthController {
                           await user.createPrint({ url: url });
                         });
                       });
-                      await user
-                        .createBeneficiary({
-                          CampaignId: fields.campaign,
-                        })
-                        .then(() => {
-                          queue1.send(
-                            new Message(
-                              {
-                                id: user.id,
-                                campaign: fields.campaign,
-                                type: "user",
-                              },
-                              { contentType: "application/json" }
-                            )
-                          );
-                        });
+                      if (campaignExist.type === "campaign") {
+                        await user
+                          .createBeneficiary({
+                            CampaignId: fields.campaign,
+                          })
+                          .then(() => {
+                            createWalletQueue.send(
+                              new Message(
+                                {
+                                  id: user.id,
+                                  campaign: fields.campaign,
+                                  type: "user",
+                                },
+                                { contentType: "application/json" }
+                              )
+                            );
+                          });
+                      }
                       util.setSuccess(
                         201,
                         "Account Onboarded Successfully",
@@ -356,7 +399,7 @@ class AuthController {
                       return util.send(res);
                     })
                     .catch((err) => {
-                      util.setError(500, err);
+                      util.setError(500, err.message);
                       return util.send(res);
                     });
                 });
@@ -423,6 +466,15 @@ class AuthController {
                   password: encryptedPassword,
                 })
                   .then(async (user) => {
+                    createWalletQueue.send(
+                      new Message(
+                        {
+                          id: user.id,
+                          type: "user",
+                        },
+                        { contentType: "application/json" }
+                      )
+                    );
                     await db.Organisations.create({
                       name: data.organisation_name,
                       website_url: data.website_url,
@@ -505,7 +557,7 @@ class AuthController {
             });
         })
         .catch((err) => {
-          util.setError(404, "Invalid Login Credentials");
+          util.setError(400, "Invalid Login Credentials");
           return util.send(res);
         });
     } catch (error) {

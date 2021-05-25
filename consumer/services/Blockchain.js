@@ -1,5 +1,4 @@
 const api = require("./../libs/Axios");
-const db = require("../models");
 const base_url = "https://chats-token.herokuapp.com/api/v1/web3";
 
 async function createAccountWallet() {
@@ -82,9 +81,38 @@ async function transferFrom(
   });
 }
 
+async function transferTo(
+  senderAddress,
+  senderPass,
+  reciepientAddress,
+  amount
+) {
+  return new Promise(async (resolve, reject) => {
+    await api
+      .post(
+        base_url +
+          "/txn/transfer/" +
+          senderAddress +
+          "/" +
+          senderPass +
+          "/" +
+          reciepientAddress +
+          "/" +
+          amount
+      )
+      .then((response) => {
+        resolve(response.data);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+}
+
 module.exports = {
   createAccountWallet,
   mintToken,
   approveToSpend,
   transferFrom,
+  transferTo,
 };

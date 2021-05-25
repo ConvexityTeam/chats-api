@@ -4,27 +4,27 @@ exports.__esModule = true;
 var amqp_1 = require("./../Connection");
 
 const db = require("./../../../models");
-
 const {
   createAccountWallet,
   mintToken,
   approveToSpend,
   transferFrom,
+  transferTo,
 } = require("./../../../services/Blockchain");
 
 const { createPair } = require("../../../services/Bantu");
 
-var queue = amqp_1["default"].declareQueue("createWallet", {
+var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
   durable: true,
   prefetch: 1,
 });
 
-var queue1 = amqp_1["default"].declareQueue("mintToken", {
+var mintTokenQueue = amqp_1["default"].declareQueue("mintToken", {
   durable: true,
   prefetch: 1,
 });
 
-var queue2 = amqp_1["default"].declareQueue("approveToSpend", {
+var approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
   durable: true,
   prefetch: 1,
 });
@@ -34,18 +34,23 @@ var transferFromQueue = amqp_1["default"].declareQueue("transferFrom", {
   prefetch: 1,
 });
 
+var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
+  durable: true,
+  prefetch: 1,
+});
+
 amqp_1["default"]
   .completeConfiguration()
   .then(function () {
-    queue
+    createWalletQueue
       .activateConsumer(async function (msg) {
         let content = msg.getContent();
         const type = content.type;
         const campaign = content.campaign ? content.campaign : null;
         let user;
-        if (type == "organisation") {
+        if (type === "organisation") {
           user = await db.Organisations.findByPk(content.id);
-        } else if (type == "user") {
+        } else if (type === "user") {
           user = await db.User.findByPk(content.id);
         }
         createAccountWallet()
@@ -74,6 +79,7 @@ amqp_1["default"]
             msg.ack();
           })
           .catch((err) => {
+            console.log("Here2");
             console.log(err);
             msg.nack();
           });
@@ -92,7 +98,7 @@ amqp_1["default"]
 amqp_1["default"]
   .completeConfiguration()
   .then(function () {
-    queue1
+    mintTokenQueue
       .activateConsumer(async function (msg) {
         let content = msg.getContent();
         const address = content.address;
@@ -141,7 +147,7 @@ amqp_1["default"]
 amqp_1["default"]
   .completeConfiguration()
   .then(function () {
-    queue2
+    approveToSpendQueue
       .activateConsumer(async function (msg) {
         let content = msg.getContent();
         const ngoAddr = content.ngoAddress;
@@ -287,6 +293,56 @@ amqp_1["default"]
       })
       .then(function () {
         return console.log("Running consumer for Transfer From");
+      })
+      ["catch"](function (err) {
+        return console.error(err);
+      });
+  })
+  ["catch"](function (err) {
+    return console.error(err);
+  });
+
+amqp_1["default"]
+  .completeConfiguration()
+  .then(function () {
+    transferToQueue
+      .activateConsumer(async function (msg) {
+        let content = msg.getContent();
+        const amount = content.amount;
+        const senderPass = content.senderPass;
+        const senderAddress = content.senderAddress;
+        const reciepientAddress = content.reciepientAddress;
+        const transaction = content.transaction;
+
+        transferTo(senderAddress, senderPass, reciepientAddress, amount)
+          .then(async (response) => {
+            console.log(response);
+            const transactionExist = await db.Transaction.findByPk(transaction);
+            const sender = await db.Wallet.findOne({
+              where: { address: senderAddress },
+            });
+            const reciever = await db.Wallet.findOne({
+              where: { address: reciepientAddress },
+            });
+            sender.decrement("balance", {
+              by: amount,
+            });
+            reciever.increment("balance", {
+              by: amount,
+            });
+            transactionExist.status = "success";
+            transactionExist.transactionHash =
+              response.Transfered.TransactionHash;
+            transactionExist.save();
+            msg.ack();
+          })
+          .catch((err) => {
+            console.log(err);
+            msg.nack();
+          });
+      })
+      .then(function () {
+        return console.log("Running consumer for Transfer To");
       })
       ["catch"](function (err) {
         return console.error(err);

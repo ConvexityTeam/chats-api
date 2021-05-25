@@ -1,5 +1,5 @@
-'use strict';
-const { Model } = require('sequelize');
+"use strict";
+const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**
@@ -10,30 +10,37 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Campaign.hasMany(models.Transaction, {
-        as: 'Transaction', foreignKey: 'TransactionalId',
+        as: "Transaction",
+        foreignKey: "TransactionalId",
         constraints: false,
         scope: {
-          TransactionalType: 'campaign'
-        }
+          TransactionalType: "campaign",
+        },
       });
-      Campaign.hasMany(models.Beneficiaries, { as: 'Beneficiaries' });
-      Campaign.hasMany(models.Tasks, { as: 'Work' });
-      Campaign.belongsTo(models.OrganisationMembers, { foreignKey: 'OrganisationMemberId', as: 'OrganisationMember' });
+      Campaign.hasMany(models.Beneficiaries, { as: "Beneficiaries" });
+      Campaign.hasMany(models.Tasks, { as: "Jobs" });
+      Campaign.belongsTo(models.OrganisationMembers, {
+        foreignKey: "OrganisationMemberId",
+        as: "OrganisationMember",
+      });
     }
-  };
-  Campaign.init({
-    OrganisationMemberId: DataTypes.STRING,
-    title: DataTypes.STRING,
-    type: DataTypes.STRING, //1 for normal Campaign, 2 for cash for work
-    description: DataTypes.TEXT,
-    status: DataTypes.INTEGER,
-    budget: DataTypes.FLOAT,
-    location: DataTypes.STRING,
-    start_date: DataTypes.DATE,
-    end_date: DataTypes.DATE,
-  }, {
-    sequelize,
-    modelName: 'Campaign'
-  });
+  }
+  Campaign.init(
+    {
+      OrganisationMemberId: DataTypes.STRING,
+      title: DataTypes.STRING,
+      type: DataTypes.STRING, //1 for normal Campaign, 2 for cash for work
+      description: DataTypes.TEXT,
+      status: DataTypes.INTEGER,
+      budget: DataTypes.FLOAT,
+      location: DataTypes.STRING,
+      start_date: DataTypes.DATE,
+      end_date: DataTypes.DATE,
+    },
+    {
+      sequelize,
+      modelName: "Campaign",
+    }
+  );
   return Campaign;
 };
