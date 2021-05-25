@@ -52,18 +52,18 @@ app.get("/", (req, res) => {
   }
 });
 
-app.use("/api/v1/users", usersRoute);
-app.use("/api/v1/transactions", transactionRouter);
-app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/campaigns", campaignRouter);
-app.use("/api/v1/roles", rolesRouter);
-app.use("/api/v1/ngo/auth", ngoAuthRouter);
-app.use("/api/v1/ngos", ngosRouter);
-app.use("/api/v1/vendors", vendorsRouter);
-app.use("/api/v1/vendors/auth", vendorsAuthRouter);
-app.use("/api/v1/beneficiaries", beneficiariesRouter);
-app.use("/api/v1/cash-for-work", cashforworkRouter);
-app.use("/api/v1/organisation", organisationRouter);
+app.use("/v1/users", usersRoute);
+app.use("/v1/transactions", transactionRouter);
+app.use("/v1/auth", authRouter);
+app.use("/v1/campaigns", campaignRouter);
+app.use("/v1/roles", rolesRouter);
+app.use("/v1/ngo/auth", ngoAuthRouter);
+app.use("/v1/ngos", ngosRouter);
+app.use("/v1/vendors", vendorsRouter);
+app.use("/v1/vendors/auth", vendorsAuthRouter);
+app.use("/v1/beneficiaries", beneficiariesRouter);
+app.use("/v1/cash-for-work", cashforworkRouter);
+app.use("/v1/organisation", organisationRouter);
 
 // when a fage route is requested
 app.get("*", (req, res) => {
