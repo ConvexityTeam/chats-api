@@ -21,7 +21,6 @@ module.exports = (sequelize, DataTypes) => {
   TaskProgress.init(
     {
       TaskUserId: DataTypes.INTEGER,
-      status: DataTypes.ENUM("fulfilled", "pending"),
     },
     {
       sequelize,

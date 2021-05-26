@@ -282,7 +282,9 @@ class CampaignsController {
     }
 
     try {
-      const theCampaign = await CampaignService.getACampaign(id);
+      const theCampaign = await db.Campaign.findOne({
+        where: { id, type: "campaign" },
+      });
       if (!theCampaign) {
         util.setError(404, `Cannot find Campaign with the id ${id}`);
       } else {

@@ -18,10 +18,6 @@ module.exports = {
           key: "id",
         },
       },
-      status: {
-        type: Sequelize.ENUM("fulfilled", "pending"),
-        defaultValue: "pending",
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

@@ -9,6 +9,14 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Tasks.hasMany(models.Transaction, {
+        as: "Transaction",
+        foreignKey: "TransactionalId",
+        constraints: false,
+        scope: {
+          TransactionalType: "wage",
+        },
+      });
       Tasks.hasMany(models.TaskUsers, { as: "AssociatedWorkers" });
       Tasks.belongsTo(models.Campaign, {
         foreignKey: "CampaignId",
@@ -21,6 +29,8 @@ module.exports = (sequelize, DataTypes) => {
       CampaignId: DataTypes.INTEGER,
       name: DataTypes.STRING,
       description: DataTypes.STRING,
+      amount: DataTypes.INTEGER,
+      status: DataTypes.ENUM("fulfilled", "pending"),
     },
     {
       sequelize,

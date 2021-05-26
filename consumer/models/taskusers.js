@@ -9,7 +9,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      TaskUsers.hasMany(models.TaskProgress, { as: "CompletionRequest" });
+      TaskUsers.hasMany(models.TaskProgress, {
+        foreignKey: "TaskUserId",
+        as: "CompletionRequest",
+      });
       TaskUsers.belongsTo(models.User, { foreignKey: "UserId", as: "Worker" });
       TaskUsers.belongsTo(models.Tasks, { foreignKey: "TaskId", as: "Task" });
     }

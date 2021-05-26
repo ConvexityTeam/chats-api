@@ -30,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
       name: DataTypes.STRING,
       description: DataTypes.STRING,
       amount: DataTypes.INTEGER,
+      status: DataTypes.ENUM("fulfilled", "pending"),
     },
     {
       sequelize,

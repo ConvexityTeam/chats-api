@@ -92,6 +92,105 @@ class CashForWorkController {
     }
   }
 
+  static async getCashForWork(req, res) {
+    try {
+      const id = req.params.cashforworkid;
+      const cashforwork = await db.Campaign.findOne({
+        where: {
+          id,
+          type: "cash-for-work",
+        },
+      });
+
+      const jobs = await cashforwork.getJobs();
+      const totalTasks = jobs.length;
+
+      const completed = jobs.filter((element) => {
+        return element.status == "fulfilled";
+      });
+
+      const completedTasks = completed.length;
+
+      const progress = Math.ceil((completedTasks / totalTasks) * 100);
+
+      const cashForWorkDetail = {
+        id: cashforwork.id,
+        title: cashforwork.title,
+        description: cashforwork.description,
+        status: cashforwork.status,
+        budget: cashforwork.budget,
+        progress,
+        location: cashforwork.location,
+        start_date: cashforwork.start_date,
+        end_date: cashforwork.end_date,
+        createdAt: cashforwork.createdAt,
+        updatedAt: cashforwork.updatedAt,
+      };
+
+      util.setSuccess(200, "Cash-for-work Retrieved", { cashForWorkDetail });
+      return util.send(res);
+    } catch (error) {
+      util.setError(404, "Invalid Cash For Work Id");
+      return util.send(res);
+    }
+  }
+
+  static async getTask(req, res) {
+    try {
+      const taskId = req.params.taskId;
+
+      const task = await db.Tasks.findOne({
+        where: {
+          id: taskId,
+        },
+        attributes: { exclude: ["CampaignId"] },
+        include: [
+          {
+            model: db.Campaign,
+            as: "Campaign",
+          },
+          {
+            model: db.TaskUsers,
+            as: "AssociatedWorkers",
+            attributes: { exclude: ["TaskId"] },
+            include: {
+              model: db.User,
+              as: "Worker",
+              attributes: {
+                exclude: [
+                  "nfc",
+                  "password",
+                  "dob",
+                  "profile_pic",
+                  "location",
+                  "is_email_verified",
+                  "is_phone_verified",
+                  "is_bvn_verified",
+                  "is_self_signup",
+                  "is_public",
+                  "is_tfa_enabled",
+                  "last_login",
+                  "tfa_secret",
+                  "bvn",
+                  "nin",
+                  "pin",
+                ],
+              },
+            },
+          },
+        ],
+      });
+
+      util.setSuccess(200, "Task Retrieved", { task });
+      return util.send(res);
+    } catch (error) {
+      console.log(error.message);
+
+      util.setError(404, "Invalid Task Id");
+      return util.send(res);
+    }
+  }
+
   static async addWorkersToTask(req, res) {
     try {
       const data = req.body;
@@ -245,22 +344,22 @@ class CashForWorkController {
         });
 
         Promise.all(uploadFilePromises).then(async (responses) => {
-          let status = "";
-
-          if (workerRecord.type == "supervisor") {
-            status = "fulfilled";
-          } else {
-            status = "pending";
-          }
-
           await workerRecord
-            .createCompletionRequest({ status })
+            .createCompletionRequest()
             .then((progressReport) => {
               responses.forEach(async (url) => {
                 await progressReport.createEvidence({ imageUrl: url });
               });
             });
         });
+        let status = "";
+
+        if (workerRecord.type == "supervisor") {
+          const task = await db.Tasks.findByPk(fields.taskId);
+          task.status = "fulfilled";
+          task.save();
+        }
+
         util.setSuccess(201, "Progress Report Submitted");
         return util.send(res);
       }
@@ -294,27 +393,9 @@ class CashForWorkController {
           return util.send(res);
         }
 
-        const records = await db.TaskUsers.findAll({
-          where: {
-            UserId: data.userId,
-            TaskId: data.taskId,
-          },
-        });
-
-        const recordIds = records.map((element) => {
-          return element.id;
-        });
-
-        const request = await db.TaskProgress.findOne({
-          where: {
-            TaskUserId: {
-              [Op.in]: recordIds,
-            },
-          },
-        });
-
-        request.status = "fulfilled";
-        request.save();
+        const task = await db.Tasks.findByPk(data.taskId);
+        task.status = "fulfilled";
+        task.save();
 
         util.setError(200, "Completion Request successfully approved");
         return util.send(res);
