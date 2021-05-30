@@ -284,6 +284,35 @@ class CampaignsController {
     try {
       const theCampaign = await db.Campaign.findOne({
         where: { id, type: "campaign" },
+        include: {
+          model: db.Beneficiaries,
+          as: "Beneficiaries",
+          attributes: { exclude: ["CampaignId"] },
+          include: {
+            model: db.User,
+            as: "User",
+            attributes: {
+              exclude: [
+                "nfc",
+                "password",
+                "dob",
+                "profile_pic",
+                "location",
+                "is_email_verified",
+                "is_phone_verified",
+                "is_bvn_verified",
+                "is_self_signup",
+                "is_public",
+                "is_tfa_enabled",
+                "last_login",
+                "tfa_secret",
+                "bvn",
+                "nin",
+                "pin",
+              ],
+            },
+          },
+        },
       });
       if (!theCampaign) {
         util.setError(404, `Cannot find Campaign with the id ${id}`);
