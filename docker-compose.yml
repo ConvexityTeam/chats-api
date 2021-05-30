@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   webserver:
-    image: nginx:1.20.0-alpine
+    image: nginx:mainline-alpine
     container_name: webserver
     restart: unless-stopped
     ports:
