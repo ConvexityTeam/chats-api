@@ -38,32 +38,27 @@ class Utils {
         message: this.message,
       };
     }
-    let finalResponse;
 
     const maxSize = 256;
     const response = JSON.stringify(result);
     const numChunks = Math.ceil(response.length / maxSize);
-    const chunks = [];
-
-    for (
-      let index = 0, output = 0;
-      index < numChunks;
-      index++, output += maxSize
-    ) {
-      chunks.push(EncryptController.encrypt(response.substr(output, maxSize)));
-    }
 
     res.writeHead(result.code, {
       "Content-Type": "text/plain",
       "Transfer-Encoding": "chunked",
     });
 
-    chunks.forEach((chunk) => {
-      res.write(chunk + "/newLine");
-    });
+    for (
+      let index = 0, output = 0;
+      index < numChunks;
+      index++, output += maxSize
+    ) {
+      res.write(
+        EncryptController.encrypt(response.substr(output, maxSize)) + " "
+      );
+    }
+
     res.end();
-    // finalResponse = EncryptController.encrypt(result);
-    // return res.status(result.code).json(finalResponse);
   }
 
   generatePassword(passLength = 8) {

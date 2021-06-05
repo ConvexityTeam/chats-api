@@ -42,7 +42,6 @@ const vendorsRouter = require("./routers/vendors");
 const beneficiariesRouter = require("./routers/beneficiaries");
 const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
-const { decrypt } = require("./libs/Encryption");
 
 // Routing endpoint
 app.get("/", (req, res) => {
