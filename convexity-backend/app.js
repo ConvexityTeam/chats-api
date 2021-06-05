@@ -2,6 +2,7 @@ require("dotenv").config();
 let express = require("express");
 var cors = require("cors");
 let app = express();
+const util = require("./libs/Utils");
 const EncryptController = require("./libs/Encryption");
 
 app.use(cors());
