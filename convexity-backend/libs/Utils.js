@@ -1,4 +1,4 @@
-var CryptoJS = require("crypto-js");
+const EncryptController = require("./Encryption");
 require("dotenv").config();
 
 class Utils {
@@ -38,18 +38,32 @@ class Utils {
         message: this.message,
       };
     }
-    const environ = process.env.NODE_ENV;
     let finalResponse;
 
-    // if (environ === "production") {
-    //   finalResponse = this.encryptResponse(result);
-    // } else {
-    //   finalResponse = result;
-    // }
+    const maxSize = 256;
+    const response = JSON.stringify(result);
+    const numChunks = Math.ceil(response.length / maxSize);
+    const chunks = [];
 
-    finalResponse = this.encryptResponse(result);
+    for (
+      let index = 0, output = 0;
+      index < numChunks;
+      index++, output += maxSize
+    ) {
+      chunks.push(EncryptController.encrypt(response.substr(output, maxSize)));
+    }
 
-    return res.status(this.statusCode).json(finalResponse);
+    res.writeHead(result.code, {
+      "Content-Type": "text/plain",
+      "Transfer-Encoding": "chunked",
+    });
+
+    chunks.forEach((chunk) => {
+      res.write(chunk + "/newLine");
+    });
+    res.end();
+    // finalResponse = EncryptController.encrypt(result);
+    // return res.status(result.code).json(finalResponse);
   }
 
   generatePassword(passLength = 8) {
@@ -71,18 +85,6 @@ class Utils {
       otp = otp + digits[index];
     }
     return otp;
-  }
-
-  encryptResponse(data) {
-    return CryptoJS.AES.encrypt(
-      JSON.stringify(data),
-      process.env.PRIVATE_KEY
-    ).toString();
-  }
-
-  decryptRequest(payload) {
-    let bytes = CryptoJS.AES.decrypt(payload, process.env.PRIVATE_KEY);
-    return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
   }
 }
 

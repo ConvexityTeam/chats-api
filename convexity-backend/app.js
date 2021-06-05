@@ -1,8 +1,8 @@
+require("dotenv").config();
 let express = require("express");
 var cors = require("cors");
 let app = express();
-const path = require("path");
-const util = require("./libs/Utils");
+const EncryptController = require("./libs/Encryption");
 
 app.use(cors());
 const helmet = require("helmet");
@@ -12,16 +12,19 @@ app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const config = {
+  PRIVATE_KEY: process.env.ENCRYPTION_PRIVATE_KEY,
+  PUBLIC_KEY: process.env.ENCRYPTION_PUBLIC_KEY,
+};
+
 app.use((req, res, next) => {
   const method = String(req.method).toLowerCase();
   const requiresBody = ["post", "put"];
   const length = Object.values(req.body).length;
-
   if (requiresBody.includes(method) && length) {
-    const decrypt = util.decryptRequest(req.body.data);
-    req.body = decrypt;
+    const decrypted = EncryptController.decrypt(req.body.data);
+    req.body = decrypted;
   }
-
   next();
 });
 
@@ -38,7 +41,7 @@ const vendorsRouter = require("./routers/vendors");
 const beneficiariesRouter = require("./routers/beneficiaries");
 const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
-const { decryptRequest } = require("./libs/Utils");
+const { decrypt } = require("./libs/Encryption");
 
 // Routing endpoint
 app.get("/", (req, res) => {
