@@ -39,26 +39,7 @@ class Utils {
       };
     }
 
-    const maxSize = 256;
-    const response = JSON.stringify(result);
-    const numChunks = Math.ceil(response.length / maxSize);
-
-    res.writeHead(result.code, {
-      "Content-Type": "text/plain",
-      "Transfer-Encoding": "chunked",
-    });
-
-    for (
-      let index = 0, output = 0;
-      index < numChunks;
-      index++, output += maxSize
-    ) {
-      res.write(
-        EncryptController.encrypt(response.substr(output, maxSize)) + " "
-      );
-    }
-
-    res.end();
+    return res.status(result.code).json(result);
   }
 
   generatePassword(passLength = 8) {
