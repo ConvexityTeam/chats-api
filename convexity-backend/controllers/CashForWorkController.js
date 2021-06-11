@@ -92,17 +92,18 @@ class CashForWorkController {
     }
   }
 
-  static async getCashForWork(req, res) {
-    try {
-      const id = req.params.cashforworkid;
-      const cashforwork = await db.Campaign.findOne({
-        where: {
-          id,
-          type: "cash-for-work",
-        },
-      });
+  static async getAllCashForWork(req, res) {
+    const cashforworks = await db.Campaign.findAll({
+      where: {
+        type: "cash-for-work",
+      },
+      include: { model: db.Tasks, as: "Jobs" },
+    });
 
-      const jobs = await cashforwork.getJobs();
+    const cashForWorkArray = [];
+
+    cashforworks.forEach((cashforwork) => {
+      const jobs = cashforwork.Jobs;
       const totalTasks = jobs.length;
 
       const completed = jobs.filter((element) => {
@@ -119,6 +120,53 @@ class CashForWorkController {
         description: cashforwork.description,
         status: cashforwork.status,
         budget: cashforwork.budget,
+        totalTasks,
+        completedTasks: completedTasks,
+        progress,
+        location: cashforwork.location,
+        start_date: cashforwork.start_date,
+        end_date: cashforwork.end_date,
+        createdAt: cashforwork.createdAt,
+        updatedAt: cashforwork.updatedAt,
+      };
+
+      cashForWorkArray.push(cashForWorkDetail);
+    });
+
+    util.setSuccess(200, "Campaign retrieved", cashForWorkArray);
+    return util.send(res);
+  }
+
+  static async getCashForWork(req, res) {
+    try {
+      const id = req.params.cashforworkid;
+      const cashforwork = await db.Campaign.findOne({
+        where: {
+          id,
+          type: "cash-for-work",
+        },
+        include: { model: db.Tasks, as: "Jobs" },
+      });
+
+      const jobs = cashforwork.Jobs;
+      const totalTasks = jobs.length;
+
+      const completed = jobs.filter((element) => {
+        return element.status == "fulfilled";
+      });
+
+      const completedTasks = completed.length;
+
+      const progress = Math.ceil((completedTasks / totalTasks) * 100);
+
+      const cashForWorkDetail = {
+        id: cashforwork.id,
+        title: cashforwork.title,
+        description: cashforwork.description,
+        status: cashforwork.status,
+        budget: cashforwork.budget,
+        totalTasks,
+        completedTasks: completedTasks,
         progress,
         location: cashforwork.location,
         start_date: cashforwork.start_date,

@@ -203,15 +203,30 @@ class UsersController {
     }
   }
 
-  static async updatePassword() {
+  static async deactivate(req, res) {
+    try {
+      const id = req.body.userId;
+
+      const user = await db.User.findByPk(id);
+
+      user.status = "suspended";
+      user.save();
+
+      util.setSuccess(200, "User Deactivated successfully");
+      return util.send(res);
+    } catch (error) {
+      util.setError(404, "Invalid User");
+      return util.send(res);
+    }
+  }
+
+  static async updatePassword(req, res) {
     const { oldPassword, newPassword, confirmedPassword } = req.body;
     if (newPassword !== confirmedPassword) {
-      return res.status(419).json({
-        status: error,
-        error: new Error("New Password Does not Match with Confirmed Password"),
-      });
+      util.setError(400, "New password does not match confirmed password ");
+      return util.send(res);
     }
-    const userId = req.body.userId;
+    const userId = req.user.id;
     db.User.findOne({
       where: {
         id: userId,
@@ -222,56 +237,44 @@ class UsersController {
           .compare(oldPassword, user.password)
           .then((valid) => {
             if (!valid) {
-              return res.status(419).json({
-                status: error,
-                error: new Error("Old Password provided is invalid"),
-              });
+              util.setError(419, "Old Password does not match");
+              return util.send(res);
             }
             //update new password in the db
             bcrypt.genSalt(10, (err, salt) => {
-              bcrypt.hash(newPassword, salt).then((hash) => {
-                const role_id = 2;
+              bcrypt.hash(newPassword, salt).then(async (hash) => {
                 const encryptedPassword = hash;
-                const balance = 0.0;
-                return db.User.update(
-                  {
+                await user
+                  .update({
                     password: encryptedPassword,
-                  },
-                  {
-                    where: {
-                      email: email,
-                    },
-                  }
-                ).then((updatedRecord) => {
-                  //mail user a new password
-                  mailer.mailPassword(
-                    email,
-                    updatedRecord.firstName,
-                    newPassword
-                  );
-                  //respond with a success message
-                  res.status(201).json({
-                    status: "success",
-                    message:
-                      "An email has been sent to the provided email address, kindly login to your email address to continue",
+                  })
+                  .then((updatedRecord) => {
+                    //mail user a new password
+                    // mailer.mailPassword(
+                    //   email,
+                    //   updatedRecord.firstName,
+                    //   newPassword
+                    // );
+                    // //respond with a success message
+                    // res.status(201).json({
+                    //   status: "success",
+                    //   message:
+                    //     "An email has been sent to the provided email address, kindly login to your email address to continue",
+                    // });
+                    util.setError(200, "Password changed successfully");
+                    return util.send(res);
                   });
-                });
               });
             });
           })
           .catch((err) => {
-            //the two password does not match
-            return res.status(419).json({
-              status: error,
-              error: new Error("Existing Password Error"),
-            });
+            util.setError(419, "Internal Server Error. Please try again.");
+            return util.send(res);
           });
       })
       .catch((err) => {
-        res.status(404).json({
-          status: "error",
-          error: err,
-        });
+        util.setError(419, "Internal Server Error. Please try again.");
+        return util.send(res);
       });
   }
 

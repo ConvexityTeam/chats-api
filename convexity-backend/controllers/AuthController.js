@@ -535,6 +535,11 @@ class AuthController {
                 util.setError(401, "Invalid Login Credentials");
                 return util.send(res);
               }
+
+              if (user.status == "suspended") {
+                util.setError(401, "Account has been Deactivated");
+                return util.send(res);
+              }
               const token = jwt.sign(
                 {
                   user: user,
