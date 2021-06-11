@@ -332,17 +332,20 @@ class UsersController {
     const beneficiary_exist = await BeneficiariesServices.getUser(beneficiary);
     if (beneficiary_exist) {
       const wallet = await beneficiary_exist.getWallet();
+      const wallets = wallet.map((element) => {
+        return element.uuid;
+      });
 
       await db.Transaction.findAll({
         where: {
-          [Op.or]: [
-            {
-              walletSenderId: wallet.uuid,
+          [Op.or]: {
+            walletRecieverId: {
+              [Op.in]: wallets,
             },
-            {
-              walletRecieverId: wallet.uuid,
+            walletSenderId: {
+              [Op.in]: wallets,
             },
-          ],
+          },
         },
         order: [["createdAt", "DESC"]],
         limit: 10,
