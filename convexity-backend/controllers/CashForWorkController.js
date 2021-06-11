@@ -145,7 +145,22 @@ class CashForWorkController {
           id,
           type: "cash-for-work",
         },
-        include: { model: db.Tasks, as: "Jobs" },
+        include: {
+          model: db.Tasks,
+          as: "Jobs",
+          include: {
+            model: db.TaskUsers,
+            as: "AssociatedWorkers",
+            include: {
+              model: db.TaskProgress,
+              as: "CompletionRequest",
+              include: {
+                model: db.TaskProgressEvidence,
+                as: "Evidences",
+              },
+            },
+          },
+        },
       });
 
       const jobs = cashforwork.Jobs;
@@ -158,6 +173,19 @@ class CashForWorkController {
       const completedTasks = completed.length;
 
       const progress = Math.ceil((completedTasks / totalTasks) * 100);
+      const workers = jobs.map((element) => {
+        return element.AssociatedWorkers;
+      });
+
+      const progression = [];
+
+      workers.forEach((element) => {
+        element.forEach((el) => {
+          if (el.CompletionRequest.length) {
+            progression.push(el.CompletionRequest);
+          }
+        });
+      });
 
       const cashForWorkDetail = {
         id: cashforwork.id,
@@ -169,6 +197,7 @@ class CashForWorkController {
         completedTasks: completedTasks,
         progress,
         location: cashforwork.location,
+        taskInfo: progression,
         start_date: cashforwork.start_date,
         end_date: cashforwork.end_date,
         createdAt: cashforwork.createdAt,
