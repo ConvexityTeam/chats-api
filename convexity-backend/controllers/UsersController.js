@@ -669,23 +669,41 @@ class UsersController {
 
   static async getSummary(req, res) {
     const id = req.params.id;
-    const users = await db.User.findOne({
+
+    const user = await db.User.findOne({
       where: { id: req.params.id },
       include: { model: db.Wallet, as: "Wallet" },
-    }).then(async (user) => {
-      const spent = await db.Transaction.sum("amount", {
-        where: { walletSenderId: user.Wallet.uuid },
-      });
-      const recieved = await db.Transaction.sum("amount", {
-        where: { walletRecieverId: user.Wallet.uuid },
-      });
-      util.setSuccess(200, "Summary", {
-        balance: user.Wallet.balance,
-        recieved,
-        spent,
-      });
-      return util.send(res);
     });
+
+    if (!user) {
+      util.setError(404, "Invalid User");
+      return util.send(res);
+    }
+
+    const wallets = user.Wallet.map((element) => {
+      return element.uuid;
+    });
+
+    const spent = await db.Transaction.sum("amount", {
+      where: {
+        walletSenderId: {
+          [Op.in]: wallets,
+        },
+      },
+    });
+    const recieved = await db.Transaction.sum("amount", {
+      where: {
+        walletRecieverId: {
+          [Op.in]: wallets,
+        },
+      },
+    });
+    util.setSuccess(200, "Summary", {
+      balance: user.Wallet.balance,
+      recieved,
+      spent,
+    });
+    return util.send(res);
   }
 
   static async checkOut(req, res) {
