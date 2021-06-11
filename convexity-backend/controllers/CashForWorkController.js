@@ -282,11 +282,23 @@ class CashForWorkController {
         util.setError(400, validation.errors);
         return util.send(res);
       } else {
-        if (
-          !files.images ||
-          (Array.isArray(files.images) && files.images.length < 5)
-        ) {
+        if (!Array.isArray(files.images)) {
           util.setError(400, "Minimum of 5 images is allowed");
+          return util.send(res);
+        }
+
+        if (files.images.length < 5) {
+          util.setError(400, "Minimum of 5 images is allowed");
+          return util.send(res);
+        }
+
+        const task = await db.Tasks.findByPk(fields.taskId);
+
+        if (task.status == "fulfilled") {
+          util.setError(
+            400,
+            "Task has been fulfilled. No need for an approval request"
+          );
           return util.send(res);
         }
 
