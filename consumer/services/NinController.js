@@ -1,4 +1,4 @@
-const api = require("../../convexity-backend/libs/Axios");
+const api = require("../libs/Axios");
 const headers = {
   userid: "1615376263809",
   "api-key": "7dx_$Ak'b_wc_uGi",
