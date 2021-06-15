@@ -173,19 +173,6 @@ class CashForWorkController {
       const completedTasks = completed.length;
 
       const progress = Math.ceil((completedTasks / totalTasks) * 100);
-      const workers = jobs.map((element) => {
-        return element.AssociatedWorkers;
-      });
-
-      const progression = [];
-
-      workers.forEach((element) => {
-        element.forEach((el) => {
-          if (el.CompletionRequest.length) {
-            progression.push(el.CompletionRequest);
-          }
-        });
-      });
 
       const cashForWorkDetail = {
         id: cashforwork.id,
@@ -197,7 +184,6 @@ class CashForWorkController {
         completedTasks: completedTasks,
         progress,
         location: cashforwork.location,
-        taskInfo: progression,
         start_date: cashforwork.start_date,
         end_date: cashforwork.end_date,
         createdAt: cashforwork.createdAt,
@@ -230,30 +216,40 @@ class CashForWorkController {
             model: db.TaskUsers,
             as: "AssociatedWorkers",
             attributes: { exclude: ["TaskId"] },
-            include: {
-              model: db.User,
-              as: "Worker",
-              attributes: {
-                exclude: [
-                  "nfc",
-                  "password",
-                  "dob",
-                  "profile_pic",
-                  "location",
-                  "is_email_verified",
-                  "is_phone_verified",
-                  "is_bvn_verified",
-                  "is_self_signup",
-                  "is_public",
-                  "is_tfa_enabled",
-                  "last_login",
-                  "tfa_secret",
-                  "bvn",
-                  "nin",
-                  "pin",
-                ],
+            include: [
+              {
+                model: db.User,
+                as: "Worker",
+                attributes: {
+                  exclude: [
+                    "nfc",
+                    "password",
+                    "dob",
+                    "profile_pic",
+                    "location",
+                    "is_email_verified",
+                    "is_phone_verified",
+                    "is_bvn_verified",
+                    "is_self_signup",
+                    "is_public",
+                    "is_tfa_enabled",
+                    "last_login",
+                    "tfa_secret",
+                    "bvn",
+                    "nin",
+                    "pin",
+                  ],
+                },
               },
-            },
+              {
+                model: db.TaskProgress,
+                as: "CompletionRequest",
+                include: {
+                  model: db.TaskProgressEvidence,
+                  as: "Evidences",
+                },
+              },
+            ],
           },
         ],
       });

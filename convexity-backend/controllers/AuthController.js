@@ -150,7 +150,12 @@ class AuthController {
           util.setError(400, "Profile Pic Required");
           return util.send(res);
         }
-        let campaignExist = await db.Campaign.findByPk(fields.campaign);
+        let campaignExist = await db.Campaign.findOne({
+          where: { id: fields.campaign, type: "campaign" },
+        });
+
+        console.log(fields.campaign, campaignExist);
+
         if (!campaignExist) {
           util.setError(400, "Invalid Campaign");
           return util.send(res);
@@ -511,6 +516,26 @@ class AuthController {
         util.setError(400, "Email must end in @" + domain);
         return util.send(res);
       }
+    }
+  }
+
+  static async verifyNin(req, res) {
+    const data = req.body;
+
+    const user = await db.User.findByPk(data.userId);
+    if (user) {
+      if (user.nin == null) {
+        util.setError(422, "User has not supplied Nin Number");
+        return util.send(res);
+      }
+      ninVerificationQueue.send(
+        new Message(user, { contentType: "application/json" })
+      );
+      util.setError(200, "User Verification Initialised");
+      return util.send(res);
+    } else {
+      util.setError(400, "Invalid User");
+      return util.send(res);
     }
   }
 

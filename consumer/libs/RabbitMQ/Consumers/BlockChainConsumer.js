@@ -13,6 +13,7 @@ const {
 } = require("./../../../services/Blockchain");
 
 const { createPair } = require("../../../services/Bantu");
+const ninVerification = require("../../../services/NinController");
 
 var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
   durable: true,
@@ -35,6 +36,11 @@ var transferFromQueue = amqp_1["default"].declareQueue("transferFrom", {
 });
 
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
+  durable: true,
+  prefetch: 1,
+});
+
+var ninVerificationQueue = amqp_1["default"].declareQueue("nin_verification", {
   durable: true,
   prefetch: 1,
 });
@@ -343,6 +349,53 @@ amqp_1["default"]
       })
       .then(function () {
         return console.log("Running consumer for Transfer To");
+      })
+      ["catch"](function (err) {
+        return console.error(err);
+      });
+  })
+  ["catch"](function (err) {
+    return console.error(err);
+  });
+
+amqp_1["default"]
+  .completeConfiguration()
+  .then(function () {
+    ninVerificationQueue
+      .activateConsumer(async function (msg) {
+        let content = msg.getContent();
+        let user = await db.User.findByPk(content.id);
+
+        ninVerification(user)
+          .then(async (response) => {
+            if (response.message == "norecord") {
+              await user.update({ status: "suspended" });
+              msg.ack();
+            } else if (response.message == "Success") {
+              let data = response[0].demoData[0];
+              let names = [
+                String(data.firstname).toLowerCase(),
+                String(data.surname).toLowerCase(),
+              ];
+              if (
+                names.includes(String(user.first_name).toLowerCase()) &&
+                names.includes(String(user.last_name).toLowerCase())
+              ) {
+                await user.update({ status: "activated" });
+                console.log("User Activated");
+              } else {
+                await user.update({ status: "suspended" });
+              }
+              msg.ack();
+              console.log("Concluded");
+            }
+          })
+          .catch((error) => {
+            msg.nack();
+          });
+      })
+      .then(function () {
+        return console.log("Running Nin Verification Queue");
       })
       ["catch"](function (err) {
         return console.error(err);
