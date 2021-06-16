@@ -10,6 +10,15 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Organisations.hasMany(models.Transaction, {
+        as: "Transaction",
+        foreignKey: "TransactionalId",
+        constraints: false,
+        scope: {
+          TransactionalType: "organisation",
+        },
+      });
+
       Organisations.hasMany(models.OrganisationMembers, { as: "Member" });
       Organisations.hasMany(models.FundAccount, { as: "MintTransaction" });
       Organisations.hasMany(models.Wallet, {
@@ -40,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
       registration_id: DataTypes.STRING,
       is_verified: DataTypes.BOOLEAN,
       year_of_inception: DataTypes.STRING,
+      verificationMode: DataTypes.ENUM("1", "2"),
     },
     {
       sequelize,

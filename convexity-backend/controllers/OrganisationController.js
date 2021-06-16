@@ -12,6 +12,9 @@ const { transferToken } = require("../services/Bantu");
 var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
   durable: true,
 });
+var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
+  durable: true,
+});
 var mintTokenQueue = amqp_1["default"].declareQueue("mintToken", {
   durable: true,
 });
@@ -44,6 +47,15 @@ class OrganisationController {
           data,
           req.user
         ).then((response) => {
+          createWalletQueue.send(
+            new Message(
+              {
+                id: req.organisation.id,
+                type: "organisation",
+              },
+              { contentType: "application/json" }
+            )
+          );
           util.setSuccess(200, "NGO Successfully added");
           return util.send(res);
         });
@@ -368,7 +380,7 @@ class OrganisationController {
             return util.send(res);
           });
       } else {
-        util.setSuccess(400, "Invalid Organisation / Campaign");
+        util.setError(400, "Invalid Organisation / Campaign");
         return util.send(res);
       }
     }
@@ -383,7 +395,11 @@ class OrganisationController {
       include: {
         model: db.Wallet,
         as: "Wallet",
-        where: { CampaignId: data.campaign },
+        where: {
+          bantuAddress: {
+            [Op.ne]: null,
+          },
+        },
       },
     });
 
@@ -391,7 +407,7 @@ class OrganisationController {
       where: { transactionReference: data.transactionReference },
     });
     if (reference) {
-      util.setSuccess(400, "Transaction Reference already exist");
+      util.setError(400, "Transaction Reference already exist");
       return util.send(res);
     }
 
@@ -417,8 +433,167 @@ class OrganisationController {
           return util.send(res);
         });
     } else {
-      util.setSuccess(200, "Invalid Organisation Id");
+      util.setError(400, "Invalid Organisation Id");
       return util.send(res);
+    }
+  }
+
+  static async getWallets(req, res) {
+    try {
+      const id = req.params.organisationId;
+      const organisation = await db.Organisations.findOne({
+        where: {
+          id,
+        },
+        include: {
+          model: db.Wallet,
+          as: "Wallet",
+          attributes: { exclude: ["bantuPrivateKey", "privateKey"] },
+        },
+      });
+      util.setSuccess(200, "Organisation Wallet Retrieved", {
+        wallets: organisation.Wallet,
+      });
+      return util.send(res);
+    } catch (error) {
+      util.setError(400, "Invalid Organisation Id");
+      return util.send(res);
+    }
+  }
+
+  static async getMainWallet(req, res) {
+    try {
+      const id = req.params.organisationId;
+      const organisation = await db.Organisations.findOne({
+        where: {
+          id,
+        },
+        include: {
+          model: db.Wallet,
+          as: "Wallet",
+          attributes: { exclude: ["bantuPrivateKey", "privateKey"] },
+          where: {
+            bantuAddress: {
+              [Op.ne]: null,
+            },
+          },
+        },
+      });
+      util.setSuccess(200, "Organisation Wallet Retrieved", {
+        wallet: organisation.Wallet[0],
+      });
+      return util.send(res);
+    } catch (error) {
+      util.setError(400, "Invalid Organisation Id");
+      return util.send(res);
+    }
+  }
+
+  static async getCampignWallet(req, res) {
+    try {
+      const id = req.params.organisationId;
+      const campaign = req.params.campaignId;
+      const organisation = await db.Organisations.findOne({
+        where: {
+          id,
+        },
+        include: {
+          model: db.Wallet,
+          as: "Wallet",
+          attributes: { exclude: ["bantuPrivateKey", "privateKey"] },
+          where: {
+            CampaignId: campaign,
+          },
+        },
+      });
+      util.setSuccess(200, "Organisation Wallet Retrieved", {
+        wallet: organisation.Wallet[0],
+      });
+      return util.send(res);
+    } catch (error) {
+      util.setError(400, "Invalid Organisation /Campaign Id");
+      return util.send(res);
+    }
+  }
+
+  static async transferToken(req, res) {
+    const data = req.body;
+    const rules = {
+      campaign: "required|numeric",
+      organisation_id: "required|numeric",
+      amount: "required|numeric|min:100",
+    };
+
+    const validation = new Validator(data, rules);
+    if (validation.fails()) {
+      util.setError(422, validation.errors);
+      return util.send(res);
+    } else {
+      const organisation = await db.Organisations.findOne({
+        where: { id: data.organisation_id },
+        include: {
+          model: db.Wallet,
+          as: "Wallet",
+        },
+      });
+
+      if (!organisation) {
+        util.setError(400, "Invalid Organisation Id");
+        return util.send(res);
+      }
+
+      const wallets = organisation.Wallet;
+      let mainWallet;
+      let reciepientWallet;
+      let campaignExist = false;
+      wallets.forEach((element) => {
+        if (element.CampaignId == data.campaign) {
+          campaignExist = true;
+          reciepientWallet = element;
+        }
+        if (element.bantuAddress) {
+          mainWallet = element;
+        }
+      });
+
+      if (!campaignExist) {
+        util.setError(
+          400,
+          "Organisation does not have a wallet attached to this campaign"
+        );
+        return util.send(res);
+      }
+
+      const campaign = await db.Campaign.findByPk(data.campaign);
+
+      if (mainWallet.balance < data.amount) {
+        util.setError(400, "Main Wallet Balance has Insufficient Balance");
+        return util.send(res);
+      } else {
+        await organisation
+          .createTransaction({
+            walletSenderId: mainWallet.uuid,
+            walletRecieverId: reciepientWallet.uuid,
+            amount: data.amount,
+            narration: "Funding " + campaign.title + " campaign ",
+          })
+          .then((transaction) => {
+            transferToQueue.send(
+              new Message(
+                {
+                  senderAddress: mainWallet.address,
+                  senderPass: mainWallet.privateKey,
+                  reciepientAddress: reciepientWallet.address,
+                  amount: data.amount,
+                  transaction: transaction.uuid,
+                },
+                { contentType: "application/json" }
+              )
+            );
+          });
+        util.setSuccess(200, "Transfer has been Initiated");
+        return util.send(res);
+      }
     }
   }
 

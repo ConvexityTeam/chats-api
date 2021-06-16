@@ -347,6 +347,7 @@ class CashForWorkController {
       const rules = {
         taskId: "required|numeric",
         userId: "required|numeric",
+        description: "required|string",
       };
 
       const validation = new Validator(fields, rules);
@@ -366,7 +367,10 @@ class CashForWorkController {
         }
 
         const task = await db.Tasks.findByPk(fields.taskId);
-
+        if (!task) {
+          util.setError(400, "Invalid Task Id");
+          return util.send(res);
+        }
         if (task.status == "fulfilled") {
           util.setError(
             400,
@@ -430,7 +434,7 @@ class CashForWorkController {
 
         Promise.all(uploadFilePromises).then(async (responses) => {
           await workerRecord
-            .createCompletionRequest()
+            .createCompletionRequest({ description: fields.description })
             .then((progressReport) => {
               responses.forEach(async (url) => {
                 await progressReport.createEvidence({ imageUrl: url });

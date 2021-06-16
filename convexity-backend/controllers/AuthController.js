@@ -484,6 +484,15 @@ class AuthController {
                       name: data.organisation_name,
                       website_url: data.website_url,
                     }).then(async (organisation) => {
+                      createWalletQueue.send(
+                        new Message(
+                          {
+                            id: organisation.id,
+                            type: "organisation",
+                          },
+                          { contentType: "application/json" }
+                        )
+                      );
                       await organisation
                         .createMember({ UserId: user.id, role: "admin" })
                         .then(() => {

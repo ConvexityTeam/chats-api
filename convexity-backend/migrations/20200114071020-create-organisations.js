@@ -1,64 +1,68 @@
-'use strict';
+"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Organisations', {
+    await queryInterface.createTable("Organisations", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       name: {
         allowNull: false,
         type: Sequelize.STRING,
-        unique: true
+        unique: true,
       },
       email: {
         type: Sequelize.STRING,
-        unique: true
+        unique: true,
       },
       phone: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       address: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       state: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       country: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       logo_link: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       website_url: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true
+        unique: true,
       },
       registration_id: {
         type: Sequelize.STRING,
-        unique: true
+        unique: true,
       },
       year_of_inception: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       is_verified: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
+      },
+      verificationMode: {
+        type: Sequelize.ENUM("1", "2"),
+        defaultValue: "1",
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Organisations');
-  }
+    await queryInterface.dropTable("Organisations");
+  },
 };

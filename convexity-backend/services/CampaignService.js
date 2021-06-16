@@ -1,27 +1,31 @@
-const { data } = require('../libs/Utils');
-const database = require('../models');
-const Transfer = require('../libs/Transfer');
-
+const { data } = require("../libs/Utils");
+const database = require("../models");
+const Transfer = require("../libs/Transfer");
 
 class CampaignService {
   static async getAllCampaigns(campaignType = "campaign") {
     try {
       return await database.Campaign.findAll({
         where: {
-          type: campaignType
-        }
+          type: campaignType,
+        },
       });
     } catch (error) {
       // console.log(error)
       throw error;
     }
   }
-  static async getOurCampaigns(userId, OrganisationId, campaignType = "campaign") {
+  static async getOurCampaigns(
+    userId,
+    OrganisationId,
+    campaignType = "campaign"
+  ) {
     try {
       return await database.Campaign.findAll({
         where: {
-          OrganisationId: OrganisationId, type: campaignType
-        }
+          OrganisationId: OrganisationId,
+          type: campaignType,
+        },
       });
     } catch (error) {
       // console.log(error)
@@ -38,7 +42,7 @@ class CampaignService {
   static async fundWallets(payload, userId, organisationId, campaignId) {
     try {
       // console.log(payload);
-      payload.forEach(element => {
+      payload.forEach((element) => {
         // console.table(element);
         return Transfer.processTransfer(userId, element.UserId, element.amount);
       });
@@ -56,10 +60,14 @@ class CampaignService {
 
   static async updateCampaign(id, updateCampaign) {
     try {
-      const CampaignToUpdate = await database.Campaign.findOne({ where: { id: Number(id) } });
+      const CampaignToUpdate = await database.Campaign.findOne({
+        where: { id: Number(id) },
+      });
 
       if (CampaignToUpdate) {
-        return await database.Campaign.update(updateCampaign, { where: { id: Number(id) } });
+        return await database.Campaign.update(updateCampaign, {
+          where: { id: Number(id) },
+        });
         //    updateCampaign;
       }
       return null;
@@ -72,7 +80,7 @@ class CampaignService {
     try {
       const theCampaign = await database.Campaign.findAll({
         where: { id: Number(id) },
-        include: 'Beneficiaries',
+        include: "Beneficiaries",
         // include: { all: true, nested: true }
       });
       console.log(theCampaign.Beneficiaries);
@@ -90,15 +98,15 @@ class CampaignService {
     try {
       const CampaignToDelete = await database.Campaign.findOne({
         where: {
-          id: Number(id)
-        }
+          id: Number(id),
+        },
       });
 
       if (CampaignToDelete) {
         const deletedCampaign = await database.Campaign.destroy({
           where: {
-            id: Number(id)
-          }
+            id: Number(id),
+          },
         });
         return deletedCampaign;
       }

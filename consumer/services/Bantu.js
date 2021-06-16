@@ -15,7 +15,7 @@ function createPair() {
 
   const privateKey = pair.secret();
   const publicKey = pair.publicKey();
-  creditWallet(publicKey);
+
   return {
     secret: privateKey,
     publicKey,

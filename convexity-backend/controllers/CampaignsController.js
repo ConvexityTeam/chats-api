@@ -161,15 +161,23 @@ class CampaignsController {
           {
             model: db.Beneficiaries,
             as: "Beneficiaries",
-            include: { model: db.User, as: "User", where: { RoleId: "5" } },
+            include: {
+              model: db.User,
+              as: "User",
+              where: { RoleId: "5", status: "activated" },
+            },
           },
         ],
       });
 
       if (campaign_exist) {
-        const beneficiaries = await db.Beneficiaries.findAll({
-          where: { CampaignId: campaign_exist.id },
-        });
+        if (!campaign_exist.Beneficiaries.length) {
+          util.setError(
+            404,
+            "No Approved Beneficiaries currently attached to this campaign"
+          );
+          return util.send(res);
+        }
         const organisation = await campaign_exist.OrganisationMember.getOrganisation();
         const wallet = await organisation.getWallet({
           where: { CampaignId: campaign_exist.id },
@@ -291,6 +299,7 @@ class CampaignsController {
           include: {
             model: db.User,
             as: "User",
+            where: { status: "activated" },
             attributes: {
               exclude: [
                 "nfc",

@@ -763,8 +763,6 @@ class UsersController {
         },
       });
 
-      console.log(pendingOrder);
-
       if (pendingOrder && pendingOrder.Cart.length) {
         let sum = pendingOrder.Cart.reduce((a, b) => {
           return Number(a) + Number(b.total_amount);

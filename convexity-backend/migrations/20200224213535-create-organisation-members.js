@@ -1,48 +1,48 @@
-'use strict';
+"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('OrganisationMembers', {
+    await queryInterface.createTable("OrganisationMembers", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       UserId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Users',
+            tableName: "Users",
           },
-          key: 'id'
-        }
+          key: "id",
+        },
       },
       OrganisationId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Organisations',
+            tableName: "Organisations",
           },
-          key: 'id'
-        }
+          key: "id",
+        },
       },
       role: {
-        type: Sequelize.ENUM('admin', 'member'),
-        defaultValue: 'member'
+        type: Sequelize.ENUM("admin", "member"),
+        defaultValue: "member",
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('OrganisationMembers');
-  }
+    await queryInterface.dropTable("OrganisationMembers");
+  },
 };

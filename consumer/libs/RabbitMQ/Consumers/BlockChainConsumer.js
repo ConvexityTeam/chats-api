@@ -2,6 +2,7 @@
 var _a;
 exports.__esModule = true;
 var amqp_1 = require("./../Connection");
+const { Op } = require("sequelize");
 
 const db = require("./../../../models");
 const {
@@ -65,14 +66,23 @@ amqp_1["default"]
             const privateKey = response.AccountCreated.privateKey;
             let walletRow;
             if (type === "organisation") {
-              const bantuPair = createPair();
-              walletRow = {
-                address,
-                privateKey,
-                CampaignId: campaign,
-                bantuAddress: bantuPair.publicKey,
-                bantuPrivateKey: bantuPair.secret,
-              };
+              const existingWallet = await user.getWallet();
+              if (existingWallet.length) {
+                walletRow = {
+                  address,
+                  privateKey,
+                  CampaignId: campaign,
+                };
+              } else {
+                const bantuPair = createPair();
+                walletRow = {
+                  address,
+                  privateKey,
+                  CampaignId: campaign,
+                  bantuAddress: bantuPair.publicKey,
+                  bantuPrivateKey: bantuPair.secret,
+                };
+              }
             } else {
               walletRow = {
                 address,
@@ -116,7 +126,11 @@ amqp_1["default"]
             include: {
               model: db.Wallet,
               as: "Wallet",
-              where: { CampaignId: content.campaign },
+              where: {
+                bantuAddress: {
+                  [Op.ne]: null,
+                },
+              },
             },
           })
             .then(async (org) => {
@@ -368,11 +382,12 @@ amqp_1["default"]
 
         ninVerification(user)
           .then(async (response) => {
-            if (response.message == "norecord") {
+            if (response.message === "norecord") {
               await user.update({ status: "suspended" });
               msg.ack();
-            } else if (response.message == "Success") {
-              let data = response[0].demoData[0];
+            }
+            if (response.message === "Success") {
+              let data = response.demoData[0];
               let names = [
                 String(data.firstname).toLowerCase(),
                 String(data.surname).toLowerCase(),
