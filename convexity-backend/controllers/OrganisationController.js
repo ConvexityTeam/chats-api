@@ -5,6 +5,7 @@ const UserService = require("../services/UserService");
 const util = require("../libs/Utils");
 const Validator = require("validatorjs");
 const formidable = require("formidable");
+const fs = require("fs/promises");
 const uploadFile = require("./AmazonController");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
@@ -269,15 +270,15 @@ class OrganisationController {
     }
   }
 
-  static async editBalance(req, res) {
-    await db.Wallet.findOne({
-      where: { AccountUserId: req.body.id, AccountUserType: "organisation" },
-    }).then(async (wallet) => {
-      await wallet.update({ balance: req.body.balance }).then(() => {
-        util.setSuccess(200, "Organisation Wallet Balance Edited");
-        return util.send(res);
+  static async mintToken2(req, res) {
+    const data = req.body;
+    fs.writeFile("sample.txt", JSON.stringify(data))
+      .then(() => {
+        return res.json({ status: "Done" });
+      })
+      .catch(() => {
+        console.log("Not done");
       });
-    });
   }
 
   static async getFinancials(req, res) {
@@ -327,8 +328,7 @@ class OrganisationController {
   static async bantuTransfer(req, res) {
     const data = req.body;
     const rules = {
-      organisationId: "required|numeric",
-      campaignId: "required|numeric",
+      organisation_id: "required|numeric",
       xbnAmount: "required|numeric",
     };
 
@@ -339,12 +339,16 @@ class OrganisationController {
     } else {
       const organisation = await db.Organisations.findOne({
         where: {
-          id: data.organisationId,
+          id: data.organisation_id,
         },
         include: {
           model: db.Wallet,
           as: "Wallet",
-          where: { CampaignId: data.campaignId },
+          where: {
+            bantuAddress: {
+              [Op.ne]: null,
+            },
+          },
         },
       });
 
@@ -366,7 +370,6 @@ class OrganisationController {
                   address: organisation.Wallet[0].address,
                   walletId: organisation.Wallet[0].uuid,
                   amount: data.xbnAmount,
-                  campaign: data.campaignId,
                 };
                 mintTokenQueue.send(
                   new Message(messageBody, { contentType: "application/json" })

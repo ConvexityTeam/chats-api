@@ -15,7 +15,7 @@ function createPair() {
 
   const privateKey = pair.secret();
   const publicKey = pair.publicKey();
-
+  creditWallet(publicKey);
   return {
     secret: privateKey,
     publicKey,
@@ -30,7 +30,7 @@ async function creditWallet(publicKey) {
       )}`
     );
     const responseJSON = await response.json();
-    console.log("SUCCESS! You have a new account :)\n", responseJSON);
+    console.log("SUCCESS! You have a new Test account :)\n" + responseJSON);
   } catch (e) {
     console.error("ERROR!", e);
   }
