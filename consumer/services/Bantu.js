@@ -5,7 +5,6 @@ require("dotenv").config();
 const config = {
   BASE_URL: process.env.BANTU_BASE_URL,
   ADMIN_ADDRESS: process.env.BANTU_ADMIN_ADDRESS,
-  ADMIN_SECRET: process.env.BANTU_ADMIN_ADDRESS_KEY,
   NETWORK_PASSPHRASE: process.env.BANTU_NETWORK_PASSPHRASE,
 };
 const server = new StellarSdk.Server(config.BASE_URL);
