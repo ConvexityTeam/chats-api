@@ -5,7 +5,7 @@ const UserService = require("../services/UserService");
 const util = require("../libs/Utils");
 const Validator = require("validatorjs");
 const formidable = require("formidable");
-const fs = require("fs/promises");
+const fs = require("fs");
 const uploadFile = require("./AmazonController");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
@@ -272,13 +272,12 @@ class OrganisationController {
 
   static async mintToken2(req, res) {
     const data = req.body;
-    fs.writeFile("sample.txt", JSON.stringify(data))
-      .then(() => {
-        return res.json({ status: "Done" });
-      })
-      .catch(() => {
-        console.log("Not done");
-      });
+    fs.writeFile("sample.txt", JSON.stringify(data), function (err) {
+      if (err) {
+        return res.json({ status: "Error" });
+      }
+      return res.json({ status: "DOne" });
+    });
   }
 
   static async getFinancials(req, res) {
