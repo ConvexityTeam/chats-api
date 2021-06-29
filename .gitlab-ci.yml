@@ -13,6 +13,6 @@ deploy_staging:
     name: staging
     url: "$APP_URL"
   script:
-    - ssh ubuntu@"$APP_URL" "eval $(ssh-agent -s) && cd convexity && git pull origin master && exit"
+    - ssh ubuntu@"$APP_URL" "eval $(ssh-agent -s) && cd convexity-blockchain && git pull && exit"
   only:
     - master
