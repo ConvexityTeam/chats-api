@@ -16,8 +16,8 @@ deploy_staging:
   script:
     - ssh ubuntu@"$APP_URL"
     - eval $(ssh-agent -s)
-    - cd .ssh
     - ls
-    - "ssh-add id_ed25519 && exit"
+    - ssh-add <(echo "$GITHUB_KEY")
+    - "cd convexity-blockchain && git pull && docker-compose build consumer backend && docker-compose up && exit"
   only:
     - master
