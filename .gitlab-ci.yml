@@ -11,6 +11,7 @@ deploy_staging:
   script:
     - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no
     - eval $(ssh-agent -s)
+    - chmod 600 $GITHUB_KEY
     - ssh-add $GITHUB_KEY
     - ls
     - cd convexity-blockchain
