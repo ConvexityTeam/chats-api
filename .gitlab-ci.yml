@@ -10,6 +10,6 @@ deploy_staging:
   stage: deploy
   script:
     - apk update && apk add openssh-client
-    - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no && eval $(ssh-agent -s) "ls && exit"
+    - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no "eval $(ssh-agent -s) && ls && exit"
   only:
     - master
