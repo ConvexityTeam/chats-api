@@ -10,6 +10,7 @@ const uploadFile = require("./AmazonController");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const { transferToken } = require("../services/Bantu");
+const api = require("../libs/Axios");
 var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
   durable: true,
 });
@@ -390,9 +391,26 @@ class OrganisationController {
 
   static async mintToken(req, res) {
     const data = req.body;
+    const txRef = data.id;
+
+    const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+
+    const response = await api.get(
+      `https://api.flutterwave.com/v3/transactions/${txRef}/verify`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secretKey}`,
+        },
+      }
+    );
+
+    const organisationId = response.data.data.meta.orgId;
+    const amount = response.data.data.amount;
+
     const organisation = await db.Organisations.findOne({
       where: {
-        id: data.organisationId,
+        id: organisationId,
       },
       include: {
         model: db.Wallet,
@@ -406,7 +424,7 @@ class OrganisationController {
     });
 
     const reference = await db.FundAccount.findOne({
-      where: { transactionReference: data.transactionReference },
+      where: { transactionReference: txRef },
     });
     if (reference) {
       util.setError(400, "Transaction Reference already exist");
@@ -416,8 +434,8 @@ class OrganisationController {
     if (organisation) {
       await organisation
         .createMintTransaction({
-          amount: data.amount,
-          transactionReference: data.transactionReference,
+          amount: amount,
+          transactionReference: txRef,
         })
         .then((fundTransaction) => {
           const messageBody = {
@@ -425,8 +443,7 @@ class OrganisationController {
             fund: fundTransaction.id,
             address: organisation.Wallet[0].address,
             walletId: organisation.Wallet[0].uuid,
-            amount: data.amount,
-            campaign: data.campaign,
+            amount: amount,
           };
           mintTokenQueue.send(
             new Message(messageBody, { contentType: "application/json" })

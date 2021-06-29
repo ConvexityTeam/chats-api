@@ -1,0 +1,18 @@
+before_script:
+  - apt-get update -qq
+  - apt-get install -qq git
+  # Setup SSH deploy keys
+  - "which ssh-agent || ( apt-get install -qq openssh-client )"
+  - eval $(ssh-agent -s)
+  - ssh-add <(echo "$SSH_PRIVATE_KEY")
+  - mkdir -p ~/.ssh
+
+deploy_staging:
+  type: deploy
+  environment:
+    name: staging
+    url: "$APP_URL"
+  script:
+    - ssh ubuntu@"$APP_URL" "eval $(ssh-agent -s) && cd convexity && git pull origin master && exit"
+  only:
+    - master
