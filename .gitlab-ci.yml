@@ -14,10 +14,21 @@ deploy_staging:
     name: staging
     url: "$APP_URL"
   script:
-    - ssh ubuntu@"$APP_URL"
-    - eval $(ssh-agent -s)
-    - ls
-    - ssh-add <(echo "$GITHUB_KEY")
-    - "git pull origin master && docker-compose build consumer backend && docker-compose up && exit"
+    - >
+    ssh ubuntu@"$APP_URL"
+
+    eval $(ssh-agent -s)
+
+    ssh-add <(echo "$GITHUB_KEY")
+
+    ls
+
+    git pull origin master 
+    
+    docker-compose build consumer backend
+    
+    docker-compose up
+    
+    exit
   only:
     - master
