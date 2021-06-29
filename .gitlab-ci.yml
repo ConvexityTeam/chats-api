@@ -10,6 +10,6 @@ deploy_staging:
   stage: deploy
   script:
     - apk update && apk add openssh-client
-    - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no "ls && eval $(ssh-agent -s) && chmod 600 $GITHUB_KEY && ssh-add $GITHUB_KEY && cd convexity-blockchain && git pull origin master && docker-compose build consumer backend && docker-compose up -d && exit"
+    - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no "chmod 600 $GITHUB_KEY && ssh-add $GITHUB_KEY && cd convexity-blockchain && git pull origin master && docker-compose build consumer backend && docker-compose up -d && exit"
   only:
     - master
