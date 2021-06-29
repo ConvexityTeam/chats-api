@@ -14,6 +14,6 @@ deploy_staging:
     name: staging
     url: "$APP_URL"
   script:
-    - ssh ubuntu@3.20.225.67 "exit"
+    - ssh ubuntu@3.20.225.67 "cd convexity-blockchain && git pull && exit"
   only:
     - master
