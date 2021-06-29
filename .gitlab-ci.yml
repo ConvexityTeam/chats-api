@@ -17,10 +17,10 @@ deploy_staging:
     - eval $(ssh-agent -s)
     - ssh-add <(echo "$GITHUB_KEY")
     - ls
-
+    - cd convexity-blockchain
     - git pull origin master
     - docker-compose build consumer backend
-    - docker-compose up
+    - docker-compose up -d
     - exit
   only:
     - master
