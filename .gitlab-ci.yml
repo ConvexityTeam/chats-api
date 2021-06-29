@@ -3,14 +3,14 @@ stages:
 
 before_script:
   - eval $(ssh-agent -s)
-  - ssh-add <(echo "$SSH_PRIVATE_KEY")
+  - ssh-add $SSH_PRIVATE_KEY
 
 deploy_staging:
   stage: deploy
   script:
-    - ssh ubuntu@"$APP_URL"
+    - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no
     - eval $(ssh-agent -s)
-    - ssh-add <(echo "$GITHUB_KEY")
+    - ssh-add $GITHUB_KEY
     - ls
     - cd convexity-blockchain
     - git pull origin master
