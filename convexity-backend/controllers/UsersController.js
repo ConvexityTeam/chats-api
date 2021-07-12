@@ -957,7 +957,7 @@ class UsersController {
                   CampaignId: null,
                 },
               });
-              let buyer;
+              let buyer, type;
 
               const belongsToCampaign = await db.Beneficiaries.findOne({
                 where: {
@@ -967,6 +967,7 @@ class UsersController {
               });
 
               if (belongsToCampaign) {
+                type = "campaign";
                 buyer = await db.Wallet.findOne({
                   where: {
                     AccountUserId: data.userId,
@@ -975,6 +976,7 @@ class UsersController {
                   },
                 });
               } else {
+                type = "main";
                 buyer = await db.Wallet.findOne({
                   where: {
                     AccountUserId: data.userId,
@@ -1001,20 +1003,36 @@ class UsersController {
                   narration: "Payment for Order " + pendingOrder.OrderUniqueId,
                 })
                 .then(async (transaction) => {
-                  const transferFromQueuemessage = {
-                    ownerAddress: ngo.address,
-                    recieverAddress: vendor.address,
-                    spenderAddress: buyer.address,
-                    senderKey: buyer.privateKey,
-                    amount: sum,
-                    transactionId: transaction.uuid,
-                    pendingOrder: pendingOrder.id,
-                  };
-                  transferFromQueue.send(
-                    new Message(transferFromQueuemessage, {
-                      contentType: "application/json",
-                    })
-                  );
+                  if (type === "campaign") {
+                    const transferFromQueueMessage = {
+                      ownerAddress: ngo.address,
+                      recieverAddress: vendor.address,
+                      spenderAddress: buyer.address,
+                      senderKey: buyer.privateKey,
+                      amount: sum,
+                      transactionId: transaction.uuid,
+                      pendingOrder: pendingOrder.id,
+                    };
+                    transferFromQueue.send(
+                      new Message(transferFromQueueMessage, {
+                        contentType: "application/json",
+                      })
+                    );
+                  } else if (type == "main") {
+                    const transferToQueueMessage = {
+                      reciepientAddress: vendor.address,
+                      senderAddress: buyer.address,
+                      senderPass: buyer.privateKey,
+                      amount: sum,
+                      transaction: transaction.uuid,
+                    };
+
+                    transferToQueue.send(
+                      new Message(transferToQueueMessage, {
+                        contentType: "application/json",
+                      })
+                    );
+                  }
                   util.setSuccess(200, "Transfer Initiated");
                   return util.send(res);
                 });
