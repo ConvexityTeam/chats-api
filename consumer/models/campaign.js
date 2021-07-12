@@ -30,9 +30,10 @@ module.exports = (sequelize, DataTypes) => {
     {
       OrganisationMemberId: DataTypes.STRING,
       title: DataTypes.STRING,
-      type: DataTypes.STRING, //1 for normal Campaign, 2 for cash for work
+      type: DataTypes.ENUM("campaign", "cash-for-work"),
+      spending: DataTypes.STRING,
       description: DataTypes.TEXT,
-      status: DataTypes.INTEGER,
+      status: DataTypes.STRING,
       budget: DataTypes.FLOAT,
       location: DataTypes.STRING,
       start_date: DataTypes.DATE,

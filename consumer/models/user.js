@@ -15,6 +15,14 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       // User.hasMany(models.Campaign, { as: 'campaigns' });
       // User.hasMany(models.Login, { as: 'logins' });
+      User.hasMany(models.Transaction, {
+        as: "Transaction",
+        foreignKey: "TransactionalId",
+        constraints: false,
+        scope: {
+          TransactionalType: "user",
+        },
+      });
       User.hasMany(models.Beneficiaries, { as: "Beneficiaries" });
       User.hasMany(models.TaskUsers, { as: "AssociatedJobs" });
       User.hasMany(models.Wallet, {

@@ -111,6 +111,78 @@ class OrganisationController {
     }
   }
 
+  static async updateCampaign(req, res) {
+    const data = req.body;
+    const rules = {
+      campaignId: "required|numeric",
+      budget: "required|numeric",
+      description: "required|string",
+      spending: "in:vendor,all",
+      status: "in:pending,in-progress,deleted,paused",
+      organisation_id: "required|numeric",
+    };
+
+    const validation = new Validator(data, rules);
+
+    if (validation.fails()) {
+      util.setError(422, validation.errors);
+      return util.send(res);
+    } else {
+      const campaignExist = await db.Campaign.findOne({
+        where: { id: data.campaignId },
+      });
+
+      if (!campaignExist) {
+        util.setError(400, "Invalid Campaign Id");
+        return util.send(res);
+      }
+
+      const campaignData = {
+        budget: data.budget,
+        description: data.description,
+      };
+
+      if (data.status) {
+        campaignData["status"] = data.status;
+      }
+
+      if (data.spending) {
+        campaignData["spending"] = data.spending;
+      }
+
+      const updateCampaign = await campaignExist.update(campaignData);
+
+      util.setSuccess(201, "Campaign Data updated");
+      return util.send(res);
+    }
+  }
+
+  static async fetchTransactions(req, res) {
+    try {
+      const organisationId = req.params.organisationId;
+
+      const organisationExist = await db.Organisations.findOne({
+        where: { id: organisationId },
+        include: { as: "Transaction", model: db.Transaction },
+      });
+
+      const mintTransactions = await db.FundAccount.findAll({
+        where: { OrganisationId: organisationId },
+      });
+
+      util.setSuccess(201, "Transactions", {
+        transaction: organisationExist.Transaction,
+        mintTransaction: mintTransactions,
+      });
+
+      return util.send(res);
+    } catch (error) {
+      console.log(error.message);
+      util.setSuccess(201, "Invalid Organisation Id");
+      return util.send(res);
+    }
+  }
+
   static async createCampaign(req, res) {
     try {
       const data = req.body;
@@ -124,6 +196,7 @@ class OrganisationController {
         description: "required|string",
         start_date: "required|date|after_or_equal:today",
         end_date: "required|date|after_or_equal:start_date",
+        spending: "in:vendor,all",
       };
 
       const validation = new Validator(data, rules);
@@ -146,6 +219,12 @@ class OrganisationController {
             description: data.description,
             start_date: data.start_date,
             end_date: data.end_date,
+            spending:
+              data.type == "cash-for-work"
+                ? "all"
+                : data.spending != ""
+                ? data.spending
+                : "alls",
           };
           await req.member.createCampaign(campaign).then((response) => {
             createWalletQueue.send(
@@ -362,6 +441,7 @@ class OrganisationController {
               .createMintTransaction({
                 amount: data.xbnAmount,
                 transactionReference: response.hash,
+                channel: "bantu",
               })
               .then((fundTransaction) => {
                 const messageBody = {
@@ -436,6 +516,7 @@ class OrganisationController {
         .createMintTransaction({
           amount: amount,
           transactionReference: txRef,
+          channel: "bantu",
         })
         .then((fundTransaction) => {
           const messageBody = {

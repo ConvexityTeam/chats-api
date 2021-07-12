@@ -154,8 +154,6 @@ class AuthController {
           where: { id: fields.campaign, type: "campaign" },
         });
 
-        console.log(fields.campaign, campaignExist);
-
         if (!campaignExist) {
           util.setError(400, "Invalid Campaign");
           return util.send(res);
@@ -300,7 +298,10 @@ class AuthController {
             //     return util.send(res);
             //   }
             // })
-            let campaignExist = await db.Campaign.findByPk(fields.campaign);
+            let campaignExist = await db.Campaign.findOne({
+              where: { id: fields.campaign, type: "campaign" },
+            });
+
             if (!campaignExist) {
               util.setError(400, "Invalid Campaign");
               return util.send(res);
@@ -548,7 +549,7 @@ class AuthController {
     }
   }
 
-  static async signIn(req, res, next) {
+  static async signIn(req, res) {
     try {
       const { email, password } = req.body;
       db.User.findOne({
@@ -580,7 +581,7 @@ class AuthController {
                 },
                 process.env.SECRET_KEY,
                 {
-                  expiresIn: "24hr",
+                  expiresIn: "48hr",
                 }
               );
               const resp = {

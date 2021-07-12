@@ -2,18 +2,25 @@ const UserService = require("../services/UserService");
 const util = require("../libs/Utils");
 const { Op } = require("sequelize");
 const db = require("../models");
+const formidable = require("formidable");
 var bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const mailer = require("../libs/Mailer");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
+const uploadFile = require("./AmazonController");
 const BeneficiariesServices = require("../services/BeneficiariesService");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
+const codeGenerator = require("./QrCodeController");
+var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
+  durable: true,
+});
 
 var transferFromQueue = amqp_1["default"].declareQueue("transferFrom", {
   durable: true,
 });
+
+const environ = process.env.NODE_ENV == "development" ? "d" : "p";
 
 class UsersController {
   static async getAllUsers(req, res) {
@@ -106,6 +113,44 @@ class UsersController {
       util.setError(422, error.message);
       return util.send(res);
     }
+  }
+
+  static async updateProfileImage(req, res) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, async (err, fields, files) => {
+      const rules = {
+        userId: "required|numeric",
+      };
+      const validation = new Validator(fields, rules);
+      if (validation.fails()) {
+        util.setError(422, validation.errors);
+        return util.send(res);
+      } else {
+        if (!files.profile_pic) {
+          util.setError(422, "Profile Image Required");
+          return util.send(res);
+        } else {
+          const user = await db.User.findByPk(fields.userId);
+          if (user) {
+            const extension = files.profile_pic.name.substring(
+              files.profile_pic.name.lastIndexOf(".") + 1
+            );
+            await uploadFile(
+              files.profile_pic,
+              "u-" + environ + "-" + user.id + "-i." + extension,
+              "convexity-profile-images"
+            ).then((url) => {
+              user.update({ profile_pic: url });
+            });
+            util.setSuccess(200, "Profile Picture Updated");
+            return util.send(res);
+          } else {
+            util.setError(422, "Invalid User");
+            return util.send(res);
+          }
+        }
+      }
+    });
   }
 
   static async updateNFC(req, res) {
@@ -709,13 +754,62 @@ class UsersController {
     return util.send(res);
   }
 
-  static async checkOut(req, res) {
-    let data = req.body;
+  static async fetchPendingOrder(req, res) {
+    const userId = req.params.userId;
+    const userExist = await db.User.findByPk(userId);
 
-    let rules = {
-      userId: "required|numeric",
-      pin: "required|numeric",
-      campaign: "required|numeric",
+    if (userExist) {
+      let pendingOrder = await db.Order.findOne({
+        where: { UserId: userId, status: "pending" },
+        include: {
+          model: db.OrderProducts,
+          as: "Cart",
+          attributes: { exclude: ["OrderId"] },
+          include: {
+            model: db.Products,
+            as: "Product",
+            include: { model: db.Market, as: "Vendor" },
+          },
+        },
+      });
+
+      if (pendingOrder) {
+        const image = await codeGenerator(pendingOrder.id);
+        let result;
+        result = {
+          orderUniqueId: pendingOrder.OrderUniqueId,
+          image,
+          status: pendingOrder.status,
+        };
+        if (pendingOrder.Cart) {
+          let cart = pendingOrder.Cart.map((cart) => {
+            return {
+              quantity: cart.quantity,
+              price: cart.unit_price,
+              product: cart.Product.name,
+            };
+          });
+          result["vendor"] = pendingOrder.Cart[0].Product.Vendor.store_name;
+          result["cart"] = cart;
+        }
+        util.setSuccess(200, "Pending Order", result);
+        return util.send(res);
+      } else {
+        util.setSuccess(200, "Pending Order", pendingOrder);
+        return util.send(res);
+      }
+    } else {
+      util.setError(400, "Invalid User");
+      return util.send(res);
+    }
+  }
+
+  static async transact(req, res) {
+    const data = req.body;
+    const rules = {
+      senderAddr: "required|string",
+      recieverAddr: "required|string",
+      amount: "required|numeric",
     };
 
     let validation = new Validator(data, rules);
@@ -724,19 +818,99 @@ class UsersController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      let campaign = await db.Campaign.findByPk(data.campaign);
+      const senderExist = await db.Wallet.findOne({
+        where: {
+          address: data.senderAddr,
+          CampaignId: NULL,
+          [Op.or]: { AccountUserType: ["user", "organisation"] },
+        },
+      });
 
-      if (!campaign) {
-        util.setError(404, "Invalid Campaign Id");
+      if (!senderExist) {
+        util.setError(404, "Sender Wallet does not Exist");
         return util.send(res);
       }
 
+      const recieverExist = await db.Wallet.findOne({
+        where: {
+          address: data.recieverAddr,
+          CampaignId: NULL,
+          [Op.or]: { AccountUserType: ["user", "organisation"] },
+        },
+      });
+
+      if (!senderExist) {
+        util.setError(404, "Reciever Wallet does not Exist");
+        return util.send(res);
+      }
+
+      if (senderExist.balance < data.amount) {
+        util.setError(422, "Sender Balance Insufficient to fund Transaction");
+        return util.send(res);
+      } else {
+        let parentEntity, parentType;
+        if (senderExist.AccountUserType === "organisation") {
+          parentType = "organisation";
+          parentEntity = await db.Organisations.findByPk(
+            senderExist.AccountUserId
+          );
+        } else if (senderExist.AccountUserType === "user") {
+          parentType = "user";
+          parentEntity = await db.User.findByPk(senderExist.AccountUserId);
+        }
+        await parentEntity
+          .createTransaction({
+            walletSenderId: senderExist.uuid,
+            walletRecieverId: recieverExist.uuid,
+            amount: data.amount,
+            narration:
+              parentType === "organisation"
+                ? `Transfer to ${parentEntity.name}`
+                : `Transfer to ${parentEntity.first_name} ${parentEntity.last_name}`,
+          })
+          .then((transaction) => {
+            transferToQueue.send(
+              new Message(
+                {
+                  senderAddress: senderExist.address,
+                  senderPass: senderExist.privateKey,
+                  reciepientAddress: recieverExist.address,
+                  amount: data.amount,
+                  transaction: transaction.uuid,
+                },
+                { contentType: "application/json" }
+              )
+            );
+          });
+
+        util.setSuccess(200, "Payment Initiated");
+        return util.send(res);
+      }
+    }
+  }
+
+  static async checkOut(req, res) {
+    let data = req.body;
+
+    let rules = {
+      userId: "required|numeric",
+      pin: "required|numeric",
+      orderId: "required|numeric",
+      campaign: "campaign|numeric",
+    };
+
+    let validation = new Validator(data, rules);
+
+    if (validation.fails()) {
+      util.setError(422, validation.errors);
+      return util.send(res);
+    } else {
       let user = await db.User.findOne({
         where: { id: data.userId },
         include: {
           model: db.Wallet,
           as: "Wallet",
-          where: { CampaignId: data.campaign },
+          where: { CampaignId: NULL },
         },
       });
 
@@ -783,14 +957,32 @@ class UsersController {
                   CampaignId: null,
                 },
               });
+              let buyer;
 
-              let buyer = await db.Wallet.findOne({
+              const belongsToCampaign = await db.Beneficiaries.findOne({
                 where: {
-                  AccountUserId: data.userId,
-                  AccountUserType: "user",
                   CampaignId: data.campaign,
+                  UserId: vendor.AccountUserId,
                 },
               });
+
+              if (belongsToCampaign) {
+                buyer = await db.Wallet.findOne({
+                  where: {
+                    AccountUserId: data.userId,
+                    AccountUserType: "user",
+                    CampaignId: data.campaign,
+                  },
+                });
+              } else {
+                buyer = await db.Wallet.findOne({
+                  where: {
+                    AccountUserId: data.userId,
+                    AccountUserType: "user",
+                    CampaignId: null,
+                  },
+                });
+              }
 
               let ngo = await db.Wallet.findOne({
                 where: {

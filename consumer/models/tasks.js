@@ -31,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
       description: DataTypes.STRING,
       amount: DataTypes.INTEGER,
       status: DataTypes.ENUM("fulfilled", "pending"),
+      approval: DataTypes.STRING,
     },
     {
       sequelize,

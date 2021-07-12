@@ -17,7 +17,9 @@ router.get(
   OrganisationCtrl.getCampignWallet
 );
 router.post("/member", OrganisationCtrl.addMember);
+router.get("/transactions/:organisationId", OrganisationCtrl.fetchTransactions);
 router.post("/campaign", OrganisationCtrl.createCampaign);
+router.put("/campaign", OrganisationCtrl.updateCampaign);
 router.post("/update-profile", OrganisationCtrl.updateProfile);
 router.post("/transfer/token", OrganisationCtrl.transferToken);
 router.get("/financials/:id", OrganisationCtrl.getFinancials);

@@ -9,6 +9,7 @@ router.get("/", auth, UsersController.getAllUsers);
 router.post("/", auth, UsersController.addUser);
 router.get("/:id", auth, UsersController.getAUser);
 router.put("/profile", auth, UsersController.updatedUser);
+router.put("/profile-image", auth, UsersController.updateProfileImage);
 router.put("/nfc_update", auth, UsersController.updateNFC);
 router.delete("/:id", auth, UsersController.deleteUser);
 router.get(
@@ -27,6 +28,7 @@ router.get(
   auth,
   UsersController.getTotalAmountRecieved
 );
+router.post("/transact", auth, UsersController.transact);
 router.get("/info/statistics", auth, UsersController.getStats);
 router.get("/info/chart", auth, UsersController.getChartData);
 router.get("/info/wallet-balance/:id", auth, UsersController.getWalletBalance);
@@ -38,6 +40,7 @@ router.post("/reset-password", UsersController.resetPassword);
 router.post("/update-password", auth, UsersController.updatePassword);
 router.post("/update-pin", auth, UsersController.updatePin);
 router.get("/financials/summary/:id", auth, UsersController.getSummary);
+router.get("/pending/orders/:userId", auth, UsersController.fetchPendingOrder);
 router.post("/action/deactivate", auth, UsersController.deactivate);
 
 module.exports = router;

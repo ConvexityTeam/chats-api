@@ -1,5 +1,5 @@
 const api = require("./../libs/Axios");
-const base_url = "https://chats-token.herokuapp.com/api/v1/web3";
+const base_url = "https://token.chats.cash/api/v1/web3";
 
 async function createAccountWallet() {
   return new Promise(async (resolve, reject) => {

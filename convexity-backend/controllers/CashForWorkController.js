@@ -24,6 +24,7 @@ class CashForWorkController {
         description: "required|string",
         campaign: "required|numeric",
         amount: "required|numeric",
+        approval: "required|string|in:supervisor,both",
       };
 
       const validation = new Validator(data, rules);
@@ -371,7 +372,8 @@ class CashForWorkController {
           util.setError(400, "Invalid Task Id");
           return util.send(res);
         }
-        if (task.status == "fulfilled") {
+
+        if (task.status === "fulfilled") {
           util.setError(
             400,
             "Task has been fulfilled. No need for an approval request"
@@ -388,6 +390,14 @@ class CashForWorkController {
           util.setError(
             400,
             "Task Id is Invalid/User has not been added to this task"
+          );
+          return util.send(res);
+        }
+
+        if (task.approval === "supervisor" && workerRecord.type === "worker") {
+          util.setError(
+            400,
+            "Only Supervisors can submit approval Request for this campaign"
           );
           return util.send(res);
         }
