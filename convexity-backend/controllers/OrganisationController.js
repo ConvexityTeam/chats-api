@@ -32,6 +32,7 @@ class OrganisationController {
       location: "required|string",
       logo_link: "url",
     };
+
     const validation = new Validator(data, rules);
     if (validation.fails()) {
       util.setError(422, validation.errors);

@@ -25,6 +25,7 @@ const vendorsRouter = require("./routers/vendors");
 const beneficiariesRouter = require("./routers/beneficiaries");
 const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
+const adminRouter = require("./routers/admin");
 
 // Routing endpoint
 app.get("/", (req, res) => {
@@ -50,6 +51,7 @@ app.use("/v1/vendors/auth", vendorsAuthRouter);
 app.use("/v1/beneficiaries", beneficiariesRouter);
 app.use("/v1/cash-for-work", cashforworkRouter);
 app.use("/v1/organisation", organisationRouter);
+app.use("/v1/admin", adminRouter);
 
 // when a fage route is requested
 app.get("*", (req, res) => {
