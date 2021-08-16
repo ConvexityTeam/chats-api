@@ -59,14 +59,13 @@ class VendorsAuthController {
         try {
             const { first_name, last_name, email, phone, password, address, store_name, location } = req.body;
             //check if email already exist
-            db.User.findOne({ where: { email: req.body.email } }).then(user => {
-                if (user !== null) {
+            db.User.findOne({ where: { email } }).then(user => {
+                if (!!user) {
                     util.setError(400, "Email Already Exists, Recover Your Account");
                     return util.send(res);
                 }
                 bcrypt.genSalt(10, (err, salt) => {
-                    bcrypt.hash(password, salt).then(hash => {
-                        const encryptedPassword = hash;
+                    bcrypt.hash(password, salt).then(encryptedPassword => {
                         return db.User.create({
                             RoleId: 4,
                             OrganisationId: 2,
@@ -78,23 +77,23 @@ class VendorsAuthController {
                             location: location,
                             address: address,
                             last_login: (new Date())
-                        }).then(async (user) => {
-                            await user.createStore({ store_name: store_name, address: address, location: location })
+                        }).then(async (account) => {
+                            await account.createStore({ store_name: store_name, address: address, location: location })
                             queue.send(
                                 new Message(
                                   {
-                                    id: user.id,
+                                    id: account.id,
                                     type: "user",
                                   },
                                   { contentType: "application/json" }
                                 )
                               );
-                            util.setSuccess(201, "Account Successfully Created", user.id)
+                            util.setSuccess(201, "Account Successfully Created", account.id)
                             return util.send(res);
-                        }).catch(err => {
+                        }).catch(error => {
                             console.log("Could not save to db");
-                            console.log(err)
-                            util.setError(500, err);
+                            console.log(error)
+                            util.setError(500, error);
                             return util.send(res);
                         });
                     });
@@ -192,7 +191,7 @@ class VendorsAuthController {
                     return util.send(res);
                 });
             }).catch(err => {
-                util.setError(404, "Invalid Login Credentials");
+                util.setError(401, "Invalid Login Credentials");
                 return util.send(res);
             });
         } catch (error) {
@@ -230,13 +229,11 @@ class VendorsAuthController {
             //reset users email password
             if (user !== null) { //if there is a user
                 //generate new password
-                const newPassword = "H@b552baba";
+                const newPassword = util.generatePassword();
                 //update new password in the db
                 bcrypt.genSalt(10, (err, salt) => {
                     bcrypt.hash(newPassword, salt).then(hash => {
-                        const role_id = 2;
                         const encryptedPassword = hash;
-                        const balance = 0.00;
                         return db.User.update({
                             password: encryptedPassword
                         }, {
@@ -266,7 +263,6 @@ class VendorsAuthController {
         const {
             firstName,
             lastName,
-            email,
             phone
         } = req.body;
         const userId = req.body.userId;

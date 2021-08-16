@@ -2,20 +2,22 @@ var nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 dotenv.config();
 class Mailer {
-    constructor() {
-
-    }
+    constructor() {}
     sendMail(to, subject, body, html = true) {
         return new Promise((resolve, reject) => {
             var transporter = nodemailer.createTransport({
-                service: 'gmail',
+                host: 'smtp.zoho.com',
+                port: 465,
+                secure: true,
+
+                // service: 'gmail',
                 auth: {
-                    user: process.env.GMAIL_EMAIL , //this should be fetched from the .env file
-                    pass: process.env.GMAIL_PASSWORD //this should be fetched from the .env file
+                    user: "Convexity Chats <us@chats.cash>" , //this should be fetched from the .env file
+                    pass: "MrQqrjXeCY7q" // "MrQqrjXeCY7q"// "f5KUL5p5EeFxEG4!" //this should be fetched from the .env file
                 }
             });
             var mailOptions = {
-                from: process.env.GMAIL_EMAIL,//this should be fetched from the .env file
+                from: "us@chats.cash",//this should be fetched from the .env file
                 to: to,
                 subject: subject,
                 html: body

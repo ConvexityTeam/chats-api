@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: "rabbitmq:3.8.14-alpine"
+    container_name: rabbitmq
+    networks:
+      - rabbitmq
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:11-alpine
+    container_name: postgres
+    networks:
+      - postgres
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    restart: unless-stopped
+
+  backend:
+    depends_on:
+      - postgres
+      - rabbitmq
+    container_name: backend
+    build:
+      context: convexity-backend
+      dockerfile: Dockerfile
+    volumes: 
+    - ./convexity-backend/:/app
+    ports: 
+      - "3000:3000"
+    networks:
+      - gateway
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+    # security_opt:
+      # - no-new-privileges:true
+
+  consumer:
+    depends_on:
+      - postgres
+      - rabbitmq
+      - backend
+    container_name: consumer
+    build:
+      context: consumer
+      dockerfile: Dockerfile
+    networks:
+      - gateway
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  gateway:
+    driver: bridge
+    name: gateway
+  rabbitmq:
+    internal: true
+  postgres:
+    internal: true
+
+volumes:
+  postgres:
+    external: true
