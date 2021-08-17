@@ -1,15 +1,29 @@
 stages:
   - deploy
 
-before_script:
-  - eval $(ssh-agent -s)
-  - chmod 600 $SSH_PRIVATE_KEY
-  - ssh-add $SSH_PRIVATE_KEY
-  - ssh-keyscan -H 'gitlab.com' >> ~/.ssh/known_hosts
+# before_script:
+  # - eval $(ssh-agent -s)
+  # - chmod 600 $SSH_PRIVATE_KEY
+  # - ssh-add $SSH_PRIVATE_KEY
 
-deploy_staging:
+# deploy_staging:
+  # stage: deploy
+  # script:
+  #   - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no ". ./ssh-restart.sh && ssh-add .ssh/id_rsa && cd app && git checkout master && git pull origin master && docker-compose build -f docker-compose.prod.yml consumer backend && docker-compose docker-compose.prod.yml up -d && exit"
+  # only:
+  #   - master
+deploy:
   stage: deploy
   script:
-    - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no ". ./ssh-restart.sh && ssh-add .ssh/id_rsa && cd app && git checkout master && git pull origin master && docker-compose build -f docker-compose.prod.yml consumer backend && docker-compose docker-compose.prod.yml up -d && exit"
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - cat ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh/id_rsa
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H 'gitlab.com' >> ~/.ssh/known_hosts
+    - chmod +x ./deploy.sh
+    # - scp  -o StrictHostKeyChecking=no -r ./.env ./docker-compose.prod.yml ec2-user@$EC2_PUBLIC_IP_ADDRESS:/home/ec2-user/app
+    - bash ./deploy.sh
   only:
     - master
