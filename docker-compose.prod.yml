@@ -1,37 +1,9 @@
 version: "3.9"
 
 services:
-  webserver:
-    image: nginx:mainline-alpine
-    container_name: webserver
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - web-root:/var/www/html
-      - ./nginx:/etc/nginx/conf.d
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - dhparam:/etc/ssl/certs
-    depends_on:
-      - backend
-    networks:
-      - gateway
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - web-root:/var/www/html
-    depends_on:
-      - webserver
-    command: certonly --webroot --webroot-path=/var/www/html --email charles@withconvexity.com --agree-tos --no-eff-email --force-renewal -d api.chats.cash
-
   rabbitmq:
     image: "rabbitmq:3.8.14-alpine"
+    # image: "${RABBITMQ_IMAGE}"
     container_name: rabbitmq
     networks:
       - rabbitmq
@@ -39,6 +11,7 @@ services:
 
   postgres:
     image: postgres:11-alpine
+    # image: "${POSTGRES_IMAGE}"
     container_name: postgres
     networks:
       - postgres
@@ -55,24 +28,31 @@ services:
     depends_on:
       - postgres
       - rabbitmq
+    # image: "${BACKEND_IMAGE}"
     container_name: backend
+
     build:
       context: convexity-backend
       dockerfile: Dockerfile
+    volumes: 
+    - ./convexity-backend/:/app
+    ports: 
+      - "${PORT}:${PORT}"
     networks:
       - gateway
       - postgres
       - rabbitmq
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
     command: npm start
+    # security_opt:
+      # - no-new-privileges:true
 
   consumer:
     depends_on:
       - postgres
       - rabbitmq
       - backend
+    # image: "${CONSUMER_IMAGE}"
     container_name: consumer
     build:
       context: consumer
@@ -97,17 +77,3 @@ networks:
 volumes:
   postgres:
     external: true
-  certbot-etc:
-  certbot-var:
-  web-root:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/ubuntu/convexity-blockchain/views/
-      o: bind
-  dhparam:
-    driver: local
-    driver_opts:
-      type: none
-      device: /home/ubuntu/convexity-blockchain/dhparam/
-      o: bind

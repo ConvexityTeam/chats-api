@@ -2,14 +2,18 @@ version: "3.9"
 
 services:
   rabbitmq:
-    image: "rabbitmq:3.8.14-alpine"
+    # image: "rabbitmq:3.8.14-alpine"
+    cache_from:
+      - "${RABBITMQ_IMAGE}"
+    image: "${RABBITMQ_IMAGE}"
     container_name: rabbitmq
     networks:
       - rabbitmq
     restart: unless-stopped
 
   postgres:
-    image: postgres:11-alpine
+    # image: postgres:11-alpine
+    image: "${POSTGRES_IMAGE}"
     container_name: postgres
     networks:
       - postgres
@@ -26,20 +30,22 @@ services:
     depends_on:
       - postgres
       - rabbitmq
+    image: "${BACKEND_IMAGE}"
     container_name: backend
+
     build:
       context: convexity-backend
       dockerfile: Dockerfile
     volumes: 
     - ./convexity-backend/:/app
     ports: 
-      - "3000:3000"
+      - "${PORT}:${PORT}"
     networks:
       - gateway
       - postgres
       - rabbitmq
     restart: unless-stopped
-    command: npm run start:dev
+    command: npm start
     # security_opt:
       # - no-new-privileges:true
 
@@ -48,6 +54,7 @@ services:
       - postgres
       - rabbitmq
       - backend
+    image: "${CONSUMER_IMAGE}"
     container_name: consumer
     build:
       context: consumer

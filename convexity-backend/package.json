@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive --exit",
-    "start": "nodemon index.js"
+    "start": "node index.js",
+    "start:dev": "nodemon index.js"
   },
   "engines": {
     "node": "^14.x"
@@ -37,6 +38,7 @@
     "node-fetch": "^2.6.1",
     "node-jsencrypt": "^1.0.0",
     "nodemailer": "^6.4.11",
+    "nodemon": "^2.0.12",
     "pg": "^8.3.3",
     "pg-hstore": "^2.3.3",
     "prettier": "^2.1.1",
