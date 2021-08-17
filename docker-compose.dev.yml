@@ -32,8 +32,13 @@ services:
       dockerfile: Dockerfile
     volumes: 
     - ./convexity-backend/:/app
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
     ports: 
-      - "3000:3000"
+      - 8080:8080
+    expose:
+      - 8080
     networks:
       - gateway
       - postgres
@@ -52,6 +57,9 @@ services:
     build:
       context: consumer
       dockerfile: Dockerfile
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
     networks:
       - gateway
       - postgres
