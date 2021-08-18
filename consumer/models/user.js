@@ -79,6 +79,7 @@ module.exports = (sequelize, DataTypes) => {
       is_email_verified: DataTypes.BOOLEAN,
       is_phone_verified: DataTypes.BOOLEAN,
       is_bvn_verified: DataTypes.BOOLEAN,
+      is_nin_verified: DataTypes.BOOLEAN,
       is_self_signup: DataTypes.BOOLEAN,
       is_public: DataTypes.BOOLEAN,
       is_tfa_enabled: DataTypes.BOOLEAN,

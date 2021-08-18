@@ -396,7 +396,7 @@ amqp_1["default"]
                 names.includes(String(user.first_name).toLowerCase()) &&
                 names.includes(String(user.last_name).toLowerCase())
               ) {
-                await user.update({ status: "activated" });
+                await user.update({ status: "activated", is_nin_verified: true });
                 console.log("User Activated");
               } else {
                 await user.update({ status: "suspended" });

@@ -12,22 +12,10 @@ router.put("/profile", auth, UsersController.updatedUser);
 router.put("/profile-image", auth, UsersController.updateProfileImage);
 router.put("/nfc_update", auth, UsersController.updateNFC);
 router.delete("/:id", auth, UsersController.deleteUser);
-router.get(
-  "/transactions/:beneficiary",
-  auth,
-  UsersController.getBeneficiaryTransactions
-);
-router.get(
-  "/recent_transactions/:beneficiary",
-  auth,
-  UsersController.getRecentTransactions
-);
+router.get( "/transactions/:beneficiary", auth, UsersController.getBeneficiaryTransactions );
+router.get( "/recent_transactions/:beneficiary", auth, UsersController.getRecentTransactions );
 router.get("/transaction/:uuid", auth, UsersController.getTransaction);
-router.get(
-  "/transactions/recieved/:id",
-  auth,
-  UsersController.getTotalAmountRecieved
-);
+router.get( "/transactions/recieved/:id", auth, UsersController.getTotalAmountRecieved );
 router.post("/transact", auth, UsersController.transact);
 router.get("/info/statistics", auth, UsersController.getStats);
 router.get("/info/chart", auth, UsersController.getChartData);

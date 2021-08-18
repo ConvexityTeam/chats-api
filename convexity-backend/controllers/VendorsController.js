@@ -107,7 +107,7 @@ class VendorsController {
             where: { UserId: req.user.id, account_number: data.account_number },
           });
           if (account_exist) {
-            util.setError(401, "Account Number already added");
+            util.setError(400, "Account Number already added");
             return util.send(res);
           } else {
             await user
