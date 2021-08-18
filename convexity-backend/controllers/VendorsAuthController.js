@@ -4,11 +4,17 @@ const jwt = require("jsonwebtoken");
 const mailer = require('../libs/Mailer');
 const util = require('../libs/Utils');
 const VendorServices = require('../services/VendorServices');
-const { data } = require('../libs/Utils');
-const { Message } = require("@droidsolutions-oss/amqp-ts");
+const {
+    data
+} = require('../libs/Utils');
+const {
+    Message
+} = require("@droidsolutions-oss/amqp-ts");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 
-var queue = amqp_1["default"].declareQueue("createWallet", { durable: true });
+var queue = amqp_1["default"].declareQueue("createWallet", {
+    durable: true
+});
 
 class VendorsAuthController {
 
@@ -57,9 +63,22 @@ class VendorsAuthController {
 
     static async createUser(req, res, next) {
         try {
-            const { first_name, last_name, email, phone, password, address, store_name, location } = req.body;
+            const {
+                first_name,
+                last_name,
+                email,
+                phone,
+                password,
+                address,
+                store_name,
+                location
+            } = req.body;
             //check if email already exist
-            db.User.findOne({ where: { email } }).then(user => {
+            db.User.findOne({
+                where: {
+                    email
+                }
+            }).then(user => {
                 if (!!user) {
                     util.setError(400, "Email Already Exists, Recover Your Account");
                     return util.send(res);
@@ -78,16 +97,19 @@ class VendorsAuthController {
                             address: address,
                             last_login: (new Date())
                         }).then(async (account) => {
-                            await account.createStore({ store_name: store_name, address: address, location: location })
+                            await account.createStore({
+                                store_name: store_name,
+                                address: address,
+                                location: location
+                            })
                             queue.send(
-                                new Message(
-                                  {
+                                new Message({
                                     id: account.id,
                                     type: "user",
-                                  },
-                                  { contentType: "application/json" }
-                                )
-                              );
+                                }, {
+                                    contentType: "application/json"
+                                })
+                            );
                             util.setSuccess(201, "Account Successfully Created", account.id)
                             return util.send(res);
                         }).catch(error => {
@@ -167,8 +189,16 @@ class VendorsAuthController {
 
     static async signIn(req, res, next) {
         try {
-            const { email, password } = req.body;
-            db.User.findOne({ where: { email: email, RoleId: 4 } }).then(user => {
+            const {
+                email,
+                password
+            } = req.body;
+            db.User.findOne({
+                where: {
+                    email: email,
+                    RoleId: 4
+                }
+            }).then(user => {
                 bcrypt.compare(password, user.password).then(valid => { //compare password of the retrieved value
                     if (!valid) { //if not valid throw this error
                         const error = new Error("Invalid Login Credentials")
@@ -204,7 +234,9 @@ class VendorsAuthController {
         const id = req.params.id;
         try {
             db.User.findOne({
-                where: { id: id }
+                where: {
+                    id: id
+                }
             }).then(user => {
                 util.setSuccess(200, "Got Users Details", user);
                 return util.send(res);

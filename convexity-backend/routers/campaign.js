@@ -1,25 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const CampaignsController = require("../controllers/CampaignsController");
-const auth = require("../middleware/main-auth");
+const {Auth} = require("../middleware/main-auth");
 
-router.get("/organisation/:id", auth, CampaignsController.getAllOurCampaigns);
+router.get("/organisation/:id", Auth, CampaignsController.getAllOurCampaigns);
 router.get("/all", CampaignsController.getAllCampaigns);
-router.post("/", auth, CampaignsController.addCampaign);
+router.post("/", Auth, CampaignsController.addCampaign);
 router.post(
   "/onboard-beneficiaries/:campaignId",
-  auth,
+  Auth,
   CampaignsController.beneficiariesToCampaign
 );
 // router.post('/fund-beneficiaries-wallets/:CampaignId', CampaignsController.fundWallets);
 router.post(
   "/fund-beneficiaries-wallets",
-  auth,
+  Auth,
   CampaignsController.fundWallets
 );
-router.get("/:id", auth, CampaignsController.getACampaign);
-router.put("/:id", auth, CampaignsController.updatedCampaign);
-router.delete("/:id", auth, CampaignsController.deleteCampaign);
-router.get("/complaints/:campaignId", auth, CampaignsController.complaints);
+router.get("/:id", Auth, CampaignsController.getACampaign);
+router.put("/:id", Auth, CampaignsController.updatedCampaign);
+router.delete("/:id", Auth, CampaignsController.deleteCampaign);
+router.get("/complaints/:campaignId", Auth, CampaignsController.complaints);
 
 module.exports = router;

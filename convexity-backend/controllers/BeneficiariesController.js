@@ -328,6 +328,45 @@ class BeneficiariesController {
     util.setSuccess(200, "Complaints Retrieved", complaints);
     return util.send(res);
   }
+
+  static async addAccount(req, res) {
+    const data = req.body;
+    const rules = {
+      account_number: "required|numeric",
+      bank_name: "required|string",
+    };
+
+    const validation = new Validator(data, rules);
+    if (validation.fails()) {
+      util.setError(422, validation.errors);
+      return util.send(res);
+    } else {
+      await db.User.findByPk(req.user.id)
+        .then(async (user) => {
+          const account_exist = await db.Accounts.findOne({
+            where: { UserId: req.user.id, account_number: data.account_number },
+          });
+          if (account_exist) {
+            util.setError(400, "Account Number already added");
+            return util.send(res);
+          } else {
+            await user
+              .createAccount({
+                account_number: data.account_number,
+                bank_name: data.bank_name,
+              })
+              .then((response) => {
+                util.setSuccess(201, "Account Added Successfully");
+                return util.send(res);
+              });
+          }
+        })
+        .catch((error) => {
+          util.setError(404, "Invalid User");
+          return util.send(res);
+        });
+    }
+  }
 }
 
 module.exports = BeneficiariesController;

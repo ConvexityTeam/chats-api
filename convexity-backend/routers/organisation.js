@@ -1,12 +1,12 @@
 const express = require("express");
 var router = express.Router();
 const OrganisationCtrl = require("../controllers/OrganisationController");
-const auth = require("../middleware/main-auth");
+const {Auth} = require("../middleware/main-auth");
 const memberAuth = require("../middleware/isMember");
 
 router.post("/flutterwave/webhook", OrganisationCtrl.mintToken);
 router.post("/flutterwave/webhook2", OrganisationCtrl.mintToken2);
-router.use(auth);
+router.use(Auth);
 router.post("/register", OrganisationCtrl.register);
 router.use(memberAuth);
 router.post("/bantu/webhook", OrganisationCtrl.bantuTransfer);
