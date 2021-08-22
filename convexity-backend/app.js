@@ -35,7 +35,8 @@ app.get("/", (req, res) => {
     util.setSuccess(200, "Welcome to CHATS App " + pass, pass);
     return util.send(res);
   } catch (error) {
-    util.setSuccess(500, "Internal Server Error " + error.toString());
+    const message = process.env.NODE_ENV === 'production' ? 'Internal Server Error.' : error.toString();
+    util.setError(500, message);
     return util.send(res);
   }
 });
@@ -57,11 +58,11 @@ app.use("/v1/admin", adminRouter);
 // when a fage route is requested
 app.get("*", (req, res) => {
   try {
-    const pass = util.generatePassword(200);
-    util.setSuccess(200, "Welcome to CHATS App " + pass);
+    util.setError(404, "Requested resource not found.");
     return util.send(res);
   } catch (error) {
-    util.setSuccess(500, "Internal Server Error " + error.toString());
+    const message = process.env.NODE_ENV === 'production' ? 'Internal Server Error.' : error.toString();
+    util.setError(500, message);
     return util.send(res);
   }
 });
