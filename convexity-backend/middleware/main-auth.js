@@ -12,7 +12,7 @@ const Auth = (roleIds = null ) => (req, res, next) => {
         return util.send(res);
       }
 
-      if (value.user && roleIds && roleIds.length && !roleIds.includes(parseInt(value.user.RoleId)) {
+      if (value.user && roleIds && roleIds.length && !roleIds.includes(parseInt(value.user.RoleId))) {
         util.setError(401, "Access Denied, UnAuthorised Access");
         return util.send(res);
       }
