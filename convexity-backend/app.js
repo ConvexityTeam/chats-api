@@ -1,13 +1,14 @@
 require("dotenv").config();
-let express = require("express");
-var cors = require("cors");
-let app = express();
-const util = require("./libs/Utils");
-
-app.use(cors());
+const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const cors = require("cors");
+const util = require("./libs/Utils");
+
+const app = express();
+
 app.use(helmet());
+app.use(cors());
 app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -57,7 +58,6 @@ app.use("/v1/admin", adminRouter);
 app.get("*", (req, res) => {
   try {
     const pass = util.generatePassword(200);
-    // console.log(pass);
     util.setSuccess(200, "Welcome to CHATS App " + pass);
     return util.send(res);
   } catch (error) {
