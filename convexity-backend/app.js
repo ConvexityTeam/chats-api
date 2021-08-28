@@ -8,10 +8,10 @@ const util = require("./libs/Utils");
 const app = express();
 
 app.use(helmet());
-app.use(cors());
 app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: '*' }));
 
 //Routers link
 const usersRoute = require("./routers/users");
@@ -31,8 +31,8 @@ const adminRouter = require("./routers/admin");
 // Routing endpoint
 app.get("/", (req, res) => {
   try {
-    const pass = util.generatePassword(200);
-    util.setSuccess(200, "Welcome to CHATS App " + pass, pass);
+    // const pass = util.generatePassword(200);
+    util.setSuccess(200, "Welcome to CHATS App ");
     return util.send(res);
   } catch (error) {
     const message = process.env.NODE_ENV === 'production' ? 'Internal Server Error.' : error.toString();
