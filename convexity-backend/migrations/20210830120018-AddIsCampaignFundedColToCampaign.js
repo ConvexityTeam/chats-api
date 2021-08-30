@@ -9,13 +9,13 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.addColumn(
-      'Users',
-      'is_nin_verified',
+      'Campaigns',
+      'is_funded',
       {
         type: Sequelize.BOOLEAN,
-        after: 'is_bvn_verified',
+        after: 'status',
         defaultValue: false
-      },
+      }
     )
   },
 
@@ -26,6 +26,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Users', 'is_nin_verified');
+     await queryInterface.removeColumn('Campaigns', 'is_funded')
   }
 };

@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
       spending: DataTypes.STRING,
       description: DataTypes.TEXT,
       status: DataTypes.STRING,
+      is_funded: DataTypes.BOOLEAN,
       budget: DataTypes.FLOAT,
       location: DataTypes.STRING,
       start_date: DataTypes.DATE,

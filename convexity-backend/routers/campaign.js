@@ -12,11 +12,7 @@ router.post(
   CampaignsController.beneficiariesToCampaign
 );
 // router.post('/fund-beneficiaries-wallets/:CampaignId', CampaignsController.fundWallets);
-router.post(
-  "/fund-beneficiaries-wallets",
-  Auth,
-  CampaignsController.fundWallets
-);
+router.post( "/fund-beneficiaries-wallets", Auth, CampaignsController.fundWallets );
 router.get("/:id", Auth, CampaignsController.getACampaign);
 router.put("/:id", Auth, CampaignsController.updatedCampaign);
 router.delete("/:id", Auth, CampaignsController.deleteCampaign);

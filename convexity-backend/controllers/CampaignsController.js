@@ -224,6 +224,9 @@ class CampaignsController {
                 console.log(err.message);
               });
           });
+
+          campaign_exist.update({is_funded: true});
+          
           util.setSuccess(201, "Transactions Initiated Successfully");
           return util.send(res);
         } else {

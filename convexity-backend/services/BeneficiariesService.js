@@ -3,7 +3,11 @@ const database = require('../models');
 class BeneficiariesService {
   static async getAllUsers() {
     try {
-      return await database.User.findAll({ where: { RoleId: 5 } }); //get all beneficiaries
+      return await database.User.findAll({
+        where: {
+          RoleId: 5
+        }
+      }); //get all beneficiaries
     } catch (error) {
       throw error;
     }
@@ -44,7 +48,8 @@ class BeneficiariesService {
     try {
       const theUser = await database.User.findOne({
         where: {
-          id: id, RoleId: 5
+          id: id,
+          RoleId: 5
         }
       });
 
@@ -56,7 +61,12 @@ class BeneficiariesService {
 
   static async getUser(id) {
     try {
-      const user = await database.User.findOne({ where: { id: id }, include: ['Wallet'] });
+      const user = await database.User.findOne({
+        where: {
+          id: id
+        },
+        include: ['Wallet']
+      });
       return user;
     } catch (error) {
       throw error;
@@ -110,7 +120,9 @@ class BeneficiariesService {
 
   static async updateComplaint(id) {
     try {
-      const updated_complaint = await database.Complaints.update({ status: "resolved" }, {
+      const updated_complaint = await database.Complaints.update({
+        status: "resolved"
+      }, {
         where: {
           id: id
         }
