@@ -14,17 +14,13 @@ var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
 class CampaignsController {
   static async getAllCampaigns(req, res) {
     try {
-      const type = req.query.type ? req.query.type : "campaign";
+      let type = req.query.type ? req.query.type : "campaign";
       const allowed_types = ["campaign", "cash-for-work"];
       if (!allowed_types.includes(type)) {
         type = "campaign";
       }
       const allCampaign = await CampaignService.getAllCampaigns(type);
-      if (allCampaign.length > 0) {
-        util.setSuccess(200, "Campaign retrieved", allCampaign);
-      } else {
-        util.setSuccess(200, "No Campaign found");
-      }
+      util.setSuccess(200, "Campaign retrieved", allCampaign);
       return util.send(res);
     } catch (error) {
       util.setError(500, error);
