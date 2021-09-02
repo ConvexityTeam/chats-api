@@ -1,28 +1,36 @@
+const {
+  Op
+} = require("sequelize");
+const {
+  AclRoles,
+  OrgRoles
+} = require('../utils')
+const {
+  Message
+} = require("@droidsolutions-oss/amqp-ts");
 const db = require("../models");
-var bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const util = require("../libs/Utils");
 const Validator = require("validatorjs");
 const formidable = require("formidable");
 const uploadFile = require("./AmazonController");
-const { Op } = require("sequelize");
-var amqp_1 = require("./../libs/RabbitMQ/Connection");
-const { Message } = require("@droidsolutions-oss/amqp-ts");
-var ninVerificationQueue = amqp_1["default"].declareQueue("nin_verification", {
+const AuthService = require('../services/AuthService');
+const amqp_1 = require("./../libs/RabbitMQ/Connection");
+const ninVerificationQueue = amqp_1["default"].declareQueue("nin_verification", {
   durable: true,
 });
-var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
+const createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
   durable: true,
 });
 
 const environ = process.env.NODE_ENV == "development" ? "d" : "p";
 
 class AuthController {
-  constructor() {
-    this.emails = [];
-  }
-  static async normalRegistration(req, res) {
-    var form = new formidable.IncomingForm({ multiples: true });
+  static async beneficiaryRegisterSelf(req, res) {
+    var form = new formidable.IncomingForm({
+      multiples: true
+    });
     form.parse(req, async (err, fields, files) => {
       fields["today"] = new Date(Date.now()).toDateString();
       const rules = {
@@ -51,13 +59,17 @@ class AuthController {
           }
         } else {
           util.setError(400, {
-            errors: { profile_pic: ["Profile Pic Required"] },
+            errors: {
+              profile_pic: ["Profile Pic Required"]
+            },
           });
           return util.send(res);
         }
 
         const user_exist = await db.User.findOne({
-          where: { email: fields.email },
+          where: {
+            email: fields.email
+          },
         });
         if (user_exist) {
           util.setError(400, "Email Already Exists, Recover Your Account");
@@ -71,25 +83,24 @@ class AuthController {
           bcrypt.hash(fields.password, salt).then(async (hash) => {
             const encryptedPassword = hash;
             await db.User.create({
-              RoleId: 5,
-              first_name: fields.first_name,
-              last_name: fields.last_name,
-              phone: fields.phone,
-              email: fields.email,
-              password: encryptedPassword,
-              gender: fields.gender,
-              address: fields.address,
-              dob: fields.dob,
-            })
+                RoleId: AclRoles.Beneficiary,
+                first_name: fields.first_name,
+                last_name: fields.last_name,
+                phone: fields.phone,
+                email: fields.email,
+                password: encryptedPassword,
+                gender: fields.gender,
+                address: fields.address,
+                dob: fields.dob,
+              })
               .then(async (user) => {
                 createWalletQueue.send(
-                  new Message(
-                    {
-                      id: user.id,
-                      type: "user",
-                    },
-                    { contentType: "application/json" }
-                  )
+                  new Message({
+                    id: user.id,
+                    type: "user",
+                  }, {
+                    contentType: "application/json"
+                  })
                 );
                 const extension = files.profile_pic.name.substring(
                   files.profile_pic.name.lastIndexOf(".") + 1
@@ -99,7 +110,9 @@ class AuthController {
                   "u-" + environ + "-" + user.id + "-i." + extension,
                   "convexity-profile-images"
                 ).then((url) => {
-                  user.update({ profile_pic: url });
+                  user.update({
+                    profile_pic: url
+                  });
                 });
 
                 util.setSuccess(201, "Account Onboarded Successfully");
@@ -115,8 +128,10 @@ class AuthController {
     });
   }
 
-  static async specialCaseRegistration(req, res) {
-    var form = new formidable.IncomingForm({ multiples: true });
+  static async sCaseCreateBeneficiary(req, res) {
+    var form = new formidable.IncomingForm({
+      multiples: true
+    });
     form.parse(req, async (err, fields, files) => {
       fields["today"] = new Date(Date.now()).toDateString();
       const rules = {
@@ -150,8 +165,12 @@ class AuthController {
           util.setError(400, "Profile Pic Required");
           return util.send(res);
         }
+
         let campaignExist = await db.Campaign.findOne({
-          where: { id: fields.campaign, type: "campaign" },
+          where: {
+            id: fields.campaign,
+            type: "campaign"
+          },
         });
 
         if (!campaignExist) {
@@ -159,7 +178,11 @@ class AuthController {
           return util.send(res);
         }
 
-        let ninExist = await db.User.findOne({ where: { nin: fields.nin } });
+        let ninExist = await db.User.findOne({
+          where: {
+            nin: fields.nin
+          }
+        });
 
         if (ninExist) {
           util.setError(400, "Nin has been taken");
@@ -168,7 +191,9 @@ class AuthController {
 
         if (fields.email) {
           const user_exist = await db.User.findOne({
-            where: { email: fields.email },
+            where: {
+              email: fields.email
+            },
           });
           if (user_exist) {
             util.setError(400, "Email Already Exists, Recover Your Account");
@@ -182,29 +207,28 @@ class AuthController {
           bcrypt.hash(fields.password, salt).then(async (hash) => {
             const encryptedPassword = hash;
             await db.User.create({
-              RoleId: 5,
-              first_name: fields.first_name,
-              last_name: fields.last_name,
-              phone: fields.phone,
-              email: fields.email ? fields.email : null,
-              password: encryptedPassword,
-              gender: fields.gender,
-              nin: fields.nin,
-              location: fields.location ? fields.location : null,
-              address: fields.address,
-              referal_id: fields.referal_id,
-              nfc: fields.nfc,
-              dob: fields.dob,
-            })
+                RoleId: AclRoles.Beneficiary,
+                first_name: fields.first_name,
+                last_name: fields.last_name,
+                phone: fields.phone,
+                email: fields.email ? fields.email : null,
+                password: encryptedPassword,
+                gender: fields.gender,
+                nin: fields.nin,
+                location: fields.location ? fields.location : null,
+                address: fields.address,
+                referal_id: fields.referal_id,
+                nfc: fields.nfc,
+                dob: fields.dob,
+              })
               .then(async (user) => {
                 createWalletQueue.send(
-                  new Message(
-                    {
-                      id: user.id,
-                      type: "user",
-                    },
-                    { contentType: "application/json" }
-                  )
+                  new Message({
+                    id: user.id,
+                    type: "user",
+                  }, {
+                    contentType: "application/json"
+                  })
                 );
 
                 const extension = files.profile_pic.name.substring(
@@ -215,25 +239,30 @@ class AuthController {
                   "u-" + environ + "-" + user.id + "-i." + extension,
                   "convexity-profile-images"
                 ).then((url) => {
-                  user.update({ profile_pic: url });
+                  user.update({
+                    profile_pic: url
+                  });
                 });
 
                 ninVerificationQueue.send(
-                  new Message(user, { contentType: "application/json" })
+                  new Message(user, {
+                    contentType: "application/json"
+                  })
                 );
                 if (campaignExist.type === "campaign") {
                   await user
-                    .createBeneficiary({ CampaignId: fields.campaign })
+                    .createBeneficiary({
+                      CampaignId: fields.campaign
+                    })
                     .then(() => {
                       createWalletQueue.send(
-                        new Message(
-                          {
-                            id: user.id,
-                            campaign: fields.campaign,
-                            type: "user",
-                          },
-                          { contentType: "application/json" }
-                        )
+                        new Message({
+                          id: user.id,
+                          campaign: fields.campaign,
+                          type: "user",
+                        }, {
+                          contentType: "application/json"
+                        })
                       );
                     });
                 }
@@ -250,8 +279,11 @@ class AuthController {
     });
   }
 
-  static async createUser(req, res) {
-    var form = new formidable.IncomingForm({ multiples: true });
+  static async createBeneficiary(req, res) {
+    // ensure that creator of beneficiary belongs to the organisation that owns campaing
+    var form = new formidable.IncomingForm({
+      multiples: true
+    });
     form.parse(req, async (err, fields, files) => {
       fields["today"] = new Date(Date.now()).toDateString();
       const rules = {
@@ -299,15 +331,20 @@ class AuthController {
             //   }
             // })
             let campaignExist = await db.Campaign.findOne({
-              where: { id: fields.campaign, type: "campaign" },
+              where: {
+                id: fields.campaign,
+                type: "campaign"
+              },
             });
 
             if (!campaignExist) {
-              util.setError(400, "Invalid Campaign");
+              util.setError(400, "Invalid Campaign ID");
               return util.send(res);
             }
             const user_exist = await db.User.findOne({
-              where: { email: fields.email },
+              where: {
+                email: fields.email
+              },
             });
             if (user_exist) {
               util.setError(400, "Email Already Exists, Recover Your Account");
@@ -320,28 +357,27 @@ class AuthController {
                 bcrypt.hash(fields.password, salt).then(async (hash) => {
                   const encryptedPassword = hash;
                   await db.User.create({
-                    RoleId: 5,
-                    first_name: fields.first_name,
-                    last_name: fields.last_name,
-                    phone: fields.phone,
-                    email: fields.email,
-                    password: encryptedPassword,
-                    gender: fields.gender,
-                    status: "activated",
-                    location: fields.location,
-                    address: fields.address,
-                    referal_id: fields.referal_id,
-                    dob: fields.dob,
-                  })
+                      RoleId: AclRoles.Beneficiary,
+                      first_name: fields.first_name,
+                      last_name: fields.last_name,
+                      phone: fields.phone,
+                      email: fields.email,
+                      password: encryptedPassword,
+                      gender: fields.gender,
+                      status: "activated",
+                      location: fields.location,
+                      address: fields.address,
+                      referal_id: fields.referal_id,
+                      dob: fields.dob,
+                    })
                     .then(async (user) => {
                       createWalletQueue.send(
-                        new Message(
-                          {
-                            id: user.id,
-                            type: "user",
-                          },
-                          { contentType: "application/json" }
-                        )
+                        new Message({
+                          id: user.id,
+                          type: "user",
+                        }, {
+                          contentType: "application/json"
+                        })
                       );
 
                       var i = 0;
@@ -353,13 +389,13 @@ class AuthController {
                           uploadFile(
                             fingerprint,
                             "u-" +
-                              environ +
-                              "-" +
-                              user.id +
-                              "-fp-" +
-                              ++i +
-                              "." +
-                              ext,
+                            environ +
+                            "-" +
+                            user.id +
+                            "-fp-" +
+                            ++i +
+                            "." +
+                            ext,
                             "convexity-fingerprints"
                           )
                         );
@@ -372,11 +408,15 @@ class AuthController {
                         "u-" + environ + "-" + user.id + "-i." + extension,
                         "convexity-profile-images"
                       ).then((url) => {
-                        user.update({ profile_pic: url });
+                        user.update({
+                          profile_pic: url
+                        });
                       });
                       Promise.all(uploadFilePromises).then((responses) => {
                         responses.forEach(async (url) => {
-                          await user.createPrint({ url: url });
+                          await user.createPrint({
+                            url: url
+                          });
                         });
                       });
                       if (campaignExist.type === "campaign") {
@@ -386,14 +426,13 @@ class AuthController {
                           })
                           .then(() => {
                             createWalletQueue.send(
-                              new Message(
-                                {
-                                  id: user.id,
-                                  campaign: fields.campaign,
-                                  type: "user",
-                                },
-                                { contentType: "application/json" }
-                              )
+                              new Message({
+                                id: user.id,
+                                campaign: fields.campaign,
+                                type: "user",
+                              }, {
+                                contentType: "application/json"
+                              })
                             );
                           });
                       }
@@ -423,7 +462,8 @@ class AuthController {
     });
   }
 
-  static async createAdminUser(req, res) {
+  static async createNgoAccount(req, res) {
+    let user = null
     const data = req.body;
     const rules = {
       organisation_name: "required|string",
@@ -444,13 +484,14 @@ class AuthController {
       const re = "(\\W|^)[\\w.\\-]{0,25}@" + domain + "(\\W|$)";
       if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
-          where: { email: data.email },
+          where: {
+            email: data.email
+          },
         });
         if (!userExist) {
           const organisationExist = await db.Organisations.findOne({
             where: {
-              [Op.or]: [
-                {
+              [Op.or]: [{
                   name: data.organisation_name,
                 },
                 {
@@ -467,39 +508,45 @@ class AuthController {
               bcrypt.hash(data.password, salt).then(async (hash) => {
                 const encryptedPassword = hash;
                 await db.User.create({
-                  RoleId: 2,
-                  email: data.email,
-                  password: encryptedPassword,
-                })
-                  .then(async (user) => {
+                    RoleId: AclRoles.NgoAdmin,
+                    email: data.email,
+                    password: encryptedPassword,
+                  })
+                  .then(async (_user) => {
+                    user = _user;
                     createWalletQueue.send(
-                      new Message(
-                        {
-                          id: user.id,
-                          type: "user",
-                        },
-                        { contentType: "application/json" }
-                      )
+                      new Message({
+                        id: user.id,
+                        type: "user",
+                      }, {
+                        contentType: "application/json"
+                      })
                     );
                     await db.Organisations.create({
                       name: data.organisation_name,
                       website_url: data.website_url,
                     }).then(async (organisation) => {
                       createWalletQueue.send(
-                        new Message(
-                          {
-                            id: organisation.id,
-                            type: "organisation",
-                          },
-                          { contentType: "application/json" }
-                        )
+                        new Message({
+                          id: organisation.id,
+                          type: "organisation",
+                        }, {
+                          contentType: "application/json"
+                        })
                       );
                       await organisation
-                        .createMember({ UserId: user.id, role: "admin" })
+                        .createMember({
+                          UserId: user.id,
+                          role: OrgRoles.Admin
+                        })
                         .then(() => {
+                          user = user.toJSON();
+                          delete user.password;
+                          delete user.tfa_secret;
                           util.setSuccess(
-                            200,
-                            "NGO and User registered successfully"
+                            201,
+                            "NGO and User registered successfully",
+                            {user, organisation}
                           );
                           return util.send(res);
                         });
@@ -539,7 +586,9 @@ class AuthController {
         return util.send(res);
       }
       ninVerificationQueue.send(
-        new Message(user, { contentType: "application/json" })
+        new Message(user, {
+          contentType: "application/json"
+        })
       );
       util.setError(200, "User Verification Initialised");
       return util.send(res);
@@ -551,67 +600,64 @@ class AuthController {
 
   static async signIn(req, res) {
     try {
-      const { email, password } = req.body;
-      db.User.findOne({
-        where: { email: email },
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
         include: {
           model: db.OrganisationMembers,
           as: "AssociatedOrganisations",
-          include: { model: db.Organisations, as: "Organisation" },
+          include: {
+            model: db.Organisations,
+            as: "Organisation"
+          },
         },
-      })
-        .then((user) => {
-          bcrypt
-            .compare(password, user.password)
-            .then((valid) => {
-              //compare password of the retrieved value
-              if (!valid) {
-                //if not valid throw this error
-                util.setError(401, "Invalid Login Credentials");
-                return util.send(res);
-              }
+      });
 
-              if (user.status == "suspended") {
-                util.setError(401, "Account has been Deactivated");
-                return util.send(res);
-              }
-              const token = jwt.sign(
-                {
-                  user: user,
-                },
-                process.env.SECRET_KEY,
-                {
-                  expiresIn: "48hr",
-                }
-              );
-              const resp = {
-                user: user,
-                token: token,
-              };
-              util.setSuccess(200, "Login Successful", resp);
-              return util.send(res);
-            })
-            .catch((error) => {
-              util.setError(500, error);
-              return util.send(res);
-            });
-        })
-        .catch((err) => {
-          util.setError(400, "Invalid Login Credentials");
-          return util.send(res);
-        });
+      const data = await AuthService.login(user, req.body.password)
+      util.setSuccess(200, 'Login Successful.', data);
+      return util.send(res);
     } catch (error) {
-      util.setError(400, error);
+      const message = error.status == 401 ? error.message : 'Login failed. Please try again later.';
+      util.setError(401, message);
       return util.send(res);
     }
+  }
+
+  static async signInVendor(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          vendor_id: req.body.vendor_id
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: "AssociatedOrganisations",
+          include: {
+            model: db.Organisations,
+            as: "Organisation"
+          },
+        },
+      });
+      const data = await AuthService.login(user, req.body.password, AclRoles.Vendor)
+      util.setSuccess(200, 'Login Successful.', data);
+      return util.send(res);
+    } catch (error) {
+      const message = error.status == 401 ? error.message : 'Login failed. Please try again later.';
+      util.setError(401, message);
+      return util.send(res);
+    }
+
   }
 
   static async userDetails(req, res, next) {
     const id = req.params.id;
     try {
       db.User.findOne({
-        where: { id: id },
-      })
+          where: {
+            id: id
+          },
+        })
         .then((user) => {
           util.setSuccess(200, "Got Users Details", user);
           return util.send(res);
@@ -627,28 +673,30 @@ class AuthController {
   }
 
   static async updateProfile(req, res, next) {
-    const { firstName, lastName, email, phone } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      phone
+    } = req.body;
     const userId = req.body.userId;
     db.User.findOne({
-      where: {
-        id: userId,
-      },
-    })
+        where: {
+          id: userId,
+        },
+      })
       .then((user) => {
         if (user !== null) {
           //if there is a user
-          return db.User.update(
-            {
-              firstName: firstName,
-              lastName: lastName,
-              phone: phone,
+          return db.User.update({
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+          }, {
+            where: {
+              id: userId,
             },
-            {
-              where: {
-                id: userId,
-              },
-            }
-          ).then((updatedRecord) => {
+          }).then((updatedRecord) => {
             //respond with a success message
             res.status(201).json({
               status: "success",

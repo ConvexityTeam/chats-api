@@ -1,4 +1,7 @@
 'use strict';
+const {
+  AclRoles
+} = require('../utils');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -10,34 +13,71 @@ module.exports = {
      *   name: 'John Doe',
      *   isBetaMember: false
      * }], {});
-    */
-    await queryInterface.bulkInsert('Roles', [
-      {
-        name: 'Admin',
+     */
+    await queryInterface.bulkInsert('Roles', [{
+        id: AclRoles.SuperAdmin,
+        name: 'Super Admin',
         description: 'Super Admin User',
-        createdAt: "2020-09-23 13:53:47.213913",
-        updatedAt: "2020-09-23 13:53:47.213913"
-      }, {
-        name: 'Sub-Admin',
-        description: 'Sub Admin User',
-        createdAt: "2020-09-23 13:53:47.213913",
-        updatedAt: "2020-09-23 13:53:47.213913"
-      }, {
-        name: 'Benefactors',
-        description: 'Benefactors User',
-        createdAt: "2020-09-23 13:53:47.213913",
-        updatedAt: "2020-09-23 13:53:47.213913"
-      }, {
-        name: 'Vendors',
-        description: 'Vendors User',
-        createdAt: "2020-09-23 13:53:47.213913",
-        updatedAt: "2020-09-23 13:53:47.213913"
-      }, {
-        name: 'Beneficiaries',
-        description: 'Beneficiaries User',
-        createdAt: "2020-09-23 13:53:47.213913",
-        updatedAt: "2020-09-23 13:53:47.213913"
-      }], {});
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.GodMode,
+        name: 'Delegated Admin',
+        description: 'GodMode Admin User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.NgoAdmin,
+        name: 'Admin',
+        description: 'NGO Admin  User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.NgoSubAdmin,
+        name: 'Sub Admin',
+        description: 'NGO Sub Admin  User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.FieldAgent,
+        name: 'Field Agent',
+        description: 'NGO Field Agent  User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.Vendor,
+        name: 'Vendor',
+        description: 'Vendor  User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.Beneficiary,
+        name: 'Beneficiary',
+        description: 'Beneficiary  User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.Donor,
+        name: 'Donor',
+        description: 'Donor  User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: AclRoles.Guest,
+        name: 'Guest',
+        description: 'Guest  User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    ], {});
   },
 
   down: async (queryInterface, Sequelize) => {

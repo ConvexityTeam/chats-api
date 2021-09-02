@@ -76,6 +76,7 @@ module.exports = (sequelize, DataTypes) => {
       location: DataTypes.STRING,
       pin: DataTypes.STRING,
       address: DataTypes.STRING,
+      vendor_id: DataTypes.STRING,
       is_email_verified: DataTypes.BOOLEAN,
       is_phone_verified: DataTypes.BOOLEAN,
       is_bvn_verified: DataTypes.BOOLEAN,

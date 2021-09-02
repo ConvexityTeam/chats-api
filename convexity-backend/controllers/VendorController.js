@@ -8,7 +8,7 @@ const { Op } = require("sequelize");
 
 const codeGenerator = require("./../controllers/QrCodeController");
 
-class VendorsController {
+class VendorController {
   constructor() {
     this.emails = [];
   }
@@ -327,4 +327,4 @@ class VendorsController {
   }
 }
 
-module.exports = VendorsController;
+module.exports = VendorController;

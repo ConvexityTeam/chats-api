@@ -2,7 +2,7 @@ const express = require('express');
 var router = express.Router();
 const NgoAuthCtrl = require('../controllers/NgoAuthController');
 // const auth = require('../middleware/auth'); //Auhorization middleware
-const {NgoAuth} = require('../middleware/main-auth');
+const {NgoAuth} = require('../middleware/auth');
 const e2e = require('../middleware/e2e'); //End2End Encryption middleware
 router.use(e2e);
 //users endpoint

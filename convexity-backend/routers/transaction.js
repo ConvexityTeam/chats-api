@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const TransactionsController = require('../controllers/TransactionsController');
-const { Auth } = require('../middleware/main-auth');
+const { Auth } = require('../middleware/auth');
 const e2e = require('../middleware/e2e'); //End2End Encryption middleware
 router.use(e2e);
 router.get('/', Auth, TransactionsController.getAllTransactions);

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const UsersController = require("../controllers/UsersController");
-const {Auth} = require("../middleware/main-auth");
+const {Auth} = require("../middleware/auth");
 const e2e = require("../middleware/e2e"); //End2End Encryption middleware
 router.use(e2e);
 
@@ -30,5 +30,9 @@ router.post("/update-pin", Auth, UsersController.updatePin);
 router.get("/financials/summary/:id", Auth, UsersController.getSummary);
 router.get("/pending/orders/:userId", Auth, UsersController.fetchPendingOrder);
 router.post("/action/deactivate", Auth, UsersController.deactivate);
+
+// /:id - getDetails
+// /verify/nin
+// /profile/update
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const CashForWorkController = require("../controllers/CashForWorkController");
-const {Auth} = require("../middleware/main-auth");
+const {Auth} = require("../middleware/auth");
 
 router.use(Auth);
 router.get("/", CashForWorkController.getAllCashForWork);

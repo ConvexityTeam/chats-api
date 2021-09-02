@@ -1,7 +1,7 @@
 const express = require("express");
 var router = express.Router();
 const OrganisationCtrl = require("../controllers/OrganisationController");
-const {Auth} = require("../middleware/main-auth");
+const {Auth} = require("../middleware/auth");
 const memberAuth = require("../middleware/isMember");
 
 router.post("/flutterwave/webhook", OrganisationCtrl.mintToken);

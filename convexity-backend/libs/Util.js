@@ -5,7 +5,6 @@ dotenv.config();
 var request = require('request');
 class Util {
     constructor() { }
-	
 }
 
 module.exports = new Util();

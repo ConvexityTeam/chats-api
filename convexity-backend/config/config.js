@@ -5,6 +5,7 @@ const config = {
   DB_USER: process.env.DB_USER,
   DB_PASSWORD: process.env.DB_PASSWORD,
   DB_HOST: process.env.DB_HOST,
+  DB_LOG: process.env.QUERY_LOGGING || false,
 };
 
 module.exports = {
@@ -13,6 +14,7 @@ module.exports = {
     password: config.DB_PASSWORD,
     database: config.DB_NAME,
     host: config.DB_HOST,
+    logging: config.DB_LOG,
     dialect: "postgres",
   },
   test: {
@@ -20,6 +22,7 @@ module.exports = {
     password: config.DB_PASSWORD,
     database: config.DB_NAME,
     host: config.DB_HOST,
+    logging: config.DB_LOG,
     dialect: "postgres",
   },
   production: {
@@ -27,6 +30,7 @@ module.exports = {
     password: config.DB_PASSWORD,
     database: config.DB_NAME,
     host: config.DB_HOST,
+    logging: config.DB_LOG,
     dialect: "postgres",
   },
 };
