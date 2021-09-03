@@ -1,22 +1,7 @@
-const http = require("http");
+require("dotenv").config();
+
 const app = require("./app");
-
-const normalizePort = (val) => {
-  const port = parseInt(val, 10);
-  if (isNaN(port)) {
-    return val;
-  }
-  if (port >= 0) {
-    return port;
-  }
-  return false;
-};
-// const server = http.createServer(app);
-
-const port = normalizePort(process.env.PORT || "3000");
-
-app.set("port", port);
-app.set("trust proxy", 1);
+const port = process.env.PORT || "3000";
 
 const errorHandler = (error) => {
   if (error.syscall !== "listen") {
@@ -39,12 +24,16 @@ const errorHandler = (error) => {
   }
 };
 
+app.set("port", port);
+app.set("trust proxy", 1);
+
 app.on("error", errorHandler);
 
-app.on("listening", () => {
-  const address = server.address();
-  const bind = typeof address === "string" ? "pipe " + address : "port " + port;
-  console.log("Listening on " + bind);
-});
 
-app.listen(port);
+app.listen(port, () => {
+  console.log('========================================');
+  console.log(`Chats Backend  API Up - Listen---`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Port: ${port}`);
+  console.log('========================================');
+});

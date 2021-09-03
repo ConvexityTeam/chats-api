@@ -186,7 +186,6 @@ class NgoController {
             return util.send(res);
         }
     }
-
 }
 
 module.exports = NgoController;

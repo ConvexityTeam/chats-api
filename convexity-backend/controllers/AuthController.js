@@ -540,13 +540,13 @@ class AuthController {
                           role: OrgRoles.Admin
                         })
                         .then(() => {
-                          user = user.toJSON();
-                          delete user.password;
-                          delete user.tfa_secret;
+
                           util.setSuccess(
                             201,
-                            "NGO and User registered successfully",
-                            {user, organisation}
+                            "NGO and User registered successfully", {
+                              user: user.toObject(),
+                              organisation
+                            }
                           );
                           return util.send(res);
                         });
@@ -711,6 +711,38 @@ class AuthController {
           error: err,
         });
       });
+  }
+
+  static async setTwoFactorSecret(req, res) {
+    try {
+      const data = await AuthService.add2faSecret(req.user);
+      util.setSuccess(200, '2FA Data Generated', data);
+      return util.send(res);
+    } catch (error) {
+      util.setError(400, error.message);
+      return util.send(res);
+    }
+  }
+
+  static async enableTwoFactorAuth(req, res) {
+    // TODO: Validate token
+    try {
+
+      const token = req.body.otp || req.query.otp;
+
+      if (!token) {
+        util.setError(422, `OTP is required.`);
+        return util.send(res);
+      }
+
+      const user = await AuthService.enable2afCheck(req.user, token);
+      util.setSuccess(200, 'Two factor authentication enabled.', user);
+      return util.send(res);
+
+    } catch (error) {
+      util.setError(400, error.message);
+      return util.send(res);
+    }
   }
 }
 
