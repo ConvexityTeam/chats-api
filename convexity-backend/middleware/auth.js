@@ -39,12 +39,6 @@ const Auth = (roleIds = null ) => (req, res, next) => {
 };
 
 exports.Auth = Auth();
-exports.AdminAuth = Auth([1]);
-
-exports.BeneficiaryAuth = Auth([1, 2, 3, 4, 5]);
-exports.VendorAuth = Auth([1, 2, 3, 4]);
-exports.NgoAuth = Auth([1, 2, 3]);
-
 exports.SuperAdminAuth = Auth([SuperAdmin]);
 exports.GodModeAuth = Auth([SuperAdmin, GodMode]);
 exports.NgoAdminAuth = Auth([NgoAdmin]);

@@ -10,7 +10,7 @@ const {
 } = require('../models');
 const {
   GenearteVendorId
-} = require('../utils').StringUtil;
+} = require('../utils');
 const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");

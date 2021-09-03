@@ -1,7 +1,7 @@
-const express = require("express");
-const router = express.Router();
+const router = require("express").Router();
+
+const {Auth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
-const {Auth} = require("../middleware/auth");
 
 router.use(Auth);
 router.get("/", CashForWorkController.getAllCashForWork);
@@ -13,4 +13,5 @@ router.post("/task/addWorkers", CashForWorkController.addWorkersToTask);
 router.post("/task/submit-progress", CashForWorkController.submitProgress);
 router.post("/task/progress/confirm", CashForWorkController.approveProgress);
 router.post("/task/pay-wages", CashForWorkController.payWages);
+
 module.exports = router;

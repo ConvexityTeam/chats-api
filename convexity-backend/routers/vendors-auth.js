@@ -1,16 +1,12 @@
-const express = require('express');
-var router = express.Router();
-const AuthCtrl = require('../controllers/VendorsAuthController');
-const { VendorAuth } = require('../middleware/auth'); //Auhorization middleware
-const e2e = require('../middleware/e2e'); //End2End Encryption middleware
+const router = require('express').Router();
 
-router.use(e2e);
-//users endpoint
+const AuthCtrl = require('../controllers/VendorsAuthController');
+
 router.post('/register', AuthCtrl.createUser);
 router.post('/login', AuthCtrl.signIn);
 router.post('/reset-password', AuthCtrl.resetPassword);
-router.post('/update-password', VendorAuth, AuthCtrl.updatePassword);
-router.post('/update-profile', VendorAuth, AuthCtrl.updateProfile);
-router.get('/user-detail/:id', VendorAuth, AuthCtrl.userDetails);
+router.post('/update-password', AuthCtrl.updatePassword);
+router.post('/update-profile', AuthCtrl.updateProfile);
+router.get('/user-detail/:id', AuthCtrl.userDetails);
 
 module.exports = router;

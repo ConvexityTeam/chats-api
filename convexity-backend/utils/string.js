@@ -7,3 +7,13 @@ exports.GenearteVendorId = () => {
   });
   return 'CHATS' + random;
 }
+
+exports.generatePaystackRef = () => {
+  const random = randomstring.generate({
+    length: 30,
+    charset: 'alphanumeric',
+    capitalization: 'uppercase'
+  });
+
+  return 'PAYCHATS' + random;
+}

@@ -1,12 +1,7 @@
-const express = require('express');
-var router = express.Router();
+const router = require('express').Router();
+
 const { VendorController, AuthController } = require('../controllers');
 
-const {VendorAuth} = require('../middleware/auth');
-const e2e = require('../middleware/e2e'); //End2End Encryption middleware
-router.use(e2e);
-// users endpoint
-// router.use(VendorAuth)
 
 router.get('/', VendorController.getAllVendors);
 router.get('/:id', VendorController.getAVendor);
@@ -25,4 +20,7 @@ router.get('/summary/:id', VendorController.getSummary);
 
 // auth/login - vendor id and password
 router.post('/auth/login', AuthController.signInVendor);
+// router.post('/auth/password/init-reset')
+// router.post('/auth/password/reset)
+
 module.exports = router;

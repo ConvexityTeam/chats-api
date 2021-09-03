@@ -1,9 +1,7 @@
-const express = require("express");
-const router = express.Router();
-const UsersController = require("../controllers/UsersController");
+const router = require('express').Router();
+
 const {Auth} = require("../middleware/auth");
-const e2e = require("../middleware/e2e"); //End2End Encryption middleware
-router.use(e2e);
+const UsersController = require("../controllers/UsersController");
 
 router.get("/", Auth, UsersController.getAllUsers);
 router.post("/", Auth, UsersController.addUser);
