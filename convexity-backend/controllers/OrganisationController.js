@@ -1,4 +1,4 @@
-const OrganisationsService = require("../services/OrganisationsService");
+const OrganisationsService = require("../services/OrganisationService");
 const db = require("../models");
 const { Op } = require("sequelize");
 const UserService = require("../services/UserService");

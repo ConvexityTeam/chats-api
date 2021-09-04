@@ -1,6 +1,6 @@
 const database = require('../models');
 
-class OrganisationsService {
+class OrganisationService {
   static async getAllOrganisations() {
     try {
       return await database.Organisations.findAll();
@@ -48,4 +48,4 @@ class OrganisationsService {
 
 }
 
-module.exports = OrganisationsService;
+module.exports = OrganisationService;

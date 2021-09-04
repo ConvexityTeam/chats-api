@@ -1,9 +1,17 @@
-const database = require('../models');
+const {User} = require('../models');
 
 class UserService {
+    static findByEmail(email, extraClause = null) {
+        return User.findOne({where: {email, ...extraClause}})
+    }
+
+    static findByPhone(phone, extraClause = null) {
+        return User.findOne({where: {phone, ...extraClause}})
+    }
+
     static async getAllUsers() {
         try {
-            return await database.User.findAll();
+            return await User.findAll();
         } catch (error) {
             throw error;
         }
@@ -11,7 +19,7 @@ class UserService {
 
     static async addUser(newUser) {
         try {
-            return await database.User.create(newUser);
+            return await User.create(newUser);
         } catch (error) {
             throw error;
         }
@@ -19,14 +27,14 @@ class UserService {
 
     static async updateUser(id, updateUser) {
         try {
-            const UserToUpdate = await database.User.findOne({
+            const UserToUpdate = await User.findOne({
                 where: {
                     id: id
                 }
             });
 
             if (UserToUpdate) {
-                await database.User.update(updateUser, {
+                await User.update(updateUser, {
                     where: {
                         id: id
                     }
@@ -42,7 +50,7 @@ class UserService {
 
     static async getAUser(id) {
         try {
-            const theUser = await database.User.findOne({
+            const theUser = await User.findOne({
                 where: {
                     id: id
                 }
@@ -56,14 +64,14 @@ class UserService {
 
     static async deleteUser(id) {
         try {
-            const UserToDelete = await database.User.findOne({
+            const UserToDelete = await User.findOne({
                 where: {
                     id: id
                 }
             });
 
             if (UserToDelete) {
-                const deletedUser = await database.User.destroy({
+                const deletedUser = await User.destroy({
                     where: {
                         id: id
                     }

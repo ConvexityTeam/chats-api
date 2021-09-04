@@ -1,8 +1,11 @@
+const { ResponseStatus } = require("../utils");
+
 class Response {
   constructor() {
     this.type = null;
     this.data = null;
     this.message = null;
+    this.errors = null;
     this.statusCode = null;
   }
 
@@ -10,18 +13,19 @@ class Response {
     this.statusCode = statusCode;
     this.message = message;
     this.data = data;
-    this.type = "success";
+    this.type = ResponseStatus.SUCCESS;
   }
 
-  setError(statusCode, message) {
+  setError(statusCode, message, errors = null) {
     this.statusCode = statusCode;
     this.message = message;
-    this.type = "error";
+    this.errors = errors;
+    this.type = ResponseStatus.FAILURE;
   }
 
   send(res) {
     let result;
-    if (this.type === "success") {
+    if (this.type === ResponseStatus.SUCCESS) {
       result = {
         code: this.statusCode,
         status: this.type,
@@ -33,6 +37,7 @@ class Response {
         code: this.statusCode,
         status: this.type,
         message: this.message,
+        ...(this.errors && {error: this.errors})
       };
     }
 

@@ -1,24 +1,29 @@
 const {
     User
 } = require('../models');
-const util = require('../libs/Utils');
-const OrganisationsService = require('../services/OrganisationsService');
-const NgoService = require('../services/NgoService');
+const {
+    Response
+} = require('../libs');
+const {
+    OrganisationService,
+    NgoService
+} = require('../services');
+const { HttpStatusCode, SanitizeObject } = require('../utils');
 
 class NgoController {
     static async getAllNGO(req, res) {
         try {
-            const allNGOs = await OrganisationsService.getAllOrganisations();
+            const allNGOs = await OrganisationService.getAllOrganisations();
             if (allNGOs.length > 0) {
-                util.setSuccess(200, 'NGOs retrieved', allNGOs);
+                Response.setSuccess(200, 'NGOs retrieved', allNGOs);
             } else {
-                util.setSuccess(200, 'No NGO found');
+                Response.setSuccess(200, 'No NGO found');
             }
-            return util.send(res);
+            return Response.send(res);
         } catch (error) {
             console.log(error)
-            util.setError(400, error);
-            return util.send(res);
+            Response.setError(400, error);
+            return Response.send(res);
         }
     }
 
@@ -28,114 +33,36 @@ class NgoController {
         } = req.params;
 
         if (!Number(id)) {
-            util.setError(400, 'Invalid Request Parameter');
-            return util.send(res);
+            Response.setError(400, 'Invalid Request Parameter');
+            return Response.send(res);
         }
 
         try {
-            const theNgo = await OrganisationsService.getAOrganisation(id);
+            const theNgo = await OrganisationService.getAOrganisation(id);
             if (!theNgo) {
-                util.setError(404, `Cannot find NGO with the id ${id}`);
+                Response.setError(404, `Cannot find NGO with the id ${id}`);
             } else {
-                util.setSuccess(200, 'Found NGO', theNgo);
+                Response.setSuccess(200, 'Found NGO', theNgo);
             }
-            return util.send(res);
+            return Response.send(res);
         } catch (error) {
-            util.setError(404, error);
-            return util.send(res);
+            Response.setError(404, error);
+            return Response.send(res);
         }
     }
 
-    static async createFieldAgent(req, res) {
+    static async createAdminMember(req, res) {
         try {
-            // validate email
-            const _account = await User.findOne({
-                where: {
-                    email: req.body.email
-                }
-            });
-    
-            if (_account) {
-                util.setError(400, "Email Already Exists, Recover Your Account");
-                return util.send(res);
-            }
-            
-            const data = req.body;
-            const {
-                user,
-                organisation
-            } = req;
-            const agent = await NgoService.createFieldAgentAccount(organisation, data, user);
+            const {role, ...data}  = SanitizeObject(req.body);
+            const { user, organisation } = req;
+            const admin = await NgoService.createAdminAccount(organisation, data, role, user);
 
-            util.setSuccess(201, 'Field Agent Account Created.', agent);
-            return util.send(res);
-
+            Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Account Created.', admin);
+            return Response.send(res);
         } catch (error) {
             console.log(error)
-            util.setError(500, `Internal server error. Contact support.`);
-            return util.send(res);
-        }
-    }
-
-    static async createSubAdmin(req, res) {
-
-        try {
-            const _account = await User.findOne({
-                where: {
-                    email: req.body.email
-                }
-            });
-    
-            if (_account) {
-                util.setError(400, "Email Already Exists, Recover Your Account");
-                return util.send(res);
-            }
-            // validate email
-            const data = req.body;
-            const {
-                user,
-                organisation
-            } = req;
-            const subAdmin = await NgoService.createSubAdminAccount(organisation, data, user);
-
-            util.setSuccess(201, 'Sub Admin Account Created.', subAdmin);
-            return util.send(res);
-
-        } catch (error) {
-            console.log(error)
-            util.setError(500, `Internal server error. Contact support.`);
-            return util.send(res);
-        }
-    }
-
-    static async createAdmin(req, res) {
-        try {
-            // validate email
-            const _account = await User.findOne({
-                where: {
-                    email: req.body.email
-                }
-            });
-    
-            if (_account) {
-                util.setError(400, "Email Already Exists, Recover Your Account");
-                return util.send(res);
-            }
-
-            const data = req.body;
-            const {
-                user,
-                organisation
-            } = req;
-            const admin = await NgoService.createAdminAccount(organisation, data, user);
-
-            util.setSuccess(201, 'Admin Account Created.', admin);
-            return util.send(res);
-
-        } catch (error) {
-            console.log(error)
-            util.setError(500, `Internal server error. Contact support.`);
-            return util.send(res);
+            Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+            return Response.send(res);
         }
     }
 
@@ -164,8 +91,8 @@ class NgoController {
             });
 
             if (_account) {
-                util.setError(400, "Email Already Exists, Recover Your Account");
-                return util.send(res);
+                Response.setError(400, "Email Already Exists, Recover Your Account");
+                return Response.send(res);
             }
 
             const vendor = await NgoService.createVendorAccount(organisation, {
@@ -178,12 +105,12 @@ class NgoController {
                 location
             }, user);
 
-            util.setSuccess(201, 'Vendor Account Created.', vendor);
-            return util.send(res);
+            Response.setSuccess(201, 'Vendor Account Created.', vendor);
+            return Response.send(res);
         } catch (error) {
             console.log(error)
-            util.setError(500, `Internal server error. Contact support.`);
-            return util.send(res);
+            Response.setError(500, `Internal server error. Contact support.`);
+            return Response.send(res);
         }
     }
 }

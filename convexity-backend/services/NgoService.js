@@ -1,6 +1,6 @@
 const {
   AclRoles,
-  OrgRoles
+  OrgAdminRolesToAcl
 } = require("../utils").Types;
 
 const {
@@ -20,14 +20,12 @@ const createWalletQueue = amqp["default"].declareQueue("createWallet", {
   durable: true
 });
 
-
-
 class NgoService {
-  static createFieldAgentAccount(organisation, data, creator) {
+  static createAdminAccount(organisation, data, role, creator) {
     return new Promise(async (resolve, reject) => {
       const rawPassword = 'password';
       const password = bcrypt.hashSync(rawPassword, 10);
-      data.RoleId = AclRoles.FieldAgent;
+      data.RoleId = OrgAdminRolesToAcl[role];
 
       User.create({
           ...data,
@@ -37,69 +35,10 @@ class NgoService {
           await OrganisationMembers.create({
             UserId: user.id,
             OrganisationId: organisation.id,
-            role: OrgRoles.FieldAgent
+            role
           });
           // send password to user
-          const userJSON = user.toJSON();
-          delete userJSON['password'];
-          delete userJSON['tfa_secret'];
-          resolve(userJSON);
-        })
-        .catch(err => {
-          reject(err);
-        });
-    });
-  }
-
-  static createSubAdminAccount(organisation, data, creator) {
-    return new Promise(async (resolve, reject) => {
-      const rawPassword = 'password';
-      const password = bcrypt.hashSync(rawPassword, 10);
-      data.RoleId = AclRoles.NgoSubAdmin;
-
-      User.create({
-          ...data,
-          password
-        })
-        .then(async (user) => {
-          await OrganisationMembers.create({
-            UserId: user.id,
-            OrganisationId: organisation.id,
-            role: OrgRoles.SubAdmin
-          });
-          // send password to user
-          const userJSON = user.toJSON();
-          delete userJSON['password'];
-          delete userJSON['tfa_secret'];
-          resolve(userJSON);
-        })
-        .catch(err => {
-          reject(err);
-        });
-    });
-  }
-
-  static createAdminAccount(organisation, data, creator) {
-    return new Promise(async (resolve, reject) => {
-      const rawPassword = 'password';
-      const password = bcrypt.hashSync(rawPassword, 10);
-      data.RoleId = AclRoles.NgoAdmin;
-
-      User.create({
-          ...data,
-          password
-        })
-        .then(async (user) => {
-          await OrganisationMembers.create({
-            UserId: user.id,
-            OrganisationId: organisation.id,
-            role: OrgRoles.Admin
-          });
-          // send password to user
-          const userJSON = user.toJSON();
-          delete userJSON['password'];
-          delete userJSON['tfa_secret'];
-          resolve(userJSON);
+          resolve(user.toObject());
         })
         .catch(err => {
           reject(err);
