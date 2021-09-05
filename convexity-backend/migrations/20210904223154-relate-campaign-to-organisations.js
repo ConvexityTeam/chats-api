@@ -12,7 +12,7 @@ module.exports = {
     await queryInterface.addColumn(
       'Campaigns',
       'OrganisationId', {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.INTEGER,
         references: {
           model: {
@@ -35,7 +35,7 @@ module.exports = {
      await queryInterface.addColumn(
       'Campaigns',
       'OrganisationMemberId', {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.INTEGER,
         references: {
           model: {
