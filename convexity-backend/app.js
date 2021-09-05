@@ -57,7 +57,7 @@ app.use("/v1/organisations", organisationRouter);
 // app.use("/v1/admin", adminRouter);
 
 // when a fage route is requested
-app.get("*", (req, res) => {
+app.all("*", (req, res) => {
   try {
     util.setError(404, "Requested resource not found.");
     return util.send(res);

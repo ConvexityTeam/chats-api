@@ -1,16 +1,19 @@
-const database = require('../models');
+const {Organisations} = require('../models');
 
 class OrganisationService {
+  static findOneById(id) {
+    return Organisations.findByPk(id);
+  }
   static async getAllOrganisations() {
     try {
-      return await database.Organisations.findAll();
+      return await Organisations.findAll();
     } catch (error) {
       throw error;
     }
   }
   static async addOrganisation(data, user) {
     try {
-      return await database.Organisations.create(data).then((organisation) => {
+      return await Organisations.create(data).then((organisation) => {
         organisation.createMember({ UserId: user.id, role: 'admin' })
       });
     } catch (error) {
@@ -20,14 +23,14 @@ class OrganisationService {
 
   static async checkExist(id) {
     try {
-      return await database.Organisations.findByPk(id)
+      return await Organisations.findByPk(id)
     } catch (error) {
       throw error;
     }
   }
   static async checkExistEmail(email) {
     try {
-      return await database.Organisations.findOne({ where: { email: email } })
+      return await Organisations.findOne({ where: { email: email } })
     } catch (error) {
       throw error;
     }

@@ -1,11 +1,47 @@
-const { data } = require("../libs/Utils");
+const {
+  data
+} = require("../libs/Utils");
 const database = require("../models");
 const Transfer = require("../libs/Transfer");
+const {
+  Sequelize,
+  Op
+} = require('sequelize');
+const {
+  Campaign
+} = require("../models");
 
 class CampaignService {
+  static searchCampaignTitle(title, extraClause = null) {
+    const where = Sequelize.where(Sequelize.fn('lower', Sequelize.col('title')), {
+      [Op.like]: `${title}`,
+    });
+
+    return Campaign.findOne({
+      where
+    });
+  }
+
+  static getCampaignById(id) {
+    return Campaign.findByPk(id);
+  }
+
+  static addCampaign(newCampaign) {
+    return Campaign.create(newCampaign);
+  }
+
+  static getCampaigns(queryClause = {}) {
+    const where = queryClause;
+    return Campaign.findAll({where: {...where}});
+  }
+
+  static updateSingleCampaign(id, update) {
+    return Campaign.update(update, {where: {id}});
+  }
+
   static async getAllCampaigns(campaignType = "campaign") {
     try {
-      return await database.Campaign.findAll({
+      return await Campaign.findAll({
         where: {
           type: campaignType,
         },
@@ -21,7 +57,7 @@ class CampaignService {
     campaignType = "campaign"
   ) {
     try {
-      return await database.Campaign.findAll({
+      return await Campaign.findAll({
         where: {
           OrganisationId: OrganisationId,
           type: campaignType,
@@ -50,23 +86,20 @@ class CampaignService {
       throw error;
     }
   }
-  static async addCampaign(newCampaign) {
-    try {
-      return await database.Campaign.create(newCampaign);
-    } catch (error) {
-      throw error;
-    }
-  }
 
   static async updateCampaign(id, updateCampaign) {
     try {
-      const CampaignToUpdate = await database.Campaign.findOne({
-        where: { id: Number(id) },
+      const CampaignToUpdate = await Campaign.findOne({
+        where: {
+          id: Number(id)
+        },
       });
 
       if (CampaignToUpdate) {
-        return await database.Campaign.update(updateCampaign, {
-          where: { id: Number(id) },
+        return await Campaign.update(updateCampaign, {
+          where: {
+            id: Number(id)
+          },
         });
         //    updateCampaign;
       }
@@ -78,8 +111,10 @@ class CampaignService {
 
   static async getACampaign(id, OrganisationId) {
     try {
-      const theCampaign = await database.Campaign.findAll({
-        where: { id: Number(id) },
+      const theCampaign = await Campaign.findAll({
+        where: {
+          id: Number(id)
+        },
         include: "Beneficiaries",
         // include: { all: true, nested: true }
       });
@@ -96,14 +131,14 @@ class CampaignService {
 
   static async deleteCampaign(id) {
     try {
-      const CampaignToDelete = await database.Campaign.findOne({
+      const CampaignToDelete = await Campaign.findOne({
         where: {
           id: Number(id),
         },
       });
 
       if (CampaignToDelete) {
-        const deletedCampaign = await database.Campaign.destroy({
+        const deletedCampaign = await Campaign.destroy({
           where: {
             id: Number(id),
           },

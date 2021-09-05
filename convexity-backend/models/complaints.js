@@ -1,8 +1,7 @@
 'use strict';
-const sequelizePaginate = require('sequelize-paginate')
-const {
-  Model
-} = require('sequelize');
+
+const { Model } = require('sequelize');
+const sequelizePaginate = require('sequelize-paginate');
 module.exports = (sequelize, DataTypes) => {
   class Complaints extends Model {
     /**

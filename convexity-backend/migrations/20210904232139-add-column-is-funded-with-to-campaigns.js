@@ -8,13 +8,12 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.addColumn(
+     await queryInterface.addColumn(
       'Campaigns',
-      'is_funded',
+      'funded_with',
       {
-        type: Sequelize.BOOLEAN,
-        after: 'status',
-        defaultValue: false
+        type: Sequelize.STRING,
+        after: 'is_funded'
       }
     )
   },
@@ -26,6 +25,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Campaigns', 'is_funded');
+     await queryInterface.removeColumn('Campaigns', 'funded_with');
   }
 };

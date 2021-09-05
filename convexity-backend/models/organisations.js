@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
 
       Organisations.hasMany(models.OrganisationMembers, { as: "Member" });
       Organisations.hasMany(models.FundAccount, { as: "MintTransaction" });
+      Organisations.hasMany(models.Campaign, { as: 'Campaign', foreignKey: "OrganisationId" })
       Organisations.hasMany(models.Wallet, {
         as: "Wallet",
         foreignKey: "AccountUserId",

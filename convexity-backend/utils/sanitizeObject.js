@@ -4,11 +4,11 @@
  * @param {Object} obj
  * @return {Object}
  */
- module.exports = (obj) => {
+ module.exports = (obj, keeps = []) => {
   const result = Object.create(null);
 
   Object.keys(obj).forEach((key) => {
-    if (obj[key]) {
+    if (obj[key] && (keeps.length ? keeps.includes(key) : true)) {
       result[key] = obj[key];
     }
   });

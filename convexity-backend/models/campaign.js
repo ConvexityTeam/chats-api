@@ -1,6 +1,5 @@
 "use strict";
 const { Model } = require("sequelize");
-const db = require(".");
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**
@@ -20,21 +19,22 @@ module.exports = (sequelize, DataTypes) => {
       });
       Campaign.hasMany(models.Beneficiaries, { as: "Beneficiaries" });
       Campaign.hasMany(models.Tasks, { as: "Jobs" });
-      Campaign.belongsTo(models.OrganisationMembers, {
-        foreignKey: "OrganisationMemberId",
-        as: "OrganisationMember",
+      Campaign.belongsTo(models.Organisations, {
+        foreignKey: "OrganisationId",
+        as: "Organisation",
       });
     }
   }
   Campaign.init(
     {
-      OrganisationMemberId: DataTypes.STRING,
+      OrganisationId: DataTypes.INTEGER,
       title: DataTypes.STRING,
       type: DataTypes.ENUM("campaign", "cash-for-work"),
       spending: DataTypes.STRING,
       description: DataTypes.TEXT,
       status: DataTypes.STRING,
       is_funded: DataTypes.BOOLEAN,
+      funded_with: DataTypes.STRING,
       budget: DataTypes.FLOAT,
       location: DataTypes.STRING,
       start_date: DataTypes.DATE,
