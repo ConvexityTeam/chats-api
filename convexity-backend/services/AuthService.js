@@ -1,13 +1,11 @@
-const bcrypt = require('bcryptjs');
-const jwt = require("jsonwebtoken");
-const {
-  generate2faSecret,
-  verify2faToken
-} = require('../utils');
 
-const {
-  User
-} = require('../models');
+const { Op } = require('sequelize');
+const { generate2faSecret, verify2faToken } = require('../utils');
+const { User, PasswordResetToken } = require('../models');
+const { createHash } = require('../utils');
+const bcrypt = require('bcryptjs');
+const moment = require('moment');
+const jwt = require("jsonwebtoken");
 
 class AuthService {
   static async login(data, _password, roleId = null) {
@@ -110,6 +108,27 @@ class AuthService {
           reject(new Error(`User not found.`));
         });
     })
+  }
+
+  static async createResetPassword(UserId, request_ip, expiresAfter = 20) {
+    const token = createHash('123456');
+    const expires_at = moment().add(expiresAfter, 'm').toDate();
+
+    return PasswordResetToken.create({UserId, token, expires_at, request_ip});
+  }
+
+  static async updatedPassord(user, rawPassword) {
+    const password = createHash(rawPassword);
+    return user.update({ password });
+  }
+
+  static getPasswordTokenRecord(ref) {
+    return PasswordResetToken.findOne({where: {
+      ref,
+      expires_at: {
+        [Op.gte]: new Date()
+      }
+    }});
   }
 }
 

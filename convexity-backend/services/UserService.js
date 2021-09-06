@@ -1,14 +1,6 @@
 const {User} = require('../models');
 
 class UserService {
-    static findByEmail(email, extraClause = null) {
-        return User.findOne({where: {email, ...extraClause}})
-    }
-
-    static findByPhone(phone, extraClause = null) {
-        return User.findOne({where: {phone, ...extraClause}})
-    }
-
     static async getAllUsers() {
         try {
             return await User.findAll();
@@ -83,6 +75,23 @@ class UserService {
             throw error;
         }
     }
+
+
+    // Refactored ==============
+
+    static findByEmail(email, extraClause = null) {
+        return User.findOne({where: {email, ...extraClause}})
+    }
+
+    static findByPhone(phone, extraClause = null) {
+        return User.findOne({where: {phone, ...extraClause}})
+    }
+
+    static findSingleUser(where) {
+        return User.findOne({where});
+    }
+
+
 }
 
 module.exports = UserService;

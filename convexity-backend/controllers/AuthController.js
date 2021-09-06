@@ -3,7 +3,8 @@ const {
 } = require("sequelize");
 const {
   AclRoles,
-  OrgRoles
+  OrgRoles,
+  HttpStatusCode
 } = require('../utils')
 const {
   Message
@@ -11,10 +12,12 @@ const {
 const db = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const util = require("../libs/Utils");
+const { Response } = require("../libs");
 const Validator = require("validatorjs");
 const formidable = require("formidable");
 const uploadFile = require("./AmazonController");
+
+
 const AuthService = require('../services/AuthService');
 const amqp_1 = require("./../libs/RabbitMQ/Connection");
 const ninVerificationQueue = amqp_1["default"].declareQueue("nin_verification", {
@@ -27,6 +30,91 @@ const createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
 const environ = process.env.NODE_ENV == "development" ? "d" : "p";
 
 class AuthController {
+  static async verifyNin(req, res) {
+    const data = req.body;
+
+    const user = await db.User.findByPk(data.userId);
+    if (user) {
+      if (user.nin == null) {
+        Response.setError(422, "User has not supplied Nin Number");
+        return Response.send(res);
+      }
+      ninVerificationQueue.send(
+        new Message(user, {
+          contentType: "application/json"
+        })
+      );
+      Response.setError(200, "User Verification Initialised");
+      return Response.send(res);
+    } else {
+      Response.setError(400, "Invalid User");
+      return Response.send(res);
+    }
+  }
+
+  static async userDetails(req, res, next) {
+    const id = req.params.id;
+    try {
+      db.User.findOne({
+          where: {
+            id: id
+          },
+        })
+        .then((user) => {
+          Response.setSuccess(200, "Got Users Details", user);
+          return Response.send(res);
+        })
+        .catch((err) => {
+          Response.setError(404, "Users Record Not Found", err);
+          return Response.send(res);
+        });
+    } catch (error) {
+      Response.setError(404, "Users Record Not Found", error);
+      return Response.send(res);
+    }
+  }
+
+  static async updateProfile(req, res, next) {
+    const {
+      firstName,
+      lastName,
+      email,
+      phone
+    } = req.body;
+    const userId = req.body.userId;
+    db.User.findOne({
+        where: {
+          id: userId,
+        },
+      })
+      .then((user) => {
+        if (user !== null) {
+          //if there is a user
+          return db.User.update({
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+          }, {
+            where: {
+              id: userId,
+            },
+          }).then((updatedRecord) => {
+            //respond with a success message
+            res.status(201).json({
+              status: "success",
+              message: "Profile Updated Successfully!",
+            });
+          });
+        }
+      })
+      .catch((err) => {
+        res.status(404).json({
+          status: "error",
+          error: err,
+        });
+      });
+  }
+
   static async beneficiaryRegisterSelf(req, res) {
     var form = new formidable.IncomingForm({
       multiples: true
@@ -45,25 +133,25 @@ class AuthController {
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
-        util.setError(400, validation.errors);
-        return util.send(res);
+        Response.setError(400, validation.errors);
+        return Response.send(res);
       } else {
         if (files.profile_pic) {
           const allowed_types = ["image/jpeg", "image/png", "image/jpg"];
           if (!allowed_types.includes(files.profile_pic.type)) {
-            util.setError(
+            Response.setError(
               400,
               "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture"
             );
-            return util.send(res);
+            return Response.send(res);
           }
         } else {
-          util.setError(400, {
+          Response.setError(400, {
             errors: {
               profile_pic: ["Profile Pic Required"]
             },
           });
-          return util.send(res);
+          return Response.send(res);
         }
 
         const user_exist = await db.User.findOne({
@@ -72,8 +160,8 @@ class AuthController {
           },
         });
         if (user_exist) {
-          util.setError(400, "Email Already Exists, Recover Your Account");
-          return util.send(res);
+          Response.setError(400, "Email Already Exists, Recover Your Account");
+          return Response.send(res);
         }
 
         bcrypt.genSalt(10, (err, salt) => {
@@ -115,12 +203,12 @@ class AuthController {
                   });
                 });
 
-                util.setSuccess(201, "Account Onboarded Successfully");
-                return util.send(res);
+                Response.setSuccess(201, "Account Onboarded Successfully");
+                return Response.send(res);
               })
               .catch((err) => {
-                util.setError(500, err);
-                return util.send(res);
+                Response.setError(500, err);
+                return Response.send(res);
               });
           });
         });
@@ -152,18 +240,18 @@ class AuthController {
 
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
-        util.setError(400, validation.errors);
-        return util.send(res);
+        Response.setError(400, validation.errors);
+        return Response.send(res);
       } else {
         if (files.profile_pic) {
           // const allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
           // if (!allowed_types.includes(files.profile_pic.type)) {
-          //   util.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture");
-          //   return util.send(res);
+          //   Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture");
+          //   return Response.send(res);
           // }
         } else {
-          util.setError(400, "Profile Pic Required");
-          return util.send(res);
+          Response.setError(400, "Profile Pic Required");
+          return Response.send(res);
         }
 
         let campaignExist = await db.Campaign.findOne({
@@ -174,8 +262,8 @@ class AuthController {
         });
 
         if (!campaignExist) {
-          util.setError(400, "Invalid Campaign");
-          return util.send(res);
+          Response.setError(400, "Invalid Campaign");
+          return Response.send(res);
         }
 
         let ninExist = await db.User.findOne({
@@ -185,8 +273,8 @@ class AuthController {
         });
 
         if (ninExist) {
-          util.setError(400, "Nin has been taken");
-          return util.send(res);
+          Response.setError(400, "Nin has been taken");
+          return Response.send(res);
         }
 
         if (fields.email) {
@@ -196,8 +284,8 @@ class AuthController {
             },
           });
           if (user_exist) {
-            util.setError(400, "Email Already Exists, Recover Your Account");
-            return util.send(res);
+            Response.setError(400, "Email Already Exists, Recover Your Account");
+            return Response.send(res);
           }
         }
         bcrypt.genSalt(10, (err, salt) => {
@@ -266,12 +354,12 @@ class AuthController {
                       );
                     });
                 }
-                util.setSuccess(201, "Account Onboarded Successfully", user.id);
-                return util.send(res);
+                Response.setSuccess(201, "Account Onboarded Successfully", user.id);
+                return Response.send(res);
               })
               .catch((err) => {
-                util.setError(500, err);
-                return util.send(res);
+                Response.setError(500, err);
+                return Response.send(res);
               });
           });
         });
@@ -302,18 +390,18 @@ class AuthController {
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
-        util.setError(400, validation.errors);
-        return util.send(res);
+        Response.setError(400, validation.errors);
+        return Response.send(res);
       } else {
         const allowed_types = ["image/jpeg", "image/png", "image/jpg"];
 
         if (!files.profile_pic) {
-          util.setError(400, "profile_pic Required");
-          return util.send(res);
+          Response.setError(400, "profile_pic Required");
+          return Response.send(res);
         }
         // else if (!allowed_types.includes(files.profile_pic.type)) {
-        //   util.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture");
-        //   return util.send(res);
+        //   Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture");
+        //   return Response.send(res);
         // }
         if (files.fingerprints) {
           if (files.fingerprints.length >= 6) {
@@ -322,12 +410,12 @@ class AuthController {
             // files.fingerprints.forEach((fingerprint) => {
             //   const limit = 2 * 1024 * 1024
             //   if (!allowed_types.includes(fingerprint.type)) {
-            //     util.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for fingerprints");
-            //     return util.send(res);
+            //     Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for fingerprints");
+            //     return Response.send(res);
             //   }
             //    if (fingerprint.size > limit) {
-            //     util.setError(400, "Fingerprint file must not exceed 2MB");
-            //     return util.send(res);
+            //     Response.setError(400, "Fingerprint file must not exceed 2MB");
+            //     return Response.send(res);
             //   }
             // })
             let campaignExist = await db.Campaign.findOne({
@@ -338,8 +426,8 @@ class AuthController {
             });
 
             if (!campaignExist) {
-              util.setError(400, "Invalid Campaign ID");
-              return util.send(res);
+              Response.setError(400, "Invalid Campaign ID");
+              return Response.send(res);
             }
             const user_exist = await db.User.findOne({
               where: {
@@ -347,8 +435,8 @@ class AuthController {
               },
             });
             if (user_exist) {
-              util.setError(400, "Email Already Exists, Recover Your Account");
-              return util.send(res);
+              Response.setError(400, "Email Already Exists, Recover Your Account");
+              return Response.send(res);
             } else {
               bcrypt.genSalt(10, (err, salt) => {
                 if (err) {
@@ -436,27 +524,27 @@ class AuthController {
                             );
                           });
                       }
-                      util.setSuccess(
+                      Response.setSuccess(
                         201,
                         "Account Onboarded Successfully",
                         user.id
                       );
-                      return util.send(res);
+                      return Response.send(res);
                     })
                     .catch((err) => {
-                      util.setError(500, err.message);
-                      return util.send(res);
+                      Response.setError(500, err.message);
+                      return Response.send(res);
                     });
                 });
               });
             }
           } else {
-            util.setError(400, "Minimum of 6 Fingerprints Required");
-            return util.send(res);
+            Response.setError(400, "Minimum of 6 Fingerprints Required");
+            return Response.send(res);
           }
         } else {
-          util.setError(400, "Fingerprints Required");
-          return util.send(res);
+          Response.setError(400, "Fingerprints Required");
+          return Response.send(res);
         }
       }
     });
@@ -475,8 +563,8 @@ class AuthController {
       url: "Only valid url with https or http allowed",
     });
     if (validation.fails()) {
-      util.setError(400, validation.errors);
-      return util.send(res);
+      Response.setError(400, validation.errors);
+      return Response.send(res);
     } else {
       const url_string = data.website_url;
       const domain = extractDomain(url_string);
@@ -541,62 +629,43 @@ class AuthController {
                         })
                         .then(() => {
 
-                          util.setSuccess(
+                          Response.setSuccess(
                             201,
                             "NGO and User registered successfully", {
                               user: user.toObject(),
                               organisation
                             }
                           );
-                          return util.send(res);
+                          return Response.send(res);
                         });
                     });
                   })
                   .catch((err) => {
-                    util.setError(500, err);
-                    return util.send(res);
+                    Response.setError(500, err);
+                    return Response.send(res);
                   });
               });
             });
           } else {
-            util.setError(
+            Response.setError(
               400,
               "An Organisation with such name or website url already exist"
             );
-            return util.send(res);
+            return Response.send(res);
           }
         } else {
-          util.setError(400, "Email Already Exists, Recover Your Account");
-          return util.send(res);
+          Response.setError(400, "Email Already Exists, Recover Your Account");
+          return Response.send(res);
         }
       } else {
-        util.setError(400, "Email must end in @" + domain);
-        return util.send(res);
+        Response.setError(400, "Email must end in @" + domain);
+        return Response.send(res);
       }
     }
   }
 
-  static async verifyNin(req, res) {
-    const data = req.body;
 
-    const user = await db.User.findByPk(data.userId);
-    if (user) {
-      if (user.nin == null) {
-        util.setError(422, "User has not supplied Nin Number");
-        return util.send(res);
-      }
-      ninVerificationQueue.send(
-        new Message(user, {
-          contentType: "application/json"
-        })
-      );
-      util.setError(200, "User Verification Initialised");
-      return util.send(res);
-    } else {
-      util.setError(400, "Invalid User");
-      return util.send(res);
-    }
-  }
+  // Refactored Methods
 
   static async signIn(req, res) {
     try {
@@ -615,12 +684,12 @@ class AuthController {
       });
 
       const data = await AuthService.login(user, req.body.password)
-      util.setSuccess(200, 'Login Successful.', data);
-      return util.send(res);
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
     } catch (error) {
       const message = error.status == 401 ? error.message : 'Login failed. Please try again later.';
-      util.setError(401, message);
-      return util.send(res);
+      Response.setError(401, message);
+      return Response.send(res);
     }
   }
 
@@ -640,87 +709,24 @@ class AuthController {
         },
       });
       const data = await AuthService.login(user, req.body.password, AclRoles.Vendor)
-      util.setSuccess(200, 'Login Successful.', data);
-      return util.send(res);
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
     } catch (error) {
       const message = error.status == 401 ? error.message : 'Login failed. Please try again later.';
-      util.setError(401, message);
-      return util.send(res);
+      Response.setError(401, message);
+      return Response.send(res);
     }
 
-  }
-
-  static async userDetails(req, res, next) {
-    const id = req.params.id;
-    try {
-      db.User.findOne({
-          where: {
-            id: id
-          },
-        })
-        .then((user) => {
-          util.setSuccess(200, "Got Users Details", user);
-          return util.send(res);
-        })
-        .catch((err) => {
-          util.setError(404, "Users Record Not Found", err);
-          return util.send(res);
-        });
-    } catch (error) {
-      util.setError(404, "Users Record Not Found", error);
-      return util.send(res);
-    }
-  }
-
-  static async updateProfile(req, res, next) {
-    const {
-      firstName,
-      lastName,
-      email,
-      phone
-    } = req.body;
-    const userId = req.body.userId;
-    db.User.findOne({
-        where: {
-          id: userId,
-        },
-      })
-      .then((user) => {
-        if (user !== null) {
-          //if there is a user
-          return db.User.update({
-            firstName: firstName,
-            lastName: lastName,
-            phone: phone,
-          }, {
-            where: {
-              id: userId,
-            },
-          }).then((updatedRecord) => {
-            //respond with a success message
-            res.status(201).json({
-              status: "success",
-              message: "Profile Updated Successfully!",
-            });
-          });
-        }
-      })
-      .catch((err) => {
-        res.status(404).json({
-          status: "error",
-          error: err,
-        });
-      });
   }
 
   static async setTwoFactorSecret(req, res) {
     try {
       const data = await AuthService.add2faSecret(req.user);
-      util.setSuccess(200, '2FA Data Generated', data);
-      return util.send(res);
+      Response.setSuccess(200, '2FA Data Generated', data);
+      return Response.send(res);
     } catch (error) {
-      util.setError(400, error.message);
-      return util.send(res);
+      Response.setError(400, error.message);
+      return Response.send(res);
     }
   }
 
@@ -731,17 +737,39 @@ class AuthController {
       const token = req.body.otp || req.query.otp;
 
       if (!token) {
-        util.setError(422, `OTP is required.`);
-        return util.send(res);
+        Response.setError(422, `OTP is required.`);
+        return Response.send(res);
       }
 
       const user = await AuthService.enable2afCheck(req.user, token);
-      util.setSuccess(200, 'Two factor authentication enabled.', user);
-      return util.send(res);
+      Response.setSuccess(200, 'Two factor authentication enabled.', user);
+      return Response.send(res);
 
     } catch (error) {
-      util.setError(400, error.message);
-      return util.send(res);
+      Response.setError(400, error.message);
+      return Response.send(res);
+    }
+  }
+
+  static async requestPasswordReset(req, res) {
+    try {
+      const data = await AuthService.createResetPassword(req.user.id, req.ip);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Token generated.', data.toObject());
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed please try again.');
+      return Response.send(res);
+    }
+  }
+
+  static async resetPassword(req, res) {
+    try {
+      await AuthService.updatedPassord(req.user, req.body.password);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Reset password request failed. Please try again.');
+      return Response.send(res);
     }
   }
 }

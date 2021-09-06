@@ -56,6 +56,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Accounts, {
         as: "Accounts"
       });
+      User.hasMany(models.VerificationToken, { as: "VerificationTokens"});
       User.belongsTo(models.Role, {
         foreignKey: "RoleId",
         as: "Role"
