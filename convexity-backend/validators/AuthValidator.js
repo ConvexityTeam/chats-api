@@ -19,6 +19,7 @@ const {
 const {
   body
 } = require('express-validator');
+const { isEmail } = require('validator')
 
 const BaseValidator = require('./BaseValidator');
 
@@ -29,7 +30,7 @@ class AuthValidator extends BaseValidator {
   static requestPasswordResetRules() {
     return [
       body('email')
-      .isEmail()
+      .custom((val) => isEmail(val))
       .withMessage(`Email is not well formed.`)
       .optional({
         nullable: true,

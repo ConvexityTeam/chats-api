@@ -1,6 +1,6 @@
 const api = require("../libs/Axios");
 const headers = {
-  userid: "1615376263809",
+  userid: " ",
   "api-key": "7dx_$Ak'b_wc_uGi",
 };
 async function ninVerification(user) {
