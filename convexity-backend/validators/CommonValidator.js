@@ -7,6 +7,10 @@ class CommonValidator {
   static async checkEmailNotTaken(req, res, next) {
     const email = req.body.email || req.params.email;
     try {
+      if(!email) {
+        next();
+        return;
+      }
       const user = await UserService.findByEmail(email);
       if (!user) return next();
       Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, `Email is taken. Unique email is required.`);

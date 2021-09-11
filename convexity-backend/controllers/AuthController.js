@@ -4,7 +4,10 @@ const {
 const {
   AclRoles,
   OrgRoles,
-  HttpStatusCode
+  createHash,
+  HttpStatusCode,
+  SanitizeObject,
+  getFileExtension
 } = require('../utils')
 const {
   Message
@@ -12,7 +15,9 @@ const {
 const db = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { Response } = require("../libs");
+const {
+  Response
+} = require("../libs");
 const Validator = require("validatorjs");
 const formidable = require("formidable");
 const uploadFile = require("./AmazonController");
@@ -20,6 +25,9 @@ const uploadFile = require("./AmazonController");
 
 const AuthService = require('../services/AuthService');
 const amqp_1 = require("./../libs/RabbitMQ/Connection");
+const {
+  UserService
+} = require("../services");
 const ninVerificationQueue = amqp_1["default"].declareQueue("nin_verification", {
   durable: true,
 });
@@ -116,104 +124,36 @@ class AuthController {
   }
 
   static async beneficiaryRegisterSelf(req, res) {
-    var form = new formidable.IncomingForm({
-      multiples: true
-    });
-    form.parse(req, async (err, fields, files) => {
-      fields["today"] = new Date(Date.now()).toDateString();
-      const rules = {
-        first_name: "required|alpha",
-        last_name: "required|alpha",
-        email: "required|email",
-        phone: "required|numeric",
-        gender: "required|in:male,female",
-        address: "string",
-        password: "required",
-        dob: "required|date|before:today",
-      };
-      const validation = new Validator(fields, rules);
-      if (validation.fails()) {
-        Response.setError(400, validation.errors);
-        return Response.send(res);
-      } else {
-        if (files.profile_pic) {
-          const allowed_types = ["image/jpeg", "image/png", "image/jpg"];
-          if (!allowed_types.includes(files.profile_pic.type)) {
-            Response.setError(
-              400,
-              "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture"
-            );
-            return Response.send(res);
-          }
-        } else {
-          Response.setError(400, {
-            errors: {
-              profile_pic: ["Profile Pic Required"]
-            },
-          });
-          return Response.send(res);
-        }
+    try {
+      const data = SanitizeObject(req.body, ['first_name', 'last_name', 'email', 'phone', 'gender', 'address', 'password', 'dob']);
+      data.password = createHash(data.password);
+      data.RoleId = AclRoles.Beneficiary;
 
-        const user_exist = await db.User.findOne({
-          where: {
-            email: fields.email
-          },
-        });
-        if (user_exist) {
-          Response.setError(400, "Email Already Exists, Recover Your Account");
-          return Response.send(res);
-        }
+      const ext = getFileExtension(req.files.profile_pic.name);
 
-        bcrypt.genSalt(10, (err, salt) => {
-          if (err) {
-            console.log("Error Ocurred hashing");
-          }
-          bcrypt.hash(fields.password, salt).then(async (hash) => {
-            const encryptedPassword = hash;
-            await db.User.create({
-                RoleId: AclRoles.Beneficiary,
-                first_name: fields.first_name,
-                last_name: fields.last_name,
-                phone: fields.phone,
-                email: fields.email,
-                password: encryptedPassword,
-                gender: fields.gender,
-                address: fields.address,
-                dob: fields.dob,
-              })
-              .then(async (user) => {
-                createWalletQueue.send(
-                  new Message({
-                    id: user.id,
-                    type: "user",
-                  }, {
-                    contentType: "application/json"
-                  })
-                );
-                const extension = files.profile_pic.name.substring(
-                  files.profile_pic.name.lastIndexOf(".") + 1
-                );
-                await uploadFile(
-                  files.profile_pic,
-                  "u-" + environ + "-" + user.id + "-i." + extension,
-                  "convexity-profile-images"
-                ).then((url) => {
-                  user.update({
-                    profile_pic: url
-                  });
-                });
+      data.profile_pic = await uploadFile(
+        req.files.profile_pic,
+        "u-" + environ + "-" + Date.now() + "-i." + ext,
+        "convexity-profile-images"
+      );
 
-                Response.setSuccess(201, "Account Onboarded Successfully");
-                return Response.send(res);
-              })
-              .catch((err) => {
-                Response.setError(500, err);
-                return Response.send(res);
-              });
-          });
-        });
-      }
-    });
+      const user = await UserService.addUser(data);
+
+      createWalletQueue.send(
+        new Message({
+          id: user.id,
+          type: "user",
+        }, {
+          contentType: "application/json"
+        })
+      );
+
+      Response.setSuccess(201, "Account Onboarded Successfully", user.toObject());
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(500, 'On-boarding failed. Please try again later.')
+    }
   }
 
   static async sCaseCreateBeneficiary(req, res) {

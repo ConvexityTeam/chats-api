@@ -37,7 +37,7 @@ class Response {
         code: this.statusCode,
         status: this.type,
         message: this.message,
-        ...(this.errors && {error: this.errors})
+        ...(this.errors && {errors: this.errors})
       };
     }
 

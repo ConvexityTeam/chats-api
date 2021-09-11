@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const {AuthController, BeneficiaryController} = require('../controllers');
+const { CommonValidator, BeneficiaryValidator } = require("../validators");
 
 router.get('/', BeneficiaryController.getAllUsers);
 router.put('/:id', BeneficiaryController.updatedUser);
@@ -13,6 +14,12 @@ router.get('/user/:beneficiary', BeneficiaryController.getBeneficiaryUserWallet)
 router.get('/user-details/:beneficiary', BeneficiaryController.getBeneficiaryUser)
 
 // Refactored
-router.post('/auth/register', AuthController.beneficiaryRegisterSelf);
+router.post(
+  '/auth/register', 
+  BeneficiaryValidator.validateSelfRegister,
+  CommonValidator.checkEmailNotTaken,
+  CommonValidator.checkPhoneNotTaken,
+  AuthController.beneficiaryRegisterSelf
+);
 
 module.exports = router;

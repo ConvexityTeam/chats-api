@@ -10,11 +10,7 @@ class UserService {
     }
 
     static async addUser(newUser) {
-        try {
-            return await User.create(newUser);
-        } catch (error) {
-            throw error;
-        }
+        return User.create(newUser);
     }
 
     static async updateUser(id, updateUser) {

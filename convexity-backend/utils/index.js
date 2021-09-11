@@ -4,6 +4,7 @@ const SanitizeObject = require('./sanitizeObject');
 const SeconFactorUtil = require('./speakeasy');
 const ResponseCodes = require('./responseCodes');
 const Encryption = require('./encryption');
+const File = require('./file');
 
 module.exports = {
   Types, ...Types, 
@@ -11,5 +12,6 @@ module.exports = {
   ...SeconFactorUtil, 
   SanitizeObject, 
   ...ResponseCodes,
-  Encryption, ...Encryption
+  Encryption, ...Encryption,
+  File, ...File
 };
