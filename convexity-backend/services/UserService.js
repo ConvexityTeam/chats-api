@@ -87,7 +87,9 @@ class UserService {
         return User.findOne({where});
     }
 
-
+    static update(id, data) {
+        return User.update(data, {where: {id}});
+    }
 }
 
 module.exports = UserService;

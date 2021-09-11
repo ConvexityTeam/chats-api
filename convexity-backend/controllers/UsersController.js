@@ -1,6 +1,10 @@
-const UserService = require("../services/UserService");
+const {
+  UserService
+} = require("../services");
 const util = require("../libs/Utils");
-const { Op } = require("sequelize");
+const {
+  Op
+} = require("sequelize");
 const db = require("../models");
 const formidable = require("formidable");
 var bcrypt = require("bcryptjs");
@@ -9,9 +13,23 @@ const Validator = require("validatorjs");
 const sequelize = require("sequelize");
 const uploadFile = require("./AmazonController");
 const BeneficiariesServices = require("../services/BeneficiariesService");
-const { Message } = require("@droidsolutions-oss/amqp-ts");
+const {
+  Message
+} = require("@droidsolutions-oss/amqp-ts");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const codeGenerator = require("./QrCodeController");
+
+const {
+  compareHash,
+  createHash,
+  SanitizeObject,
+  HttpStatusCode
+} = require("../utils");
+
+const {
+  Response
+} = require("../libs");
+
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
 });
@@ -140,7 +158,9 @@ class UsersController {
               "u-" + environ + "-" + user.id + "-i." + extension,
               "convexity-profile-images"
             ).then((url) => {
-              user.update({ profile_pic: url });
+              user.update({
+                profile_pic: url
+              });
             });
             util.setSuccess(200, "Profile Picture Updated");
             return util.send(res);
@@ -165,7 +185,11 @@ class UsersController {
         util.setError(422, validation.errors);
         return util.send(res);
       } else {
-        await db.User.update(data, { where: { id: data.id } }).then(() => {
+        await db.User.update(data, {
+          where: {
+            id: data.id
+          }
+        }).then(() => {
           util.setSuccess(200, "User NFC Data Updated Successfully");
           return util.send(res);
         });
@@ -177,7 +201,9 @@ class UsersController {
   }
 
   static async getAUser(req, res) {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
     if (!Number(id)) {
       util.setError(400, "Please input a valid numeric value");
@@ -202,7 +228,11 @@ class UsersController {
     const email = req.body.email;
     try {
       //check if users exist in the db with email address
-      db.User.findOne({ where: { email: email } })
+      db.User.findOne({
+          where: {
+            email: email
+          }
+        })
         .then((user) => {
           //reset users email password
           if (user !== null) {
@@ -213,12 +243,13 @@ class UsersController {
             bcrypt.genSalt(10, (err, salt) => {
               bcrypt.hash(newPassword, salt).then((hash) => {
                 const encryptedPassword = hash;
-                return db.User.update(
-                  { password: encryptedPassword },
-                  {
-                    where: { email: email },
-                  }
-                ).then((updatedRecord) => {
+                return db.User.update({
+                  password: encryptedPassword
+                }, {
+                  where: {
+                    email: email
+                  },
+                }).then((updatedRecord) => {
                   //mail user a new password
                   mailer.mailPassword(
                     email,
@@ -228,8 +259,7 @@ class UsersController {
                   //respond with a success message
                   res.status(201).json({
                     status: "success",
-                    message:
-                      "An email has been sent to the provided email address, kindly login to your email address to continue",
+                    message: "An email has been sent to the provided email address, kindly login to your email address to continue",
                   });
                 });
               });
@@ -266,17 +296,21 @@ class UsersController {
   }
 
   static async updatePassword(req, res) {
-    const { oldPassword, newPassword, confirmedPassword } = req.body;
+    const {
+      oldPassword,
+      newPassword,
+      confirmedPassword
+    } = req.body;
     if (newPassword !== confirmedPassword) {
       util.setError(400, "New password does not match confirmed password ");
       return util.send(res);
     }
     const userId = req.user.id;
     db.User.findOne({
-      where: {
-        id: userId,
-      },
-    })
+        where: {
+          id: userId,
+        },
+      })
       .then((user) => {
         bcrypt
           .compare(oldPassword, user.password)
@@ -324,7 +358,9 @@ class UsersController {
   }
 
   static async deleteUser(req, res) {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
     if (!Number(id)) {
       util.setError(400, "Please provide a numeric value");
@@ -395,7 +431,9 @@ class UsersController {
             },
           },
         },
-        order: [["createdAt", "DESC"]],
+        order: [
+          ["createdAt", "DESC"]
+        ],
         limit: 10,
       }).then((response) => {
         util.setSuccess(200, "Transactions Retrieved", response);
@@ -429,7 +467,9 @@ class UsersController {
     var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     const wallet = await db.User.findOne({
-      where: { id: req.user.id },
+      where: {
+        id: req.user.id
+      },
       include: ["Wallet"],
     });
     const wallets = wallet.Wallet.map((element) => {
@@ -446,7 +486,9 @@ class UsersController {
           [Op.lte]: lastDay,
         },
       },
-      attributes: [[sequelize.fn("sum", sequelize.col("amount")), "income"]],
+      attributes: [
+        [sequelize.fn("sum", sequelize.col("amount")), "income"]
+      ],
       raw: true,
     });
     const expense = await db.Transaction.findAll({
@@ -459,24 +501,32 @@ class UsersController {
           [Op.lte]: lastDay,
         },
       },
-      attributes: [[sequelize.fn("sum", sequelize.col("amount")), "expense"]],
+      attributes: [
+        [sequelize.fn("sum", sequelize.col("amount")), "expense"]
+      ],
       raw: true,
     });
-    util.setSuccess(200, "Statistics Retrieved", [
-      {
-        balance: wallet.Wallet.balance,
-        income: income[0].income == null ? 0 : income[0].income,
-        expense: expense[0].expense == null ? 0 : expense[0].expense,
-      },
-    ]);
+    util.setSuccess(200, "Statistics Retrieved", [{
+      balance: wallet.Wallet.balance,
+      income: income[0].income == null ? 0 : income[0].income,
+      expense: expense[0].expense == null ? 0 : expense[0].expense,
+    }, ]);
     return util.send(res);
   }
 
   static async getChartData(req, res) {
     const users = await db.User.findAll({
-      where: { RoleId: 5, dob: { [Op.ne]: null } },
+      where: {
+        RoleId: 5,
+        dob: {
+          [Op.ne]: null
+        }
+      },
     });
-    const gender_chart = { male: 0, female: 0 };
+    const gender_chart = {
+      male: 0,
+      female: 0
+    };
     const age_groups = {
       "18-29": 0,
       "30-41": 0,
@@ -512,25 +562,45 @@ class UsersController {
   }
 
   static async countUserTypes(req, res) {
-    let vendors = await db.User.count({ where: { RoleId: 4 } });
-    let beneficiaries = await db.User.count({ where: { RoleId: 5 } });
-    util.setSuccess(200, "Users Type Counted", { vendors, beneficiaries });
+    let vendors = await db.User.count({
+      where: {
+        RoleId: 4
+      }
+    });
+    let beneficiaries = await db.User.count({
+      where: {
+        RoleId: 5
+      }
+    });
+    util.setSuccess(200, "Users Type Counted", {
+      vendors,
+      beneficiaries
+    });
     return util.send(res);
   }
 
   static async getTotalAmountRecieved(req, res) {
     let id = req.params.id;
     await db.User.findOne({
-      where: { id: req.params.id },
-      include: { model: db.Wallet, as: "Wallet" },
+      where: {
+        id: req.params.id
+      },
+      include: {
+        model: db.Wallet,
+        as: "Wallet"
+      },
     }).then(async (user) => {
       await db.Transaction.findAll({
-        where: { walletRecieverId: user.Wallet.uuid },
+        where: {
+          walletRecieverId: user.Wallet.uuid
+        },
         attributes: [
           [sequelize.fn("sum", sequelize.col("amount")), "amount_recieved"],
         ],
       }).then(async (transactions) => {
-        util.setSuccess(200, "Recieved Transactions", { transactions });
+        util.setSuccess(200, "Recieved Transactions", {
+          transactions
+        });
         return util.send(res);
       });
     });
@@ -539,9 +609,11 @@ class UsersController {
   static async getWalletBalance(req, res) {
     const user_id = req.params.id;
     const userExist = await db.User.findOne({
-      where: { id: user_id },
-      include: ["Wallet"],
-    })
+        where: {
+          id: user_id
+        },
+        include: ["Wallet"],
+      })
       .then((user) => {
         util.setSuccess(200, "User Wallet Balance", user.Wallet);
         return util.send(res);
@@ -570,20 +642,33 @@ class UsersController {
         return util.send(res);
       }
       let product = await db.Products.findOne({
-        where: { id: data.productId },
-        include: { model: db.Market, as: "Vendor" },
+        where: {
+          id: data.productId
+        },
+        include: {
+          model: db.Market,
+          as: "Vendor"
+        },
       });
       if (!product) {
         util.setError(404, "Invalid Product");
         return util.send(res);
       }
       let pendingOrder = await db.Order.findOne({
-        where: { UserId: data.userId, status: "pending" },
+        where: {
+          UserId: data.userId,
+          status: "pending"
+        },
         include: {
           model: db.OrderProducts,
           as: "Cart",
-          order: [["createdAt", "DESC"]],
-          include: { model: db.Products, as: "Product" },
+          order: [
+            ["createdAt", "DESC"]
+          ],
+          include: {
+            model: db.Products,
+            as: "Product"
+          },
         },
       });
 
@@ -592,7 +677,9 @@ class UsersController {
           Math.random().toString(36).substring(2, 12)
         ).toUpperCase();
         await user
-          .createOrder({ OrderUniqueId: uniqueId })
+          .createOrder({
+            OrderUniqueId: uniqueId
+          })
           .then(async (order) => {
             await order
               .createCart({
@@ -616,7 +703,9 @@ class UsersController {
             return util.send(res);
           } else {
             let productAddedToCart = await db.OrderProducts.findOne({
-              where: { ProductId: product.id },
+              where: {
+                ProductId: product.id
+              },
             });
             if (productAddedToCart) {
               await productAddedToCart
@@ -674,16 +763,23 @@ class UsersController {
       return util.send(res);
     }
     let pendingOrder = await db.Order.findOne({
-      where: { UserId: id, status: "pending" },
+      where: {
+        UserId: id,
+        status: "pending"
+      },
       include: {
         model: db.OrderProducts,
         as: "Cart",
-        attributes: { exclude: ["OrderId"] },
+        attributes: {
+          exclude: ["OrderId"]
+        },
       },
     });
 
     if (pendingOrder && pendingOrder.Cart.length) {
-      util.setSuccess(200, "Cart", { cart: pendingOrder.Cart });
+      util.setSuccess(200, "Cart", {
+        cart: pendingOrder.Cart
+      });
       return util.send(res);
     } else {
       util.setError(400, "No Item in Cart");
@@ -707,7 +803,9 @@ class UsersController {
         util.setError(404, "Invalid User");
         return util.send(res);
       } else {
-        await user.update({ pin: data.pin }).then(() => {
+        await user.update({
+          pin: data.pin
+        }).then(() => {
           util.setSuccess(200, "Pin updated Successfully");
           return util.send(res);
         });
@@ -719,8 +817,13 @@ class UsersController {
     const id = req.params.id;
 
     const user = await db.User.findOne({
-      where: { id: req.params.id },
-      include: { model: db.Wallet, as: "Wallet" },
+      where: {
+        id: req.params.id
+      },
+      include: {
+        model: db.Wallet,
+        as: "Wallet"
+      },
     });
 
     if (!user) {
@@ -760,15 +863,23 @@ class UsersController {
 
     if (userExist) {
       let pendingOrder = await db.Order.findOne({
-        where: { UserId: userId, status: "pending" },
+        where: {
+          UserId: userId,
+          status: "pending"
+        },
         include: {
           model: db.OrderProducts,
           as: "Cart",
-          attributes: { exclude: ["OrderId"] },
+          attributes: {
+            exclude: ["OrderId"]
+          },
           include: {
             model: db.Products,
             as: "Product",
-            include: { model: db.Market, as: "Vendor" },
+            include: {
+              model: db.Market,
+              as: "Vendor"
+            },
           },
         },
       });
@@ -822,7 +933,9 @@ class UsersController {
         where: {
           address: data.senderAddr,
           CampaignId: NULL,
-          [Op.or]: { AccountUserType: ["user", "organisation"] },
+          [Op.or]: {
+            AccountUserType: ["user", "organisation"]
+          },
         },
       });
 
@@ -835,7 +948,9 @@ class UsersController {
         where: {
           address: data.recieverAddr,
           CampaignId: NULL,
-          [Op.or]: { AccountUserType: ["user", "organisation"] },
+          [Op.or]: {
+            AccountUserType: ["user", "organisation"]
+          },
         },
       });
 
@@ -863,23 +978,21 @@ class UsersController {
             walletSenderId: senderExist.uuid,
             walletRecieverId: recieverExist.uuid,
             amount: data.amount,
-            narration:
-              parentType === "organisation"
-                ? `Transfer to ${parentEntity.name}`
-                : `Transfer to ${parentEntity.first_name} ${parentEntity.last_name}`,
+            narration: parentType === "organisation" ?
+              `Transfer to ${parentEntity.name}` :
+              `Transfer to ${parentEntity.first_name} ${parentEntity.last_name}`,
           })
           .then((transaction) => {
             transferToQueue.send(
-              new Message(
-                {
-                  senderAddress: senderExist.address,
-                  senderPass: senderExist.privateKey,
-                  reciepientAddress: recieverExist.address,
-                  amount: data.amount,
-                  transaction: transaction.uuid,
-                },
-                { contentType: "application/json" }
-              )
+              new Message({
+                senderAddress: senderExist.address,
+                senderPass: senderExist.privateKey,
+                reciepientAddress: recieverExist.address,
+                amount: data.amount,
+                transaction: transaction.uuid,
+              }, {
+                contentType: "application/json"
+              })
             );
           });
 
@@ -906,11 +1019,15 @@ class UsersController {
       return util.send(res);
     } else {
       let user = await db.User.findOne({
-        where: { id: data.userId },
+        where: {
+          id: data.userId
+        },
         include: {
           model: db.Wallet,
           as: "Wallet",
-          where: { CampaignId: NULL },
+          where: {
+            CampaignId: NULL
+          },
         },
       });
 
@@ -925,14 +1042,20 @@ class UsersController {
       }
 
       let pendingOrder = await db.Order.findOne({
-        where: { UserId: data.userId, status: "pending" },
+        where: {
+          UserId: data.userId,
+          status: "pending"
+        },
         include: {
           model: db.OrderProducts,
           as: "Cart",
           include: {
             model: db.Products,
             as: "Product",
-            include: { model: db.Market, as: "Vendor" },
+            include: {
+              model: db.Market,
+              as: "Vendor"
+            },
           },
         },
       });
@@ -1048,7 +1171,71 @@ class UsersController {
       }
     }
   }
+
+  static async setAccountPin(req, res) {
+    try {
+      if(req.user.pin) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'PIN already set. Chnage PIN or contact support.');
+        return Response.send(res)
+      }
+      const pin = createHash(req.body.pin.trim());
+      await UserService.update(req.user.id, {pin});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      return Response.send(res);
+    }
+    catch(error) {
+      console.log('setAccountPin', error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'PIN update failed..');
+      return Response.send(res);
+    }
+  }
+
+  static async updateAccountPin(req, res) {
+    try {
+      if(!req.user.pin) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'PIN not found. Set PIN first.');
+        return Response.send(res)
+      }
+
+      if(!compareHash(req.body.old_pin, req.user.pin)) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid or wrong old PIN.');
+        return Response.send(res)
+      }
+      const pin = createHash(req.body.new_pin);
+      await UserService.update(req.user.id, {pin});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      return Response.send(res);
+    } catch (error) {
+      console.log('updateAccountPin', error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'PIN update failed..');
+      return Response.send(res);
+    }
+  }
+
+
+  static async changePassword(req, res) {
+    try {
+      const user = req.user;
+      const { old_password, new_password } = SanitizeObject(req.body, ['old_password', 'new_password']);
+
+      if (!compareHash(old_password, user.password)) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid old password');
+        return Response.send(res)
+      }
+
+      const password = createHash(new_password)
+      await UserService.update(user.id, { password });
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      return Response.send(res);
+    } catch (error) {
+      console.log('ChangePassword', error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Password update failed. Please retry.');
+      return Response.send(res);
+    }
+  }
 }
+
+
 function getDifference(dob) {
   today = new Date();
   past = new Date(dob); // remember this is equivalent to 06 01 2010
