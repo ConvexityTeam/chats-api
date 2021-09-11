@@ -1,10 +1,12 @@
 const router = require('express').Router();
 
 const { VendorController, AuthController } = require('../controllers');
+const { Auth, VendorAuth } = require('../middleware');
 
 
 router.get('/', VendorController.getAllVendors);
-router.get('/:id', VendorController.getAVendor);
+router.get('/me', VendorAuth, VendorController.getVendor);
+router.get('/:id', Auth, VendorController.getVendor);
 router.post('/add-account', VendorController.addAccount)
 router.get('/stores/all', VendorController.getAllStores)
 router.get('/store/:id', VendorController.getVendorStore)

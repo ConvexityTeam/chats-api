@@ -3,6 +3,14 @@ const db = require("../models");
 const {
   Op
 } = require("sequelize");
+
+const {
+  OrganisationService
+} = require('../services');
+const {
+  HttpStatusCode,
+  SanitizeObject
+} = require('../utils');
 const UserService = require("../services/UserService");
 const {
   Response
@@ -13,6 +21,7 @@ const fs = require("fs");
 const uploadFile = require("./AmazonController");
 
 const amqp = require("./../libs/RabbitMQ/Connection");
+
 const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");
@@ -23,10 +32,6 @@ const api = require("../libs/Axios");
 const {
   CampaignService
 } = require("../services");
-const {
-  HttpStatusCode,
-  SanitizeObject
-} = require("../utils");
 
 const createWalletQueue = amqp["default"].declareQueue("createWallet", {
   durable: true,
@@ -62,23 +67,7 @@ class OrganisationController {
       if (organisation) {
         Response.setError(422, "Email already taken");
         return Response.send(res);
-      } else {
-        const success = OrganisationsService.addOrganisation(
-          data,
-          req.user
-        ).then((response) => {
-          createWalletQueue.send(
-            new Message({
-              id: req.organisation.id,
-              type: "organisation",
-            }, {
-              contentType: "application/json"
-            })
-          );
-          Response.setSuccess(200, "NGO Successfully added");
-          return Response.send(res);
-        });
-      }
+      } else {}
     }
   }
 
@@ -188,7 +177,9 @@ class OrganisationController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, "Campaign updated.", campaign);
       return Response.send(res);
     } catch (error) {
-      console.log({error});
+      console.log({
+        error
+      });
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Campaign update failed. Please retry.");
       return Response.send(res);
     }
@@ -235,7 +226,6 @@ class OrganisationController {
         campaignData["spending"] = data.spending;
       }
 
-      const updateCampaign = await campaignExist.update(campaignData);
 
       Response.setSuccess(201, "Campaign Data updated");
       return Response.send(res);
@@ -395,7 +385,7 @@ class OrganisationController {
                       first_name: fields.first_name,
                       last_name: fields.last_name,
                     })
-                    .then((response) => {
+                    .then(() => {
                       Response.setSuccess(201, "NGO profile updated successfully", {
                         org,
                       });
@@ -463,22 +453,8 @@ class OrganisationController {
     }
   }
 
-  static async getMetric(req, res) {
+  static async getMetric(req) {
     const id = req.params.id;
-    const organisation = await db.Organisations.findOne({
-      where: {
-        id
-      },
-      include: ["Wallet"],
-    });
-    const maxDisbursement = await db.Transaction.findAll({
-      where: {},
-      attributes: [
-        "createdAt",
-        [sequelize.fn("sum", sequelize.col("amount")), "total_amount"],
-      ],
-      group: ["member_id"],
-    });
   }
 
   static async bantuTransfer(req, res) {
@@ -853,10 +829,41 @@ class OrganisationController {
       });
       return Response.send(res);
     }
-    // } catch (error) {
-    // Response.setError(200, "Id is invalid");
-    // return Response.send(res);
-    // }
+  }
+
+  static async createVendor(req, res) {
+    try {
+      const { user, organisation } = req;
+      const { first_name, last_name, email, phone, address, store_name, location } = SanitizeObject(req.body);
+      const vendor = await OrganisationService.createVendorAccount(organisation, { first_name, last_name, email, phone, address, store_name, location }, user);
+      Response.setSuccess(201, 'Vendor Account Created.', vendor);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
+  static async getOrganisationVendors(req, res) {
+    try {
+      const { organisation} = req;
+      const vendors = (await OrganisationService.organisationVendors(organisation)).map(res => {
+        const toObject = res.toObject();
+        toObject.Wallet.map(wallet => {
+          delete wallet.privateKey;
+          delete wallet.bantuPrivateKey;
+          return wallet;
+        });
+        return toObject;
+      });
+      Response.setSuccess(200, 'Organisation vendors', vendors);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
   }
 }
 

@@ -1,54 +1,167 @@
-const {Organisations} = require('../models');
+const {
+  User,
+  Market,
+  Organisations,
+  OrganisationMembers
+} = require('../models');
+const {
+  OrgRoles,
+  AclRoles,
+  GenearteVendorId
+} = require('../utils');
+
+const bcrypt = require("bcryptjs");
+const amqp = require("./../libs/RabbitMQ/Connection");
+const {
+  Op
+} = require('sequelize');
+const {
+  Message
+} = require("@droidsolutions-oss/amqp-ts");
+const createWalletQueue = amqp["default"].declareQueue("createWallet", {
+  durable: true
+});
 
 class OrganisationService {
   static findOneById(id) {
     return Organisations.findByPk(id);
   }
+
   static async getAllOrganisations() {
-    try {
-      return await Organisations.findAll();
-    } catch (error) {
-      throw error;
-    }
+    return Organisations.findAll();
   }
+
   static async addOrganisation(data, user) {
-    try {
-      return await Organisations.create(data).then((organisation) => {
-        organisation.createMember({ UserId: user.id, role: 'admin' })
-      });
-    } catch (error) {
-      throw error;
+    return Organisations.create(data).then((organisation) => {
+      organisation.createMember({
+        UserId: user.id,
+        role: OrgRoles.Admin
+      })
+    });
+  }
+
+  static async createMember(UserId, OrganisationId, role) {
+    const exisiting = await OrganisationMembers.findOne({
+      where: {
+        UserId,
+        OrganisationId
+      }
+    });
+
+    if (exisiting) {
+      return exisiting;
     }
+
+    return OrganisationMembers.create({
+      UserId,
+      OrganisationId,
+      role
+    });
   }
 
   static async checkExist(id) {
-    try {
-      return await Organisations.findByPk(id)
-    } catch (error) {
-      throw error;
-    }
+
+    return Organisations.findByPk(id)
   }
+
   static async checkExistEmail(email) {
-    try {
-      return await Organisations.findOne({ where: { email: email } })
-    } catch (error) {
-      throw error;
-    }
+    return Organisations.findOne({
+      where: {
+        email: email
+      }
+    });
   }
 
   static async isMember(organisation, user) {
-    try {
-      return await database.OrganisationMembers.findOne({
-        where: {
-          OrganisationId: organisation,
-          UserId: user
-        }
-      })
-    } catch (error) {
-      throw error;
-    }
+    return database.OrganisationMembers.findOne({
+      where: {
+        OrganisationId: organisation,
+        UserId: user
+      }
+    });
   }
 
+  static async organisationVendors({
+    id: OrganisationId
+  }) {
+    const vendorIds = (await OrganisationMembers.findAll({
+      where: {
+        OrganisationId,
+        role: OrgRoles.Vendor
+      }
+    })).map(m => m.UserId);
+    return User.findAll({
+      where: {
+        id: {
+          [Op.in]: [...vendorIds]
+        }
+      },
+      include: ['Wallet', 'Store']
+    })
+  }
+
+  static createVendorAccount(organisation, data, creator) {
+    return new Promise((resolve, reject) => {
+      let account = null;
+      let store = null;
+
+      const {
+        address,
+        store_name,
+        location
+      } = data;
+      const rawPassword = 'password';
+      const RoleId = AclRoles.Vendor;
+      const OrganisationId = organisation.id;
+      const password = bcrypt.hashSync(rawPassword, 10);
+      const vendor_id = GenearteVendorId();
+
+      User.create({
+          ...data,
+          vendor_id,
+          RoleId,
+          OrganisationId,
+          password
+        })
+        .then(async _account => {
+          account = _account;
+          this.createMember(account.id, OrganisationId, OrgRoles.Vendor)
+          return Market.create({
+            store_name,
+            address,
+            location,
+            UserId: account.id
+          })
+        })
+        .then(_store => {
+          store = _store;
+          createWalletQueue.send(
+            new Message({
+              id: account.id,
+              type: 'user'
+            }, {
+              contentType: "application/json"
+            })
+          );
+
+          // send login password to vendor
+
+          account = account.toObject();
+          account.Store = store.toJSON();
+          resolve(account);
+        })
+        .catch(error => {
+          if (account && !store) {
+            User.destroy({
+              where: {
+                id: account.id
+              }
+            });
+          }
+          reject(error);
+        })
+    });
+  }
 }
 
 module.exports = OrganisationService;

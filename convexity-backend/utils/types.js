@@ -14,6 +14,7 @@ const OrgRoles = {
   Admin: 'admin',
   SubAdmin: 'subadmin',
   FieldAgent: 'fieldagent',
+  Vendor: 'vendor',
   Member: 'member'
 }
 

@@ -6,11 +6,14 @@ const {
 } = require('../controllers');
 const {
   Auth,
+  FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
   IsOrgMember
 } = require("../middleware");
 const {
+  CommonValidator,
+  VendorValidator,
   CampaignValidator,
   OrganisationValidator
 } = require('../validators');
@@ -67,5 +70,23 @@ router.route('/:organisation_id/campaigns/:campaign_id')
     CampaignValidator.validate,
     OrganisationCtrl.updateOrgCampaign
   );
+
+
+router.route('/:organisation_id/vendors')
+  .get(
+    FieldAgentAuth,
+    IsOrgMember,
+    OrganisationCtrl.getOrganisationVendors
+  )
+  .post(
+    FieldAgentAuth,
+    IsOrgMember,
+    VendorValidator.createVendorRules(),
+    VendorValidator.validate,
+    VendorValidator.VendorStoreExists,
+    CommonValidator.checkEmailNotTaken,
+    CommonValidator.checkPhoneNotTaken,
+    OrganisationCtrl.createVendor
+  )
 
 module.exports = router;

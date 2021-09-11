@@ -4,6 +4,7 @@ const NgoService = require('./NgoService');
 const OrganisationService = require('./OrganisationService');
 const CampaignService = require('./CampaignService');
 const AuthService = require('./AuthService');
+const VendorService = require('./VendorServices');
 
 module.exports = {
   UserService,
@@ -11,5 +12,6 @@ module.exports = {
   OrganisationService,
   CampaignService,
   PaystackService,
+  VendorService,
   AuthService
 }

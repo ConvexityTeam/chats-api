@@ -72,5 +72,11 @@ module.exports = (sequelize, DataTypes) => {
       modelName: "Wallet",
     }
   );
+  Wallet.prototype.toObject = function() {
+    const wallet = this.toJSON();
+    delete wallet.privateKey;
+    delete wallet.bantuPrivateKey;
+    return wallet;
+  }
   return Wallet;
 };

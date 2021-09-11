@@ -22,19 +22,21 @@ class VendorController {
       return util.send(res);
     }
   }
-  static async getAVendor(req, res) {
-    const { id } = req.params;
+  static async getVendor(req, res) {
+    const id = req.params.id || req.user.id;
 
     try {
       const aVendor = await VendorServices.getAVendor(id);
+      const vToObject = aVendor.toObject();
+      vToObject.Wallets = aVendor.Wallets.map(wallet => wallet.toObject());
       if (!aVendor) {
-        util.setError(404, `Cannot find Vendor with the id ${id}`);
+        util.setError(404, `Vendor not found.`);
       } else {
-        util.setSuccess(200, "Vendors Record Found", aVendor);
+        util.setSuccess(200, "Vendor Record Found", vToObject);
       }
       return util.send(res);
     } catch (error) {
-      util.setError(404, error);
+      util.setError(500, 'Request Failed. Please retry.');
       return util.send(res);
     }
   }

@@ -65,54 +65,6 @@ class NgoController {
             return Response.send(res);
         }
     }
-
-    static async createVendor(req, res) {
-        try {
-            // run data validation
-            const {
-                user,
-                organisation
-            } = req;
-
-            const {
-                first_name,
-                last_name,
-                email,
-                phone,
-                address,
-                store_name,
-                location
-            } = req.body;
-
-            const _account = await User.findOne({
-                where: {
-                    email
-                }
-            });
-
-            if (_account) {
-                Response.setError(400, "Email Already Exists, Recover Your Account");
-                return Response.send(res);
-            }
-
-            const vendor = await NgoService.createVendorAccount(organisation, {
-                first_name,
-                last_name,
-                email,
-                phone,
-                address,
-                store_name,
-                location
-            }, user);
-
-            Response.setSuccess(201, 'Vendor Account Created.', vendor);
-            return Response.send(res);
-        } catch (error) {
-            console.log(error)
-            Response.setError(500, `Internal server error. Contact support.`);
-            return Response.send(res);
-        }
-    }
 }
 
 module.exports = NgoController;

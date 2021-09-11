@@ -1,32 +1,46 @@
-const database = require('../models');
+const {
+    Sequelize,
+    Op
+} = require('sequelize');
+const {
+    User,
+    Market
+} = require('../models');
+const { AclRoles } = require('../utils');
 
 class VendorServices {
+    static searchVendorStore(store_name, extraClause = null) {
+        const where = Sequelize.where(Sequelize.fn('lower', Sequelize.col('store_name')), {
+            [Op.like]: `${store_name}`,
+        });
+
+        return Market.findOne({
+            where
+        });
+    }
+
     static async getAllVendors() {
-        try {
-            return await database.User.findAll({ where: { RoleId: 4 } }); //get all Vendors
-        } catch (error) {
-            throw error;
-        }
+        return User.findAll({
+            where: {
+                RoleId: 4
+            }
+        });
     }
 
     static async addUser(newUser) {
-        try {
-            return await database.User.create(newUser);
-        } catch (error) {
-            throw error;
-        }
+        return User.create(newUser);
     }
 
     static async updateUser(id, updateUser) {
         try {
-            const UserToUpdate = await database.User.findOne({
+            const UserToUpdate = await User.findOne({
                 where: {
                     id: id
                 }
             });
 
             if (UserToUpdate) {
-                await database.User.update(updateUser, {
+                await User.update(updateUser, {
                     where: {
                         id: id
                     }
@@ -41,29 +55,23 @@ class VendorServices {
     }
 
     static async getAVendor(id) {
-        try {
-            const theUser = await database.User.findOne({
-                where: {
-                    id: id, RoleId: 4
-                }
-            });
-
-            return theUser;
-        } catch (error) {
-            throw error;
-        }
+        const RoleId = AclRoles.Vendor;
+        return User.findOne({
+            where: { id, RoleId },
+            include: ['Store', 'Wallets', 'AssociatedOrganisations', 'Accounts']
+        });
     }
 
     static async deleteUser(id) {
         try {
-            const UserToDelete = await database.User.findOne({
+            const UserToDelete = await User.findOne({
                 where: {
                     id: id
                 }
             });
 
             if (UserToDelete) {
-                const deletedUser = await database.User.destroy({
+                const deletedUser = await User.destroy({
                     where: {
                         id: id
                     }
@@ -75,6 +83,8 @@ class VendorServices {
             throw error;
         }
     }
+
+
 }
 
 module.exports = VendorServices;

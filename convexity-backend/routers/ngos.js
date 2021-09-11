@@ -1,8 +1,8 @@
 const router = require('express').Router();
 
-const { AuthController, NgoController} = require('../controllers');
+const { AuthController, NgoController, OrganisationController} = require('../controllers');
 const { FieldAgentAuth, NgoAdminAuth, IsOrgMember } = require('../middleware');
-const { NgoValidator, CommonValidator } = require('../validators');
+const { NgoValidator, CommonValidator, VendorValidator } = require('../validators');
 
 router.get('/', NgoController.getAllNGO);
 router.get('/:id', NgoController.getOneNGO);
@@ -25,7 +25,15 @@ router.route(`/:organisation_id/members`)
 // sub-admin/reset-password
 
 // vendors/create - generate vendor and password
-router.post('/vendors/create', FieldAgentAuth, IsOrgMember, NgoController.createVendor)
+router.post(
+  '/vendors/create', 
+  FieldAgentAuth, 
+  IsOrgMember, 
+  VendorValidator.createVendorRules(), 
+  VendorValidator.validate,
+  VendorValidator.VendorStoreExists,
+   OrganisationController.createVendor
+)
 // vendors/deactivate'
 
 

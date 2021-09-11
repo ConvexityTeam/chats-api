@@ -39,6 +39,14 @@ module.exports = (sequelize, DataTypes) => {
           AccountUserType: "user",
         },
       });
+      User.hasMany(models.Wallet, {
+        as: "Wallets",
+        foreignKey: "AccountUserId",
+        constraints: false,
+        scope: {
+          AccountUserType: "user",
+        },
+      });
       ////////////////////////
       User.hasOne(models.Market, {
         as: "Store",
