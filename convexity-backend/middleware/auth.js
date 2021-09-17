@@ -1,8 +1,9 @@
 require("dotenv").config();
 
 const jwt = require("jsonwebtoken");
-const util = require("../libs/Utils");
 const {User} = require("../models");
+const {Response} = require("../libs");
+const { HttpStatusCode } = require("../utils");
 const {Guest, SuperAdmin, GodMode, NgoAdmin, NgoSubAdmin, FieldAgent, Vendor, Beneficiary, Donor} = require('../utils').AclRoles;
 
 const Auth = (roleIds = null ) => (req, res, next) => {
@@ -10,22 +11,22 @@ const Auth = (roleIds = null ) => (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.SECRET_KEY, async (err, payload) => {
       if (err) {
-        util.setError(401, "Unauthorised. Token Invalid");
-        return util.send(res);
+        Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, "Unauthorised. Token Invalid");
+        return Response.send(res);
       }
 
       const user = await User.findByPk(payload.uid);
       const userOrgs = payload.oids;
 
       if(!user || !userOrgs) {
-        util.setError(401, "Unauthorised. User does not exist in our system");
+        Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, "Unauthorised. User does not exist in our system");
       }
 
       // TODO: check user status
 
       if (user && roleIds && roleIds.length && !roleIds.includes(parseInt(user.RoleId))) {
-        util.setError(401, "Access Denied, UnAuthorised Access");
-        return util.send(res);
+        Response.setError(HttpStatusCode.STATUS_FORBIDDEN, "Access Denied, UnAuthorised Access");
+        return Response.send(res);
       }
 
       req.user = user;
@@ -33,8 +34,8 @@ const Auth = (roleIds = null ) => (req, res, next) => {
       next();
     });
   } catch (error) {
-    util.setError(500, 'Unexpected error occured. Please contact support.');
-    return util.send(res);
+    Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Unexpected error occured. Please contact support.');
+    return Response.send(res);
   }
 };
 

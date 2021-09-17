@@ -10,14 +10,14 @@ const IsOrgMember = async (req, res, next) => {
   try {
     const OrganisationId = req.body.organisation_id || req.params.organisation_id || req.query.organisation_id;
     if (!OrganisationId) {
-      Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, 'Orgnisation ID is missing.');
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Orgnisation ID is missing.');
       return Response.send(res);
     }
 
     const organisation = await Organisations.findByPk(OrganisationId);
 
     if (!organisation) {
-      Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, 'Orgnisation does not exist..');
+      Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Orgnisation does not exist..');
       return Response.send(res);
     }
 
@@ -29,7 +29,7 @@ const IsOrgMember = async (req, res, next) => {
     });
 
     if (!member) {
-      Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, 'Access denied. Your not organisation member.');
+      Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Access denied. Your not organisation member.');
       return Response.send(res);
     }
     
