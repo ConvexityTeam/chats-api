@@ -36,7 +36,11 @@ class CampaignValidator extends BaseValidator {
       .withMessage(`Campaign buget must be a valid decimal`),
       body('location')
       .not().isEmpty()
-      .withMessage(`Campaign location is required.`),
+      .withMessage(`Campaign location is required.`)
+      .optional({
+        nullable: true,
+        checkFalsy: true
+      }),
       body('start_date')
       .isDate({
         format: 'DD-MM-YYYY'
@@ -60,8 +64,8 @@ class CampaignValidator extends BaseValidator {
     const rules = this.createCampaignRules()
     rules.push(
       body('status')
-        .isIn(this.campaignStatuses)
-        .withMessage(`Campaign status should be one of: [${this.campaignStatuses.join(', ')}]`),
+      .isIn(this.campaignStatuses)
+      .withMessage(`Campaign status should be one of: [${this.campaignStatuses.join(', ')}]`),
     )
     return rules.map(rule =>
       rule.optional({
@@ -122,12 +126,12 @@ class CampaignValidator extends BaseValidator {
         return Response.send(res);
       }
 
-      if(!organisationId) {
+      if (!organisationId) {
         Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Organisation ID is required');
         return Response.send(res);
       }
 
-      if(organisationId != campaign.OrganisationId) {
+      if (organisationId != campaign.OrganisationId) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign does not belong to Organisation.');
         return Response.send(res);
       }
