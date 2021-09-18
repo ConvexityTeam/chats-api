@@ -35,28 +35,28 @@ class CampaignValidator extends BaseValidator {
       .isDecimal()
       .withMessage(`Campaign buget must be a valid decimal`),
       body('location')
-      .not().isEmpty()
-      .withMessage(`Campaign location is required.`)
       .optional({
         nullable: true,
         checkFalsy: true
       }),
       body('start_date')
       .isDate({
-        format: 'DD-MM-YYYY'
+        format: 'DD-MM-YYYY',
+        strictMode: true
       })
       .withMessage(`Campaign start date should be a valid date.`),
-      // .isAfter('now')
+      // .isAfter()
       // .withMessage('Campaign start date should be after today.'),
       body('end_date')
       .isDate({
-        format: 'dd-mm-yyyy'
+        format: 'DD-MM-YYYY',
+        strictMode: true
       })
-      .withMessage(`Campaign start date should be a valid date.`)
-      .custom((val, {
-        req
-      }) => isAfter(val, req.body.start_date))
-      .withMessage(`Campaign end date should be after start date.`)
+      .withMessage(`Campaign end date should be a valid date.`)
+      // .custom(
+      //   (val, { req }) => moment(val, 'DD-MM-YYYY').isAfter(moment(req.body.start_date, 'DD-MM-YYYY'))
+      // )
+      // .withMessage(`Campaign end date should be after start date.`)
     ]
   }
 

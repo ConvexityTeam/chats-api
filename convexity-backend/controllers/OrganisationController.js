@@ -833,9 +833,28 @@ class OrganisationController {
 
   static async createVendor(req, res) {
     try {
-      const { user, organisation } = req;
-      const { first_name, last_name, email, phone, address, store_name, location } = SanitizeObject(req.body);
-      const vendor = await OrganisationService.createVendorAccount(organisation, { first_name, last_name, email, phone, address, store_name, location }, user);
+      const {
+        user,
+        organisation
+      } = req;
+      const {
+        first_name,
+        last_name,
+        email,
+        phone,
+        address,
+        store_name,
+        location
+      } = SanitizeObject(req.body);
+      const vendor = await OrganisationService.createVendorAccount(organisation, {
+        first_name,
+        last_name,
+        email,
+        phone,
+        address,
+        store_name,
+        location
+      }, user);
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
@@ -847,7 +866,9 @@ class OrganisationController {
 
   static async getOrganisationVendors(req, res) {
     try {
-      const { organisation} = req;
+      const {
+        organisation
+      } = req;
       const vendors = (await OrganisationService.organisationVendors(organisation)).map(res => {
         const toObject = res.toObject();
         toObject.Wallet.map(wallet => {

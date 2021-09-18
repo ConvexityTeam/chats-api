@@ -35,10 +35,11 @@ class BeneficiaryValidator extends BaseValidator {
       .withMessage('Password is required.'),
       body('dob')
       .isDate({
-        format: 'DD-MM-YYYY'
+        format: 'DD-MM-YYYY',
+        strictMode: true
       })
       .withMessage('Date of birth must be a valid date.')
-      .isAfter('now')
+      .isAfter()
       .withMessage('Date of birth must be before today.')
     ]
   }
