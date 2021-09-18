@@ -1,28 +1,10 @@
-const {
-  SuperAdmin,
-  GodMode,
-  NgoAdmin,
-  Vendor,
-  Beneficiary
-} = require('../utils').AclRoles;
-const {
-  HttpStatusCode,
-  compareHash
-} = require('../utils')
-const {
-  UserService,
-  AuthService
-} = require('../services');
-const {
-  Response
-} = require('../libs');
-const {
-  body
-} = require('express-validator');
+const { Response } = require('../libs');
+const { body } = require('express-validator');
 const { isEmail } = require('validator')
-
+const { HttpStatusCode, compareHash } = require('../utils')
+const { UserService, AuthService } = require('../services');
 const BaseValidator = require('./BaseValidator');
-
+const { SuperAdmin, GodMode, NgoAdmin, Vendor, Beneficiary } = require('../utils').AclRoles;
 
 class AuthValidator extends BaseValidator {
   static selfResetAllowedFor = [SuperAdmin, GodMode, NgoAdmin, Vendor, Beneficiary];
@@ -68,16 +50,9 @@ class AuthValidator extends BaseValidator {
 
   static async canResetPassword(req, res, next) {
     const query = {};
-    const {
-      email,
-      phone
-    } = req.body;
-    email && Object.assign(query, {
-      email
-    });
-    phone && Object.assign(query, {
-      phone
-    });
+    const { email, phone } = req.body;
+    email && Object.assign(query, { email });
+    phone && Object.assign(query, { phone });
 
     if (!query.phone && !query.email) {
       Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Email or Phone number is required.');

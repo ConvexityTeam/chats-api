@@ -367,6 +367,16 @@ class BeneficiariesController {
         });
     }
   }
+
+
+  // Register By Organisation Special Case
+  static async registerSpecialCaseBeneficiary(req, res) {
+
+  } 
+
+  static async registerBeneficiary(req, res) {
+    
+  }
 }
 
 module.exports = BeneficiariesController;

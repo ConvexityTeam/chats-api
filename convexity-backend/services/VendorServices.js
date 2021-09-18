@@ -10,9 +10,10 @@ const { AclRoles } = require('../utils');
 
 class VendorServices {
     static searchVendorStore(store_name, extraClause = null) {
-        const where = Sequelize.where(Sequelize.fn('lower', Sequelize.col('store_name')), {
-            [Op.like]: `${store_name}`,
-        });
+        const where = { 
+            ...extraClause,
+            store_name: Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('store_name')), 'LIKE', `%${store_name.toLowerCase()}%`)
+        };
 
         return Market.findOne({
             where

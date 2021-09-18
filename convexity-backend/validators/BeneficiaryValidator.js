@@ -2,7 +2,7 @@ const {
   body
 } = require('express-validator');
 const {
-  HttpStatusCode
+  HttpStatusCode, formInputToDate
 } = require('../utils');
 const formidable = require("formidable");
 const Validator = require("validatorjs");
@@ -41,6 +41,7 @@ class BeneficiaryValidator extends BaseValidator {
       .withMessage('Date of birth must be a valid date.')
       .isAfter()
       .withMessage('Date of birth must be before today.')
+      .customSanitizer(formInputToDate)
     ]
   }
 

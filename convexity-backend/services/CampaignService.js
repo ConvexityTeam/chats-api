@@ -8,14 +8,16 @@ const {
   Op
 } = require('sequelize');
 const {
-  Campaign
+  Campaign,
+  Beneficiaries
 } = require("../models");
 
 class CampaignService {
   static searchCampaignTitle(title, extraClause = null) {
-    const where = Sequelize.where(Sequelize.fn('lower', Sequelize.col('title')), {
-      [Op.like]: `${title}`,
-    });
+    const where = {
+      ...extraClause,
+      title:  Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('title')), 'LIKE', `%${title.toLowerCase()}%`) 
+    };
 
     return Campaign.findOne({
       where
@@ -32,11 +34,30 @@ class CampaignService {
 
   static getCampaigns(queryClause = {}) {
     const where = queryClause;
-    return Campaign.findAll({where: {...where}});
+    return Campaign.findAll({
+      where: {
+        ...where
+      },
+      attributes: {
+        include: [
+          [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+        ]
+      },
+      include: [{
+        as: 'Beneficiaries',
+        model: Beneficiaries,
+        attributes: []
+      }],
+      group: ['Campaign.id']
+    });
   }
 
   static updateSingleCampaign(id, update) {
-    return Campaign.update(update, {where: {id}});
+    return Campaign.update(update, {
+      where: {
+        id
+      }
+    });
   }
 
   static async getAllCampaigns(campaignType = "campaign") {

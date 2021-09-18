@@ -5,6 +5,7 @@ const SeconFactorUtil = require('./speakeasy');
 const ResponseCodes = require('./responseCodes');
 const Encryption = require('./encryption');
 const File = require('./file');
+const DateUtil = require('./date');
 
 module.exports = {
   Types, ...Types, 
@@ -13,5 +14,6 @@ module.exports = {
   SanitizeObject, 
   ...ResponseCodes,
   Encryption, ...Encryption,
-  File, ...File
+  File, ...File,
+  DateUtil, ...DateUtil
 };

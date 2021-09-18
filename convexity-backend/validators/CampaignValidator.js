@@ -9,13 +9,14 @@ const {
 } = require("../libs");
 const CampaignService = require("../services/CampaignService");
 const {
-  HttpStatusCode
+  HttpStatusCode, formInputToDate
 } = require("../utils");
 const BaseValidator = require("./BaseValidator");
 
 class CampaignValidator extends BaseValidator {
   static campaignTypes = ['campaign', 'cash-for-work'];
   static campaignStatuses = ['pending', 'active', 'paused', 'completed'];
+
   static createCampaignRules() {
     return [
       body('title')
@@ -44,19 +45,22 @@ class CampaignValidator extends BaseValidator {
         format: 'DD-MM-YYYY',
         strictMode: true
       })
-      .withMessage(`Campaign start date should be a valid date.`),
-      // .isAfter()
-      // .withMessage('Campaign start date should be after today.'),
+      .withMessage(`Campaign start date should be a valid date.`)
+      .customSanitizer(formInputToDate)
+      .isAfter()
+      .withMessage('Campaign start date should be after today.'),
       body('end_date')
       .isDate({
         format: 'DD-MM-YYYY',
         strictMode: true
       })
       .withMessage(`Campaign end date should be a valid date.`)
+      .customSanitizer(formInputToDate)
       // .custom(
-      //   (val, { req }) => moment(val, 'DD-MM-YYYY').isAfter(moment(req.body.start_date, 'DD-MM-YYYY'))
+      //   (val, { req }) => isAfter(val, req.body.start_date)
       // )
       // .withMessage(`Campaign end date should be after start date.`)
+      
     ]
   }
 
