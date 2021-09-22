@@ -11,20 +11,16 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Products.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Vendor' })
+      Products.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Vendor' });
+      Products.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' });
     }
   };
   Products.init({
-    MarketId: DataTypes.STRING,
-    name: DataTypes.STRING,
-    quantity: DataTypes.INTEGER,
-    price: DataTypes.FLOAT,
-    value: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return this.price * this.quantity
-      }
-    }
+    type: DataTypes.ENUM("product", "service"),
+    tag: DataTypes.STRING,
+    cost: DataTypes.FLOAT,
+    MarketId: DataTypes.INTEGER,
+    CampaignId: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'Products',

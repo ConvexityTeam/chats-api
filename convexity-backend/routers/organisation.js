@@ -1,8 +1,9 @@
 const router = require('express').Router();
 
-const OrganisationCtrl = require("../controllers/OrganisationController");
 const {
-  WalletController
+  WalletController,
+  ProductController,
+  OrganisationController
 } = require('../controllers');
 const {
   Auth,
@@ -15,26 +16,26 @@ const {
   CommonValidator,
   VendorValidator,
   CampaignValidator,
-  OrganisationValidator
+  OrganisationValidator,
+  ProductValidator
 } = require('../validators');
 
-
-router.post("/flutterwave/webhook", OrganisationCtrl.mintToken);
-router.post("/flutterwave/webhook2", OrganisationCtrl.mintToken2);
-router.post("/register", OrganisationCtrl.register);
-router.post("/bantu/webhook", OrganisationCtrl.bantuTransfer);
-router.get("/wallets/:organisationId", OrganisationCtrl.getWallets);
-router.get("/wallets/main/:organisationId", OrganisationCtrl.getMainWallet);
-router.get("/wallets/campaign/:organisationId/:campaignId", OrganisationCtrl.getCampignWallet);
-router.post("/member", OrganisationCtrl.addMember);
-router.get("/transactions/:organisationId", OrganisationCtrl.fetchTransactions);
-router.post("/campaign", OrganisationCtrl.createCampaign);
-router.put("/campaign", OrganisationCtrl.updateCampaign);
-router.post("/update-profile", OrganisationCtrl.updateProfile);
-router.post("/transfer/token", OrganisationCtrl.transferToken);
-router.get("/financials/:id", OrganisationCtrl.getFinancials);
-router.get("/beneficiaries-summary/:id", OrganisationCtrl.getBeneficiariesFinancials);
-router.get("/metric/:id", OrganisationCtrl.getMetric);
+router.post("/flutterwave/webhook", OrganisationController.mintToken);
+router.post("/flutterwave/webhook2", OrganisationController.mintToken2);
+router.post("/register", OrganisationController.register);
+router.post("/bantu/webhook", OrganisationController.bantuTransfer);
+router.get("/wallets/:organisationId", OrganisationController.getWallets);
+router.get("/wallets/main/:organisationId", OrganisationController.getMainWallet);
+router.get("/wallets/campaign/:organisationId/:campaignId", OrganisationController.getCampignWallet);
+router.post("/member", OrganisationController.addMember);
+router.get("/transactions/:organisationId", OrganisationController.fetchTransactions);
+router.post("/campaign", OrganisationController.createCampaign);
+router.put("/campaign", OrganisationController.updateCampaign);
+router.post("/update-profile", OrganisationController.updateProfile);
+router.post("/transfer/token", OrganisationController.transferToken);
+router.get("/financials/:id", OrganisationController.getFinancials);
+router.get("/beneficiaries-summary/:id", OrganisationController.getBeneficiariesFinancials);
+router.get("/metric/:id", OrganisationController.getMetric);
 
 
 // Refactord routes
@@ -43,7 +44,7 @@ router.post('/:organisation_id/wallets/paystack-deposit', NgoAdminAuth, IsOrgMem
 router.route('/:organisation_id/campaigns')
   .get(
     OrganisationValidator.organisationExists,
-    OrganisationCtrl.getAvailableOrgCampaigns
+    OrganisationController.getAvailableOrgCampaigns
   )
   .post(
     NgoSubAdminAuth,
@@ -51,14 +52,25 @@ router.route('/:organisation_id/campaigns')
     CampaignValidator.campaignTitleExists,
     CampaignValidator.createCampaignRules(),
     CampaignValidator.validate,
-    OrganisationCtrl.createCampaign
+    OrganisationController.createCampaign
+  );
+
+router.route('/:organisation_id/campaigns/:campaign_id/products')
+  .post(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    ProductValidator.addProductRules(),
+    ProductValidator.validate,
+    ProductValidator.productVendorsExist,
+    ProductController.addCampaignProduct
   );
 
 router.route('/:organisation_id/campaigns/all')
   .get(
     NgoSubAdminAuth,
     IsOrgMember,
-    OrganisationCtrl.getAllOrgCampaigns
+    OrganisationController.getAllOrgCampaigns
   );
 
 router.route('/:organisation_id/campaigns/:campaign_id')
@@ -68,7 +80,7 @@ router.route('/:organisation_id/campaigns/:campaign_id')
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignValidator.updateCampaignRules(),
     CampaignValidator.validate,
-    OrganisationCtrl.updateOrgCampaign
+    OrganisationController.updateOrgCampaign
   );
 
 
@@ -76,7 +88,7 @@ router.route('/:organisation_id/vendors')
   .get(
     FieldAgentAuth,
     IsOrgMember,
-    OrganisationCtrl.getOrganisationVendors
+    OrganisationController.getOrganisationVendors
   )
   .post(
     FieldAgentAuth,
@@ -86,7 +98,7 @@ router.route('/:organisation_id/vendors')
     VendorValidator.VendorStoreExists,
     CommonValidator.checkEmailNotTaken,
     CommonValidator.checkPhoneNotTaken,
-    OrganisationCtrl.createVendor
+    OrganisationController.createVendor
   )
 
 module.exports = router;

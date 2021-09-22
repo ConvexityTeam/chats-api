@@ -1,19 +1,30 @@
-const { HttpStatusCode } = require("../utils");
+const {
+  HttpStatusCode
+} = require("../utils");
 
-const { UserService } = require('../services');
-const { Response } = require('../libs');
+const {
+  UserService
+} = require('../services');
+const {
+  Response
+} = require('../libs');
 
 class CommonValidator {
   static async checkEmailNotTaken(req, res, next) {
     const email = req.body.email || req.params.email;
     try {
-      if(!email) {
+      if (!email) {
         next();
         return;
       }
       const user = await UserService.findByEmail(email);
       if (!user) return next();
-      Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, `Email is taken. Unique email is required.`);
+      Response.setError(
+        HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
+        'Validation Failed!', {
+          email: [`Email is taken. Unique email is required.`]
+        }
+      );
       return Response.send(res);
     } catch (error) {
       Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Email validation failed.`);
@@ -26,7 +37,9 @@ class CommonValidator {
     try {
       const user = await UserService.findByEmail(email);
       if (!user) return next();
-      Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, `Phone number is taken. Unique email is required.`);
+      Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed!', {
+        phone: [`Phone number is taken. Unique email is required.`]
+      });
       return Response.send(res);
     } catch (error) {
       Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Phone validation failed.`);

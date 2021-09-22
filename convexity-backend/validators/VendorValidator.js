@@ -1,35 +1,43 @@
-const { body } = require('express-validator');
-const { Response } = require('../libs');
-const { HttpStatusCode } = require("../utils");
-const { VendorService } = require('../services');
+const {
+  body
+} = require('express-validator');
+const {
+  Response
+} = require('../libs');
+const {
+  HttpStatusCode
+} = require("../utils");
+const {
+  VendorService
+} = require('../services');
 const BaseValidator = require('./BaseValidator');
 
 class VendorValidator extends BaseValidator {
   static createVendorRules() {
     return [
       body('first_name')
-        .not().isEmpty()
-        .withMessage('Vendor first name is required.'),
+      .not().isEmpty()
+      .withMessage('Vendor first name is required.'),
       body('last_name')
-        .not().isEmpty()
-        .withMessage('Vendor last name is required.'),
+      .not().isEmpty()
+      .withMessage('Vendor last name is required.'),
       body('email')
-        .isEmail()
-        .withMessage('Email is not well formed.'),
+      .isEmail()
+      .withMessage('Email is not well formed.'),
       body('store_name')
-       .not().isEmpty()
-       .withMessage('Store name is required.'),
+      .not().isEmpty()
+      .withMessage('Store name is required.'),
       body('location')
-        .not().isEmpty()
-        .withMessage('Location store is required.'),
+      .not().isEmpty()
+      .withMessage('Location store is required.'),
       body('address')
-        .not().isEmpty()
-        .withMessage('Store address is required.'),
+      .not().isEmpty()
+      .withMessage('Store address is required.'),
       body('phone')
-        .not().isEmpty()
-        .withMessage('Phone is required.')
-        .isMobilePhone()
-        .withMessage('Phone number is well formed.')
+      .not().isEmpty()
+      .withMessage('Phone is required.')
+      .isMobilePhone()
+      .withMessage('Phone number is well formed.')
     ]
   }
   static async VendorStoreExists(req, res, next) {
@@ -40,7 +48,12 @@ class VendorValidator extends BaseValidator {
       }
       const existing = await VendorService.searchVendorStore(req.body.store_name);
       if (existing) {
-        Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Vendor Store Exists.');
+        Response.setError(
+          HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
+          'Validation Failed!', {
+            store_name: ['Store is registered!']
+          }
+        );
         return Response.send(res);
       }
       next();

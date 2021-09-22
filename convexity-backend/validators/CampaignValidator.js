@@ -108,6 +108,8 @@ class CampaignValidator extends BaseValidator {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign does not exist.');
         return Response.send(res);
       }
+
+      req.campaign = campaign;
       next();
     } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Please contact support.');
@@ -139,6 +141,8 @@ class CampaignValidator extends BaseValidator {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign does not belong to Organisation.');
         return Response.send(res);
       }
+
+      req.campaign = campaign;
 
       next();
     } catch (error) {
