@@ -3,7 +3,8 @@ const router = require('express').Router();
 const {
   WalletController,
   ProductController,
-  OrganisationController
+  OrganisationController,
+  CampaignController
 } = require('../controllers');
 const {
   Auth,
@@ -43,6 +44,7 @@ router.post('/:organisation_id/wallets/paystack-deposit', NgoAdminAuth, IsOrgMem
 
 router.route('/:organisation_id/campaigns')
   .get(
+    FieldAgentAuth,
     OrganisationValidator.organisationExists,
     OrganisationController.getAvailableOrgCampaigns
   )
@@ -74,6 +76,12 @@ router.route('/:organisation_id/campaigns/all')
   );
 
 router.route('/:organisation_id/campaigns/:campaign_id')
+  .get(
+    NgoAdminAuth,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.getCampaign
+  )
   .put(
     NgoAdminAuth,
     IsOrgMember,

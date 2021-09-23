@@ -8,8 +8,9 @@ const {
   Op
 } = require('sequelize');
 const {
+  User,
   Campaign,
-  Beneficiaries
+  Beneficiary
 } = require("../models");
 
 class CampaignService {
@@ -32,6 +33,27 @@ class CampaignService {
     return Campaign.create(newCampaign);
   }
 
+  static getCampaignWithBeneficiaries(id) {
+    return Campaign.findOne({
+      where: {id},
+      attributes: {
+        include: [ [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"] ]
+      },
+      include: [ 
+        {
+          model: User,
+          as: 'Beneficiaries',
+          attributes: ['id', 'first_name', 'last_name', 'gender', 'marital_status', 'profile_pic', 'dob'],
+          through: {
+            attributes: []
+          }
+        }
+      
+      ],
+      group: ["Campaign.id", "Beneficiaries.id"]
+    })
+  }
+
   static getCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
@@ -39,16 +61,13 @@ class CampaignService {
         ...where
       },
       attributes: {
-        include: [
-          [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-        ]
+        include: [ [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"] ]
       },
-      include: [{
-        as: 'Beneficiaries',
-        model: Beneficiaries,
-        attributes: []
-      }],
-      group: ['Campaign.id']
+      include: [ 'Beneficiaries' ],
+      includeIgnoreAttributes:false,
+      group: [
+        "Campaign.id"
+      ],
     });
   }
 
@@ -61,16 +80,11 @@ class CampaignService {
   }
 
   static async getAllCampaigns(campaignType = "campaign") {
-    try {
-      return await Campaign.findAll({
+    return Campaign.findAll({
         where: {
           type: campaignType,
         },
       });
-    } catch (error) {
-      // console.log(error)
-      throw error;
-    }
   }
   static async getOurCampaigns(
     userId,
@@ -90,11 +104,7 @@ class CampaignService {
     }
   }
   static async beneficiariesToCampaign(payload) {
-    try {
-      return await database.Beneficiaries.bulkCreate(payload);
-    } catch (error) {
-      throw error;
-    }
+    return database.Beneficiary.bulkCreate(payload);
   }
   static async fundWallets(payload, userId, organisationId, campaignId) {
     try {
@@ -107,7 +117,6 @@ class CampaignService {
       throw error;
     }
   }
-
   static async updateCampaign(id, updateCampaign) {
     try {
       const CampaignToUpdate = await Campaign.findOne({
@@ -131,23 +140,12 @@ class CampaignService {
   }
 
   static async getACampaign(id, OrganisationId) {
-    try {
-      const theCampaign = await Campaign.findAll({
+    return Campaign.findAll({
         where: {
           id: Number(id)
         },
-        include: "Beneficiaries",
-        // include: { all: true, nested: true }
+        include: ["Beneficiaries"],
       });
-      console.log(theCampaign.Beneficiaries);
-      // theCampaign.Beneficiaries.forEach(user => {
-      //     console.log(user);
-      // });
-      return theCampaign;
-    } catch (error) {
-      // console.log(error);
-      throw error;
-    }
   }
 
   static async deleteCampaign(id) {

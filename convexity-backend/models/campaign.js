@@ -1,5 +1,7 @@
 "use strict";
-const { Model } = require("sequelize");
+const {
+  Model
+} = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**
@@ -17,33 +19,39 @@ module.exports = (sequelize, DataTypes) => {
           TransactionalType: "campaign",
         },
       });
-      Campaign.hasMany(models.Beneficiaries, { as: "Beneficiaries" });
-      Campaign.hasMany(models.Tasks, { as: "Jobs" });
+      Campaign.belongsToMany(
+        models.User, {
+          as: 'Beneficiaries',
+          foreignKey: "CampaignId",
+          through: models.Beneficiary,
+          constraints: false,
+        });
+      Campaign.hasMany(models.Tasks, {
+        as: "Jobs"
+      });
       Campaign.belongsTo(models.Organisations, {
         foreignKey: "OrganisationId",
         as: "Organisation",
       });
     }
   }
-  Campaign.init(
-    {
-      OrganisationId: DataTypes.INTEGER,
-      title: DataTypes.STRING,
-      type: DataTypes.ENUM("campaign", "cash-for-work"),
-      spending: DataTypes.STRING,
-      description: DataTypes.TEXT,
-      status: DataTypes.STRING,
-      is_funded: DataTypes.BOOLEAN,
-      funded_with: DataTypes.STRING,
-      budget: DataTypes.FLOAT,
-      location: DataTypes.STRING,
-      start_date: DataTypes.DATE,
-      end_date: DataTypes.DATE,
-    },
-    {
-      sequelize,
-      modelName: "Campaign",
-    }
-  );
+
+  Campaign.init({
+    OrganisationId: DataTypes.INTEGER,
+    title: DataTypes.STRING,
+    type: DataTypes.ENUM("campaign", "cash-for-work"),
+    spending: DataTypes.STRING,
+    description: DataTypes.TEXT,
+    status: DataTypes.STRING,
+    is_funded: DataTypes.BOOLEAN,
+    funded_with: DataTypes.STRING,
+    budget: DataTypes.FLOAT,
+    location: DataTypes.STRING,
+    start_date: DataTypes.DATE,
+    end_date: DataTypes.DATE,
+  }, {
+    sequelize,
+    modelName: "Campaign",
+  });
   return Campaign;
 };

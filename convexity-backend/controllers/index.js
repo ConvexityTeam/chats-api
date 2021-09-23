@@ -5,6 +5,8 @@ const VendorController = require('./VendorController')
 const BeneficiaryController = require('./BeneficiariesController');
 const OrganisationController = require('./OrganisationController');
 const ProductController = require('./ProductController');
+const CampaignController = require('./CampaignController');
+
 
 module.exports = {
   AuthController,
@@ -13,5 +15,6 @@ module.exports = {
   WalletController,
   BeneficiaryController,
   OrganisationController,
-  ProductController
+  ProductController,
+  CampaignController
 }

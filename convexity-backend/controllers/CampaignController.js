@@ -1,9 +1,11 @@
-const CampaignService = require("../services/CampaignService");
+const {CampaignService} = require("../services");
 const db = require("../models");
 const util = require("../libs/Utils");
 const { Op } = require("sequelize");
-var amqp_1 = require("./../libs/RabbitMQ/Connection");
+var amqp_1 = require("../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
+const { Response } = require("../libs");
+const { HttpStatusCode } = require("../utils");
 var approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
   durable: true,
 });
@@ -11,7 +13,7 @@ var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
   durable: true,
 });
 
-class CampaignsController {
+class CampaignController {
   static async getAllCampaigns(req, res) {
     try {
       let type = req.query.type ? req.query.type : "campaign";
@@ -403,6 +405,19 @@ class CampaignsController {
     });
     return util.send(res);
   }
+
+  static async getCampaign(req, res) {
+    try {
+      const campaignId = req.params.campaign_id;
+      const campaign = await CampaignService.getCampaignWithBeneficiaries(campaignId);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Details', campaign);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
 }
 
 async function loopCampaigns(campaignId, beneficiaries) {
@@ -416,4 +431,4 @@ async function loopCampaigns(campaignId, beneficiaries) {
   }
 }
 
-module.exports = CampaignsController;
+module.exports = CampaignController;

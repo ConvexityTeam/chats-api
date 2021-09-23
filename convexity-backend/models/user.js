@@ -25,8 +25,10 @@ module.exports = (sequelize, DataTypes) => {
           TransactionalType: "user",
         },
       });
-      User.hasMany(models.Beneficiaries, {
-        as: "Beneficiaries"
+      User.belongsToMany(models.Campaign, {
+        as: "Campaigns",
+        foreignKey: "UserId",
+        through: models.Beneficiary
       });
       User.hasMany(models.TaskUsers, {
         as: "AssociatedJobs"
