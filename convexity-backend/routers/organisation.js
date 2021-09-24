@@ -64,7 +64,6 @@ router.route('/:organisation_id/vendors')
 
 router.route('/:organisation_id/campaigns')
   .get(
-    FieldAgentAuth,
     OrganisationValidator.organisationExists,
     OrganisationController.getAvailableOrgCampaigns
   )

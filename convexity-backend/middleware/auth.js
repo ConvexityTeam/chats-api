@@ -34,7 +34,7 @@ const Auth = (roleIds = null ) => (req, res, next) => {
       next();
     });
   } catch (error) {
-    Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Unexpected error occured. Please contact support.');
+    Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, "Unauthorised. Token Invalid");
     return Response.send(res);
   }
 };
