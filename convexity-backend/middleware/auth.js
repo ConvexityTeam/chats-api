@@ -47,5 +47,5 @@ exports.NgoSubAdminAuth = Auth([NgoAdmin, NgoSubAdmin]);
 exports.FieldAgentAuth = Auth([NgoAdmin, NgoSubAdmin, FieldAgent]);
 exports.VendorAuth = Auth([Vendor]);
 exports.BeneficiaryAuth = Auth([Beneficiary]);
-exports.BeneficiaryAuth = Auth([Donor]);
+exports.DonorAuth = Auth([Donor]);
 exports.GuestAuth = Auth([Guest, SuperAdmin, GodMode, NgoAdmin, NgoSubAdmin, FieldAgent, Vendor, Beneficiary, Donor])

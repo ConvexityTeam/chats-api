@@ -7,6 +7,7 @@ const VendorValidator = require('./VendorValidator');
 const BeneficiaryValidator = require('./BeneficiaryValidator');
 const UserValidator = require('./UserValidator');
 const ProductValidator = require('./ProductValidator');
+const ComplaintValidator = require('./ComplaintValidator');
 
 module.exports = {
   AuthValidator,
@@ -17,5 +18,6 @@ module.exports = {
   OrganisationValidator,
   BeneficiaryValidator,
   UserValidator,
-  ProductValidator
+  ProductValidator,
+  ComplaintValidator
 }

@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
       Campaign.hasMany(models.Tasks, {
         as: "Jobs"
       });
+      Campaign.hasMany(models.Complaint, {
+        as: 'Complaints',
+        foreignKey: "CampaignId"
+      })
       Campaign.belongsTo(models.Organisations, {
         foreignKey: "OrganisationId",
         as: "Organisation",

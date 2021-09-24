@@ -1,0 +1,1 @@
+exports.publicAttr = ['id', 'email', 'first_name', 'last_name', 'gender', 'marital_status', 'profile_pic', 'dob'];

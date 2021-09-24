@@ -143,7 +143,6 @@ class CampaignValidator extends BaseValidator {
       }
 
       req.campaign = campaign;
-
       next();
     } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Please contact support.');

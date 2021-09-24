@@ -1,19 +1,63 @@
-const {CampaignService} = require("../services");
+const {CampaignService, ComplaintService} = require("../services");
 const db = require("../models");
-const util = require("../libs/Utils");
 const { Op } = require("sequelize");
-var amqp_1 = require("../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const { Response } = require("../libs");
-const { HttpStatusCode } = require("../utils");
-var approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
+const { HttpStatusCode, SanitizeObject } = require("../utils");
+
+const amqp_1 = require("../libs/RabbitMQ/Connection");
+const approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
   durable: true,
 });
-var createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
+const createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
   durable: true,
 });
 
 class CampaignController {
+
+  static async addBeneficiaryComplaint(req, res) {
+    try {
+      const {report} = SanitizeObject(req.body, ['report']);
+      const UserId = req.user.id;
+      const complaint = await ComplaintService.createComplaint({CampaignId: req.campaign.id, UserId, report});
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Complaint Submitted.', complaint);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
+      return Response.send(res);
+    }
+  }
+
+  static async getBeneficiaryCampaignComplaint(req, res) {
+    try {
+      const filter = SanitizeObject(req.query, ['status']);
+      const Campaign = req.campaign.toJSON();
+      filter.CampaignId = Campaign.id;
+      const {count: complaints_count, rows: Complaints} = await ComplaintService.getBeneficiaryComplaints(req.user.id, filter);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaign Complaints.', {...Campaign, complaints_count,  Complaints});
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
+      return Response.send(res);
+    }
+  }
+
+  static async getBeneficiaryCampaigns(req, res) {
+    try {
+      const user = req.user.toObject();
+      const filter = SanitizeObject(req.query, ['status', 'type']);
+      const {count: campaigns_count, rows: Campaigns} = await CampaignService.beneficiaryCampaings(user.id, filter);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaigns.', {...user, campaigns_count,  Campaigns});
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
+      return Response.send(res);
+    }
+  }
+
   static async getAllCampaigns(req, res) {
     try {
       let type = req.query.type ? req.query.type : "campaign";
@@ -22,11 +66,11 @@ class CampaignController {
         type = "campaign";
       }
       const allCampaign = await CampaignService.getAllCampaigns(type);
-      util.setSuccess(200, "Campaign retrieved", allCampaign);
-      return util.send(res);
+      Response.setSuccess(200, "Campaign retrieved", allCampaign);
+      return Response.send(res);
     } catch (error) {
-      util.setError(500, error);
-      return util.send(res);
+      Response.setError(500, error);
+      return Response.send(res);
     }
   }
   static async getAllOurCampaigns(req, res) {
@@ -73,16 +117,16 @@ class CampaignController {
             beneficiaries_count: beneficiaries_count,
           });
         }
-        util.setSuccess(200, "Campaigns Retrieved", campaignsArray);
-        return util.send(res);
+        Response.setSuccess(200, "Campaigns Retrieved", campaignsArray);
+        return Response.send(res);
       } else {
-        util.setError(422, "Invalid Organisation Id");
-        return util.send(res);
+        Response.setError(422, "Invalid Organisation Id");
+        return Response.send(res);
       }
-      return util.send(res);
+      return Response.send(res);
     } catch (error) {
-      util.setError(400, error);
-      return util.send(res);
+      Response.setError(400, error);
+      return Response.send(res);
     }
   }
   static async beneficiariesToCampaign(req, res) {
@@ -126,24 +170,25 @@ class CampaignController {
             });
           });
 
-          util.setSuccess(201, "Beneficiaries Added To Campaign Successfully");
-          return util.send(res);
+          Response.setSuccess(201, "Beneficiaries Added To Campaign Successfully");
+          return Response.send(res);
         } else {
-          util.setError(
+          Response.setError(
             422,
             "Some User(s) has already been added as Beneficiaries to the campaign"
           );
-          return util.send(res);
+          return Response.send(res);
         }
       } else {
-        util.setError(422, "Invalid Campaign Id");
-        return util.send(res);
+        Response.setError(422, "Invalid Campaign Id");
+        return Response.send(res);
       }
     } catch (error) {
-      util.setError(400, error.message);
-      return util.send(res);
+      Response.setError(400, error.message);
+      return Response.send(res);
     }
   }
+  
   /**
    * Funding of Beneficiaries Wallet
    * @param req http request header
@@ -170,11 +215,11 @@ class CampaignController {
 
       if (campaign_exist) {
         if (!campaign_exist.Beneficiaries.length) {
-          util.setError(
+          Response.setError(
             404,
             "No Approved Beneficiaries currently attached to this campaign"
           );
-          return util.send(res);
+          return Response.send(res);
         }
         const organisation = await campaign_exist.OrganisationMember.getOrganisation();
         const wallet = await organisation.getWallet({
@@ -225,25 +270,25 @@ class CampaignController {
 
           campaign_exist.update({is_funded: true});
           
-          util.setSuccess(201, "Transactions Initiated Successfully");
-          return util.send(res);
+          Response.setSuccess(201, "Transactions Initiated Successfully");
+          return Response.send(res);
         } else {
-          util.setError(422, "Budget is greater than wallet Balance");
-          return util.send(res);
+          Response.setError(422, "Budget is greater than wallet Balance");
+          return Response.send(res);
         }
       } else {
-        util.setError(422, "Invalid Campaign Id");
-        return util.send(res);
+        Response.setError(422, "Invalid Campaign Id");
+        return Response.send(res);
       }
     } catch (error) {
-      util.setError(400, error.message);
-      return util.send(res);
+      Response.setError(400, error.message);
+      return Response.send(res);
     }
   }
   static async addCampaign(req, res) {
     if (!req.body.title || !req.body.budget || !req.body.start_date) {
-      util.setError(400, "Please Provide complete details");
-      return util.send(res);
+      Response.setError(400, "Please Provide complete details");
+      return Response.send(res);
     }
     const newCampaign = req.body;
     newCampaign.status = 1;
@@ -251,11 +296,11 @@ class CampaignController {
     // newCampaign.type = 1;
     try {
       const createdCampaign = await CampaignService.addCampaign(newCampaign);
-      util.setSuccess(201, "Campaign Created Successfully!", createdCampaign);
-      return util.send(res);
+      Response.setSuccess(201, "Campaign Created Successfully!", createdCampaign);
+      return Response.send(res);
     } catch (error) {
-      util.setError(400, error.message);
-      return util.send(res);
+      Response.setError(400, error.message);
+      return Response.send(res);
     }
   }
 
@@ -263,8 +308,8 @@ class CampaignController {
     const alteredCampaign = req.body;
     const { id } = req.params;
     if (!Number(id)) {
-      util.setError(400, "Please input a valid numeric value");
-      return util.send(res);
+      Response.setError(400, "Please input a valid numeric value");
+      return Response.send(res);
     }
     try {
       const updateCampaign = await CampaignService.updateCampaign(
@@ -272,22 +317,22 @@ class CampaignController {
         alteredCampaign
       );
       if (!updateCampaign) {
-        util.setError(404, `Cannot find Campaign with the id: ${id}`);
+        Response.setError(404, `Cannot find Campaign with the id: ${id}`);
       } else {
-        util.setSuccess(200, "Campaign updated", updateCampaign);
+        Response.setSuccess(200, "Campaign updated", updateCampaign);
       }
-      return util.send(res);
+      return Response.send(res);
     } catch (error) {
-      util.setError(404, error);
-      return util.send(res);
+      Response.setError(404, error);
+      return Response.send(res);
     }
   }
 
   static async getACampaign(req, res) {
     const { id } = req.params;
     if (!Number(id)) {
-      util.setError(400, "Please input a valid numeric value");
-      return util.send(res);
+      Response.setError(400, "Please input a valid numeric value");
+      return Response.send(res);
     }
 
     try {
@@ -325,43 +370,43 @@ class CampaignController {
         },
       });
       if (!theCampaign) {
-        util.setError(404, `Cannot find Campaign with the id ${id}`);
+        Response.setError(404, `Cannot find Campaign with the id ${id}`);
       } else {
-        util.setSuccess(200, "Found Campaign", theCampaign);
+        Response.setSuccess(200, "Found Campaign", theCampaign);
       }
-      return util.send(res);
+      return Response.send(res);
     } catch (error) {
-      util.setError(500, error);
-      return util.send(res);
+      Response.setError(500, error);
+      return Response.send(res);
     }
   }
 
   static async deleteCampaign(req, res) {
     const { id } = req.params;
     if (!Number(id)) {
-      util.setError(400, "Please provide a numeric value");
-      return util.send(res);
+      Response.setError(400, "Please provide a numeric value");
+      return Response.send(res);
     }
 
     try {
       const CampaignToDelete = await CampaignService.deleteCampaign(id);
       if (CampaignToDelete) {
-        util.setSuccess(200, "Campaign deleted");
+        Response.setSuccess(200, "Campaign deleted");
       } else {
-        util.setError(404, `Campaign with the id ${id} cannot be found`);
+        Response.setError(404, `Campaign with the id ${id} cannot be found`);
       }
-      return util.send(res);
+      return Response.send(res);
     } catch (error) {
-      util.setError(400, error);
-      return util.send(res);
+      Response.setError(400, error);
+      return Response.send(res);
     }
   }
   static async complaints(req, res) {
     const campaign = req.params.campaignId;
     let campaignExist = await db.Campaign.findByPk(campaign);
     if (!campaignExist) {
-      util.setError(422, "Campaign Invalid");
-      return util.send(res);
+      Response.setError(422, "Campaign Invalid");
+      return Response.send(res);
     }
     const beneficiaries = await campaignExist.getBeneficiaries();
 
@@ -395,7 +440,7 @@ class CampaignController {
       prevPage = Number(page_val) - 1;
     }
 
-    util.setSuccess(200, "Complaints Retrieved", {
+    Response.setSuccess(200, "Complaints Retrieved", {
       complaints: docs,
       current_page: options.page,
       pages: pages,
@@ -403,7 +448,7 @@ class CampaignController {
       nextPage: nextPage,
       prevPage: prevPage,
     });
-    return util.send(res);
+    return Response.send(res);
   }
 
   static async getCampaign(req, res) {

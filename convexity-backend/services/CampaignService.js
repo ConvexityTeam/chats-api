@@ -12,6 +12,7 @@ const {
   Campaign,
   Beneficiary
 } = require("../models");
+const { userConst } = require("../constants");
 
 class CampaignService {
   static searchCampaignTitle(title, extraClause = null) {
@@ -29,10 +30,18 @@ class CampaignService {
     return Campaign.findByPk(id);
   }
 
+  static campaignBeneficiaryExists(CampaignId, UserId) {
+    return Beneficiary.findOne({CampaignId, UserId});
+  }
+
   static addCampaign(newCampaign) {
     return Campaign.create(newCampaign);
   }
 
+  static addBeneficiaryComplaint(campaign, UserId, report) {
+    return campaign.createComplaint({UserId, report});
+  }
+ 
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
       where: {id},
@@ -43,7 +52,7 @@ class CampaignService {
         {
           model: User,
           as: 'Beneficiaries',
-          attributes: ['id', 'first_name', 'last_name', 'gender', 'marital_status', 'profile_pic', 'dob'],
+          attributes: userConst.publicAttr,
           through: {
             attributes: []
           }
@@ -51,6 +60,24 @@ class CampaignService {
       
       ],
       group: ["Campaign.id", "Beneficiaries.id"]
+    })
+  }
+
+  static beneficiaryCampaings(UserId, extraClasue = null) {
+    return Campaign.findAndCountAll({
+      where: {...extraClasue},
+      include: [
+        'Organisation',
+        {
+          model: User,
+          as: 'Beneficiaries',
+          attributes: [],
+          where: {id: UserId},
+          through: {
+            attributes: []
+          }
+        }
+      ]
     })
   }
 

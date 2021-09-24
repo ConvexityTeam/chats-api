@@ -3,24 +3,27 @@
 const { Model } = require('sequelize');
 const sequelizePaginate = require('sequelize-paginate');
 module.exports = (sequelize, DataTypes) => {
-  class Complaints extends Model {
+  class Complaint extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // Complaints.belongsTo(models.Beneficiaries, { foreignKey: 'BeneficiaryId', as: 'Beneficiary' })
+      Complaint.belongsTo(models.User, { foreignKey: 'UserId', as: 'Beneficiary' })
+      Complaint.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' })
     }
   };
-  Complaints.init({
-    BeneficiaryId: DataTypes.INTEGER,
+  Complaint.init({
+    
     report: DataTypes.TEXT,
     status: DataTypes.ENUM('resolved', 'unresolved'),
+    CampaignId: DataTypes.INTEGER,
+    UserId: DataTypes.INTEGER,
   }, {
     sequelize,
-    modelName: 'Complaints',
+    modelName: 'Complaint',
   });
-  sequelizePaginate.paginate(Complaints)
-  return Complaints;
+  sequelizePaginate.paginate(Complaint)
+  return Complaint;
 };

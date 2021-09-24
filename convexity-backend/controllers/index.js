@@ -6,6 +6,7 @@ const BeneficiaryController = require('./BeneficiariesController');
 const OrganisationController = require('./OrganisationController');
 const ProductController = require('./ProductController');
 const CampaignController = require('./CampaignController');
+const ComplaintController = require('./ComplaintController');
 
 
 module.exports = {
@@ -16,5 +17,6 @@ module.exports = {
   BeneficiaryController,
   OrganisationController,
   ProductController,
-  CampaignController
+  CampaignController,
+  ComplaintController
 }

@@ -1,6 +1,7 @@
 const router = require("express").Router();
-const {AuthController, BeneficiaryController} = require('../controllers');
-const { CommonValidator, BeneficiaryValidator } = require("../validators");
+const {AuthController, BeneficiaryController, CampaignController} = require('../controllers');
+const { BeneficiaryAuth } = require("../middleware");
+const { CommonValidator, BeneficiaryValidator, ComplaintValidator, CampaignValidator } = require("../validators");
 
 router.get('/', BeneficiaryController.getAllUsers);
 router.put('/:id', BeneficiaryController.updatedUser);
@@ -21,5 +22,27 @@ router.post(
   CommonValidator.checkPhoneNotTaken,
   AuthController.beneficiaryRegisterSelf
 );
+
+router.route('/campaigns')
+  .get(
+    BeneficiaryAuth,
+    CampaignController.getBeneficiaryCampaigns
+  )
+
+router.route('/campaigns/:campaign_id/complaints')
+.get(
+  BeneficiaryAuth,
+  CampaignValidator.campaignExists,
+  BeneficiaryValidator.IsCampaignBeneficiary,
+  CampaignController.getBeneficiaryCampaignComplaint
+)
+  .post(
+    BeneficiaryAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryValidator.IsCampaignBeneficiary,
+    ComplaintValidator.addComplaintRules(),
+    ComplaintValidator.validate,
+    CampaignController.addBeneficiaryComplaint
+  )
 
 module.exports = router;

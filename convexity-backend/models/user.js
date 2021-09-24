@@ -30,6 +30,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "UserId",
         through: models.Beneficiary
       });
+
+      User.hasMany(models.Complaint, {
+        as: "Complaints",
+        foreignKey: "UserId",
+      });
+
       User.hasMany(models.TaskUsers, {
         as: "AssociatedJobs"
       });

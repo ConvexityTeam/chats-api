@@ -9,7 +9,8 @@ const { HttpStatusCode } = require("../utils");
 const IsOrgMember = async (req, res, next) => {
   try {
     const OrganisationId = req.body.organisation_id || req.params.organisation_id || req.query.organisation_id;
-    if (!OrganisationId) {
+
+    if (!OrganisationId.trim()) {
       Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Orgnisation ID is missing.');
       return Response.send(res);
     }
