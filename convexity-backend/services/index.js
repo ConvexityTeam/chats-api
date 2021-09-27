@@ -7,6 +7,7 @@ const AuthService = require('./AuthService');
 const VendorService = require('./VendorServices');
 const ProductService = require('./ProductService');
 const ComplaintService = require('./ComplaintService');
+const BeneficiaryService = require('./BeneficiaryService');
 
 module.exports = {
   UserService,
@@ -17,5 +18,6 @@ module.exports = {
   VendorService,
   AuthService,
   ProductService,
-  ComplaintService
+  ComplaintService,
+  BeneficiaryService
 }

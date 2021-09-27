@@ -4,7 +4,7 @@ const {
 const {
   HttpStatusCode, formInputToDate
 } = require('../utils');
-const {CampaignService} = require('../services');
+const {CampaignService, BeneficiaryService, UserService} = require('../services');
 const formidable = require("formidable");
 const Validator = require("validatorjs");
 const {Response} = require('../libs');
@@ -131,6 +131,31 @@ class BeneficiaryValidator extends BaseValidator {
     } catch (error) {
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Internal server error. Please try again or contact the administrator.');
+      return Response.send(res);
+    }
+  }
+
+  static async BeneficiaryExists(req, res, next) {
+    try {
+      const organisationId = req.organisation.id || req.params.organisation_id || req.body.organisation_id || null;
+      const id = req.params.beneficiary_id || req.body.beneficiary_id || req.params.id;
+
+      if(!id) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Beneficiary ID is missing.');
+        return Response.send(res);
+      }
+      const beneficiary = await UserService.findBeneficiary(id, organisationId);
+      
+      if(!beneficiary) {
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Organisation beneficiary not found.');
+        return Response.send(res);
+      }
+
+      req.beneficiary = beneficiary;
+      next();
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
   }

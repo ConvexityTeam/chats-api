@@ -18,6 +18,15 @@ module.exports = (sequelize, DataTypes) => {
         as: "Transactions",
         foreignKey: "uuid",
       });
+      Wallet.hasMany(models.Transaction, { 
+        as: "ReceivedTransactions",
+        foreignKey: "walletRecieverId"
+
+      });
+      Wallet.hasMany(models.Transaction, { 
+        as: "SentTransactions",
+        foreignKey: "walletSenderId"
+      });
       Wallet.belongsTo(models.User, {
         foreignKey: "AccountUserId",
         constraints: false,
@@ -48,16 +57,12 @@ module.exports = (sequelize, DataTypes) => {
       hooks: {
         afterFind: async (findResult) => {
           if (!Array.isArray(findResult)) findResult = [findResult];
+
           for (const instance of findResult) {
-            if (
-              instance.AccountUserType === "user" &&
-              instance.user !== undefined
-            ) {
+            if ( instance.AccountUserType === "user" && instance.user !== undefined ) {
               instance.AccountUserId = instance.user;
-            } else if (
-              instance.AccountUserType === "organisation" &&
-              instance.organisation !== undefined
-            ) {
+            } 
+            else if ( instance.AccountUserType === "organisation" && instance.organisation !== undefined ) {
               instance.AccountUserId = instance.organisation;
             }
             // To prevent mistakes:

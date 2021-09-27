@@ -5,7 +5,8 @@ const {
   ProductController,
   OrganisationController,
   CampaignController,
-  ComplaintController
+  ComplaintController,
+  BeneficiaryController
 } = require('../controllers');
 
 const {
@@ -21,7 +22,8 @@ const {
   CampaignValidator,
   OrganisationValidator,
   ProductValidator,
-  ComplaintValidator
+  ComplaintValidator,
+  BeneficiaryValidator
 } = require('../validators');
 
 router.post("/flutterwave/webhook", OrganisationController.mintToken);
@@ -44,6 +46,29 @@ router.get("/metric/:id", OrganisationController.getMetric);
 
 // Refactord routes
 router.post('/:organisation_id/wallets/paystack-deposit', NgoAdminAuth, IsOrgMember, WalletController.paystackDeposit);
+
+router.route('/:organisation_id/beneficiaries')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    BeneficiaryController.organisationBeneficiaries
+  );
+
+router.route('/:organisation_id/beneficiaries/:beneficiary_id')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    BeneficiaryValidator.BeneficiaryExists,
+    BeneficiaryController.getBeneficiary
+  )
+
+router.route('/:organisation_id/beneficiaries/:beneficiary_id/transactions')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    BeneficiaryValidator.BeneficiaryExists,
+    BeneficiaryController.beneficaryTransactions
+  );
 
 router.route('/:organisation_id/vendors')
   .get(
@@ -119,12 +144,12 @@ router.route('/:organisation_id/campaigns/:campaign_id/complaints')
   )
 
 router.route('/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id')
-.get(
-  NgoSubAdminAuth,
-  IsOrgMember,
-  CampaignValidator.campaignBelongsToOrganisation,
-  ComplaintController.getCampaignConplaint
-);
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    ComplaintController.getCampaignConplaint
+  );
 
 router.patch(
   '/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id/resolve',

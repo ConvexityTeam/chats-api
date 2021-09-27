@@ -12,7 +12,8 @@ const mailer = require("../libs/Mailer");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
 const uploadFile = require("./AmazonController");
-const BeneficiariesServices = require("../services/BeneficiariesService");
+const {BeneficiaryService} = require("../services");
+
 const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");
@@ -384,7 +385,7 @@ class UsersController {
 
   static async getBeneficiaryTransactions(req, res) {
     const beneficiary = req.params.beneficiary;
-    const beneficiary_exist = await BeneficiariesServices.getUser(beneficiary);
+    const beneficiary_exist = await BeneficiaryService.getUser(beneficiary);
     if (beneficiary_exist) {
       const wallet = await beneficiary_exist.getWallet();
       const wallets = wallet.map((element) => {
@@ -413,7 +414,7 @@ class UsersController {
 
   static async getRecentTransactions(req, res) {
     const beneficiary = req.params.beneficiary;
-    const beneficiary_exist = await BeneficiariesServices.getUser(beneficiary);
+    const beneficiary_exist = await BeneficiaryService.getUser(beneficiary);
     if (beneficiary_exist) {
       const wallet = await beneficiary_exist.getWallet();
       const wallets = wallet.map((element) => {

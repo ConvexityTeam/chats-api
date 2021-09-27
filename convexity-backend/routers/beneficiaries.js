@@ -4,7 +4,7 @@ const { BeneficiaryAuth } = require("../middleware");
 const { CommonValidator, BeneficiaryValidator, ComplaintValidator, CampaignValidator } = require("../validators");
 
 router.get('/', BeneficiaryController.getAllUsers);
-router.put('/:id', BeneficiaryController.updatedUser);
+// router.put('/:id', BeneficiaryController.updatedUser);
 router.delete('/:id', BeneficiaryController.deleteUser);
 router.post('/add-account', BeneficiaryController.addAccount);
 router.post('/register', BeneficiaryController.createUser);
@@ -28,6 +28,22 @@ router.route('/campaigns')
     BeneficiaryAuth,
     CampaignController.getBeneficiaryCampaigns
   )
+
+router.route('/transactions')
+  .get(
+    BeneficiaryAuth,
+    CampaignController.getBeneficiaryCampaigns
+  );
+
+router.route('/:id')
+  // .get(
+  //   BeneficiaryAuth,
+  //   CampaignController.getBeneficiaryCampaigns
+  // )
+  .put(
+    BeneficiaryAuth,
+    BeneficiaryController.updatedUser
+  );
 
 router.route('/campaigns/:campaign_id/complaints')
 .get(

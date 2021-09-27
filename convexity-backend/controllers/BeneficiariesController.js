@@ -1,13 +1,22 @@
-const BeneficiariesServices = require("../services/BeneficiariesService");
+const BeneficiariesService = require("../services/BeneficiaryService");
 const util = require("../libs/Utils");
 const db = require("../models");
 const Validator = require("validatorjs");
-const { Op } = require("sequelize");
+const {
+  Op
+} = require("sequelize");
 const sequelize = require("sequelize");
+const {
+  Response
+} = require("../libs");
+const {
+  HttpStatusCode
+} = require("../utils");
 class BeneficiariesController {
+
   static async getAllUsers(req, res) {
     try {
-      const allUsers = await BeneficiariesServices.getAllUsers();
+      const allUsers = await BeneficiariesService.getAllUsers();
       if (allUsers.length > 0) {
         util.setSuccess(200, "Users retrieved", allUsers);
       } else {
@@ -19,6 +28,7 @@ class BeneficiariesController {
       return util.send(res);
     }
   }
+
   static async createUser(req, res, next) {
     try {
       const {
@@ -40,8 +50,11 @@ class BeneficiariesController {
 
       //check if email already exist
       db.User.findOne({
-        where: { email: req.body.email, phone: req.body.phone },
-      })
+          where: {
+            email: req.body.email,
+            phone: req.body.phone
+          },
+        })
         .then((user) => {
           if (user !== null) {
             util.setError(400, "Email Already Exists, Recover Your Account");
@@ -52,30 +65,30 @@ class BeneficiariesController {
               const encryptedPassword = hash;
               const balance = 0.0;
               return db.User.create({
-                RoleId: 5,
-                OrganisationId: OrganisationId,
-                first_name: first_name,
-                last_name: last_name,
-                phone: phone,
-                email: email,
-                password: encryptedPassword,
-                gender: gender,
-                marital_status: marital_status,
-                balance: balance,
-                bvn: bvn,
-                status: 1,
-                location: location,
-                address: address,
-                referal_id: "",
-                pin: "",
-                last_login: new Date(),
-                right_fingers: right_fingers,
-                left_fingers: left_fingers,
-                profile_pic: profile_pic,
-                // "balance","location","pin","blockchain_address","address","is_email_verified",
-                // "is_phone_verified", "is_bvn_verified","is_self_signup","is_public","is_tfa_enabled",
-                // "tfa_secret","is_organisation","organisation_id","last_login","createdAt","updatedAt"
-              })
+                  RoleId: 5,
+                  OrganisationId: OrganisationId,
+                  first_name: first_name,
+                  last_name: last_name,
+                  phone: phone,
+                  email: email,
+                  password: encryptedPassword,
+                  gender: gender,
+                  marital_status: marital_status,
+                  balance: balance,
+                  bvn: bvn,
+                  status: 1,
+                  location: location,
+                  address: address,
+                  referal_id: "",
+                  pin: "",
+                  last_login: new Date(),
+                  right_fingers: right_fingers,
+                  left_fingers: left_fingers,
+                  profile_pic: profile_pic,
+                  // "balance","location","pin","blockchain_address","address","is_email_verified",
+                  // "is_phone_verified", "is_bvn_verified","is_self_signup","is_public","is_tfa_enabled",
+                  // "tfa_secret","is_organisation","organisation_id","last_login","createdAt","updatedAt"
+                })
                 .then((user) => {
                   util.setSuccess(201, "Account Successfully Created", user.id);
                   return util.send(res);
@@ -99,13 +112,15 @@ class BeneficiariesController {
 
   static async updatedUser(req, res) {
     const alteredUser = req.body;
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
     if (!Number(id)) {
       util.setError(400, "Please input a valid numeric value");
       return util.send(res);
     }
     try {
-      const updateUser = await BeneficiariesServices.updateUser(
+      const updateUser = await BeneficiariesService.updateUser(
         id,
         alteredUser
       );
@@ -122,7 +137,9 @@ class BeneficiariesController {
   }
 
   static async getAUser(req, res) {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
     if (!Number(id)) {
       util.setError(400, "Please input a valid numeric value");
@@ -130,7 +147,7 @@ class BeneficiariesController {
     }
 
     try {
-      const theUser = await BeneficiariesServices.getAUser(id);
+      const theUser = await BeneficiariesService.getAUser(id);
       if (!theUser) {
         util.setError(404, `Cannot find User with the id ${id}`);
       } else {
@@ -144,7 +161,9 @@ class BeneficiariesController {
   }
 
   static async deleteUser(req, res) {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
     if (!Number(id)) {
       util.setError(400, "Please provide a numeric value");
@@ -152,7 +171,7 @@ class BeneficiariesController {
     }
 
     try {
-      const UserToDelete = await BeneficiariesServices.deleteUser(id);
+      const UserToDelete = await BeneficiariesService.deleteUser(id);
 
       if (UserToDelete) {
         util.setSuccess(200, "User deleted");
@@ -178,7 +197,7 @@ class BeneficiariesController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      const beneficiary_exist = await BeneficiariesServices.checkBeneficiary(
+      const beneficiary_exist = await BeneficiariesService.checkBeneficiary(
         data.beneficiaryId
       );
       if (beneficiary_exist) {
@@ -186,7 +205,7 @@ class BeneficiariesController {
           BeneficiaryId: data.beneficiaryId,
           report: data.report,
         };
-        const complaint = await BeneficiariesServices.createComplaint(
+        const complaint = await BeneficiariesService.createComplaint(
           newComplaint
         );
         util.setSuccess(200, "A new complaint has been made successfully");
@@ -208,11 +227,11 @@ class BeneficiariesController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      const complaint_exist = await BeneficiariesServices.checkComplaint(
+      const complaint_exist = await BeneficiariesService.checkComplaint(
         data.complaintId
       );
       if (complaint_exist) {
-        await BeneficiariesServices.updateComplaint(data.complaintId).then(
+        await BeneficiariesService.updateComplaint(data.complaintId).then(
           () => {
             util.setSuccess(200, "Complaint Resolved successfully.");
             return util.send(res);
@@ -238,9 +257,15 @@ class BeneficiariesController {
       page: page_val,
       paginate: 10,
       where: whereCondtion,
-      order: [["id", "DESC"]],
+      order: [
+        ["id", "DESC"]
+      ],
     };
-    const { docs, pages, total } = await db.Complaints.paginate(options);
+    const {
+      docs,
+      pages,
+      total
+    } = await db.Complaints.paginate(options);
     var nextPage = null;
     var prevPage = null;
     if (page_val != pages) {
@@ -265,7 +290,9 @@ class BeneficiariesController {
   static async getBeneficiaryUserWallet(req, res) {
     const beneficiary = req.params.beneficiary;
     const beneficiary_exist = await db.User.findOne({
-      where: { id: beneficiary },
+      where: {
+        id: beneficiary
+      },
       include: {
         as: "Wallet",
         model: db.Wallet,
@@ -275,7 +302,9 @@ class BeneficiariesController {
       },
     });
     const campaigns = await db.Beneficiaries.findAll({
-      where: { UserId: beneficiary },
+      where: {
+        UserId: beneficiary
+      },
       include: ["Campaign"],
     });
     if (beneficiary_exist) {
@@ -294,7 +323,9 @@ class BeneficiariesController {
     const beneficiary = req.params.beneficiary;
     const beneficiary_exist = await db.User.findByPk(beneficiary);
     const campaigns = await db.Beneficiaries.findAll({
-      where: { UserId: beneficiary },
+      where: {
+        UserId: beneficiary
+      },
       include: ["Campaign"],
     });
     if (beneficiary_exist) {
@@ -324,7 +355,9 @@ class BeneficiariesController {
     if (allowedStatus.includes(status)) {
       whereQuery["status"] = status;
     }
-    const complaints = await db.Complaints.findAll({ where: whereQuery });
+    const complaints = await db.Complaints.findAll({
+      where: whereQuery
+    });
     util.setSuccess(200, "Complaints Retrieved", complaints);
     return util.send(res);
   }
@@ -344,7 +377,10 @@ class BeneficiariesController {
       await db.User.findByPk(req.user.id)
         .then(async (user) => {
           const account_exist = await db.Accounts.findOne({
-            where: { UserId: req.user.id, account_number: data.account_number },
+            where: {
+              UserId: req.user.id,
+              account_number: data.account_number
+            },
           });
           if (account_exist) {
             util.setError(400, "Account Number already added");
@@ -368,14 +404,66 @@ class BeneficiariesController {
     }
   }
 
-
   // Register By Organisation Special Case
-  static async registerSpecialCaseBeneficiary(req, res) {
+  static async registerSpecialCaseBeneficiary(req, res) {}
 
-  } 
+  static async registerBeneficiary(req, res) {}
 
-  static async registerBeneficiary(req, res) {
-    
+  static async organisationBeneficiaries(req, res) {
+    try {
+      const organisation = req.organisation;
+      const beneficiaries = await BeneficiariesService.findOrgnaisationBeneficiaries(organisation.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation beneficiaries', beneficiaries);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
+
+  static async getBeneficiary(req, res) {
+    try {
+      let total_wallet_spent = 0;
+      let total_wallet_balance = 0;
+      let total_wallet_received = 0;
+      
+      const id = req.params.beneficiary_id;
+      const _beneficiary = await BeneficiariesService.beneficiaryDetails(id);
+      const Wallets = _beneficiary.Wallets.map(wallet => {
+        total_wallet_balance += wallet.balance;
+        total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+        total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+        const w = wallet.toObject();
+        delete w.ReceivedTransactions;
+        delete w.SentTransactions;
+        return w;
+      });
+
+      const beneficiary = _beneficiary.toJSON();
+
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Details.', {total_wallet_balance, total_wallet_received, total_wallet_spent, ...beneficiary, Wallets});
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
+
+  static async beneficaryTransactions(req, res) {
+    try {
+      const beneficiary = req.beneficiary.toJSON();
+      const Transactions = await BeneficiariesService.beneficiaryTransactions(beneficiary.id);
+      const transactions_count = Transactions.length;
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Transactions.', {...beneficiary, transactions_count, Transactions});
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
   }
 }
 

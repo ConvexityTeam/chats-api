@@ -1,4 +1,15 @@
-const {User} = require('../models');
+const {
+    User,
+    Campaign
+} = require('../models');
+const {
+    Op,
+    Sequelize
+} = require('sequelize');
+const {
+    AclRoles
+} = require('../utils');
+const { userConst } = require('../constants');
 
 class UserService {
     static async getAllUsers() {
@@ -35,7 +46,6 @@ class UserService {
             throw error;
         }
     }
-
     static async getAUser(id) {
         try {
             const theUser = await User.findOne({
@@ -76,19 +86,50 @@ class UserService {
     // Refactored ==============
 
     static findByEmail(email, extraClause = null) {
-        return User.findOne({where: {email, ...extraClause}})
+        return User.findOne({
+            where: {
+                email,
+                ...extraClause
+            }
+        })
     }
 
     static findByPhone(phone, extraClause = null) {
-        return User.findOne({where: {phone, ...extraClause}})
+        return User.findOne({
+            where: {
+                phone,
+                ...extraClause
+            }
+        })
     }
 
     static findSingleUser(where) {
-        return User.findOne({where});
+        return User.findOne({
+            where
+        });
+    }
+
+    static findBeneficiary(id, OrganisationId = null) {
+        return User.findOne({
+            where: {
+                id,
+                RoleId: AclRoles.Beneficiary
+
+                // ...(OrganisationId && {
+                //     OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
+                // }
+                // )
+            },
+            attributes: userConst.publicAttr
+        });
     }
 
     static update(id, data) {
-        return User.update(data, {where: {id}});
+        return User.update(data, {
+            where: {
+                id
+            }
+        });
     }
 }
 
