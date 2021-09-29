@@ -16,22 +16,27 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Wallet.hasMany(models.Transaction, {
         as: "Transactions",
+        targetKey: "uuid",
         foreignKey: "uuid",
       });
       Wallet.hasMany(models.Transaction, { 
         as: "ReceivedTransactions",
+        targetKey: "uuid",
         foreignKey: "walletRecieverId"
 
       });
       Wallet.hasMany(models.Transaction, { 
         as: "SentTransactions",
+        targetKey: "uuid",
         foreignKey: "walletSenderId"
       });
       Wallet.belongsTo(models.User, {
+        as: 'User',
         foreignKey: "AccountUserId",
         constraints: false,
       });
       Wallet.belongsTo(models.Organisations, {
+        as: 'Organisation',
         foreignKey: "AccountUserId",
         constraints: false,
       });

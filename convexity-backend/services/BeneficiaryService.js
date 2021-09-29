@@ -164,6 +164,8 @@ class BeneficiariesService {
     });
   }
 
+  
+
   static async findOrgnaisationBeneficiaries(OrganisationId) {
     return User.findAll({
       where: {

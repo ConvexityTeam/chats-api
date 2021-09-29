@@ -3,7 +3,7 @@ const db = require("../models");
 const { Op } = require("sequelize");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const { Response } = require("../libs");
-const { HttpStatusCode, SanitizeObject } = require("../utils");
+const { HttpStatusCode, SanitizeObject, AclRoles } = require("../utils");
 
 const amqp_1 = require("../libs/RabbitMQ/Connection");
 const approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
@@ -200,15 +200,12 @@ class CampaignController {
       const campaign_exist = await db.Campaign.findOne({
         where: { id: req.body.CampaignId },
         include: [
-          { model: db.OrganisationMembers, as: "OrganisationMember" },
+          'Organisation',
           {
-            model: db.Beneficiaries,
+            model: db.User,
             as: "Beneficiaries",
-            include: {
-              model: db.User,
-              as: "User",
-              where: { RoleId: "5", status: "activated" },
-            },
+            through: db.Beneficiary,
+            where: { RoleId: AclRoles.Beneficiary, status: "activated" }
           },
         ],
       });
@@ -221,8 +218,8 @@ class CampaignController {
           );
           return Response.send(res);
         }
-        const organisation = await campaign_exist.OrganisationMember.getOrganisation();
-        const wallet = await organisation.getWallet({
+        // const organisation = await campaign_exist.OrganisationMember.getOrganisation();
+        const wallet = await campaign_exist.Organisation.getWallets({
           where: { CampaignId: campaign_exist.id },
         });
 
@@ -232,8 +229,8 @@ class CampaignController {
             campaign_exist.budget / beneficiaries_count
           );
           campaign_exist["Beneficiaries"].forEach(async (beneficiary) => {
-            const user = await beneficiary.getUser();
-            const user_wallet = await user.getWallet({
+            // const user = await beneficiary.getUser();
+            const user_wallet = await beneficiary.getWallet({
               where: { CampaignId: campaign_exist.id },
             });
 
@@ -242,11 +239,7 @@ class CampaignController {
                 walletSenderId: wallet[0].uuid,
                 walletRecieverId: user_wallet[0].uuid,
                 amount: amount,
-                narration:
-                  "Approved Spending for " +
-                  user.first_name +
-                  " " +
-                  user.last_name,
+                narration: "Approved Spending for " + user.first_name + " " + user.last_name,
               })
               .then((transaction) => {
                 approveToSpendQueue.send(

@@ -54,6 +54,13 @@ router.route('/:organisation_id/beneficiaries')
     BeneficiaryController.organisationBeneficiaries
   );
 
+router.route('/:organisation_id/beneficiaries/transactions')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    OrganisationController.getBeneficiariesTransactions
+  )
+
 router.route('/:organisation_id/beneficiaries/:beneficiary_id')
   .get(
     NgoSubAdminAuth,

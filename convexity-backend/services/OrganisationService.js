@@ -1,7 +1,9 @@
 const {
   User,
   Market,
+  Wallet,
   Organisations,
+  Transaction,
   OrganisationMembers
 } = require('../models');
 const {
@@ -13,11 +15,13 @@ const {
 const bcrypt = require("bcryptjs");
 const amqp = require("./../libs/RabbitMQ/Connection");
 const {
-  Op
+  Op,
+  Sequelize
 } = require('sequelize');
 const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");
+const { userConst } = require('../constants');
 const createWalletQueue = amqp["default"].declareQueue("createWallet", {
   durable: true
 });
@@ -160,6 +164,35 @@ class OrganisationService {
           }
           reject(error);
         })
+    });
+  }
+
+
+  static async beneficiariesTransactions(OrganisationId) {
+    return Transaction.findAll({
+      where: {
+        walletSenderId: Sequelize.where(Sequelize.col('SenderWallet.AccountUserId'), OrganisationId)
+      },
+      include: [
+        {
+          model: Wallet,
+          as: 'SenderWallet',
+          attributes: [],
+          where: {
+            AccountUserType: 'organisation',
+            CampaignId: {
+              [Op.ne]: null
+            }
+          },
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: userConst.publicAttr
+            }
+          ]
+        }
+      ]
     });
   }
 }

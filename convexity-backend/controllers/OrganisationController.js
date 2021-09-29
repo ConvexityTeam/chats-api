@@ -1,9 +1,7 @@
-const OrganisationsService = require("../services/OrganisationService");
-const db = require("../models");
+
 const {
   Op
 } = require("sequelize");
-
 const {
   OrganisationService
 } = require('../services');
@@ -15,6 +13,8 @@ const UserService = require("../services/UserService");
 const {
   Response
 } = require("../libs");
+const db = require("../models");
+
 const Validator = require("validatorjs");
 const formidable = require("formidable");
 const fs = require("fs");
@@ -60,7 +60,7 @@ class OrganisationController {
       Response.setError(422, validation.errors);
       return Response.send(res);
     } else {
-      const organisation = await OrganisationsService.checkExistEmail(
+      const organisation = await OrganisationService.checkExistEmail(
         data.email
       );
 
@@ -113,6 +113,18 @@ class OrganisationController {
     }
   }
 
+  static async getBeneficiariesTransactions(req, res) {
+    try {
+      const transactions = await OrganisationService.beneficiariesTransactions(req.organisation.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries transactions.', transactions);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
+
   static async addMember(req, res) {
     const data = req.body;
     const rules = {
@@ -125,7 +137,7 @@ class OrganisationController {
       Response.setError(422, validation.errors);
       return Response.send(res);
     } else {
-      const organisation = await OrganisationsService.checkExist(
+      const organisation = await OrganisationService.checkExist(
         data.organisation_id
       );
       const user = await UserService.getAUser(data.user_id);
@@ -140,7 +152,7 @@ class OrganisationController {
         Response.setError(422, errors);
         return Response.send(res);
       } else {
-        const is_member = await OrganisationsService.isMember(
+        const is_member = await OrganisationService.isMember(
           organisation.id,
           user.id
         );

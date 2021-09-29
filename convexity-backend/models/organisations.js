@@ -30,6 +30,14 @@ module.exports = (sequelize, DataTypes) => {
           AccountUserType: "organisation",
         },
       });
+      Organisations.hasMany(models.Wallet, {
+        as: "Wallets",
+        foreignKey: "AccountUserId",
+        constraints: false,
+        scope: {
+          AccountUserType: "organisation",
+        },
+      });
     }
   }
   Organisations.init(
