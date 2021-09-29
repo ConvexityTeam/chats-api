@@ -60,16 +60,13 @@ class CampaignController {
 
   static async getAllCampaigns(req, res) {
     try {
-      let type = req.query.type ? req.query.type : "campaign";
-      const allowed_types = ["campaign", "cash-for-work"];
-      if (!allowed_types.includes(type)) {
-        type = "campaign";
-      }
-      const allCampaign = await CampaignService.getAllCampaigns(type);
-      Response.setSuccess(200, "Campaign retrieved", allCampaign);
+      const query = SanitizeObject(req.query, ['type']);
+      const allCampaign = await CampaignService.getAllCampaigns({...query, status: 'active'});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, "Campaign retrieved", allCampaign);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, error);
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
       return Response.send(res);
     }
   }

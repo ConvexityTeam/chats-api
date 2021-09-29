@@ -8,7 +8,10 @@ const {
   Wallet,
   Transaction
 } = require('../models');
-const { Op, Sequelize } = require('sequelize');
+const {
+  Op,
+  Sequelize
+} = require('sequelize');
 const {
   userConst
 } = require('../constants');
@@ -147,24 +150,32 @@ class BeneficiariesService {
       include: [{
           model: Wallet,
           as: "SenderWallet",
-          where: {
-            AccountUserType: "user",
+          attributes: {
+            exclude: ['privateKey', 'bantuPrivateKey']
           },
-          attributes: []
+          include: [{
+            model: User,
+            as: 'User',
+            attributes: userConst.publicAttr
+          }]
         },
         {
           model: Wallet,
           as: "RecievingWallet",
-          where: {
-            AccountUserType: "user",
+
+          attributes: {
+            exclude: ['privateKey', 'bantuPrivateKey']
           },
-          attributes: []
+          include: [{
+            model: User,
+            as: 'User',
+            attributes: userConst.publicAttr
+          }]
         }
       ]
     });
   }
 
-  
 
   static async findOrgnaisationBeneficiaries(OrganisationId) {
     return User.findAll({

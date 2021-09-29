@@ -183,15 +183,24 @@ class OrganisationService {
             CampaignId: {
               [Op.ne]: null
             }
-          },
-          include: [
-            {
-              model: User,
-              as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
-        }
+          }
+        },
+        
+          {
+            model: Wallet,
+            as: 'RecievingWallet',
+            attributes: { 
+              exclude: ['privateKey', 'bantuPrivateKey']
+            },
+            include: [
+              {
+                model: User,
+                as: 'User',
+                attributes: userConst.publicAttr
+              }
+            ]
+          }
+        
       ]
     });
   }

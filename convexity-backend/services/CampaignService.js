@@ -12,13 +12,15 @@ const {
   Campaign,
   Beneficiary
 } = require("../models");
-const { userConst } = require("../constants");
+const {
+  userConst
+} = require("../constants");
 
 class CampaignService {
   static searchCampaignTitle(title, extraClause = null) {
     const where = {
       ...extraClause,
-      title:  Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('title')), 'LIKE', `%${title.toLowerCase()}%`) 
+      title: Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('title')), 'LIKE', `%${title.toLowerCase()}%`)
     };
 
     return Campaign.findOne({
@@ -31,7 +33,10 @@ class CampaignService {
   }
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
-    return Beneficiary.findOne({CampaignId, UserId});
+    return Beneficiary.findOne({
+      CampaignId,
+      UserId
+    });
   }
 
   static addCampaign(newCampaign) {
@@ -39,17 +44,23 @@ class CampaignService {
   }
 
   static addBeneficiaryComplaint(campaign, UserId, report) {
-    return campaign.createComplaint({UserId, report});
+    return campaign.createComplaint({
+      UserId,
+      report
+    });
   }
- 
+
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
-      where: {id},
-      attributes: {
-        include: [ [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"] ]
+      where: {
+        id
       },
-      include: [ 
-        {
+      attributes: {
+        include: [
+          [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+        ]
+      },
+      include: [{
           model: User,
           as: 'Beneficiaries',
           attributes: userConst.publicAttr,
@@ -57,7 +68,7 @@ class CampaignService {
             attributes: []
           }
         }
-      
+
       ],
       group: ["Campaign.id", "Beneficiaries.id"]
     })
@@ -65,14 +76,18 @@ class CampaignService {
 
   static beneficiaryCampaings(UserId, extraClasue = null) {
     return Campaign.findAndCountAll({
-      where: {...extraClasue},
+      where: {
+        ...extraClasue
+      },
       include: [
         'Organisation',
         {
           model: User,
           as: 'Beneficiaries',
           attributes: [],
-          where: {id: UserId},
+          where: {
+            id: UserId
+          },
           through: {
             attributes: []
           }
@@ -88,10 +103,12 @@ class CampaignService {
         ...where
       },
       attributes: {
-        include: [ [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"] ]
+        include: [
+          [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+        ]
       },
-      include: [ 'Beneficiaries' ],
-      includeIgnoreAttributes:false,
+      include: ['Beneficiaries'],
+      includeIgnoreAttributes: false,
       group: [
         "Campaign.id"
       ],
@@ -106,12 +123,14 @@ class CampaignService {
     });
   }
 
-  static async getAllCampaigns(campaignType = "campaign") {
+  static async getAllCampaigns(queryClause = null) {
     return Campaign.findAll({
         where: {
-          type: campaignType,
+          ...queryClause
         },
-      });
+        include: ['Organisation']
+      }
+    );
   }
   static async getOurCampaigns(
     userId,
@@ -168,11 +187,11 @@ class CampaignService {
 
   static async getACampaign(id, OrganisationId) {
     return Campaign.findAll({
-        where: {
-          id: Number(id)
-        },
-        include: ["Beneficiaries"],
-      });
+      where: {
+        id: Number(id)
+      },
+      include: ["Beneficiaries"],
+    });
   }
 
   static async deleteCampaign(id) {
