@@ -427,7 +427,7 @@ class BeneficiariesController {
       let total_wallet_spent = 0;
       let total_wallet_balance = 0;
       let total_wallet_received = 0;
-      
+
       const id = req.params.beneficiary_id;
       const _beneficiary = await BeneficiariesService.beneficiaryDetails(id);
       const Wallets = _beneficiary.Wallets.map(wallet => {
@@ -442,8 +442,47 @@ class BeneficiariesController {
 
       const beneficiary = _beneficiary.toJSON();
 
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Details.', {
+        total_wallet_balance,
+        total_wallet_received,
+        total_wallet_spent,
+        ...beneficiary,
+        Wallets
+      });
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
 
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Details.', {total_wallet_balance, total_wallet_received, total_wallet_spent, ...beneficiary, Wallets});
+  static async getProfile(req, res) {
+    try {
+      let total_wallet_spent = 0;
+      let total_wallet_balance = 0;
+      let total_wallet_received = 0;
+
+      const _beneficiary = await BeneficiariesService.beneficiaryProfile(req.user.id);
+      const Wallets = _beneficiary.Wallets.map(wallet => {
+        total_wallet_balance += wallet.balance;
+        total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+        total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+        const w = wallet.toObject();
+        delete w.ReceivedTransactions;
+        delete w.SentTransactions;
+        return w;
+      });
+
+      const beneficiary = _beneficiary.toObject();
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Profile.', {
+        total_wallet_balance,
+        total_wallet_received,
+        total_wallet_spent,
+        ...beneficiary,
+        Wallets
+      });
       return Response.send(res);
     } catch (error) {
       console.log(error);
@@ -457,7 +496,11 @@ class BeneficiariesController {
       const beneficiary = req.beneficiary.toJSON();
       const Transactions = await BeneficiariesService.beneficiaryTransactions(beneficiary.id);
       const transactions_count = Transactions.length;
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Transactions.', {...beneficiary, transactions_count, Transactions});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Transactions.', {
+        ...beneficiary,
+        transactions_count,
+        Transactions
+      });
       return Response.send(res);
     } catch (error) {
       console.log(error);

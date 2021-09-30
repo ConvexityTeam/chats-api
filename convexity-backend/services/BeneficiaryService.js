@@ -117,7 +117,8 @@ class BeneficiariesService {
   static async beneficiaryDetails(id) {
     return User.findOne({
       where: {
-        id
+        id,
+        RoleId: AclRoles.Beneficiary
       },
       attributes: userConst.publicAttr,
       include: [{
@@ -135,6 +136,33 @@ class BeneficiariesService {
             "SentTransactions"
           ]
         },
+      ]
+    });
+  }
+
+  static async beneficiaryProfile(id) {
+    return User.findOne({
+      where: {
+        id,
+        RoleId: AclRoles.Beneficiary
+      },
+      include: [{
+          model: Campaign,
+          as: 'Campaigns',
+          through: {
+            attributes: []
+          },
+          include: ['Organisation']
+        },
+        {
+          model: Wallet,
+          as: "Wallets",
+          include: [
+            "ReceivedTransactions",
+            "SentTransactions"
+          ]
+        },
+        'Accounts'
       ]
     });
   }

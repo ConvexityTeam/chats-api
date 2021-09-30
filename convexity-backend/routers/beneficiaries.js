@@ -1,10 +1,22 @@
+const {
+  GodModeAuth,
+  BeneficiaryAuth
+} = require("../middleware");
+const {
+  AuthController,
+  BeneficiaryController,
+  CampaignController
+} = require('../controllers');
+
+const {
+  CommonValidator,
+  BeneficiaryValidator,
+  ComplaintValidator,
+  CampaignValidator
+} = require("../validators");
 const router = require("express").Router();
-const {AuthController, BeneficiaryController, CampaignController} = require('../controllers');
-const { BeneficiaryAuth } = require("../middleware");
-const { CommonValidator, BeneficiaryValidator, ComplaintValidator, CampaignValidator } = require("../validators");
 
 router.get('/', BeneficiaryController.getAllUsers);
-// router.put('/:id', BeneficiaryController.updatedUser);
 router.delete('/:id', BeneficiaryController.deleteUser);
 router.post('/add-account', BeneficiaryController.addAccount);
 router.post('/register', BeneficiaryController.createUser);
@@ -14,9 +26,25 @@ router.get('/complaints/:beneficiary', BeneficiaryController.getComplaintsByBene
 router.get('/user/:beneficiary', BeneficiaryController.getBeneficiaryUserWallet)
 router.get('/user-details/:beneficiary', BeneficiaryController.getBeneficiaryUser)
 
+router.route('/profile')
+  .get(
+    BeneficiaryAuth,
+    BeneficiaryController.getProfile
+  );
+
+router.route('/:id')
+  .delete(
+    GodModeAuth,
+    BeneficiaryController.deleteUser
+  )
+  .put(
+    BeneficiaryAuth,
+    BeneficiaryController.updatedUser
+  );
+
 // Refactored
 router.post(
-  '/auth/register', 
+  '/auth/register',
   BeneficiaryValidator.validateSelfRegister,
   CommonValidator.checkEmailNotTaken,
   CommonValidator.checkPhoneNotTaken,
@@ -35,23 +63,13 @@ router.route('/transactions')
     CampaignController.getBeneficiaryCampaigns
   );
 
-router.route('/:id')
-  // .get(
-  //   BeneficiaryAuth,
-  //   CampaignController.getBeneficiaryCampaigns
-  // )
-  .put(
-    BeneficiaryAuth,
-    BeneficiaryController.updatedUser
-  );
-
 router.route('/campaigns/:campaign_id/complaints')
-.get(
-  BeneficiaryAuth,
-  CampaignValidator.campaignExists,
-  BeneficiaryValidator.IsCampaignBeneficiary,
-  CampaignController.getBeneficiaryCampaignComplaint
-)
+  .get(
+    BeneficiaryAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryValidator.IsCampaignBeneficiary,
+    CampaignController.getBeneficiaryCampaignComplaint
+  )
   .post(
     BeneficiaryAuth,
     CampaignValidator.campaignExists,
