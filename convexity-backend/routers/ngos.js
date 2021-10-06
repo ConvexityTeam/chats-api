@@ -40,10 +40,5 @@ router.post(
 router.post('/beneficiaries/register', FieldAgentAuth, IsOrgMember, AuthController.createBeneficiary)
 router.post('/beneficiaries/register-special-case', FieldAgentAuth, IsOrgMember, AuthController.sCaseCreateBeneficiary)
 
-// beneficiaries/register
-// beneficiaries/register-special-case
-
-// organisation
-
 
 module.exports = router;

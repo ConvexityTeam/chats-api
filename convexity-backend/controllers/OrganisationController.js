@@ -845,28 +845,9 @@ class OrganisationController {
 
   static async createVendor(req, res) {
     try {
-      const {
-        user,
-        organisation
-      } = req;
-      const {
-        first_name,
-        last_name,
-        email,
-        phone,
-        address,
-        store_name,
-        location
-      } = SanitizeObject(req.body);
-      const vendor = await OrganisationService.createVendorAccount(organisation, {
-        first_name,
-        last_name,
-        email,
-        phone,
-        address,
-        store_name,
-        location
-      }, user);
+      const { user, organisation } = req;
+      const data = SanitizeObject(req.body, [first_name, last_name, email, phone, address, store_name, location]);
+      const vendor = await OrganisationService.createVendorAccount(organisation, data, user);
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
@@ -897,6 +878,30 @@ class OrganisationController {
       Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }
+  }
+
+  static async getVendorSummary(req, res) {
+    try {
+      const organisation = req.organisation;
+      const vendors_count = (await OrganisationService.organisationVendors(organisation)).length;
+      const yesterday = new Date((new Date).setDate((new Date).getDate() - 1));
+      const previous_stat = await OrganisationService.dailyVendorStat(organisation.id, yesterday);
+      const today_stat = await OrganisationService.dailyVendorStat(organisation.id);
+      const Transactions = await OrganisationService.vendorsTransactions(organisation.id);
+      Response.setSuccess(200, 'Organisation vendors Summary', {
+        organisation,
+        vendors_count,
+        previous_stat,
+        today_stat,
+        Transactions
+      });
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+
   }
 }
 

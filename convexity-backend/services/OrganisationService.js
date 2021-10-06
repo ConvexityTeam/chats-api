@@ -1,10 +1,14 @@
 const {
   User,
+  Order,
+  Product,
   Market,
   Wallet,
   Organisations,
   Transaction,
-  OrganisationMembers
+  OrderProduct,
+  OrganisationMembers,
+  StoreTransaction
 } = require('../models');
 const {
   OrgRoles,
@@ -21,7 +25,9 @@ const {
 const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");
-const { userConst } = require('../constants');
+const {
+  userConst
+} = require('../constants');
 const createWalletQueue = amqp["default"].declareQueue("createWallet", {
   durable: true
 });
@@ -173,8 +179,7 @@ class OrganisationService {
       where: {
         walletSenderId: Sequelize.where(Sequelize.col('SenderWallet.AccountUserId'), OrganisationId)
       },
-      include: [
-        {
+      include: [{
           model: Wallet,
           as: 'SenderWallet',
           attributes: [],
@@ -185,24 +190,120 @@ class OrganisationService {
             }
           }
         },
-        
-          {
-            model: Wallet,
-            as: 'RecievingWallet',
-            attributes: { 
-              exclude: ['privateKey', 'bantuPrivateKey']
-            },
-            include: [
-              {
-                model: User,
-                as: 'User',
-                attributes: userConst.publicAttr
-              }
-            ]
-          }
-        
+
+        {
+          model: Wallet,
+          as: 'RecievingWallet',
+          attributes: {
+            exclude: ['privateKey', 'bantuPrivateKey']
+          },
+          include: [{
+            model: User,
+            as: 'User',
+            attributes: userConst.publicAttr
+          }]
+        }
+
       ]
     });
+  }
+
+  static async dailyVendorStat(OrganisationId, date = new Date) {
+    const START = date.setHours(0, 0, 0, 0);
+    const END = date.setHours(23, 59, 59);
+    return Organisations.findOne({
+      where: {
+        id: OrganisationId
+      },
+      attributes: {
+        exclude: Object.keys(Organisations.rawAttributes),
+        include: [
+          [Sequelize.fn('SUM', Sequelize.col('Vendors.StoreTransactions.Order.Cart.total_amount')), 'transactions_value'],
+          [Sequelize.fn('COUNT', Sequelize.col("Vendors.StoreTransactions.id")), "transactions_count"],
+          [Sequelize.fn('COUNT', Sequelize.col("Vendors.StoreTransactions.Order.Products.id")), "products_count"],
+          [Sequelize.fn('COUNT', Sequelize.col("Vendors.id")), "vendors_count"]
+        ]
+      },
+      include: [{
+        model: User,
+        as: 'Vendors',
+        attributes: [],
+        include: [{
+          attributes: [],
+          model: StoreTransaction,
+          as: 'StoreTransactions',
+          where: {
+            createdAt: {
+              [Op.gt]: START,
+              [Op.lt]: END
+            }
+          },
+          include: [{
+            model: Order,
+            as: 'Order',
+            attributes: [],
+            where: {
+              status: {
+                [Op.in]: ['confirmed', 'delivered']
+              }
+            },
+            include:[ {
+              attributes: [],
+              model: Product,
+              as: 'Products', 
+              through: {
+                attributes: []
+              }
+            }, 
+            {
+              model: OrderProduct,
+              as: 'Cart',
+              attributes: []
+            }
+          ]
+          }]
+        }]
+      }],
+      group: [
+        // 'Vendors.id', 
+        'Organisations.id', 
+        'Vendors.OrganisationMembers.UserId',
+        'Vendors.OrganisationMembers.OrganisationId',
+        'Vendors.OrganisationMembers.role',
+        'Vendors.OrganisationMembers.createdAt',
+        'Vendors.OrganisationMembers.updatedAt',
+        // 'Vendors.StoreTransactions.id',
+        // 'Vendors.StoreTransactions.Order.id',
+        // 'Vendors.StoreTransactions.Order.Cart.id'
+      ]
+    })
+  }
+
+  static async vendorsTransactions(OrganisationId, filter = null) {
+    return StoreTransaction.findAll({
+      where: {...filter},
+      include: [
+        { 
+          model: User,
+          as: 'Vendor',
+          attributes: userConst.publicAttr,
+          include: [
+            'Store',
+            { 
+              model: Organisations,
+              as: 'Organisations',
+              attributes: [],
+              where: {
+                id: OrganisationId
+              },
+              through: {
+                attributes: []
+              }
+            }
+          ]
+        }
+      ]
+    })
   }
 }
 

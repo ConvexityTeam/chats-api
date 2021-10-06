@@ -20,9 +20,11 @@ router.get('/store/products/:storeId', VendorController.getProductByStore)
 router.get('/summary/:id', VendorController.getSummary);
 
 
-// auth/login - vendor id and password
 router.post('/auth/login', AuthController.signInVendor);
-// router.post('/auth/password/init-reset')
-// router.post('/auth/password/reset)
+// router.get('/products')
+// router.get('/orders');
+// router.get('/orders/:order_id');
+
+
 
 module.exports = router;

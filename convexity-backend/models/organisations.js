@@ -1,6 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 const { async } = require("regenerator-runtime");
+const { AclRoles, OrgRoles } = require("../utils");
 module.exports = (sequelize, DataTypes) => {
   class Organisations extends Model {
     /**
@@ -19,7 +20,18 @@ module.exports = (sequelize, DataTypes) => {
         },
       });
 
+
+      Organisations.belongsToMany(models.User, {
+        as: 'Vendors',
+        through: {
+          model: models.OrganisationMembers,
+          scope: { 
+            role: OrgRoles.Vendor
+          }
+        }
+      });
       Organisations.hasMany(models.OrganisationMembers, { as: "Member" });
+      Organisations.hasMany(models.OrganisationMembers, { as: "Members" });
       Organisations.hasMany(models.FundAccount, { as: "MintTransaction" });
       Organisations.hasMany(models.Campaign, { as: 'Campaign', foreignKey: "OrganisationId" })
       Organisations.hasMany(models.Wallet, {

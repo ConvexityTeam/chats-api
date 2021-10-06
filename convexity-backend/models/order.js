@@ -11,22 +11,21 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Order.hasMany(models.Transaction, {
-        as: 'Transaction', foreignKey: 'TransactionalId',
-        constraints: false,
-        scope: {
-          TransactionalType: 'order'
-        }
+      Order.hasOne(models.StoreTransaction, {
+        as: 'Transaction', foreignKey: 'OrderId',
       });
-      Order.hasMany(models.OrderProducts, { as: 'Cart' })
-      Order.belongsTo(models.User, { as: 'UserOrder', foreignKey: 'UserId' })
+      Order.hasMany(models.OrderProduct, 
+        { as: 'Cart', foreignKey: 'OrderId' }
+      )
+      Order.belongsToMany(models.Product, 
+        { as: 'Products', through: models.OrderProduct }
+      )
+      Order.belongsTo(models.User, { as: 'Vendor', foreignKey: 'VendorId' })
     }
   };
   Order.init({
-    OrderUniqueId: {
-      type: DataTypes.STRING,
-    },
-    UserId: DataTypes.INTEGER,
+    reference:  DataTypes.STRING,
+    VendorId: DataTypes.INTEGER,
     status: DataTypes.ENUM('pending', 'processing', 'confirmed', 'delivered'),
 
   }, {

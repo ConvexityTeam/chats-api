@@ -93,6 +93,12 @@ router.route('/:organisation_id/vendors')
     CommonValidator.checkPhoneNotTaken,
     OrganisationController.createVendor
   )
+router.route('/:organisation_id/vendors/summary')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    OrganisationController.getVendorSummary
+  )
 
 router.route('/:organisation_id/campaigns')
   .get(
