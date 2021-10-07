@@ -71,7 +71,13 @@ class VendorService {
     }
 
     static async getVendor(id, extraClause = null) {
-        return User.findOne({...extraClause, id, RoleId: AclRoles.Vendor});
+        return User.findOne({
+            where: {
+                ...extraClause,
+                id,
+                RoleId: AclRoles.Vendor
+            }
+        });
     }
 
     static async deleteUser(id) {
