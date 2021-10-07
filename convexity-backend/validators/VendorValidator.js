@@ -11,8 +11,23 @@ const {
   VendorService
 } = require('../services');
 const BaseValidator = require('./BaseValidator');
+const ProductValidator = require('./ProductValidator');
 
 class VendorValidator extends BaseValidator {
+  static createOrderRules() {
+    return [
+      body('*.qantity')
+      .isInt({
+        min: 1,
+        allow_leading_zeroes: false
+      })
+      .withMessage('Product qantity must be numeric and allowed minimum is 1'),
+      body('*.product_id')
+        .isNumeric()
+        .withMessage('Product has invalid ID.')
+        .custom(ProductValidator.vendorHasProduct)
+    ]
+  }
   static createVendorRules() {
     return [
       body('first_name')
@@ -58,6 +73,23 @@ class VendorValidator extends BaseValidator {
       }
       next();
     } catch (error) {
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Contact support.');
+      return Response.send(res);
+    }
+  }
+
+  static async VendorExists(req, res, next) {
+    try {
+      const id = req.params.vendor_id || req.body.vendor_id || req.user.id;
+      const vendor = await VendorService.getVendor(id);
+      if (vendor) {
+        req.vendor = vendor;
+        return next();
+      }
+      Respons.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Invalid vendor account or vendor ID.');
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Contact support.');
       return Response.send(res);
     }

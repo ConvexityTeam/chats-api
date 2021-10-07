@@ -3,7 +3,7 @@ var bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const mailer = require('../libs/Mailer');
 const util = require('../libs/Utils');
-const VendorServices = require('../services/VendorServices');
+const VendorServices = require('../services/VendorService');
 const {
     data
 } = require('../libs/Utils');

@@ -2,11 +2,12 @@ const router = require('express').Router();
 
 const { VendorController, AuthController } = require('../controllers');
 const { Auth, VendorAuth } = require('../middleware');
+const VendorValidator = require('../validators/VendorValidator');
 
 
 router.get('/', VendorController.getAllVendors);
 router.get('/me', VendorAuth, VendorController.getVendor);
-router.get('/:id', Auth, VendorController.getVendor);
+
 router.post('/add-account', VendorController.addAccount)
 router.get('/stores/all', VendorController.getAllStores)
 router.get('/store/:id', VendorController.getVendorStore)
@@ -21,9 +22,24 @@ router.get('/summary/:id', VendorController.getSummary);
 
 
 router.post('/auth/login', AuthController.signInVendor);
-// router.get('/products')
-// router.get('/orders');
+
+router.route('/products')
+  .get(
+    VendorAuth,
+    VendorValidator.VendorExists,
+    VendorController.vendorProducts
+  )
+router.route('/orders')
+    .post(
+      VendorAuth,
+      VendorValidator.VendorExists,
+      VendorValidator.createOrderRules(),
+      VendorValidator.validate,
+      VendorController.createOrder
+    );
 // router.get('/orders/:order_id');
+
+router.get('/:id', Auth, VendorController.getVendor);
 
 
 

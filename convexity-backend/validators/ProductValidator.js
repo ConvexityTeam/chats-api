@@ -1,7 +1,7 @@
 const BaseValidator = require('./BaseValidator');
 const { Response } = require('../libs');
 const { HttpStatusCode } = require('../utils');
-const { VendorService } = require('../services')
+const { VendorService, ProductService } = require('../services')
 const { body } = require('express-validator');
 
 
@@ -34,7 +34,7 @@ class ProductValidator extends BaseValidator {
 
   static async productVendorsExist(req, res, next) {
     const ids = req.body.vendor_id;
-    const vendors = (await Promise.all(ids.map(id => VendorService.getAVendor(id)))).filter(v => !!v);
+    const vendors = (await Promise.all(ids.map(id => VendorService.getVendor(id)))).filter(v => !!v);
     if (vendors && vendors.length != ids.length || !vendors) {
       Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed!', {
         vendor_id:
@@ -44,6 +44,24 @@ class ProductValidator extends BaseValidator {
     }
     req.vendors = vendors;
     next();
+  }
+
+  static async vendorHasProduct(id, {req}) {
+      const vendorId = req.params.vendor_id || req.body.vendor_id || req.vendor.id;
+
+      return ProductService.findProductByVendorId(id, vendorId)
+        .then((product) => {
+          if(!product) {
+            return Promise.reject('Product not found in store.');
+          }
+
+          const found_products = {...req.body.found_products};
+          found_products[id] = product;
+
+          req.body.found_products = found_products;
+
+          Promise.resolve(product);
+        });
   }
 }
 

@@ -1,12 +1,14 @@
 const db = require("../models");
 var bcrypt = require("bcryptjs");
 const util = require("../libs/Utils");
-const VendorServices = require("../services/VendorServices");
+const {VendorService} = require("../services");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
 const { Op } = require("sequelize");
 
 const codeGenerator = require("./../controllers/QrCodeController");
+const { Response } = require("../libs");
+const { HttpStatusCode } = require("../utils");
 
 class VendorController {
   constructor() {
@@ -14,7 +16,7 @@ class VendorController {
   }
   static async getAllVendors(req, res) {
     try {
-      const allVendors = await VendorServices.getAllVendors();
+      const allVendors = await VendorService.getAllVendors();
       util.setSuccess(200, "Vendors retrieved", allVendors);
       return util.send(res);
     } catch (error) {
@@ -22,11 +24,12 @@ class VendorController {
       return util.send(res);
     }
   }
+
   static async getVendor(req, res) {
     const id = req.params.id || req.user.id;
 
     try {
-      const aVendor = await VendorServices.getAVendor(id);
+      const aVendor = await VendorService.getAVendor(id);
       const vToObject = aVendor.toObject();
       vToObject.Wallets = aVendor.Wallets.map(wallet => wallet.toObject());
       if (!aVendor) {
@@ -257,7 +260,6 @@ class VendorController {
       }
     }
   }
-
   static async getProductsValue(req, res) {
     await db.Products.findAll().then((products) => {
       const sum = products.reduce((a, b) => {
@@ -282,7 +284,6 @@ class VendorController {
     util.setSuccess(200, "Order Retrieved", orders);
     return util.send(res);
   }
-
   static async getSummary(req, res) {
     try {
       const vendor = req.params.id;
@@ -326,6 +327,25 @@ class VendorController {
       util.setError(404, "Invalid Vendor Id");
       return util.send(res);
     }
+  }
+
+  // Refactored
+  static async vendorProducts(req, res) {
+    try {
+      const products = await VendorService.vendorStoreProducts(req.vendor.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor products', products);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
+  static async createOrder(req, res) {
+    const body = req.body;
+    Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Create Order', body);
+    return Response.send(res);
   }
 }
 

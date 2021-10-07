@@ -4,13 +4,17 @@ const {
 } = require('sequelize');
 const {
     User,
-    Market
+    Store,
+    Market,
+    Product
 } = require('../models');
-const { AclRoles } = require('../utils');
+const {
+    AclRoles
+} = require('../utils');
 
-class VendorServices {
+class VendorService {
     static searchVendorStore(store_name, extraClause = null) {
-        const where = { 
+        const where = {
             ...extraClause,
             store_name: Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('store_name')), 'LIKE', `%${store_name.toLowerCase()}%`)
         };
@@ -58,9 +62,16 @@ class VendorServices {
     static async getAVendor(id) {
         const RoleId = AclRoles.Vendor;
         return User.findOne({
-            where: { id, RoleId },
+            where: {
+                id,
+                RoleId
+            },
             include: ['Store', 'Wallets', 'AssociatedOrganisations', 'Accounts']
         });
+    }
+
+    static async getVendor(id, extraClause = null) {
+        return User.findOne({...extraClause, id, RoleId: AclRoles.Vendor});
     }
 
     static async deleteUser(id) {
@@ -85,7 +96,31 @@ class VendorServices {
         }
     }
 
+    // Refactor
+
+    static async vendorStoreProducts(vendorId) {
+        return Product.findAll({
+            include: [{
+                model: Market,
+                as: 'Store',
+                attributes: [],
+                where: {
+                    UserId: vendorId
+                }
+            }]
+        })
+    }
+
+    // static async createOrder(order, products) {
+    //     return Product.create(order)
+    //         .then(
+    //             (_order) => Promise.all(products.map(
+    //                 product => _order.createCart(product)
+    //             ))
+    //         )
+    // }
+
 
 }
 
-module.exports = VendorServices;
+module.exports = VendorService;
