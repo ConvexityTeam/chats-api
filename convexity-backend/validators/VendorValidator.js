@@ -16,15 +16,18 @@ const ProductValidator = require('./ProductValidator');
 class VendorValidator extends BaseValidator {
   static createOrderRules() {
     return [
-      body('*.qantity')
+      body()
+        .isArray({min: 1})
+        .withMessage('Add at least 1 product'),
+      body('*.quantity')
       .isInt({
         min: 1,
         allow_leading_zeroes: false
       })
-      .withMessage('Product qantity must be numeric and allowed minimum is 1'),
+      .withMessage('Product quantity must be numeric and allowed minimum is 1'),
       body('*.product_id')
-        .isNumeric()
-        .withMessage('Product has invalid ID.')
+        .isInt()
+        .withMessage('Product has invalid ID. ID must be numeric.')
         .custom(ProductValidator.vendorHasProduct)
     ]
   }

@@ -17,3 +17,13 @@ exports.generatePaystackRef = () => {
 
   return 'PAYCHATS' + random;
 }
+
+exports.generateOrderRef = () => {
+  const random = randomstring.generate({
+    length: 7,
+    charset: 'alphanumeric',
+    capitalization: 'uppercase'
+  });
+
+  return 'CHATSQRC' + random;
+}

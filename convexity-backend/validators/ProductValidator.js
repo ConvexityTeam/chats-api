@@ -46,22 +46,22 @@ class ProductValidator extends BaseValidator {
     next();
   }
 
-  static async vendorHasProduct(id, {req}) {
+  static vendorHasProduct(id, {req}) {
       const vendorId = req.params.vendor_id || req.body.vendor_id || req.vendor.id;
-
-      return ProductService.findProductByVendorId(id, vendorId)
-        .then((product) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const product = await ProductService.findProductByVendorId(id, vendorId);
           if(!product) {
-            return Promise.reject('Product not found in store.');
+            return reject('Product not found in store.');
           }
-
-          const found_products = {...req.body.found_products};
-          found_products[id] = product;
-
-          req.body.found_products = found_products;
-
-          Promise.resolve(product);
-        });
+          const found_products = {...req.found_products};
+          found_products[id] = product.dataValues;
+          req.found_products = found_products;
+          resolve(true);
+        } catch (error) {
+          reject('Product not found in store.');
+        }
+      });
   }
 }
 

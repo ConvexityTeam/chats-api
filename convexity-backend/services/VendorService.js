@@ -3,10 +3,15 @@ const {
     Op
 } = require('sequelize');
 const {
+    userConst
+} = require('../constants');
+const {
     User,
     Store,
+    Order,
     Market,
-    Product
+    Product,
+    OrderProduct
 } = require('../models');
 const {
     AclRoles
@@ -117,15 +122,62 @@ class VendorService {
         })
     }
 
-    // static async createOrder(order, products) {
-    //     return Product.create(order)
-    //         .then(
-    //             (_order) => Promise.all(products.map(
-    //                 product => _order.createCart(product)
-    //             ))
-    //         )
-    // }
+    static async createOrder(order, Cart) {
+        return Order.create({
+            ...order,
+            Cart
+        }, {
+            include: [{
+                model: OrderProduct,
+                as: 'Cart'
+            }]
+        });
+    }
 
+    static async getOrder(id, extraClause = null) {
+        return Order.findOne({
+            where: {
+                ...extraClause,
+                id
+            },
+            include: [{
+                    model: User,
+                    as: 'Vendor',
+                    attributes: userConst.publicAttr,
+                    include: ['Store']
+                },
+                {
+                    model: OrderProduct,
+                    as: 'Cart',
+                    include: ['Product']
+                }
+            ],
+        });
+    }
+
+    static async findVendorOrders(VendorId, extraClause = null) {
+        return Order.findAll({
+            where: {
+                ...extraClause,
+                VendorId
+            },
+            include: [{
+                    model: User,
+                    as: 'Vendor',
+                    attributes: userConst.publicAttr,
+                    include: ['Store']
+                },
+                {
+                    model: OrderProduct,
+                    as: 'Cart',
+                    include: ['Product']
+                }
+            ],
+            order: [
+                ['id', 'DESC']
+            ]
+        });
+    }
 
 }
 

@@ -1,3 +1,5 @@
+const { Product, Market } = require('../models');
+
 class ProductService {
   static addProduct(product, vendors, campaign) {
     return Promise.all(

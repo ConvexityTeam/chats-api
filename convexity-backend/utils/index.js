@@ -6,6 +6,7 @@ const ResponseCodes = require('./responseCodes');
 const Encryption = require('./encryption');
 const File = require('./file');
 const DateUtil = require('./date');
+const QrCodeUtil = require('./qrcode');
 
 module.exports = {
   Types, ...Types, 
@@ -15,5 +16,6 @@ module.exports = {
   ...ResponseCodes,
   Encryption, ...Encryption,
   File, ...File,
-  DateUtil, ...DateUtil
+  DateUtil, ...DateUtil,
+  QrCodeUtil, ...QrCodeUtil
 };

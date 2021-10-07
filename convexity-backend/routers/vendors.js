@@ -30,6 +30,10 @@ router.route('/products')
     VendorController.vendorProducts
   )
 router.route('/orders')
+    .get(
+      VendorAuth, 
+      VendorController.getVendorOrders
+    )
     .post(
       VendorAuth,
       VendorValidator.VendorExists,
@@ -37,7 +41,12 @@ router.route('/orders')
       VendorValidator.validate,
       VendorController.createOrder
     );
-// router.get('/orders/:order_id');
+    
+router.route('/orders/:id')
+      .get(
+        VendorAuth,
+        VendorController.getOrderById
+      );
 
 router.get('/:id', Auth, VendorController.getVendor);
 
