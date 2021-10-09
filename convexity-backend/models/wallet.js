@@ -7,11 +7,11 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    getAccountUserType(options) {
-      if (!this.AccountUserType) return Promise.resolve(null);
-      const mixinMethodName = `get${uppercaseFirst(this.AccountUserType)}`;
-      return this[mixinMethodName](options);
-    }
+    // getAccountUserType(options) {
+    //   if (!this.AccountUserType) return Promise.resolve(null);
+    //   const mixinMethodName = `get${uppercaseFirst(this.AccountUserType)}`;
+    //   return this[mixinMethodName](options);
+    // }
 
     static associate(models) {
       Wallet.hasMany(models.Transaction, {
@@ -21,14 +21,13 @@ module.exports = (sequelize, DataTypes) => {
       });
       Wallet.hasMany(models.Transaction, { 
         as: "ReceivedTransactions",
-        targetKey: "uuid",
-        foreignKey: "walletRecieverId"
-
+        foreignKey: "walletRecieverId",
+        targetKey: 'uuid'
       });
       Wallet.hasMany(models.Transaction, { 
         as: "SentTransactions",
+        foreignKey: "walletSenderId",
         targetKey: "uuid",
-        foreignKey: "walletSenderId"
       });
       Wallet.belongsTo(models.User, {
         as: 'User',
@@ -65,10 +64,10 @@ module.exports = (sequelize, DataTypes) => {
 
           for (const instance of findResult) {
             if ( instance.AccountUserType === "user" && instance.user !== undefined ) {
-              instance.AccountUserId = instance.user;
+              instance.AccountUserId = instance.user.id;
             } 
             else if ( instance.AccountUserType === "organisation" && instance.organisation !== undefined ) {
-              instance.AccountUserId = instance.organisation;
+              instance.AccountUserId = instance.organisation.id;
             }
             // To prevent mistakes:
             delete instance.user;

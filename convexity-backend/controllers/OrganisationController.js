@@ -3,7 +3,7 @@ const {
   Op
 } = require("sequelize");
 const {
-  OrganisationService
+  OrganisationService, VendorService
 } = require('../services');
 const {
   HttpStatusCode,
@@ -862,7 +862,7 @@ class OrganisationController {
       const {
         organisation
       } = req;
-      const vendors = (await OrganisationService.organisationVendors(organisation)).map(res => {
+      const vendors = (await VendorService.organisationVendors(organisation)).map(res => {
         const toObject = res.toObject();
         toObject.Wallet.map(wallet => {
           delete wallet.privateKey;
@@ -880,14 +880,28 @@ class OrganisationController {
     }
   }
 
-  static async getVendorSummary(req, res) {
+  static async getVendorDetails(req, res) {
+    try {
+      const OrganisationId = req.organisation.id;
+      const vendorId = req.params.vendor_id || req.body.vendor_id;
+      const vendor = await VendorService.vendorPublicDetails(vendorId, {OrganisationId});
+      Response.setSuccess(200, 'Organisation vendors', vendor);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
+  static async getVendorsSummary(req, res) {
     try {
       const organisation = req.organisation;
-      const vendors_count = (await OrganisationService.organisationVendors(organisation)).length;
+      const vendors_count = (await VendorService.organisationVendors(organisation)).length;
       const yesterday = new Date((new Date).setDate((new Date).getDate() - 1));
-      const previous_stat = await OrganisationService.dailyVendorStat(organisation.id, yesterday);
-      const today_stat = await OrganisationService.dailyVendorStat(organisation.id);
-      const Transactions = await OrganisationService.vendorsTransactions(organisation.id);
+      const previous_stat = await VendorService.organisationDailyVendorStat(organisation.id, yesterday);
+      const today_stat = await VendorService.organisationDailyVendorStat(organisation.id);
+      const Transactions = await VendorService.organisationIdVendorsTransactions(organisation.id);
       Response.setSuccess(200, 'Organisation vendors Summary', {
         organisation,
         vendors_count,

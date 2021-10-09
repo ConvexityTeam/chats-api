@@ -114,9 +114,10 @@ class BeneficiariesService {
     });
   }
 
-  static async beneficiaryDetails(id) {
+  static async beneficiaryDetails(id, extraClause = null) {
     return User.findOne({
       where: {
+        ...extraClause,
         id,
         RoleId: AclRoles.Beneficiary
       },

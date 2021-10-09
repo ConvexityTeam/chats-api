@@ -97,7 +97,14 @@ router.route('/:organisation_id/vendors/summary')
   .get(
     NgoSubAdminAuth,
     IsOrgMember,
-    OrganisationController.getVendorSummary
+    OrganisationController.getVendorsSummary
+  )
+
+router.route('/:organisation_id/vendors/:vendor_id')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    OrganisationController.getVendorDetails
   )
 
 router.route('/:organisation_id/campaigns')

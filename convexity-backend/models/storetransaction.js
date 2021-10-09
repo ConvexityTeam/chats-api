@@ -12,8 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       StoreTransaction.hasOne(models.Transaction, {
-        foreignKey: 'WalletTxId',
-        as: 'WalletTransaction'
+        as: 'WalletTransaction', targetKey: 'WalletTxId'
       });
       StoreTransaction.belongsTo(models.User, { foreignKey: 'VendorId', as: 'Vendor'});
       StoreTransaction.belongsTo(models.User, { foreignKey: 'BeneficiaryId', as: 'Beneficiary'});
