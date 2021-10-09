@@ -22,7 +22,7 @@ const {
     OrgRoles,
     AclRoles,
     GenearteVendorId
-  } = require('../utils');
+} = require('../utils');
 
 class VendorService {
     static searchVendorStore(store_name, extraClause = null) {
@@ -86,9 +86,26 @@ class VendorService {
         return User.findOne({
             where: {
                 ...extraClause,
-                id,
+                // id,
                 RoleId: AclRoles.Vendor
             }
+        });
+    }
+
+    static async getOrganisationVendor(id, OrganisationId) {
+        return User.findOne({
+            where: {
+                id,
+                RoleId: AclRoles.Vendor
+            },
+            attributes: userConst.publicAttr,
+            include: [{
+                model: Organisations,
+                as: 'Organisations',
+                where: {
+                    id: OrganisationId
+                }
+            }]
         });
     }
 
@@ -161,6 +178,19 @@ class VendorService {
         });
     }
 
+    static async findVendorStore(UserId) {
+        return Market.findOne({
+            include: [{
+                model: User,
+                as: 'StoreOwner',
+                attributes: [],
+                where: {
+                    id: UserId
+                }
+            }]
+        })
+    }
+
     static async findVendorOrders(VendorId, extraClause = null) {
         return Order.findAll({
             where: {
@@ -186,7 +216,10 @@ class VendorService {
     }
 
     static async vendorPublicDetails(id, extraClause = null) {
-        const {OrganisationId, ...filter } = extraClause;
+        const {
+            OrganisationId,
+            ...filter
+        } = extraClause;
         return User.findOne({
             where: {
                 ...filter,
@@ -194,15 +227,16 @@ class VendorService {
                 RoleId: AclRoles.Vendor
             },
             attributes: userConst.publicAttr,
-            include: [
-                {
+            include: [{
                     model: Organisations,
                     as: 'Organisations',
                     through: {
                         attributes: []
                     },
                     where: {
-                        ...(OrganisationId && {id: OrganisationId})
+                        ...(OrganisationId && {
+                            id: OrganisationId
+                        })
                     }
                 },
                 {

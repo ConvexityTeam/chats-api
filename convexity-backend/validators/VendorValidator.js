@@ -18,7 +18,7 @@ class VendorValidator extends BaseValidator {
     return [
       body()
         .isArray({min: 1})
-        .withMessage('Add at least 1 product'),
+        .withMessage('Minimum of 1 product is required.'),
       body('*.quantity')
       .isInt({
         min: 1,

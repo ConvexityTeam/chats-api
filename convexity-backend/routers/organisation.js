@@ -151,7 +151,6 @@ router.route('/:organisation_id/campaigns/:campaign_id/products')
     CampaignValidator.campaignBelongsToOrganisation,
     ProductValidator.addProductRules(),
     ProductValidator.validate,
-    ProductValidator.productVendorsExist,
     ProductController.addCampaignProduct
   );
 

@@ -5,9 +5,14 @@ const { HttpStatusCode, SanitizeObject } = require('../utils');
 class ProductController {
   static async addCampaignProduct(req, res) {
     try {
-      const {body, vendors, campaign} = req;
-      const data = SanitizeObject(body, ['type', 'tag', 'cost']);
-      const products = await ProductService.addProduct(data, vendors, campaign);
+      const {body, campaign} = req;
+      const products = await  Promise.all(body.map(
+        _body => {
+          const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
+          return ProductService.addProduct(data, _body.vendors, campaign.id);
+        }
+      ));
+       
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Product added to stores', products);
       Response.send(res)
     } catch (error) {

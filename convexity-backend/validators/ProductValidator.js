@@ -1,8 +1,10 @@
 const BaseValidator = require('./BaseValidator');
 const { Response } = require('../libs');
-const { HttpStatusCode } = require('../utils');
+const { HttpStatusCode, AclRoles } = require('../utils');
+const { User, Organisations } = require('../models');
 const { VendorService, ProductService } = require('../services')
 const { body } = require('express-validator');
+const { userConst } = require('../constants');
 
 
 class ProductValidator extends BaseValidator {
@@ -10,40 +12,52 @@ class ProductValidator extends BaseValidator {
 
   static addProductRules() {
     return [
-      body('type')
+      body()
+        .isArray({min: 1})
+        .withMessage('Minimum of 1 product is required.'),
+      body('*.type')
       .notEmpty()
       .withMessage('Product / Service type is required')
       .isIn(this.types)
       .withMessage(`Type must be any of [${this.types.join(', ')}]`),
-      body('tag')
+      body('*.tag')
       .notEmpty()
       .withMessage('Product/Service tag is required.'),
-      body('cost')
+      body('*.cost')
       .notEmpty()
       .withMessage('Product/Service cost is required.')
       .isFloat()
       .withMessage('Valid Product/Service cost is required.')
       .custom(value => parseFloat(value) > 0)
       .withMessage('Product/Service cost must be positive.'),
-      body('vendor_id')
-      .notEmpty()
-      .withMessage('Vendors are required.')
-      .customSanitizer(value => Array.isArray(value) ? value : [value])
+      body('*.vendors')
+      .isArray({min: 1})
+      .withMessage('Minimum of 1 vendor is required.'),
+      body('*.vendors.*')
+      .isInt()
+      .withMessage('Vendor ID must be numeric.')
+      .custom(ProductValidator.productVendorsExist)
     ]
   }
 
-  static async productVendorsExist(req, res, next) {
-    const ids = req.body.vendor_id;
-    const vendors = (await Promise.all(ids.map(id => VendorService.getVendor(id)))).filter(v => !!v);
-    if (vendors && vendors.length != ids.length || !vendors) {
-      Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed!', {
-        vendor_id:
-        ['One or more invalid vendor(s) specified. Select only existing vendors.']
+  static productVendorsExist(id, meta) {
+      const {req, path, location } = meta;
+      // const valuePath = path && path.split('.').map(x => x.split('[').map(y => y.replace(']', ''))).flat().filter(x => x.trim() !== '');
+      const orgId = req.params.organisation_id || req.organisation.id;
+
+      return new Promise(async  (resolve, reject) => {
+        try {
+          const vendor = await VendorService.getOrganisationVendor(id, orgId);
+
+          if(!vendor) {
+            reject('Organisation vendor not found.');
+            return;
+          }
+          resolve(true);
+        } catch (error) {
+          reject(`Error checking vendor`);
+        }
       });
-      return Response.send(res);
-    }
-    req.vendors = vendors;
-    next();
   }
 
   static vendorHasProduct(id, {req}) {
