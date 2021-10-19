@@ -133,8 +133,8 @@ class BeneficiariesService {
           model: Wallet,
           as: "Wallets",
           include: [
-            "ReceivedTransactions",
-            "SentTransactions"
+            // "ReceivedTransactions",
+            "SentTx"
           ]
         },
       ]
@@ -158,10 +158,6 @@ class BeneficiariesService {
         {
           model: Wallet,
           as: "Wallets",
-          include: [
-            "ReceivedTransactions",
-            "SentTransactions"
-          ]
         },
         'Accounts'
       ]
@@ -172,8 +168,8 @@ class BeneficiariesService {
     return Transaction.findAll({
       where: {
         [Op.or]: {
-          walletSenderId: Sequelize.where(Sequelize.col('SenderWallet.AccountUserId'), UserId),
-          walletRecieverId: Sequelize.where(Sequelize.col('RecievingWallet.AccountUserId'), UserId)
+          walletSenderId: Sequelize.where(Sequelize.col('SenderWallet.UserId'), UserId),
+          walletRecieverId: Sequelize.where(Sequelize.col('ReceiverWallet.UserId'), UserId)
         }
       },
       include: [{
@@ -190,7 +186,7 @@ class BeneficiariesService {
         },
         {
           model: Wallet,
-          as: "RecievingWallet",
+          as: "ReceiverWallet",
 
           attributes: {
             exclude: ['privateKey', 'bantuPrivateKey']

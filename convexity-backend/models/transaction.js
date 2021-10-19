@@ -13,13 +13,11 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Transaction.belongsTo(models.Wallet, {
         foreignKey: 'SenderWalletId',
-        targetKey: 'uuid',
         as: 'SenderWallet'
       });
 
       Transaction.belongsTo(models.Wallet, {
         foreignKey: 'ReceiverWalletId',
-        targetKey: 'uuid',
         as: 'ReceiverWallet'
       });
 

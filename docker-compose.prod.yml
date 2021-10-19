@@ -52,26 +52,26 @@ services:
     # security_opt:
       # - no-new-privileges:true
 
-  consumer:
-    depends_on:
-      - postgres
-      - rabbitmq
-      - backend
-    # image: "${CONSUMER_IMAGE}"
-    container_name: consumer
-    build:
-      context: consumer
-      dockerfile: Dockerfile
-    environment:
-      - PORT=8080
-      - NODE_ENV=production
-    networks:
-      - gateway
-      - postgres
-      - rabbitmq
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
+  # consumer:
+  #   depends_on:
+  #     - postgres
+  #     - rabbitmq
+  #     - backend
+  #   # image: "${CONSUMER_IMAGE}"
+  #   container_name: consumer
+  #   build:
+  #     context: consumer
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - PORT=8080
+  #     - NODE_ENV=production
+  #   networks:
+  #     - gateway
+  #     - postgres
+  #     - rabbitmq
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - no-new-privileges:true
 
 networks:
   gateway:

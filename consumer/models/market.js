@@ -14,9 +14,9 @@ module.exports = (sequelize, DataTypes) => {
       Market.hasMany(models.Products, { foreignKey: 'MarketId', as: 'Products' })
       Market.belongsTo(models.User, { 
         foreignKey: 'UserId', as: 'StoreOwner',
-        scope: {
-          RoleId: Acl
-        }
+        // scope: {
+        //   RoleId: Acl
+        // }
       });
     }
   };

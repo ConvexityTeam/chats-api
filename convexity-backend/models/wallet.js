@@ -15,20 +15,17 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       Wallet.hasMany(models.Transaction, {
-        as: "SentTransactions",
+        as: "SentTx",
         foreignKey: "SenderWalletId",
       });
       Wallet.hasMany(models.Transaction, { 
-        as: "ReceivedTransactions",
+        as: "ReceivedTx",
         foreignKey: "ReceiverWalletId",
       });
 
       Wallet.belongsTo(models.User, {
         as: 'User',
         foreignKey: "UserId",
-        scope: {
-          wallet_type: 'user'
-        }
       });
       Wallet.belongsTo(models.Organisations, {
         as: 'Organisation',
@@ -65,25 +62,25 @@ module.exports = (sequelize, DataTypes) => {
       local_currency: DataTypes.STRING,
     },
     {
-      hooks: {
-        afterFind: async (findResult) => {
-          if (!Array.isArray(findResult)) findResult = [findResult];
+      // hooks: {
+      //   afterFind: async (findResult) => {
+      //     if (!Array.isArray(findResult)) findResult = [findResult];
 
-          for (const instance of findResult) {
-            if ( instance.AccountUserType === "user" && instance.user !== undefined ) {
-              instance.AccountUserId = instance.user.id;
-            } 
-            else if ( instance.AccountUserType === "organisation" && instance.organisation !== undefined ) {
-              instance.AccountUserId = instance.organisation.id;
-            }
-            // To prevent mistakes:
-            delete instance.user;
-            delete instance.dataValues.user;
-            delete instance.organisation;
-            delete instance.dataValues.organisation;
-          }
-        },
-      },
+      //     for (const instance of findResult) {
+      //       if ( instance.AccountUserType === "user" && instance.user !== undefined ) {
+      //         instance.AccountUserId = instance.user.id;
+      //       } 
+      //       else if ( instance.AccountUserType === "organisation" && instance.organisation !== undefined ) {
+      //         instance.AccountUserId = instance.organisation.id;
+      //       }
+      //       // To prevent mistakes:
+      //       delete instance.user;
+      //       delete instance.dataValues.user;
+      //       delete instance.organisation;
+      //       delete instance.dataValues.organisation;
+      //     }
+      //   },
+      // },
       sequelize,
       modelName: "Wallet",
     }

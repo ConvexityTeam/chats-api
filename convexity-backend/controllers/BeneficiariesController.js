@@ -1,4 +1,6 @@
-const BeneficiariesService = require("../services/BeneficiaryService");
+const {
+  BeneficiaryService
+} = require("../services");
 const util = require("../libs/Utils");
 const db = require("../models");
 const Validator = require("validatorjs");
@@ -16,7 +18,7 @@ class BeneficiariesController {
 
   static async getAllUsers(req, res) {
     try {
-      const allUsers = await BeneficiariesService.getAllUsers();
+      const allUsers = await BeneficiaryService.getAllUsers();
       if (allUsers.length > 0) {
         util.setSuccess(200, "Users retrieved", allUsers);
       } else {
@@ -120,7 +122,7 @@ class BeneficiariesController {
       return util.send(res);
     }
     try {
-      const updateUser = await BeneficiariesService.updateUser(
+      const updateUser = await BeneficiaryService.updateUser(
         id,
         alteredUser
       );
@@ -147,7 +149,7 @@ class BeneficiariesController {
     }
 
     try {
-      const theUser = await BeneficiariesService.getAUser(id);
+      const theUser = await BeneficiaryService.getAUser(id);
       if (!theUser) {
         util.setError(404, `Cannot find User with the id ${id}`);
       } else {
@@ -171,7 +173,7 @@ class BeneficiariesController {
     }
 
     try {
-      const UserToDelete = await BeneficiariesService.deleteUser(id);
+      const UserToDelete = await BeneficiaryService.deleteUser(id);
 
       if (UserToDelete) {
         util.setSuccess(200, "User deleted");
@@ -197,7 +199,7 @@ class BeneficiariesController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      const beneficiary_exist = await BeneficiariesService.checkBeneficiary(
+      const beneficiary_exist = await BeneficiaryService.checkBeneficiary(
         data.beneficiaryId
       );
       if (beneficiary_exist) {
@@ -205,7 +207,7 @@ class BeneficiariesController {
           BeneficiaryId: data.beneficiaryId,
           report: data.report,
         };
-        const complaint = await BeneficiariesService.createComplaint(
+        const complaint = await BeneficiaryService.createComplaint(
           newComplaint
         );
         util.setSuccess(200, "A new complaint has been made successfully");
@@ -227,11 +229,11 @@ class BeneficiariesController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      const complaint_exist = await BeneficiariesService.checkComplaint(
+      const complaint_exist = await BeneficiaryService.checkComplaint(
         data.complaintId
       );
       if (complaint_exist) {
-        await BeneficiariesService.updateComplaint(data.complaintId).then(
+        await BeneficiaryService.updateComplaint(data.complaintId).then(
           () => {
             util.setSuccess(200, "Complaint Resolved successfully.");
             return util.send(res);
@@ -412,7 +414,7 @@ class BeneficiariesController {
   static async organisationBeneficiaries(req, res) {
     try {
       const organisation = req.organisation;
-      const beneficiaries = await BeneficiariesService.findOrgnaisationBeneficiaries(organisation.id);
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation beneficiaries', beneficiaries);
       return Response.send(res);
     } catch (error) {
@@ -429,7 +431,7 @@ class BeneficiariesController {
       let total_wallet_received = 0;
 
       const id = req.params.beneficiary_id;
-      const _beneficiary = await BeneficiariesService.beneficiaryDetails(id);
+      const _beneficiary = await BeneficiaryService.beneficiaryDetails(id);
       const Wallets = _beneficiary.Wallets.map(wallet => {
         total_wallet_balance += wallet.balance;
         total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
@@ -463,14 +465,14 @@ class BeneficiariesController {
       let total_wallet_balance = 0;
       let total_wallet_received = 0;
 
-      const _beneficiary = await BeneficiariesService.beneficiaryProfile(req.user.id);
+      const _beneficiary = await BeneficiaryService.beneficiaryProfile(req.user.id);
       const Wallets = _beneficiary.Wallets.map(wallet => {
         total_wallet_balance += wallet.balance;
-        total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-        total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+        // total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+        // total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
         const w = wallet.toObject();
-        delete w.ReceivedTransactions;
-        delete w.SentTransactions;
+        // delete w.ReceivedTransactions;
+        // delete w.SentTransactions;
         return w;
       });
 
@@ -494,7 +496,7 @@ class BeneficiariesController {
   static async beneficaryTransactions(req, res) {
     try {
       const beneficiary = req.beneficiary.toJSON();
-      const Transactions = await BeneficiariesService.beneficiaryTransactions(beneficiary.id);
+      const Transactions = await BeneficiaryService.beneficiaryTransactions(beneficiary.id);
       const transactions_count = Transactions.length;
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Transactions.', {
         ...beneficiary,
