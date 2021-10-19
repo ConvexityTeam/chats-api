@@ -11,8 +11,43 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Transaction.belongsTo(models.Wallet, { foreignKey: 'walletSenderId', targetKey: 'uuid', as: 'SenderWallet' });
-      Transaction.belongsTo(models.Wallet, { foreignKey: 'walletRecieverId', targetKey: 'uuid', as: 'RecievingWallet' });
+      Transaction.belongsTo(models.Wallet, {
+        foreignKey: 'SenderWalletId',
+        targetKey: 'uuid',
+        as: 'SenderWallet'
+      });
+
+      Transaction.belongsTo(models.Wallet, {
+        foreignKey: 'ReceiverWalletId',
+        targetKey: 'uuid',
+        as: 'ReceiverWallet'
+      });
+
+      Transaction.belongsTo(models.User, {
+        foreignKey: 'OrganisationId',
+        as: 'Organisations'
+      });
+
+      Transaction.belongsTo(models.User, {
+        foreignKey: 'OrderId',
+        as: 'Order'
+      });
+
+      Transaction.belongsTo(models.User, {
+        foreignKey: 'BeneficiaryId',
+        as: 'Beneficiary',
+        scope: {
+          transaction_type: 'order'
+        }
+      });
+
+      Transaction.belongsTo(models.User, {
+        foreignKey: 'VendorId',
+        as: 'Vendor',
+        scope: {
+          transaction_type: 'order'
+        }
+      });
     }
   };
   Transaction.init({
@@ -21,11 +56,14 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
-    walletSenderId: DataTypes.UUID,
-    walletRecieverId: DataTypes.UUID,
-    TransactionalId: DataTypes.INTEGER,
-    TransactionalType: DataTypes.STRING,
-    transactionHash: DataTypes.STRING,
+    reference: DataTypes.STRING,
+    SenderWalletId: DataTypes.UUID,
+    ReceiverWalletId: DataTypes.UUID,
+    OrderId: DataTypes.INTEGER,
+    VendorId: DataTypes.INTEGER,
+    BeneficiaryId: DataTypes.INTEGER,
+    transaction_type: DataTypes.ENUM('deposit', 'order', 'withdrawal', 'transfer', 'approval', 'spent'),
+    transaction_hash: DataTypes.STRING,
     amount: DataTypes.FLOAT,
     status: DataTypes.ENUM('success', 'processing', 'declined'),
     is_approved: DataTypes.BOOLEAN,

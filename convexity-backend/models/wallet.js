@@ -15,29 +15,32 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       Wallet.hasMany(models.Transaction, {
-        as: "Transactions",
-        targetKey: "uuid",
-        foreignKey: "uuid",
+        as: "SentTransactions",
+        foreignKey: "SenderWalletId",
       });
       Wallet.hasMany(models.Transaction, { 
         as: "ReceivedTransactions",
-        foreignKey: "walletRecieverId",
-        targetKey: 'uuid'
+        foreignKey: "ReceiverWalletId",
       });
-      Wallet.hasMany(models.Transaction, { 
-        as: "SentTransactions",
-        foreignKey: "walletSenderId",
-        targetKey: "uuid",
-      });
+
       Wallet.belongsTo(models.User, {
         as: 'User',
-        foreignKey: "AccountUserId",
-        constraints: false,
+        foreignKey: "UserId",
+        scope: {
+          wallet_type: 'user'
+        }
       });
       Wallet.belongsTo(models.Organisations, {
         as: 'Organisation',
-        foreignKey: "AccountUserId",
-        constraints: false,
+        foreignKey: "OrganisationId",
+      });
+
+      Wallet.belongsTo(models.Campaign, {
+        as: 'Campaign',
+        foreignKey: "CampaignId",
+        scope: {
+          UserId: null,
+        }
       });
     }
   }
@@ -52,10 +55,14 @@ module.exports = (sequelize, DataTypes) => {
       privateKey: DataTypes.STRING,
       bantuAddress: DataTypes.STRING,
       bantuPrivateKey: DataTypes.STRING,
-      AccountUserId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER,
-      AccountUserType: DataTypes.STRING,
+      OrganisationId: DataTypes.INTEGER,
+      wallet_type: DataTypes.ENUM('user', 'organisation', 'campaign'),
+      UserId: DataTypes.INTEGER,
       balance: DataTypes.FLOAT,
+      crypto_balance: DataTypes.FLOAT,
+      fiat_balance: DataTypes.FLOAT,
+      local_currency: DataTypes.STRING,
     },
     {
       hooks: {

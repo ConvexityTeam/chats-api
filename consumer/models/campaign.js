@@ -10,25 +10,25 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Campaign.hasMany(models.Transaction, {
-        as: "Transaction",
-        foreignKey: "TransactionalId",
-        constraints: false,
+      Campaign.hasOne(models.Transaction, {
+        as: "CampaignWallet",
+        foreignKey: "CampaignId",
         scope: {
-          TransactionalType: "campaign",
+          wallet_type: "campaign",
         },
       });
       Campaign.hasMany(models.Beneficiaries, { as: "Beneficiaries" });
       Campaign.hasMany(models.Tasks, { as: "Jobs" });
-      Campaign.belongsTo(models.OrganisationMembers, {
-        foreignKey: "OrganisationMemberId",
-        as: "OrganisationMember",
+
+      Campaign.belongsTo(models.Organisations, {
+        foreignKey: "OrganisationId",
+        as: "Organisation",
       });
     }
   }
   Campaign.init(
     {
-      OrganisationMemberId: DataTypes.STRING,
+      OrganisationId: DataTypes.INTEGER,
       title: DataTypes.STRING,
       type: DataTypes.ENUM("campaign", "cash-for-work"),
       spending: DataTypes.STRING,

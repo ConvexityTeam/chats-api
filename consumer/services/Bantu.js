@@ -1,27 +1,29 @@
+require("dotenv").config();
 const StellarSdk = require("stellar-sdk");
 const fetch = require("node-fetch");
-require("dotenv").config();
 
 const config = {
   BASE_URL: process.env.BANTU_BASE_URL,
   ADMIN_ADDRESS: process.env.BANTU_ADMIN_ADDRESS,
   NETWORK_PASSPHRASE: process.env.BANTU_NETWORK_PASSPHRASE,
 };
+
 const server = new StellarSdk.Server(config.BASE_URL);
+
 
 function createPair() {
   const pair = StellarSdk.Keypair.random();
 
-  const privateKey = pair.secret();
+  const secret = pair.secret();
   const publicKey = pair.publicKey();
-  creditWallet(publicKey);
+  activateAccount(publicKey);
   return {
-    secret: privateKey,
+    secret,
     publicKey,
   };
 }
 
-async function creditWallet(publicKey) {
+async function activateAccount(publicKey) {
   try {
     const response = await fetch(
       `https://friendbot.dev.bantu.network?addr=${encodeURIComponent(
@@ -29,7 +31,7 @@ async function creditWallet(publicKey) {
       )}`
     );
     const responseJSON = await response.json();
-    console.log("SUCCESS! You have a new Test account :)\n" + responseJSON);
+    console.log("SUCCESS! You have a new BANTU account :)\n" + responseJSON);
   } catch (e) {
     console.error("ERROR!", e);
   }
@@ -37,39 +39,32 @@ async function creditWallet(publicKey) {
 
 async function getXbnBalance(publicKey) {
   return new Promise(async (resolve, reject) => {
-    let xbnBalance = 0;
-    return await server
+    server
       .loadAccount(publicKey)
       .then((account) => {
-        account.balances.forEach(function (balance) {
-          if (balance.asset_type == "native") {
-            xbnBalance = balance.balance;
-            return;
-          }
-        });
-        resolve(xbnBalance);
+        const balance = account.balances.filter(asset => asset.asset_type == "native").map(asset => asset.balance).reduce((a, b) => a + b, 0)
+        resolve(balance);
       })
       .catch((error) => {
-        reject(error.message);
+        reject(error);
       });
   });
 }
 
 async function transferToken(senderSecret, amount) {
   return new Promise((resolve, reject) => {
-    var sourceKeys = StellarSdk.Keypair.fromSecret(senderSecret);
-    var destinationId = config.ADMIN_ADDRESS;
-    var transaction;
+    const sourceKeys = StellarSdk.Keypair.fromSecret(senderSecret);
+    const destinationId = config.ADMIN_ADDRESS;
     server
       .loadAccount(destinationId)
-      .then(async function () {
+      .then(function () {
         return server.loadAccount(sourceKeys.publicKey());
       })
       .then(function (sourceAccount) {
-        transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-          fee: StellarSdk.BASE_FEE,
-          networkPassphrase: config.NETWORK_PASSPHRASE,
-        })
+        const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+            fee: StellarSdk.BASE_FEE,
+            networkPassphrase: config.NETWORK_PASSPHRASE,
+          })
           .addOperation(
             StellarSdk.Operation.payment({
               destination: destinationId,
@@ -77,7 +72,7 @@ async function transferToken(senderSecret, amount) {
               amount: String(amount),
             })
           )
-          .addMemo(StellarSdk.Memo.text("Test Transaction"))
+          .addMemo(StellarSdk.Memo.text("CHATS Transaction"))
           .setTimeout(180)
           .build();
         transaction.sign(sourceKeys);
@@ -88,9 +83,10 @@ async function transferToken(senderSecret, amount) {
       })
       .catch(function (error) {
         if (error instanceof StellarSdk.NotFoundError) {
-          return reject("The destination account does not exist!");
-        } else {
-          return reject(error);
+          reject("The destination account does not exist!");
+        } 
+        else {
+          reject(error);
         }
       });
   });
@@ -99,6 +95,6 @@ async function transferToken(senderSecret, amount) {
 module.exports = {
   createPair,
   getXbnBalance,
-  creditWallet,
+  creditWallet: activateAccount,
   transferToken,
 };

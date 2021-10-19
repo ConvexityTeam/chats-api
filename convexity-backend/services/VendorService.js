@@ -252,7 +252,7 @@ class VendorService {
                 //         "SentTransactions"
                 //     ]
                 // },
-                // 'StoreTransactions'
+                'StoreTransactions'
             ]
         })
     }

@@ -12,7 +12,12 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Market.hasMany(models.Products, { foreignKey: 'MarketId', as: 'Products' })
-      Market.belongsTo(models.User, { foreignKey: 'UserId', as: 'StoreOwner' });
+      Market.belongsTo(models.User, { 
+        foreignKey: 'UserId', as: 'StoreOwner',
+        scope: {
+          RoleId: Acl
+        }
+      });
     }
   };
   Market.init({

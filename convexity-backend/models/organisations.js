@@ -30,24 +30,15 @@ module.exports = (sequelize, DataTypes) => {
           }
         }
       });
-      Organisations.hasMany(models.OrganisationMembers, { as: "Member" });
+      // Organisations.hasMany(models.OrganisationMembers, { as: "Member" });
       Organisations.hasMany(models.OrganisationMembers, { as: "Members" });
-      Organisations.hasMany(models.FundAccount, { as: "MintTransaction" });
-      Organisations.hasMany(models.Campaign, { as: 'Campaign', foreignKey: "OrganisationId" })
+      Organisations.hasMany(models.FundAccount, { as: "FundingHistories" });
+      Organisations.hasMany(models.Campaign, { as: 'Campaigns', foreignKey: "OrganisationId" })
       Organisations.hasMany(models.Wallet, {
         as: "Wallet",
-        foreignKey: "AccountUserId",
-        constraints: false,
+        foreignKey: "OrganisationId",
         scope: {
-          AccountUserType: "organisation",
-        },
-      });
-      Organisations.hasMany(models.Wallet, {
-        as: "Wallets",
-        foreignKey: "AccountUserId",
-        constraints: false,
-        scope: {
-          AccountUserType: "organisation",
+          wallet_type: "organisation",
         },
       });
     }

@@ -19,13 +19,18 @@ module.exports = (sequelize, DataTypes) => {
       // User.hasMany(models.Campaign, { as: 'campaigns' });
       // User.hasMany(models.Login, { as: 'logins' });
       User.hasMany(models.Transaction, {
-        as: "Transaction",
-        foreignKey: "TransactionalId",
-        constraints: false,
-        scope: {
-          TransactionalType: "user",
-        },
+        as: "Transactions",
+        foreignKey: "UserId",
       });
+
+      User.hasMany(models.Transaction, {
+        as: "OrderTransaction",
+        foreignKey: "BeneficiaryId",
+        scope: {
+          transaction_type: 'order'
+        }
+      });
+
       User.belongsToMany(models.Campaign, {
         as: "Campaigns",
         foreignKey: "UserId",
@@ -42,18 +47,18 @@ module.exports = (sequelize, DataTypes) => {
       });
       User.hasMany(models.Wallet, {
         as: "Wallet",
-        foreignKey: "AccountUserId",
+        foreignKey: "UserId",
         constraints: false,
         scope: {
-          AccountUserType: "user",
+          wallet_type: "user",
         },
       });
       User.hasMany(models.Wallet, {
         as: "Wallets",
-        foreignKey: "AccountUserId",
+        foreignKey: "UserId",
         constraints: false,
         scope: {
-          AccountUserType: "user",
+          wallet_type: "user",
         },
       });
       ////////////////////////
@@ -68,9 +73,12 @@ module.exports = (sequelize, DataTypes) => {
           RoleId: AclRoles.Vendor
         }
       });
-      User.hasMany(models.StoreTransaction, {
+      User.hasMany(models.Transaction, {
         as: "StoreTransactions",
-        foreignKey: 'VendorId'
+        foreignKey: 'VendorId',
+        scope: {
+          transaction_type: 'order'
+        }
       });
       User.hasMany(models.OrganisationMembers, {
         as: "AssociatedOrganisations",

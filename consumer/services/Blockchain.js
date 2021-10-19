@@ -15,9 +15,8 @@ async function createAccountWallet() {
 }
 
 async function mintToken(walletAddress, amount) {
-  return new Promise(async (resolve, reject) => {
-    await api
-      .post(base_url + "/txn/mint/" + amount + "/" + walletAddress)
+  return new Promise((resolve, reject) => {
+    api .post(base_url + "/txn/mint/" + amount + "/" + walletAddress)
       .then((response) => {
         resolve(response.data);
       })
@@ -28,19 +27,8 @@ async function mintToken(walletAddress, amount) {
 }
 
 async function approveToSpend(ngoAddress, ngoPassword, benWallet, amount) {
-  return new Promise(async (resolve, reject) => {
-    await api
-      .post(
-        base_url +
-          "/txn/approve/" +
-          ngoAddress +
-          "/" +
-          ngoPassword +
-          "/" +
-          benWallet +
-          "/" +
-          amount
-      )
+  return new Promise((resolve, reject) => {
+    api.post( base_url + "/txn/approve/" + ngoAddress + "/" + ngoPassword + "/" + benWallet + "/" + amount )
       .then((response) => {
         resolve(response.data);
       })
@@ -58,20 +46,7 @@ async function transferFrom(
   amount
 ) {
   return new Promise(async (resolve, reject) => {
-    await api
-      .post(
-        base_url +
-          "/txn/transferfrom/" +
-          ngoAdress +
-          "/" +
-          reciepientAdress +
-          "/" +
-          beneficiaryAddress +
-          "/" +
-          beneficiaryPassword +
-          "/" +
-          amount
-      )
+    api .post( base_url + "/txn/transferfrom/" + ngoAdress + "/" + reciepientAdress + "/" + beneficiaryAddress + "/" + beneficiaryPassword + "/" + amount )
       .then((response) => {
         resolve(response.data);
       })

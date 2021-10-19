@@ -11,21 +11,27 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Campaign.hasMany(models.Transaction, {
-        as: "Transaction",
-        foreignKey: "TransactionalId",
+
+      Campaign.belongsToMany(models.User, {
+        as: 'Beneficiaries',
+        foreignKey: "CampaignId",
+        through: models.Beneficiary,
         constraints: false,
+      });
+      Campaign.hasMany(models.Wallet, {
+        as: 'BeneficiariesWallets',
+        foreignKey: "CampaignId",
         scope: {
-          TransactionalType: "campaign",
+          UserId: !null
+        }
+      });
+      Campaign.hasOne(models.Wallet, {
+        as: 'Wallet',
+        foreignKey: "CampaignId",
+        scope: {
+          UserId: null
         },
       });
-      Campaign.belongsToMany(
-        models.User, {
-          as: 'Beneficiaries',
-          foreignKey: "CampaignId",
-          through: models.Beneficiary,
-          constraints: false,
-        });
       Campaign.hasMany(models.Tasks, {
         as: "Jobs"
       });
