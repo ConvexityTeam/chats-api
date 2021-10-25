@@ -1,9 +1,22 @@
-const {CampaignService, ComplaintService} = require("../services");
+const {
+  CampaignService,
+  ComplaintService
+} = require("../services");
 const db = require("../models");
-const { Op } = require("sequelize");
-const { Message } = require("@droidsolutions-oss/amqp-ts");
-const { Response } = require("../libs");
-const { HttpStatusCode, SanitizeObject, AclRoles } = require("../utils");
+const {
+  Op
+} = require("sequelize");
+const {
+  Message
+} = require("@droidsolutions-oss/amqp-ts");
+const {
+  Response
+} = require("../libs");
+const {
+  HttpStatusCode,
+  SanitizeObject,
+  AclRoles
+} = require("../utils");
 
 const amqp_1 = require("../libs/RabbitMQ/Connection");
 const approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
@@ -17,9 +30,15 @@ class CampaignController {
 
   static async addBeneficiaryComplaint(req, res) {
     try {
-      const {report} = SanitizeObject(req.body, ['report']);
+      const {
+        report
+      } = SanitizeObject(req.body, ['report']);
       const UserId = req.user.id;
-      const complaint = await ComplaintService.createComplaint({CampaignId: req.campaign.id, UserId, report});
+      const complaint = await ComplaintService.createComplaint({
+        CampaignId: req.campaign.id,
+        UserId,
+        report
+      });
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Complaint Submitted.', complaint);
       return Response.send(res);
     } catch (error) {
@@ -34,8 +53,15 @@ class CampaignController {
       const filter = SanitizeObject(req.query, ['status']);
       const Campaign = req.campaign.toJSON();
       filter.CampaignId = Campaign.id;
-      const {count: complaints_count, rows: Complaints} = await ComplaintService.getBeneficiaryComplaints(req.user.id, filter);
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaign Complaints.', {...Campaign, complaints_count,  Complaints});
+      const {
+        count: complaints_count,
+        rows: Complaints
+      } = await ComplaintService.getBeneficiaryComplaints(req.user.id, filter);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaign Complaints.', {
+        ...Campaign,
+        complaints_count,
+        Complaints
+      });
       return Response.send(res);
     } catch (error) {
       console.log(error);
@@ -48,8 +74,15 @@ class CampaignController {
     try {
       const user = req.user.toObject();
       const filter = SanitizeObject(req.query, ['status', 'type']);
-      const {count: campaigns_count, rows: Campaigns} = await CampaignService.beneficiaryCampaings(user.id, filter);
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaigns.', {...user, campaigns_count,  Campaigns});
+      const {
+        count: campaigns_count,
+        rows: Campaigns
+      } = await CampaignService.beneficiaryCampaings(user.id, filter);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaigns.', {
+        ...user,
+        campaigns_count,
+        Campaigns
+      });
       return Response.send(res);
     } catch (error) {
       console.log(error);
@@ -61,7 +94,10 @@ class CampaignController {
   static async getAllCampaigns(req, res) {
     try {
       const query = SanitizeObject(req.query, ['type']);
-      const allCampaign = await CampaignService.getAllCampaigns({...query, status: 'active'});
+      const allCampaign = await CampaignService.getAllCampaigns({
+        ...query,
+        status: 'active'
+      });
       Response.setSuccess(HttpStatusCode.STATUS_OK, "Campaign retrieved", allCampaign);
       return Response.send(res);
     } catch (error) {
@@ -80,7 +116,9 @@ class CampaignController {
       }
       const OrganisationId = req.params.id;
       const organisation_exist = await db.Organisations.findOne({
-        where: { id: OrganisationId },
+        where: {
+          id: OrganisationId
+        },
         include: "Member",
       });
 
@@ -129,7 +167,10 @@ class CampaignController {
   static async beneficiariesToCampaign(req, res) {
     try {
       const campaign_exist = await db.Campaign.findOne({
-        where: { id: req.params.campaignId, type: "campaign" },
+        where: {
+          id: req.params.campaignId,
+          type: "campaign"
+        },
       });
       if (campaign_exist) {
         let beneficiaries = req.body.users;
@@ -155,14 +196,13 @@ class CampaignController {
               CampaignId: req.params.campaignId,
             }).then(() => {
               createWalletQueue.send(
-                new Message(
-                  {
-                    id: element,
-                    campaign: req.params.campaignId,
-                    type: "user",
-                  },
-                  { contentType: "application/json" }
-                )
+                new Message({
+                  id: element,
+                  campaign: req.params.campaignId,
+                  type: "user",
+                }, {
+                  contentType: "application/json"
+                })
               );
             });
           });
@@ -185,7 +225,7 @@ class CampaignController {
       return Response.send(res);
     }
   }
-  
+
   /**
    * Funding of Beneficiaries Wallet
    * @param req http request header
@@ -195,14 +235,19 @@ class CampaignController {
   static async fundWallets(req, res) {
     try {
       const campaign_exist = await db.Campaign.findOne({
-        where: { id: req.body.CampaignId },
+        where: {
+          id: req.body.CampaignId
+        },
         include: [
           'Organisation',
           {
             model: db.User,
             as: "Beneficiaries",
             through: db.Beneficiary,
-            where: { RoleId: AclRoles.Beneficiary, status: "activated" }
+            where: {
+              RoleId: AclRoles.Beneficiary,
+              status: "activated"
+            }
           },
         ],
       });
@@ -217,7 +262,9 @@ class CampaignController {
         }
         // const organisation = await campaign_exist.OrganisationMember.getOrganisation();
         const wallet = await campaign_exist.Organisation.getWallets({
-          where: { CampaignId: campaign_exist.id },
+          where: {
+            CampaignId: campaign_exist.id
+          },
         });
 
         if (wallet[0].balance >= campaign_exist.budget) {
@@ -228,7 +275,9 @@ class CampaignController {
           campaign_exist["Beneficiaries"].forEach(async (beneficiary) => {
             // const user = await beneficiary.getUser();
             const user_wallet = await beneficiary.getWallet({
-              where: { CampaignId: campaign_exist.id },
+              where: {
+                CampaignId: campaign_exist.id
+              },
             });
 
             await campaign_exist
@@ -240,17 +289,16 @@ class CampaignController {
               })
               .then((transaction) => {
                 approveToSpendQueue.send(
-                  new Message(
-                    {
-                      reciever: user_wallet[0].address,
-                      campaign: campaign_exist.id,
-                      ngoAddress: wallet[0].address,
-                      ngoPrivateKey: wallet[0].privateKey,
-                      transactionId: transaction.uuid,
-                      amount: amount,
-                    },
-                    { contentType: "application/json" }
-                  )
+                  new Message({
+                    reciever: user_wallet[0].address,
+                    campaign: campaign_exist.id,
+                    ngoAddress: wallet[0].address,
+                    ngoPrivateKey: wallet[0].privateKey,
+                    transactionId: transaction.uuid,
+                    amount: amount,
+                  }, {
+                    contentType: "application/json"
+                  })
                 );
               })
               .catch((err) => {
@@ -258,8 +306,10 @@ class CampaignController {
               });
           });
 
-          campaign_exist.update({is_funded: true});
-          
+          campaign_exist.update({
+            is_funded: true
+          });
+
           Response.setSuccess(201, "Transactions Initiated Successfully");
           return Response.send(res);
         } else {
@@ -296,7 +346,9 @@ class CampaignController {
 
   static async updatedCampaign(req, res) {
     const alteredCampaign = req.body;
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
     if (!Number(id)) {
       Response.setError(400, "Please input a valid numeric value");
       return Response.send(res);
@@ -319,7 +371,9 @@ class CampaignController {
   }
 
   static async getACampaign(req, res) {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
     if (!Number(id)) {
       Response.setError(400, "Please input a valid numeric value");
       return Response.send(res);
@@ -327,15 +381,22 @@ class CampaignController {
 
     try {
       const theCampaign = await db.Campaign.findOne({
-        where: { id, type: "campaign" },
+        where: {
+          id,
+          type: "campaign"
+        },
         include: {
           model: db.Beneficiaries,
           as: "Beneficiaries",
-          attributes: { exclude: ["CampaignId"] },
+          attributes: {
+            exclude: ["CampaignId"]
+          },
           include: {
             model: db.User,
             as: "User",
-            where: { status: "activated" },
+            where: {
+              status: "activated"
+            },
             attributes: {
               exclude: [
                 "nfc",
@@ -372,7 +433,9 @@ class CampaignController {
   }
 
   static async deleteCampaign(req, res) {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
     if (!Number(id)) {
       Response.setError(400, "Please provide a numeric value");
       return Response.send(res);
@@ -417,9 +480,15 @@ class CampaignController {
       page: page_val,
       paginate: 10,
       where: whereCondtion,
-      order: [["id", "DESC"]],
+      order: [
+        ["id", "DESC"]
+      ],
     };
-    const { docs, pages, total } = await db.Complaints.paginate(options);
+    const {
+      docs,
+      pages,
+      total
+    } = await db.Complaints.paginate(options);
     var nextPage = null;
     var prevPage = null;
     if (page_val != pages) {
@@ -445,6 +514,9 @@ class CampaignController {
     try {
       const campaignId = req.params.campaign_id;
       const campaign = await CampaignService.getCampaignWithBeneficiaries(campaignId);
+      campaign.dataValues.beneficiary_share = campaign.beneficiaries_count > 0 ? (campaign.budget / campaign.beneficiaries_count).toFixed(2) : 0;
+      campaign.dataValues.amount_spent = (campaign.amount_disbursed - campaign.BeneficiariesWallets.map(balance => balance).reduce((a, b) => a + b, 0)).toFixed(2)
+      campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(campaignId);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Details', campaign);
       return Response.send(res);
     } catch (error) {

@@ -6,6 +6,7 @@ const {
   User,
   Wallet,
   Campaign,
+  Complaint,
   Beneficiary
 } = require("../models");
 const {
@@ -68,18 +69,25 @@ class CampaignService {
         },
         {
           model: Wallet,
-          as: 'Wallet',
-          attributes: {
-            exclude: walletConst.walletExcludes
-          },
-          include: [
-            'SentTransactions'
-          ]
+          as: 'BeneficiariesWallets',
+          attributes: walletConst.walletExcludes
         }
-
       ],
-      group: ["Campaign.id", "Beneficiaries.id", "Wallet.uuid"]
+      group: ['Campaign.id', 'Beneficiaries.id', 'BeneficiariesWallets.uuid']
     })
+  }
+
+  static getCampaignComplaint(CampaignId) {
+    return Complaint.findAll({
+      where: {CampaignId},
+      include: [
+        {
+          model: User,
+          as: 'Beneficiary',
+          attributes: userConst.publicAttr,
+        }
+      ]
+    });
   }
 
   static beneficiaryCampaings(UserId, extraClasue = null) {
@@ -157,6 +165,7 @@ class CampaignService {
       throw error;
     }
   }
+
   static async beneficiariesToCampaign(payload) {
     return Beneficiary.bulkCreate(payload);
   }
@@ -201,7 +210,6 @@ class CampaignService {
       include: ["Beneficiaries"],
     });
   }
-
   static async deleteCampaign(id) {
     try {
       const CampaignToDelete = await Campaign.findOne({
