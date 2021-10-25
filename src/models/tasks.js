@@ -9,14 +9,6 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Tasks.hasMany(models.Transaction, {
-        as: "Transaction",
-        foreignKey: "TransactionalId",
-        constraints: false,
-        scope: {
-          TransactionalType: "wage",
-        },
-      });
       Tasks.hasMany(models.TaskUsers, { as: "AssociatedWorkers" });
       Tasks.belongsTo(models.Campaign, {
         foreignKey: "CampaignId",

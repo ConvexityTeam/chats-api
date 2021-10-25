@@ -282,7 +282,12 @@ class OrganisationController {
       const spending = data.type == 'campaign' ? 'vendor' : 'all';
       const OrganisationId = req.organisation.id;
 
-      CampaignService.addCampaign({ ...data, spending, OrganisationId, status: 'pending' }) .then(campaign => {
+      CampaignService.addCampaign({
+          ...data,
+          spending,
+          OrganisationId,
+          status: 'pending'
+        }).then(campaign => {
           QueueService.createWallet(OrganisationId, 'organisation', campaign.id);
           Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Created Campaign.', campaign);
           return Response.send(res);
@@ -835,7 +840,7 @@ class OrganisationController {
         user,
         organisation
       } = req;
-      const data = SanitizeObject(req.body, [first_name, last_name, email, phone, address, store_name, location]);
+      const data = SanitizeObject(req.body, ['first_name', 'last_name', 'email', 'phone', 'address', 'store_name', 'location']);
       const vendor = await OrganisationService.createVendorAccount(organisation, data, user);
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
@@ -876,7 +881,9 @@ class OrganisationController {
       const vendor = await VendorService.vendorPublicDetails(vendorId, {
         OrganisationId
       });
-      Response.setSuccess(200, 'Organisation vendors', vendor);
+      vendor.dataValues.total_received = vendor.Wallets.map(wallet => wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
+      vendor.dataValues.total_spent = vendor.Wallets.map(wallet => wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
+      Response.setSuccess(200, 'Organisation vendor', vendor);
       return Response.send(res);
     } catch (error) {
       console.log(error);

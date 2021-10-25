@@ -18,10 +18,6 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       // User.hasMany(models.Campaign, { as: 'campaigns' });
       // User.hasMany(models.Login, { as: 'logins' });
-      User.hasMany(models.Transaction, {
-        as: "Transactions",
-        foreignKey: "UserId",
-      });
 
       User.hasMany(models.Transaction, {
         as: "OrderTransaction",
@@ -77,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
         as: "StoreTransactions",
         foreignKey: 'VendorId',
         scope: {
-          transaction_type: 'order'
+          transaction_origin: 'store'
         }
       });
       User.hasMany(models.OrganisationMembers, {

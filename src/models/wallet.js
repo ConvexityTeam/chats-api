@@ -7,16 +7,19 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    // getAccountUserType(options) {
-    //   if (!this.AccountUserType) return Promise.resolve(null);
-    //   const mixinMethodName = `get${uppercaseFirst(this.AccountUserType)}`;
-    //   return this[mixinMethodName](options);
-    // }
 
     static associate(models) {
       Wallet.belongsTo(models.User, {
         as: 'User',
         foreignKey: "UserId",
+      });
+      Wallet.hasMany(models.Transaction, {
+        as: 'ReceivedTransactions',
+        foreignKey: "ReceiverWalletId"
+      });
+      Wallet.hasMany(models.Transaction, {
+        as: 'SentTransactions',
+        foreignKey: "SenderWalletId"
       });
       Wallet.belongsTo(models.Organisation, {
         as: 'Organisation',

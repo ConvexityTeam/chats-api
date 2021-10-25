@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
         as: 'Organisations'
       });
 
-      Transaction.belongsTo(models.User, {
+      Transaction.belongsTo(models.Order, {
         foreignKey: 'OrderId',
         as: 'Order'
       });
@@ -41,10 +41,7 @@ module.exports = (sequelize, DataTypes) => {
 
       Transaction.belongsTo(models.User, {
         foreignKey: 'VendorId',
-        as: 'Vendor',
-        scope: {
-          transaction_type: 'order'
-        }
+        as: 'Vendor'
       });
     }
   };
@@ -60,7 +57,9 @@ module.exports = (sequelize, DataTypes) => {
     OrderId: DataTypes.INTEGER,
     VendorId: DataTypes.INTEGER,
     BeneficiaryId: DataTypes.INTEGER,
+    OrganisationId: DataTypes.INTEGER,
     transaction_type: DataTypes.ENUM('deposit', 'order', 'withdrawal', 'transfer', 'approval', 'spent'),
+    transaction_origin: DataTypes.ENUM('store', 'wallet'),
     transaction_hash: DataTypes.STRING,
     amount: DataTypes.FLOAT,
     status: DataTypes.ENUM('success', 'processing', 'declined'),

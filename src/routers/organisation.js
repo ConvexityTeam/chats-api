@@ -104,6 +104,7 @@ router.route('/:organisation_id/vendors/:vendor_id')
   .get(
     NgoSubAdminAuth,
     IsOrgMember,
+    VendorValidator.VendorExists,
     OrganisationController.getVendorDetails
   )
 
