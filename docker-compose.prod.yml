@@ -3,7 +3,6 @@ version: "3.9"
 services:
   rabbitmq:
     image: "rabbitmq:3.8.14-alpine"
-    # image: "${RABBITMQ_IMAGE}"
     container_name: rabbitmq
     networks:
       - rabbitmq
@@ -11,7 +10,6 @@ services:
 
   postgres:
     image: postgres:11-alpine
-    # image: "${POSTGRES_IMAGE}"
     container_name: postgres
     networks:
       - postgres
@@ -28,15 +26,15 @@ services:
     depends_on:
       - postgres
       - rabbitmq
-    # image: "${BACKEND_IMAGE}"
     container_name: backend
-
     build:
-      context: convexity-backend
+      context: .
       dockerfile: Dockerfile
+    volumes: 
+    - ./:/app
     environment:
       - PORT=8080
-      - NODE_ENV=production    
+      - NODE_ENV=production
     ports: 
       - 8080:8080
     expose:
@@ -46,32 +44,32 @@ services:
       - postgres
       - rabbitmq
     restart: unless-stopped
-    volumes: 
-    - ./convexity-backend/:/app
-    command: npm start
+    command: npm run start
     # security_opt:
       # - no-new-privileges:true
 
-  # consumer:
-  #   depends_on:
-  #     - postgres
-  #     - rabbitmq
-  #     - backend
-  #   # image: "${CONSUMER_IMAGE}"
-  #   container_name: consumer
-  #   build:
-  #     context: consumer
-  #     dockerfile: Dockerfile
-  #   environment:
-  #     - PORT=8080
-  #     - NODE_ENV=production
-  #   networks:
-  #     - gateway
-  #     - postgres
-  #     - rabbitmq
-  #   restart: unless-stopped
-  #   security_opt:
-  #     - no-new-privileges:true
+  consumer:
+    depends_on:
+      - postgres
+      - rabbitmq
+      - backend
+    container_name: consumer
+    build:
+      context: .
+      dockerfile: Dockerfile.Consumer
+    volumes: 
+    - ./:/app
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+    networks:
+      - gateway
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command: npm run start:consumer
 
 networks:
   gateway:
