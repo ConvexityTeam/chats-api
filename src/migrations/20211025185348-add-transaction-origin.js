@@ -8,7 +8,7 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    queryInterface.addColumn('Transactions', 'transaction_origin', {
+    await queryInterface.addColumn('Transactions', 'transaction_origin', {
       type: Sequelize.ENUM('store', 'wallet'),
       allowNull: false
     });
@@ -21,6 +21,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    queryInterface.removeColumn('Transactions', 'transaction_origin');
+    await queryInterface.removeColumn('Transactions', 'transaction_origin');
   }
 };

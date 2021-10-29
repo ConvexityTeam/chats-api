@@ -8,7 +8,7 @@ const PaystackWebhookGuard = (req, res, next) => {
     next();
     return;
   }
-  res.send(400)
+  res.sendStatus(400)
 }
 
 exports.PaystackWebhookGuard  = PaystackWebhookGuard;

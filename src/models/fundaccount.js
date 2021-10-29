@@ -16,10 +16,12 @@ module.exports = (sequelize, DataTypes) => {
   };
   FundAccount.init({
     channel: DataTypes.STRING,
+    service: DataTypes.STRING,
     OrganisationId: DataTypes.INTEGER,
     amount: DataTypes.STRING,
     transactionReference: DataTypes.STRING,
-    status: DataTypes.ENUM('processing', 'successful', 'declined')
+    status: DataTypes.ENUM('processing', 'successful', 'declined'),
+    approved: DataTypes.BOOLEAN,
   }, {
     sequelize,
     modelName: 'FundAccount',

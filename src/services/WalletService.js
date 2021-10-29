@@ -21,6 +21,14 @@ class WalletService {
         return Wallet.create({...where, ...data});
       });
   }
+
+  static findMainOrganisationWallet(OrganisationId) {
+    return Wallet.findOne({where: {
+      OrganisationId,
+      wallet_type: 'organisation',
+      CampaignId: null
+    }});
+  }
 }
 
 module.exports = WalletService;

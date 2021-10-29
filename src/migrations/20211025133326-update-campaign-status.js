@@ -8,12 +8,12 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    queryInterface.removeColumn('Campaigns', 'status');
-    queryInterface.addColumn('Campaigns', 'status', {
+    await queryInterface.removeColumn('Campaigns', 'status');
+    await queryInterface.addColumn('Campaigns', 'status', {
       type: Sequelize.ENUM('pending', 'active', 'paused', 'completed'),
       defaultValue: 'pending'
     });
-    queryInterface.addColumn('Campaigns', 'paused_date', {
+    await queryInterface.addColumn('Campaigns', 'paused_date', {
       type: Sequelize.DATE,
       allowNull: true
     });
@@ -26,11 +26,11 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     queryInterface.removeColumn('Campaigns', 'status');
-     queryInterface.addColumn('Campaigns', 'status', {
+    await queryInterface.removeColumn('Campaigns', 'status');
+    await queryInterface.addColumn('Campaigns', 'status', {
       type: Sequelize.STRING,
       defaultValue: 'pending'
     });
-    queryInterface.removeColumn('Campaigns', 'paused_date');
+    await queryInterface.removeColumn('Campaigns', 'paused_date');
   }
 };

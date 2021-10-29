@@ -27,3 +27,10 @@ exports.generateOrderRef = () => {
 
   return 'CHATSQRC' + random;
 }
+
+exports.generateTransactionRef = () => {
+  return randomstring.generate({
+    length: 10,
+    charset: 'numeric'
+  });
+}
