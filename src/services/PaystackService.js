@@ -34,7 +34,7 @@ class PaystackService {
       metadata: {
         organisation_id: organisation.id
       },
-      ...({dev_data})
+      ...(dev_data && {dev_data})
     }
   }
 
