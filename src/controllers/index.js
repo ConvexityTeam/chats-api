@@ -7,6 +7,7 @@ const OrganisationController = require('./OrganisationController');
 const ProductController = require('./ProductController');
 const CampaignController = require('./CampaignController');
 const ComplaintController = require('./ComplaintController');
+const WebhookController = require('./WebhookController');
 
 
 module.exports = {
@@ -18,5 +19,6 @@ module.exports = {
   OrganisationController,
   ProductController,
   CampaignController,
-  ComplaintController
+  ComplaintController,
+  WebhookController
 }

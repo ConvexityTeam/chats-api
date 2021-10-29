@@ -3,15 +3,14 @@ const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
-const app = express();
 
 
-app.use(helmet());
-app.use(morgan("combined"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: '*' }));
-
+const {
+  Response
+} = require("./libs");
+const {
+  HttpStatusCode
+} = require("./utils");
 //Routers link
 const usersRoute = require("./routers/users");
 const transactionRouter = require("./routers/transaction");
@@ -25,8 +24,17 @@ const vendorsRouter = require("./routers/vendors");
 const beneficiariesRouter = require("./routers/beneficiaries");
 const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
-const { Response } = require("./libs");
-const { HttpStatusCode } = require("./utils");
+const webhookRouter = require('./routers/webhooks');
+
+const app = express();
+
+app.use(cors({ origin: '*' }));
+app.use(helmet());
+app.use(morgan("combined"));
+app.use(express.json());
+app.use(express.urlencoded({
+  extended: true
+}));
 // const adminRouter = require("./routers/admin");
 
 // Routing endpoint
@@ -43,7 +51,7 @@ app.use("/v1/beneficiaries", beneficiariesRouter);
 app.use("/v1/cash-for-work", cashforworkRouter);
 app.use("/v1/organisation", organisationRouter);
 app.use("/v1/organisations", organisationRouter);
-// app.use("/v1/admin", adminRouter);
+app.use('/v1/webhooks', webhookRouter)
 
 app.get("/", (req, res) => {
   try {

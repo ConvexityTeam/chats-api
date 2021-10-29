@@ -1,35 +1,44 @@
 const { paystackConfig } = require('../config');
+const { FundAccount } = require('../models');
 const { generatePaystackRef } = require('../utils');
+const paystack = require('paystack')(paystackConfig.secretKey);
 class PaystackService {
 
-  static buildDepositData(organisation_id, _amount, _currency = null) {
-    return new Promise((resolve, reject) => {
-      const amount = _amount * 100;
-      const currency = _currency || paystackConfig.defaultCurrency;
-      const ref = generatePaystackRef();
+  static async buildDepositData(organisation, _amount, _currency = null) {
+    let dev_data = null;
+    const amount = _amount * 100;
+    const currency = _currency || paystackConfig.defaultCurrency;
+    const ref = generatePaystackRef();
 
-      if (!paystackConfig.currencies.includes(currency)) {
-        reject(new Error(`${currency} not supported.`));
-        return;
-      }
+    if(process.env.NODE_ENV == 'development') {
+      dev_data = (await paystack.transaction.initialize({
+        reference: ref, amount, email: organisation.email
+      })).data || null;
+    }
 
-      if (amount <= 0) {
-        reject(new Error(`Deposit amount must be greater than 0`));
-        return;
-      }
+    
 
-      resolve({
-        ref,
-        metadata: {
-          organisation_id
-        },
-        key: paystackConfig.publickKey,
-        channels: paystackConfig.channels,
-        currency,
-        amount
-      });
-
+    FundAccount.create({
+      channel: 'fiat',
+      service: 'paystack',
+      OrganisationId: organisation.id,
+      amount: _amount,
+      transactionReference: ref
     });
+
+    return {
+      ref,
+      email: organisation.email,
+      key: paystackConfig.publickKey,
+      channels: paystackConfig.channels,
+      currency,
+      amount,
+      
+      metadata: {
+        organisation_id: organisation.id
+      },
+      ...({dev_data})
+    }
   }
 }
 

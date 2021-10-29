@@ -23,7 +23,8 @@ const {
   OrganisationValidator,
   ProductValidator,
   ComplaintValidator,
-  BeneficiaryValidator
+  BeneficiaryValidator,
+  WalletValidator
 } = require('../validators');
 
 router.post("/flutterwave/webhook", OrganisationController.mintToken);
@@ -45,7 +46,14 @@ router.get("/metric/:id", OrganisationController.getMetric);
 
 
 // Refactord routes
-router.post('/:organisation_id/wallets/paystack-deposit', NgoAdminAuth, IsOrgMember, WalletController.paystackDeposit);
+router.route('/:organisation_id/wallets/paystack-deposit')
+  .post(
+    NgoSubAdminAuth, 
+    IsOrgMember, 
+    WalletValidator.fiatDepositRules(),
+    WalletValidator.validate,
+    WalletController.paystackDeposit
+  );
 
 router.route('/:organisation_id/beneficiaries')
   .get(
@@ -92,7 +100,8 @@ router.route('/:organisation_id/vendors')
     CommonValidator.checkEmailNotTaken,
     CommonValidator.checkPhoneNotTaken,
     OrganisationController.createVendor
-  )
+  );
+
 router.route('/:organisation_id/vendors/summary')
   .get(
     NgoSubAdminAuth,
