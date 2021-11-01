@@ -5,12 +5,8 @@ const morgan = require("morgan");
 const cors = require("cors");
 
 
-const {
-  Response
-} = require("./libs");
-const {
-  HttpStatusCode
-} = require("./utils");
+const { Response } = require("./libs");
+const { HttpStatusCode } = require("./utils");
 //Routers link
 const usersRoute = require("./routers/users");
 const transactionRouter = require("./routers/transaction");
@@ -26,15 +22,14 @@ const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
 const webhookRouter = require('./routers/webhooks');
 
+
 const app = express();
 
 app.use(cors({ origin: '*' }));
 app.use(helmet());
 app.use(morgan("combined"));
 app.use(express.json());
-app.use(express.urlencoded({
-  extended: true
-}));
+app.use(express.urlencoded({extended: true}));
 // const adminRouter = require("./routers/admin");
 
 // Routing endpoint
@@ -73,4 +68,5 @@ app.all("*", (req, res) => {
     return Response.send(res);
   }
 });
+
 module.exports = app;

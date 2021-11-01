@@ -34,3 +34,20 @@ exports.generateTransactionRef = () => {
     charset: 'numeric'
   });
 }
+
+exports.generateOrganisationId = () => {
+  const random = randomstring.generate({
+    length: 7,
+    charset: 'alphanumeric',
+    capitalization: 'uppercase'
+  });
+  return `CHATSORG${random}`;
+}
+
+exports.extractDomain = (address) => {
+  return address.toLowerCase()
+    .split('://').pop()
+    .split('?').shift()
+    .split(':').shift()
+    .replace('www.');
+}

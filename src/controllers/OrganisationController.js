@@ -7,11 +7,13 @@ const {
 } = require('../services');
 const {
   HttpStatusCode,
-  SanitizeObject
+  SanitizeObject,
+  generateOrganisationId
 } = require('../utils');
 const UserService = require("../services/UserService");
 const {
-  Response
+  Response,
+  Logger
 } = require("../libs");
 const db = require("../models");
 
@@ -31,6 +33,7 @@ const {
   CampaignService,
   QueueService
 } = require("../services");
+const AwsUploadService = require("../services/AwsUploadService");
 
 const createWalletQueue = amqp["default"].declareQueue("createWallet", {
   durable: true,
@@ -43,6 +46,7 @@ const mintTokenQueue = amqp["default"].declareQueue("mintToken", {
 });
 
 class OrganisationController {
+  static logger = Logger;
   static async register(req, res) {
     const data = req.body;
     const rules = {
@@ -70,6 +74,56 @@ class OrganisationController {
     }
   }
 
+  static async changeOrganisationLogo(req, res) {
+    try {
+      const file = req.file;
+      const ext = req.file.mimetype.split('/').pop();
+      const key = `${Date.now()}.${ext}`;
+      const buket = 'convexity-ngo-logo';
+      const logo_link = await AwsUploadService.uploadFile(file, key, buket);
+      await OrganisationService.updateOrganisationProfile(req.organisation.id, {logo_link});
+      const updated = await OrganisationService.findOneById(req.organisation.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation logo updated.', updated);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
+
+
+  static async completeProfile(req, res) {
+    try {
+      const organisation = req.organisation;
+      const data = SanitizeObject(req.body, ['country', 'state', 'address', 'year_of_inception', 'website_url']);
+      data.profile_completed = true;
+
+      if (!organisation.registration_id) {
+        data.registration_id = generateOrganisationId();
+      }
+      await OrganisationService.updateOrganisationProfile(organisation.id, data);
+      const updated = await OrganisationService.findOneById(organisation.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation profile updated.', updated);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
+
+  static async getProfile(req, res) {
+    try {
+      const profile = await OrganisationService.findOneById(req.organisation.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation profile.', profile);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
   static async getAvailableOrgCampaigns(req, res) {
     try {
       const OrganisationId = req.params.organisation_id;

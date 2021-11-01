@@ -35,6 +35,11 @@ class OrganisationService {
     });
   }
 
+
+  static async updateOrganisationProfile(id, data = {}) {
+    return Organisation.update(data, {where: {id}});
+  }
+
   static async createMember(UserId, OrganisationId, role) {
     const exisiting = await OrganisationMembers.findOne({
       where: {
@@ -55,7 +60,6 @@ class OrganisationService {
   }
 
   static async checkExist(id) {
-
     return Organisation.findByPk(id)
   }
 

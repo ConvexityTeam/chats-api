@@ -23,6 +23,10 @@ class Logger {
     this.logger.info(message);
   }
 
+  warn(message) {
+    this.logger.warn(message);
+  }
+
   debug(message) {
     this.logger.debug(message);
   }
@@ -55,7 +59,13 @@ class Logger {
         winston.format.printf(info => `${info.label}:${info.level.toUpperCase()} [${[info.timestamp]}] ${info.message}`),
       )
     }
+    winston.addColors({
+      error: 'red',
+      warn: 'yellow',
+      info: 'cyan',
+      debug: 'green'
+  });
   }
 }
 
-module.exports = new Logger('ChatsAPI')
+module.exports = new Logger('CHATSAPI')

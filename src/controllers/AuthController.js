@@ -7,7 +7,8 @@ const {
   createHash,
   HttpStatusCode,
   SanitizeObject,
-  getFileExtension
+  getFileExtension,
+  generateOrganisationId
 } = require('../utils')
 const {
   Message
@@ -508,6 +509,8 @@ class AuthController {
                     await db.Organisation.create({
                       name: data.organisation_name,
                       website_url: data.website_url,
+                      registration_id: generateOrganisationId()
+
                     }).then(async (organisation) => {
                       QueueService.createWallet(organisation.id, 'organisation');
                       await organisation

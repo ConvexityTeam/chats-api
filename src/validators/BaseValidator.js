@@ -19,7 +19,7 @@ class BaseValidator {
       });
 
     Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed.', extractedErrors)
-    Response.send(res);
+    return Response.send(res);
   }
 
   static paginationValidationRules() {
