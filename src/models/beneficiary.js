@@ -17,7 +17,8 @@ module.exports = (sequelize, DataTypes) => {
   };
   Beneficiary.init({
     UserId: DataTypes.INTEGER,
-    CampaignId: DataTypes.INTEGER
+    CampaignId: DataTypes.INTEGER,
+    approved: DataTypes.BOOLEAN,
   }, {
     sequelize,
     modelName: 'Beneficiary',

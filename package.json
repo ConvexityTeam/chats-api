@@ -67,7 +67,8 @@
     "stellar-sdk": "^8.2.0",
     "superagent": "^6.1.0",
     "validator": "^10.11.0",
-    "validatorjs": "^3.22.1"
+    "validatorjs": "^3.22.1",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "eslint-config-prettier": "^6.11.0",
