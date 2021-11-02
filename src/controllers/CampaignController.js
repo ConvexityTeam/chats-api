@@ -244,18 +244,22 @@ class CampaignController {
     }
   }
 
-  removeBeneficiary(req, res) {
+  static async removeBeneficiary(req, res) {
     try {
       const campaign = req.campaign;
       const beneficiaryId = req.beneficiary_id;
-      if (campaign.status !== 'completed') {
+      if (campaign.status == 'completed') {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is already completed.');
         return Response.send(res);
       }
+      await CampaignService.removeBeneficiary(campaign.id, beneficiaryId);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary removed successfully');
+      return Response.send(res);
     } catch (error) {
-
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
     }
-
   }
 
   static async fundWallets(req, res) {

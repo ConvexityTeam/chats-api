@@ -10,7 +10,8 @@ const {
   Beneficiary
 } = require("../models");
 const {
-  userConst, walletConst
+  userConst,
+  walletConst
 } = require("../constants");
 const Transfer = require("../libs/Transfer");
 const QueueService = require('./QueueService');
@@ -50,17 +51,48 @@ class CampaignService {
   }
 
   static addBeneficiary(CampaignId, UserId) {
-    return Beneficiary.findOne({where: {CampaignId, UserId}})
+    return Beneficiary.findOne({
+        where: {
+          CampaignId,
+          UserId
+        }
+      })
       .then(beneficiary => {
-        if(beneficiary) {
+        if (beneficiary) {
           return beneficiary;
         }
-        return Beneficiary.create({CampaignId, UserId})
+        return Beneficiary.create({
+            CampaignId,
+            UserId
+          })
           .then(newBeneficiary => {
             QueueService.createWallet(UserId, 'user', CampaignId)
             return newBeneficiary;
           });
       })
+  }
+
+  static removeBeneficiary(CampaignId, UserId) {
+    return Beneficiary.destroy({
+        where: {
+          CampaignId,
+          UserId
+        }
+      })
+      .then((res) => {
+        console.log('====================================');
+        console.log({
+          res
+        });
+        console.log('====================================');
+        return Wallet.destroy({
+          where: {
+            wallet_type: 'user',
+            CampaignId,
+            UserId
+          }
+        })
+      });
   }
 
   static getCampaignWithBeneficiaries(id) {
@@ -73,8 +105,7 @@ class CampaignService {
           [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
         ]
       },
-      include: [
-        {
+      include: [{
           model: User,
           as: 'Beneficiaries',
           attributes: userConst.publicAttr,
@@ -94,14 +125,14 @@ class CampaignService {
 
   static getCampaignComplaint(CampaignId) {
     return Complaint.findAll({
-      where: {CampaignId},
-      include: [
-        {
-          model: User,
-          as: 'Beneficiary',
-          attributes: userConst.publicAttr,
-        }
-      ]
+      where: {
+        CampaignId
+      },
+      include: [{
+        model: User,
+        as: 'Beneficiary',
+        attributes: userConst.publicAttr,
+      }]
     });
   }
 
@@ -111,13 +142,11 @@ class CampaignService {
         UserId,
         ...extraClasue
       },
-      include: [
-        {
-          model: Campaign,
-          as: 'Campaign',
-          include: ['Organisation']
-        }
-      ]
+      include: [{
+        model: Campaign,
+        as: 'Campaign',
+        include: ['Organisation']
+      }]
     })
   }
 
@@ -150,12 +179,11 @@ class CampaignService {
 
   static async getAllCampaigns(queryClause = null) {
     return Campaign.findAll({
-        where: {
-          ...queryClause
-        },
-        include: ['Organisation']
-      }
-    );
+      where: {
+        ...queryClause
+      },
+      include: ['Organisation']
+    });
   }
   static async getOurCampaigns(
     userId,
