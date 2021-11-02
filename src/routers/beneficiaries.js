@@ -37,10 +37,10 @@ router.route('/:id')
     GodModeAuth,
     BeneficiaryController.deleteUser
   )
-  .put(
-    BeneficiaryAuth,
-    BeneficiaryController.updatedUser
-  );
+  // .put(
+  //   BeneficiaryAuth,
+  //   BeneficiaryController.updatedUser
+  // );
 
 // Refactored
 router.post(
@@ -57,22 +57,33 @@ router.route('/campaigns')
     CampaignController.getBeneficiaryCampaigns
   )
 
-router.route('/transactions')
-  .get(
-    BeneficiaryAuth,
-    CampaignController.getBeneficiaryCampaigns
-  );
+// router.route('/transactions')
+//   .get(
+//     BeneficiaryAuth,
+//     CampaignController.getBeneficiaryCampaigns
+//   );
+
+router.put(
+  '/campaigns/:campaign_id/join',
+  BeneficiaryAuth,
+  BeneficiaryValidator.NotCampaignBeneficiary,
+  CampaignController.addBeneficiary
+)
+
+router.put(
+  '/campaigns/:campaign_id/leave',
+  BeneficiaryAuth,
+  BeneficiaryValidator.IsCampaignBeneficiary,
+)
 
 router.route('/campaigns/:campaign_id/complaints')
   .get(
     BeneficiaryAuth,
-    CampaignValidator.campaignExists,
     BeneficiaryValidator.IsCampaignBeneficiary,
     CampaignController.getBeneficiaryCampaignComplaint
   )
   .post(
     BeneficiaryAuth,
-    CampaignValidator.campaignExists,
     BeneficiaryValidator.IsCampaignBeneficiary,
     ComplaintValidator.addComplaintRules(),
     ComplaintValidator.validate,

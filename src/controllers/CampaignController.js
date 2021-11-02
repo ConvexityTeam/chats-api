@@ -27,7 +27,6 @@ const createWalletQueue = amqp_1["default"].declareQueue("createWallet", {
 });
 
 class CampaignController {
-
   static async addBeneficiaryComplaint(req, res) {
     try {
       const {
@@ -106,6 +105,7 @@ class CampaignController {
       return Response.send(res);
     }
   }
+
   static async getAllOurCampaigns(req, res) {
     try {
       const type = req.query.type ? req.query.type : "campaign";
@@ -232,6 +232,30 @@ class CampaignController {
    * @param res http response header
    * @async
    */
+
+  static async addBeneficiary(req, res) {
+    try {
+      const campaign = req.campaign;
+      const beneficiaryId = req.beneficiary_id;
+      if(campaign.status !== 'active') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is not active.');
+        return Response.send(res);
+      }
+
+      const beneficiary = await CampaignService.addBeneficiary(campaign.id, beneficiaryId);
+      Response.setError(HttpStatusCode.STATUS_CREATED, 'Beneficiary Added.', beneficiary);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
+
+  removeBeneficiary(req, res) {
+
+  }
+
   static async fundWallets(req, res) {
     try {
       const campaign_exist = await db.Campaign.findOne({

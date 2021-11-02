@@ -82,13 +82,13 @@ class BeneficiaryValidator extends BaseValidator {
 
       if (!files.profile_pic) {
         Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed!', {
-            profile_pic: ["Profile Pic Required"]
+            profile_pic: ["Profile image is required"]
           ,
         });
         return Response.send(res);
       }
 
-      if (!allowedFileTypes.includes(files.profile_pic.type)) {
+      if (!allowedFileTypes.includes(files.profile_pic.type.toLowerCase())) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed!', {
               profile_pic: ["Invalid File type. Only jpg, png and jpeg files allowed for Profile picture"]
@@ -107,6 +107,7 @@ class BeneficiaryValidator extends BaseValidator {
   static async IsCampaignBeneficiary(req, res, next) {
     try {
       const campaignId = req.params.campaign_id || req.body.campaign_id || campaign.id;
+      const beneficiaryId = req.params.beneficiary_id || req.body.beneficiary_id || req.user.id;
 
       if(!campaignId.trim()) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Valid campaign ID is missing.');
@@ -120,13 +121,47 @@ class BeneficiaryValidator extends BaseValidator {
         return Response.send(res);
       }
 
-      if(await CampaignService.campaignBeneficiaryExists(campaignId, req.user.id)) {
+      if(await CampaignService.campaignBeneficiaryExists(campaignId, beneficiaryId)) {
         req.campaign = campaign;
+        req.beneficiary_id = beneficiaryId;
         next();
         return;
       }
 
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'User is not a campaign beneficiary.');
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Internal server error. Please try again or contact the administrator.');
+      return Response.send(res);
+    }
+  }
+
+  static async NotCampaignBeneficiary(req, res, next) {
+    try {
+      const campaignId = req.params.campaign_id || req.body.campaign_id || campaign.id;
+      const beneficiaryId = req.params.beneficiary_id || req.body.beneficiary_id || req.user.id;
+
+      if(!campaignId.trim()) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Valid campaign ID is missing.');
+        return Response.send(res);
+      }
+
+      const campaign = req.campaign || await CampaignService.getCampaignById(campaignId);
+
+      if(!campaign) {
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign not found.');
+        return Response.send(res);
+      }
+
+      if(! (await CampaignService.campaignBeneficiaryExists(campaignId, beneficiaryId))) {
+        req.campaign = campaign;
+        req.beneficiary_id = beneficiaryId;
+        next();
+        return;
+      }
+
+      Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'User is already a beneficiary.');
       return Response.send(res);
     } catch (error) {
       console.log(error);

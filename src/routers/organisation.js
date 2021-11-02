@@ -89,6 +89,8 @@ router.route('/:organisation_id/beneficiaries/approve')
   .put(
     NgoSubAdminAuth,
     IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    BeneficiaryValidator.IsCampaignBeneficiary
   )
 
 

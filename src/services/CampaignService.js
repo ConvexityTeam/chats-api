@@ -13,6 +13,7 @@ const {
   userConst, walletConst
 } = require("../constants");
 const Transfer = require("../libs/Transfer");
+const { QueueService } = require('./QueueService');
 
 class CampaignService {
   static searchCampaignTitle(title, extraClause = null) {
@@ -46,6 +47,20 @@ class CampaignService {
       UserId,
       report
     });
+  }
+
+  static addBeneficiary(CampaignId, UserId) {
+    return Beneficiary.findOne({where: {CampaignId, UserId}})
+      .then(beneficiary => {
+        if(beneficiary) {
+          return beneficiary;
+        }
+        return Beneficiary.create({CampaignId, UserId})
+          .then(newBeneficiary => {
+            QueueService.createWallet(UserId, 'user', CampaignId)
+            return newBeneficiary;
+          });
+      })
   }
 
   static getCampaignWithBeneficiaries(id) {

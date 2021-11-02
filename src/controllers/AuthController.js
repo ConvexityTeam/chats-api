@@ -135,7 +135,7 @@ class AuthController {
 
       data.profile_pic = await uploadFile(
         req.files.profile_pic,
-        "u-" + environ + "-" + Date.now() + "-i." + ext,
+        `${environ}-${Date.now()}.${ext}`,
         "convexity-profile-images"
       );
 

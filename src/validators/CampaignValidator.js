@@ -120,9 +120,11 @@ class CampaignValidator extends BaseValidator {
   static async campaignBelongsToOrganisation(req, res, next) {
     try {
       const id = req.body.campaign_id || req.params.campaign_id;
-      const organisationId = req.body.organisation_id || req.params.organisation_id || req.query.organisation_id;
+      const organisationId = req.body.organisation_id || req.params.organisation_id || req.query.organisation_id || req.organisation.id;
       if (!id) {
-        Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Campaign ID is required');
+        Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Input Validation Error.', {
+          campaign_id: ['Valid Campaign ID is required']
+        });
         return Response.send(res);
       }
 
@@ -133,7 +135,9 @@ class CampaignValidator extends BaseValidator {
       }
 
       if (!organisationId) {
-        Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Organisation ID is required');
+        Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Input Validation Error', {
+          organisation_id: ['Organisation ID is required']
+        });
         return Response.send(res);
       }
 
