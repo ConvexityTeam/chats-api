@@ -71,17 +71,9 @@ class CampaignController {
 
   static async getBeneficiaryCampaigns(req, res) {
     try {
-      const user = req.user.toObject();
       const filter = SanitizeObject(req.query, ['status', 'type']);
-      const {
-        count: campaigns_count,
-        rows: Campaigns
-      } = await CampaignService.beneficiaryCampaings(user.id, filter);
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaigns.', {
-        ...user,
-        campaigns_count,
-        Campaigns
-      });
+      const campaigns = await CampaignService.beneficiaryCampaings(req.user.id, filter);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
       console.log(error);
@@ -237,7 +229,7 @@ class CampaignController {
     try {
       const campaign = req.campaign;
       const beneficiaryId = req.beneficiary_id;
-      if(campaign.status !== 'active') {
+      if (campaign.status !== 'active') {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is not active.');
         return Response.send(res);
       }
@@ -253,6 +245,16 @@ class CampaignController {
   }
 
   removeBeneficiary(req, res) {
+    try {
+      const campaign = req.campaign;
+      const beneficiaryId = req.beneficiary_id;
+      if (campaign.status !== 'completed') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is already completed.');
+        return Response.send(res);
+      }
+    } catch (error) {
+
+    }
 
   }
 

@@ -106,22 +106,16 @@ class CampaignService {
   }
 
   static beneficiaryCampaings(UserId, extraClasue = null) {
-    return Campaign.findAndCountAll({
+    return Beneficiary.findAll({
       where: {
+        UserId,
         ...extraClasue
       },
       include: [
-        'Organisation',
         {
-          model: User,
-          as: 'Beneficiaries',
-          attributes: [],
-          where: {
-            id: UserId
-          },
-          through: {
-            attributes: []
-          }
+          model: Campaign,
+          as: 'Campaign',
+          include: ['Organisation']
         }
       ]
     })
