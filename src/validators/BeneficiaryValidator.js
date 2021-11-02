@@ -139,8 +139,8 @@ class BeneficiaryValidator extends BaseValidator {
 
   static async NotCampaignBeneficiary(req, res, next) {
     try {
-      const campaignId = req.params.campaign_id || req.body.campaign_id || campaign.id;
-      const beneficiaryId = req.params.beneficiary_id || req.body.beneficiary_id || req.user.id;
+      const campaignId = req.params.campaign_id || req.body.campaign_id || campaign.id || '';
+      const beneficiaryId = req.params.beneficiary_id || req.body.beneficiary_id || req.user.id || '';
 
       if(!campaignId.trim()) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Valid campaign ID is missing.');

@@ -20,6 +20,7 @@ const Auth = (roleIds = null ) => (req, res, next) => {
 
       if(!user || !userOrgs) {
         Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, "Unauthorised. User does not exist in our system");
+        return Response.send(res);
       }
 
       // TODO: check user status

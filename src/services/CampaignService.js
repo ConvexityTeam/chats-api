@@ -13,7 +13,7 @@ const {
   userConst, walletConst
 } = require("../constants");
 const Transfer = require("../libs/Transfer");
-const { QueueService } = require('./QueueService');
+const QueueService = require('./QueueService');
 
 class CampaignService {
   static searchCampaignTitle(title, extraClause = null) {

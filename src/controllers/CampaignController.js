@@ -243,7 +243,7 @@ class CampaignController {
       }
 
       const beneficiary = await CampaignService.addBeneficiary(campaign.id, beneficiaryId);
-      Response.setError(HttpStatusCode.STATUS_CREATED, 'Beneficiary Added.', beneficiary);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Beneficiary Added.', beneficiary);
       return Response.send(res);
     } catch (error) {
       console.log(error);
