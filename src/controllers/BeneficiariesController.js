@@ -1,5 +1,5 @@
 const {
-  BeneficiaryService
+  BeneficiaryService, WalletService
 } = require("../services");
 const util = require("../libs/Utils");
 const db = require("../models");
@@ -406,6 +406,19 @@ class BeneficiariesController {
     }
   }
 
+  static async getWallets(req, res) {
+    try {
+      const Wallets = await WalletService.findUserWallets(req.user.id);
+      const total_balance = Wallets.map(wallet => wallet.balance).reduce((a, b) => a + b, 0);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary wallets', {total_balance, Wallets});
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
+
   // Register By Organisation Special Case
   static async registerSpecialCaseBeneficiary(req, res) {}
 
@@ -492,7 +505,6 @@ class BeneficiariesController {
       return Response.send(res);
     }
   }
-
   static async beneficaryTransactions(req, res) {
     try {
       const beneficiary = req.beneficiary.toJSON();

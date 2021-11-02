@@ -1,3 +1,4 @@
+const { walletConst } = require('../constants');
 const { Wallet } = require('../models')
 class WalletService {
   static updateOrCreate({ wallet_type, CampaignId, ownerId }, data) {
@@ -28,6 +29,16 @@ class WalletService {
       wallet_type: 'organisation',
       CampaignId: null
     }});
+  }
+
+  static findUserWallets(UserId) {
+    return Wallet.findAll({
+      where: {UserId},
+      attributes: {
+        exclude: walletConst.walletExcludes
+      },
+      include: ['Campaign']
+    });
   }
 }
 

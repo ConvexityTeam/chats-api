@@ -28,10 +28,7 @@ module.exports = (sequelize, DataTypes) => {
 
       Wallet.belongsTo(models.Campaign, {
         as: 'Campaign',
-        foreignKey: "CampaignId",
-        scope: {
-          wallet_type: 'organisation'
-        }
+        foreignKey: 'CampaignId'
       });
     }
   }

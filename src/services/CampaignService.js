@@ -80,18 +80,16 @@ class CampaignService {
         }
       })
       .then((res) => {
-        console.log('====================================');
-        console.log({
-          res
-        });
-        console.log('====================================');
-        return Wallet.destroy({
-          where: {
-            wallet_type: 'user',
-            CampaignId,
-            UserId
-          }
-        })
+        if (res) {
+          return Wallet.destroy({
+            where: {
+              wallet_type: 'user',
+              CampaignId,
+              UserId
+            }
+          })
+        }
+        return null;
       });
   }
 

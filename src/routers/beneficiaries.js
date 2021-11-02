@@ -37,10 +37,12 @@ router.route('/:id')
     GodModeAuth,
     BeneficiaryController.deleteUser
   )
-  // .put(
-  //   BeneficiaryAuth,
-  //   BeneficiaryController.updatedUser
-  // );
+
+router.get(
+  '/wallets',
+  BeneficiaryAuth,
+  BeneficiaryController.getWallets
+)
 
 // Refactored
 router.post(
