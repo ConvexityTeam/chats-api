@@ -39,7 +39,9 @@ const IsOrgMember = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.log(error);
     Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error. Please contact support.');
+    return Response.send(res);
   }
 };
 

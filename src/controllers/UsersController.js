@@ -1,10 +1,13 @@
-const {
-  UserService
-} = require("../services");
 const util = require("../libs/Utils");
 const {
   Op
 } = require("sequelize");
+const {
+  compareHash,
+  createHash,
+  SanitizeObject,
+  HttpStatusCode
+} = require("../utils");
 const db = require("../models");
 const formidable = require("formidable");
 var bcrypt = require("bcryptjs");
@@ -12,24 +15,14 @@ const mailer = require("../libs/Mailer");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
 const uploadFile = require("./AmazonController");
-const {BeneficiaryService} = require("../services");
+const {BeneficiaryService, UserService} = require("../services");
+const { Response } = require('../libs')
 
 const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const codeGenerator = require("./QrCodeController");
-
-const {
-  compareHash,
-  createHash,
-  SanitizeObject,
-  HttpStatusCode
-} = require("../utils");
-
-const {
-  Response
-} = require("../libs");
 
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
@@ -46,21 +39,21 @@ class UsersController {
     try {
       const allUsers = await UserService.getAllUsers();
       if (allUsers.length > 0) {
-        util.setSuccess(200, "Users retrieved", allUsers);
+        Response.setSuccess(200, "Users retrieved", allUsers);
       } else {
-        util.setSuccess(200, "No User found");
+        Response.setSuccess(200, "No User found");
       }
-      return util.send(res);
+      return Response.send(res);
     } catch (error) {
-      util.setError(400, error);
-      return util.send(res);
+      Response.setError(400, error);
+      return Response.send(res);
     }
   }
 
   static async addUser(req, res) {
     if (!req.body.first_name || !req.body.last_name || !req.body.email) {
-      util.setError(400, "Please provide complete details");
-      return util.send(res);
+      Response.setError(400, "Please provide complete details");
+      return Response.send(res);
     }
     // console.log(multer_config.profile_pic);
     // req.body.profile_pic = multer_config.profile_pic;
@@ -68,12 +61,37 @@ class UsersController {
     console.log(newUser);
     try {
       const createdUser = await UserService.addUser(newUser);
-      util.setSuccess(201, "User Added!", createdUser);
-      return util.send(res);
+      Response.setSuccess(201, "User Added!", createdUser);
+      return Response.send(res);
     } catch (error) {
       console.log(error);
-      util.setError(500, error.message);
-      return util.send(res);
+      Response.setError(500, error.message);
+      return Response.send(res);
+    }
+  }
+
+  static async addBankAccount(req, res) {
+    try {
+      const data = SanitizeObject(req.body, ['account_number', 'bank_name']);
+      const account = await UserService.addUserAccount(req.user.id, data);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Bank Account Added', account);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
+      return Response.send(res);
+    }
+  }
+
+  static async getUserAccouns(req, res) {
+    try {
+      const accounts = await UserService.findUserAccounts(req.user.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Bank Accounts', accounts);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
+      return Response.send(res);
     }
   }
 
@@ -95,8 +113,8 @@ class UsersController {
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
-        util.setError(422, validation.errors);
-        return util.send(res);
+        Response.setError(422, validation.errors);
+        return Response.send(res);
       } else {
         var filterData = {
           first_name: data.first_name,
@@ -119,18 +137,18 @@ class UsersController {
         const user_exist = await db.User.findByPk(data.id)
           .then(async (user) => {
             await user.update(updateData).then((response) => {
-              util.setSuccess(200, "User Updated Successfully");
-              return util.send(res);
+              Response.setSuccess(200, "User Updated Successfully");
+              return Response.send(res);
             });
           })
           .catch((err) => {
-            util.setError(404, "Invalid User Id");
-            return util.send(res);
+            Response.setError(404, "Invalid User Id");
+            return Response.send(res);
           });
       }
     } catch (error) {
-      util.setError(422, error.message);
-      return util.send(res);
+      Response.setError(422, error.message);
+      return Response.send(res);
     }
   }
 
@@ -142,12 +160,12 @@ class UsersController {
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
-        util.setError(422, validation.errors);
-        return util.send(res);
+        Response.setError(422, validation.errors);
+        return Response.send(res);
       } else {
         if (!files.profile_pic) {
-          util.setError(422, "Profile Image Required");
-          return util.send(res);
+          Response.setError(422, "Profile Image Required");
+          return Response.send(res);
         } else {
           const user = await db.User.findByPk(fields.userId);
           if (user) {
@@ -163,11 +181,11 @@ class UsersController {
                 profile_pic: url
               });
             });
-            util.setSuccess(200, "Profile Picture Updated");
-            return util.send(res);
+            Response.setSuccess(200, "Profile Picture Updated");
+            return Response.send(res);
           } else {
-            util.setError(422, "Invalid User");
-            return util.send(res);
+            Response.setError(422, "Invalid User");
+            return Response.send(res);
           }
         }
       }
@@ -183,21 +201,21 @@ class UsersController {
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
-        util.setError(422, validation.errors);
-        return util.send(res);
+        Response.setError(422, validation.errors);
+        return Response.send(res);
       } else {
         await db.User.update(data, {
           where: {
             id: data.id
           }
         }).then(() => {
-          util.setSuccess(200, "User NFC Data Updated Successfully");
-          return util.send(res);
+          Response.setSuccess(200, "User NFC Data Updated Successfully");
+          return Response.send(res);
         });
       }
     } catch (error) {
-      util.setError(422, error.message);
-      return util.send(res);
+      Response.setError(422, error.message);
+      return Response.send(res);
     }
   }
 
@@ -207,21 +225,21 @@ class UsersController {
     } = req.params;
 
     if (!Number(id)) {
-      util.setError(400, "Please input a valid numeric value");
-      return util.send(res);
+      Response.setError(400, "Please input a valid numeric value");
+      return Response.send(res);
     }
 
     try {
       const theUser = await UserService.getAUser(id);
       if (!theUser) {
-        util.setError(404, `Cannot find User with the id ${id}`);
+        Response.setError(404, `Cannot find User with the id ${id}`);
       } else {
-        util.setSuccess(200, "Found User", theUser);
+        Response.setSuccess(200, "Found User", theUser);
       }
-      return util.send(res);
+      return Response.send(res);
     } catch (error) {
-      util.setError(404, error.toString());
-      return util.send(res);
+      Response.setError(404, error.toString());
+      return Response.send(res);
     }
   }
 
@@ -239,7 +257,7 @@ class UsersController {
           if (user !== null) {
             //if there is a user
             //generate new password
-            const newPassword = util.generatePassword();
+            const newPassword = Response.generatePassword();
             //update new password in the db
             bcrypt.genSalt(10, (err, salt) => {
               bcrypt.hash(newPassword, salt).then((hash) => {
@@ -274,8 +292,8 @@ class UsersController {
           });
         });
     } catch (error) {
-      util.setError(500, "Internal Server Error " + error.toString);
-      return util.send(res);
+      Response.setError(500, "Internal Server Error " + error.toString);
+      return Response.send(res);
     }
   }
 
@@ -288,11 +306,11 @@ class UsersController {
       user.status = "suspended";
       user.save();
 
-      util.setSuccess(200, "User Deactivated successfully");
-      return util.send(res);
+      Response.setSuccess(200, "User Deactivated successfully");
+      return Response.send(res);
     } catch (error) {
-      util.setError(404, "Invalid User");
-      return util.send(res);
+      Response.setError(404, "Invalid User");
+      return Response.send(res);
     }
   }
 
@@ -303,8 +321,8 @@ class UsersController {
       confirmedPassword
     } = req.body;
     if (newPassword !== confirmedPassword) {
-      util.setError(400, "New password does not match confirmed password ");
-      return util.send(res);
+      Response.setError(400, "New password does not match confirmed password ");
+      return Response.send(res);
     }
     const userId = req.user.id;
     db.User.findOne({
@@ -317,8 +335,8 @@ class UsersController {
           .compare(oldPassword, user.password)
           .then((valid) => {
             if (!valid) {
-              util.setError(419, "Old Password does not match");
-              return util.send(res);
+              Response.setError(419, "Old Password does not match");
+              return Response.send(res);
             }
             //update new password in the db
             bcrypt.genSalt(10, (err, salt) => {
@@ -341,20 +359,20 @@ class UsersController {
                     //   message:
                     //     "An email has been sent to the provided email address, kindly login to your email address to continue",
                     // });
-                    util.setError(200, "Password changed successfully");
-                    return util.send(res);
+                    Response.setError(200, "Password changed successfully");
+                    return Response.send(res);
                   });
               });
             });
           })
           .catch((err) => {
-            util.setError(419, "Internal Server Error. Please try again.");
-            return util.send(res);
+            Response.setError(419, "Internal Server Error. Please try again.");
+            return Response.send(res);
           });
       })
       .catch((err) => {
-        util.setError(419, "Internal Server Error. Please try again.");
-        return util.send(res);
+        Response.setError(419, "Internal Server Error. Please try again.");
+        return Response.send(res);
       });
   }
 
@@ -364,22 +382,22 @@ class UsersController {
     } = req.params;
 
     if (!Number(id)) {
-      util.setError(400, "Please provide a numeric value");
-      return util.send(res);
+      Response.setError(400, "Please provide a numeric value");
+      return Response.send(res);
     }
 
     try {
       const UserToDelete = await UserService.deleteUser(id);
 
       if (UserToDelete) {
-        util.setSuccess(200, "User deleted");
+        Response.setSuccess(200, "User deleted");
       } else {
-        util.setError(404, `User with the id ${id} cannot be found`);
+        Response.setError(404, `User with the id ${id} cannot be found`);
       }
-      return util.send(res);
+      return Response.send(res);
     } catch (error) {
-      util.setError(400, error);
-      return util.send(res);
+      Response.setError(400, error);
+      return Response.send(res);
     }
   }
 
@@ -403,12 +421,12 @@ class UsersController {
           },
         },
       }).then((response) => {
-        util.setSuccess(200, "Transactions Retrieved", response);
-        return util.send(res);
+        Response.setSuccess(200, "Transactions Retrieved", response);
+        return Response.send(res);
       });
     } else {
-      util.setError(422, "Beneficiary Id is Invalid");
-      return util.send(res);
+      Response.setError(422, "Beneficiary Id is Invalid");
+      return Response.send(res);
     }
   }
 
@@ -437,12 +455,12 @@ class UsersController {
         ],
         limit: 10,
       }).then((response) => {
-        util.setSuccess(200, "Transactions Retrieved", response);
-        return util.send(res);
+        Response.setSuccess(200, "Transactions Retrieved", response);
+        return Response.send(res);
       });
     } else {
-      util.setError(422, "Beneficiary Id is Invalid");
-      return util.send(res);
+      Response.setError(422, "Beneficiary Id is Invalid");
+      return Response.send(res);
     }
   }
 
@@ -455,11 +473,11 @@ class UsersController {
       include: ["SenderWallet", "RecievingWallet"],
     });
     if (transaction_exist) {
-      util.setSuccess(200, "Transaction Retrieved", transaction_exist);
-      return util.send(res);
+      Response.setSuccess(200, "Transaction Retrieved", transaction_exist);
+      return Response.send(res);
     } else {
-      util.setError(422, "Transaction Id is Invalid");
-      return util.send(res);
+      Response.setError(422, "Transaction Id is Invalid");
+      return Response.send(res);
     }
   }
 
@@ -507,12 +525,12 @@ class UsersController {
       ],
       raw: true,
     });
-    util.setSuccess(200, "Statistics Retrieved", [{
+    Response.setSuccess(200, "Statistics Retrieved", [{
       balance: wallet.Wallet.balance,
       income: income[0].income == null ? 0 : income[0].income,
       expense: expense[0].expense == null ? 0 : expense[0].expense,
     }, ]);
-    return util.send(res);
+    return Response.send(res);
   }
 
   static async getChartData(req, res) {
@@ -555,11 +573,11 @@ class UsersController {
         age_groups["65~"] += 1;
       }
     }
-    util.setSuccess(200, "Chart Data Retrieved", {
+    Response.setSuccess(200, "Chart Data Retrieved", {
       gender_chart: gender_chart,
       age_chart: age_groups,
     });
-    return util.send(res);
+    return Response.send(res);
   }
 
   static async countUserTypes(req, res) {
@@ -573,11 +591,11 @@ class UsersController {
         RoleId: 5
       }
     });
-    util.setSuccess(200, "Users Type Counted", {
+    Response.setSuccess(200, "Users Type Counted", {
       vendors,
       beneficiaries
     });
-    return util.send(res);
+    return Response.send(res);
   }
 
   static async getTotalAmountRecieved(req, res) {
@@ -599,10 +617,10 @@ class UsersController {
           [sequelize.fn("sum", sequelize.col("amount")), "amount_recieved"],
         ],
       }).then(async (transactions) => {
-        util.setSuccess(200, "Recieved Transactions", {
+        Response.setSuccess(200, "Recieved Transactions", {
           transactions
         });
-        return util.send(res);
+        return Response.send(res);
       });
     });
   }
@@ -616,12 +634,12 @@ class UsersController {
         include: ["Wallet"],
       })
       .then((user) => {
-        util.setSuccess(200, "User Wallet Balance", user.Wallet);
-        return util.send(res);
+        Response.setSuccess(200, "User Wallet Balance", user.Wallet);
+        return Response.send(res);
       })
       .catch((err) => {
-        util.setError(404, "Invalid User Id");
-        return util.send(res);
+        Response.setError(404, "Invalid User Id");
+        return Response.send(res);
       });
   }
 
@@ -634,13 +652,13 @@ class UsersController {
     };
     let validation = new Validator(data, rules);
     if (validation.fails()) {
-      util.setError(400, validation.errors);
-      return util.send(res);
+      Response.setError(400, validation.errors);
+      return Response.send(res);
     } else {
       let user = await db.User.findByPk(data.userId);
       if (!user) {
-        util.setError(404, "Invalid User");
-        return util.send(res);
+        Response.setError(404, "Invalid User");
+        return Response.send(res);
       }
       let product = await db.Products.findOne({
         where: {
@@ -652,8 +670,8 @@ class UsersController {
         },
       });
       if (!product) {
-        util.setError(404, "Invalid Product");
-        return util.send(res);
+        Response.setError(404, "Invalid Product");
+        return Response.send(res);
       }
       let pendingOrder = await db.Order.findOne({
         where: {
@@ -690,18 +708,18 @@ class UsersController {
                 total_amount: product.price * data.quantity,
               })
               .then((cart) => {
-                util.setSuccess(201, product.name + " has been added to cart");
-                return util.send(res);
+                Response.setSuccess(201, product.name + " has been added to cart");
+                return Response.send(res);
               });
           });
       } else {
         if (pendingOrder.Cart.length) {
           if (pendingOrder.Cart[0].Product.MarketId != product.MarketId) {
-            util.setError(
+            Response.setError(
               400,
               "Cannot add product that belongs to a different vendor"
             );
-            return util.send(res);
+            return Response.send(res);
           } else {
             let productAddedToCart = await db.OrderProducts.findOne({
               where: {
@@ -716,11 +734,11 @@ class UsersController {
                   unit_price: product.price,
                 })
                 .then(() => {
-                  util.setSuccess(
+                  Response.setSuccess(
                     201,
                     product.name + " has been added to cart"
                   );
-                  return util.send(res);
+                  return Response.send(res);
                 });
             } else {
               await pendingOrder
@@ -731,11 +749,11 @@ class UsersController {
                   unit_price: product.price,
                 })
                 .then(() => {
-                  util.setSuccess(
+                  Response.setSuccess(
                     201,
                     product.name + " has been added to cart"
                   );
-                  return util.send(res);
+                  return Response.send(res);
                 });
             }
           }
@@ -748,8 +766,8 @@ class UsersController {
               unit_price: product.price,
             })
             .then(() => {
-              util.setSuccess(201, product.name + " has been added to cart");
-              return util.send(res);
+              Response.setSuccess(201, product.name + " has been added to cart");
+              return Response.send(res);
             });
         }
       }
@@ -760,8 +778,8 @@ class UsersController {
     let id = req.params.userId;
     let user = await db.User.findByPk(id);
     if (!user) {
-      util.setError(404, "Invalid User");
-      return util.send(res);
+      Response.setError(404, "Invalid User");
+      return Response.send(res);
     }
     let pendingOrder = await db.Order.findOne({
       where: {
@@ -778,13 +796,13 @@ class UsersController {
     });
 
     if (pendingOrder && pendingOrder.Cart.length) {
-      util.setSuccess(200, "Cart", {
+      Response.setSuccess(200, "Cart", {
         cart: pendingOrder.Cart
       });
-      return util.send(res);
+      return Response.send(res);
     } else {
-      util.setError(400, "No Item in Cart");
-      return util.send(res);
+      Response.setError(400, "No Item in Cart");
+      return Response.send(res);
     }
   }
 
@@ -796,19 +814,19 @@ class UsersController {
     };
     let validation = new Validator(data, rules);
     if (validation.fails()) {
-      util.setError(422, validation.errors);
-      return util.send(res);
+      Response.setError(422, validation.errors);
+      return Response.send(res);
     } else {
       let user = await db.User.findByPk(data.userId);
       if (!user) {
-        util.setError(404, "Invalid User");
-        return util.send(res);
+        Response.setError(404, "Invalid User");
+        return Response.send(res);
       } else {
         await user.update({
           pin: data.pin
         }).then(() => {
-          util.setSuccess(200, "Pin updated Successfully");
-          return util.send(res);
+          Response.setSuccess(200, "Pin updated Successfully");
+          return Response.send(res);
         });
       }
     }
@@ -828,8 +846,8 @@ class UsersController {
     });
 
     if (!user) {
-      util.setError(404, "Invalid User");
-      return util.send(res);
+      Response.setError(404, "Invalid User");
+      return Response.send(res);
     }
 
     const wallets = user.Wallet.map((element) => {
@@ -850,12 +868,12 @@ class UsersController {
         },
       },
     });
-    util.setSuccess(200, "Summary", {
+    Response.setSuccess(200, "Summary", {
       balance: user.Wallet.balance,
       recieved,
       spent,
     });
-    return util.send(res);
+    return Response.send(res);
   }
 
   static async fetchPendingOrder(req, res) {
@@ -904,15 +922,15 @@ class UsersController {
           result["vendor"] = pendingOrder.Cart[0].Product.Vendor.store_name;
           result["cart"] = cart;
         }
-        util.setSuccess(200, "Pending Order", result);
-        return util.send(res);
+        Response.setSuccess(200, "Pending Order", result);
+        return Response.send(res);
       } else {
-        util.setSuccess(200, "Pending Order", pendingOrder);
-        return util.send(res);
+        Response.setSuccess(200, "Pending Order", pendingOrder);
+        return Response.send(res);
       }
     } else {
-      util.setError(400, "Invalid User");
-      return util.send(res);
+      Response.setError(400, "Invalid User");
+      return Response.send(res);
     }
   }
 
@@ -927,8 +945,8 @@ class UsersController {
     let validation = new Validator(data, rules);
 
     if (validation.fails()) {
-      util.setError(422, validation.errors);
-      return util.send(res);
+      Response.setError(422, validation.errors);
+      return Response.send(res);
     } else {
       const senderExist = await db.Wallet.findOne({
         where: {
@@ -941,8 +959,8 @@ class UsersController {
       });
 
       if (!senderExist) {
-        util.setError(404, "Sender Wallet does not Exist");
-        return util.send(res);
+        Response.setError(404, "Sender Wallet does not Exist");
+        return Response.send(res);
       }
 
       const recieverExist = await db.Wallet.findOne({
@@ -956,13 +974,13 @@ class UsersController {
       });
 
       if (!senderExist) {
-        util.setError(404, "Reciever Wallet does not Exist");
-        return util.send(res);
+        Response.setError(404, "Reciever Wallet does not Exist");
+        return Response.send(res);
       }
 
       if (senderExist.balance < data.amount) {
-        util.setError(422, "Sender Balance Insufficient to fund Transaction");
-        return util.send(res);
+        Response.setError(422, "Sender Balance Insufficient to fund Transaction");
+        return Response.send(res);
       } else {
         let parentEntity, parentType;
         if (senderExist.AccountUserType === "organisation") {
@@ -997,8 +1015,8 @@ class UsersController {
             );
           });
 
-        util.setSuccess(200, "Payment Initiated");
-        return util.send(res);
+        Response.setSuccess(200, "Payment Initiated");
+        return Response.send(res);
       }
     }
   }
@@ -1016,8 +1034,8 @@ class UsersController {
     let validation = new Validator(data, rules);
 
     if (validation.fails()) {
-      util.setError(422, validation.errors);
-      return util.send(res);
+      Response.setError(422, validation.errors);
+      return Response.send(res);
     } else {
       let user = await db.User.findOne({
         where: {
@@ -1033,13 +1051,13 @@ class UsersController {
       });
 
       if (!user) {
-        util.setError(404, "Invalid User");
-        return util.send(res);
+        Response.setError(404, "Invalid User");
+        return Response.send(res);
       }
 
       if (user.pin != data.pin) {
-        util.setError(400, "Invalid Pin");
-        return util.send(res);
+        Response.setError(400, "Invalid Pin");
+        return Response.send(res);
       }
 
       let pendingOrder = await db.Order.findOne({
@@ -1066,11 +1084,11 @@ class UsersController {
           return Number(a) + Number(b.total_amount);
         }, 0);
         if (user.Wallet[0].balance < sum) {
-          util.setError(
+          Response.setError(
             400,
             "Insufficient Funds in Wallet to clear Cart Items"
           );
-          return util.send(res);
+          return Response.send(res);
         } else {
           try {
             let result = await db.sequelize.transaction(async (t) => {
@@ -1157,18 +1175,18 @@ class UsersController {
                       })
                     );
                   }
-                  util.setSuccess(200, "Transfer Initiated");
-                  return util.send(res);
+                  Response.setSuccess(200, "Transfer Initiated");
+                  return Response.send(res);
                 });
             });
           } catch (error) {
-            util.setError(500, error.message);
-            return util.send(res);
+            Response.setError(500, error.message);
+            return Response.send(res);
           }
         }
       } else {
-        util.setError(400, "No Item in Cart");
-        return util.send(res);
+        Response.setError(400, "No Item in Cart");
+        return Response.send(res);
       }
     }
   }

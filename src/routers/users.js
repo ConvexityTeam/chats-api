@@ -1,12 +1,53 @@
 const router = require('express').Router();
 
 const {
-  Auth
+  Auth,
+  VendorBeneficiaryAuth
 } = require("../middleware/auth");
 const UsersController = require("../controllers/UsersController");
 const {
   UserValidator
 } = require('../validators');
+const {
+  IsUserVerified
+} = require('../middleware');
+
+// Refactored
+
+router.route('/pin')
+  .put(
+    Auth,
+    UserValidator.updatePinRules(),
+    UserValidator.validate,
+    UsersController.updateAccountPin
+  )
+  .post(
+    Auth,
+    UserValidator.setPinRules(),
+    UserValidator.validate,
+    UsersController.setAccountPin
+  );
+
+router.route('/password')
+  .put(
+    Auth,
+    UserValidator.updatePasswordRules(),
+    UserValidator.validate,
+    UsersController.changePassword
+  );
+
+router.route('/accounts')
+  .get(
+    VendorBeneficiaryAuth,
+    UsersController.getUserAccouns
+  )
+  .post(
+    VendorBeneficiaryAuth,
+    IsUserVerified,
+    UserValidator.addAccountValidation,
+    UsersController.addBankAccount
+  )
+
 
 router.get("/", Auth, UsersController.getAllUsers);
 router.post("/", Auth, UsersController.addUser);
@@ -33,31 +74,6 @@ router.post("/update-pin", Auth, UsersController.updatePin);
 router.get("/financials/summary/:id", Auth, UsersController.getSummary);
 router.get("/pending/orders/:userId", Auth, UsersController.fetchPendingOrder);
 router.post("/action/deactivate", Auth, UsersController.deactivate);
-
-
-// Refactored
-
-router.route('/pin')
-  .put(
-    Auth,
-    UserValidator.updatePinRules(),
-    UserValidator.validate,
-    UsersController.updateAccountPin
-  )
-  .post(
-    Auth,
-    UserValidator.setPinRules(),
-    UserValidator.validate,
-    UsersController.setAccountPin
-  );
-
-router.route('/password')
-  .put(
-    Auth,
-    UserValidator.updatePasswordRules(),
-    UserValidator.validate,
-    UsersController.changePassword
-  )
 
 
 

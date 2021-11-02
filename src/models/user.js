@@ -86,8 +86,8 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.FingerPrints, {
         as: "Print"
       });
-      User.hasMany(models.Accounts, {
-        as: "Accounts"
+      User.hasMany(models.BankAccount, {
+        as: "BankAccount"
       });
       User.hasMany(models.VerificationToken, { as: "VerificationTokens"});
       User.belongsTo(models.Role, {

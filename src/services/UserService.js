@@ -1,6 +1,7 @@
 const {
     User,
-    Campaign
+    Campaign,
+    BankAccount
 } = require('../models');
 const {
     Op,
@@ -9,7 +10,9 @@ const {
 const {
     AclRoles
 } = require('../utils');
-const { userConst } = require('../constants');
+const {
+    userConst
+} = require('../constants');
 
 class UserService {
     static async getAllUsers() {
@@ -130,6 +133,26 @@ class UserService {
                 id
             }
         });
+    }
+
+    static addUserAccount(UserId, data) {
+        return BankAccount.create({
+            ...data,
+            UserId
+        }, {
+            include: ['AccountHolder']
+        });
+    }
+
+    static findUserAccounts(UserId) {
+        return BankAccount.findAll({
+            where: {UserId},
+            include: {
+                model: User,
+                as: "AccountHolder",
+                attributes: ['first_name', 'last_name', 'phone', 'dob']
+            }
+        })
     }
 }
 
