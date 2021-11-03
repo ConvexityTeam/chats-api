@@ -191,8 +191,7 @@ router.route('/:organisation_id/campaigns/:campaign_id/products')
     NgoSubAdminAuth,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
-    ProductValidator.addProductRules(),
-    ProductValidator.validate,
+    ProductValidator.addProductRules,
     ProductController.addCampaignProduct
   );
 

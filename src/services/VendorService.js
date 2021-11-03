@@ -101,7 +101,7 @@ class VendorService {
             },
             attributes: userConst.publicAttr,
             include: [{
-                model: Organisations,
+                model: Organisation,
                 as: 'Organisations',
                 where: {
                     id: OrganisationId

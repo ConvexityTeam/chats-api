@@ -3,19 +3,18 @@ const { Response } = require('../libs');
 const { HttpStatusCode, AclRoles } = require('../utils');
 const { User, Organisations } = require('../models');
 const { VendorService, ProductService } = require('../services')
-const { body } = require('express-validator');
+const { check, body } = require('express-validator');
 const { userConst } = require('../constants');
 
 
 class ProductValidator extends BaseValidator {
   static types = ['product', 'service'];
 
-  static addProductRules() {
-    return [
-      body()
+  static addProductRules =  [
+    body()
         .isArray({min: 1})
         .withMessage('Minimum of 1 product is required.'),
-      body('*.type')
+        body('*.type')
       .notEmpty()
       .withMessage('Product / Service type is required')
       .isIn(this.types)
@@ -36,15 +35,12 @@ class ProductValidator extends BaseValidator {
       body('*.vendors.*')
       .isInt()
       .withMessage('Vendor ID must be numeric.')
-      .custom(ProductValidator.productVendorsExist)
+      .custom(ProductValidator.productVendorsExist),
+      this.validate
     ]
-  }
 
-  static productVendorsExist(id, meta) {
-      const {req, path, location } = meta;
-      // const valuePath = path && path.split('.').map(x => x.split('[').map(y => y.replace(']', ''))).flat().filter(x => x.trim() !== '');
+  static productVendorsExist(id, {req}) {
       const orgId = req.params.organisation_id || req.organisation.id;
-
       return new Promise(async  (resolve, reject) => {
         try {
           const vendor = await VendorService.getOrganisationVendor(id, orgId);
@@ -61,7 +57,7 @@ class ProductValidator extends BaseValidator {
   }
 
   static vendorHasProduct(id, {req}) {
-      const vendorId = req.params.vendor_id || req.body.vendor_id || req.vendor.id;
+      const vendorId = req.params.vendor_id || req.check.vendor_id || req.vendor.id;
       return new Promise(async (resolve, reject) => {
         try {
           const product = await ProductService.findProductByVendorId(id, vendorId);
