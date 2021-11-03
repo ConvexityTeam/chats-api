@@ -137,11 +137,11 @@ class CampaignService {
   static beneficiaryCampaings(UserId, extraClasue = null) {
     return Beneficiary.findAll({
       where: {
-        UserId,
-        ...extraClasue
+        UserId
       },
       include: [{
         model: Campaign,
+        where: {...extraClasue},
         as: 'Campaign',
         include: ['Organisation']
       }]

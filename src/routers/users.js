@@ -75,7 +75,4 @@ router.get("/financials/summary/:id", Auth, UsersController.getSummary);
 router.get("/pending/orders/:userId", Auth, UsersController.fetchPendingOrder);
 router.post("/action/deactivate", Auth, UsersController.deactivate);
 
-
-
-
 module.exports = router;

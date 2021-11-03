@@ -158,8 +158,7 @@ class BeneficiariesService {
         {
           model: Wallet,
           as: "Wallets",
-        },
-        'Accounts'
+        }
       ]
     });
   }
