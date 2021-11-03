@@ -508,6 +508,7 @@ class AuthController {
                     QueueService.createWallet(user.id, 'user');
                     await db.Organisation.create({
                       name: data.organisation_name,
+                      email: data.email,  
                       website_url: data.website_url,
                       registration_id: generateOrganisationId()
 
