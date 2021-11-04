@@ -1,4 +1,5 @@
 const { tokenConfig } = require("../config");
+const { Encryption } = require("../libs")
 const axios = require('axios');
 
 const Axios = axios.create({
@@ -17,10 +18,16 @@ class BlockchainService {
     });
   }
 
-  static async mintToken(walletAddress, amount) {
+  static async mintToken(mintTo, amount) {
     return new Promise(async (resolve, reject) => {
       try {
-        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/mint/${amount}/${walletAddress}`);
+        const payload = {mintTo, amount};
+        const checksum = Encryption.encryptTokenPayload(payload);
+        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`, {
+          headers: {
+            'X-CHECKSUM': checksum
+          }
+        });
         resolve(data);
       } catch (error) {
         reject(error);
