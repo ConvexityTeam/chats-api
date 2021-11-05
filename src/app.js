@@ -21,6 +21,7 @@ const beneficiariesRouter = require("./routers/beneficiaries");
 const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
 const webhookRouter = require('./routers/webhooks');
+const taskRouter = require('./routers/task');
 
 
 const app = express();
@@ -47,6 +48,7 @@ app.use("/v1/cash-for-work", cashforworkRouter);
 app.use("/v1/organisation", organisationRouter);
 app.use("/v1/organisations", organisationRouter);
 app.use('/v1/webhooks', webhookRouter)
+app.use('/v1/tasks', taskRouter);
 
 app.get("/", (req, res) => {
   try {
