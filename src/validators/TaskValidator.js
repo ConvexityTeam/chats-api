@@ -28,7 +28,7 @@ class TaskValidator extends BaseValidator {
       body('assignment_count').optional().isNumeric().withMessage('Numeric value expected.'),
       body('require_vendor_approval').optional().isBoolean().withMessage('vendor approval requirement must be a boolean.'),
       body('require_agent_approval').optional().isBoolean().withMessage('agent approval requirement must be a boolean.'),
-      body('require_evidence').isBoolean().optional().withMessage('evidence upload requirement must be a boolean.')
+      body('require_evidence').optional().isBoolean().withMessage('evidence upload requirement must be a boolean.')
     ]
   }
 
