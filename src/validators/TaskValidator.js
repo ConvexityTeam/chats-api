@@ -8,11 +8,10 @@ class TaskValidator extends BaseValidator {
 
   static createCashForWorkTaskRule() {
     return [
-      param('campaign_id').isNumeric().notEmpty(),
-      body('tasks').isArray(),
-      body('tasks.*.name').notEmpty().isString().withMessage('name is required.'),
-      body('tasks.*.description').notEmpty().isString().withMessage('description is required.'),
-      body('tasks.*.amount').notEmpty().isNumeric().withMessage('amount is required.')
+      body().isArray({ min: 1 }).withMessage('Minimum of 1 task is required.'),
+      body('*.name').notEmpty().isString().withMessage('name is required.'),
+      body('*.description').notEmpty().isString().withMessage('description is required.'),
+      body('*.amount').notEmpty().isNumeric().withMessage('amount is required.')
     ]
   }
 
