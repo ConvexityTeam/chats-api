@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         as: "CompletionRequest",
       });
       TaskUsers.belongsTo(models.User, { foreignKey: "UserId", as: "Worker" });
-      TaskUsers.belongsTo(models.Tasks, { foreignKey: "TaskId", as: "Task" });
+      TaskUsers.belongsTo(models.Task, { foreignKey: "TaskId", as: "Task" });
     }
   }
   TaskUsers.init(

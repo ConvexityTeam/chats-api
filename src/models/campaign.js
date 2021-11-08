@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
           wallet_type: 'organisation'
         },
       });
-      Campaign.hasMany(models.Tasks, {
+      Campaign.hasMany(models.Task, {
         as: "Jobs"
       });
       Campaign.hasMany(models.Complaint, {

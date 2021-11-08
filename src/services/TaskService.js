@@ -1,4 +1,4 @@
-const { Campaign, Tasks, TaskUsers, User } = require('../models');
+const { Campaign, Task, TaskUsers, User } = require('../models');
 const { publicAttr } = require('../constants/user.constants');
 
 class TaskService {
@@ -17,18 +17,19 @@ class TaskService {
       throw new Error("Invalid campaign id");
 
     if (campaign.status == "completed")
-      throw new Error("Campaign is already completed");
+      throw new Error("Campaign is already completed"); 
 
-    tasks.forEach(task => {
-      task.CampaignId = campaignId
+    const _tasks = tasks.map(task => {
+      task.CampaignId = campaignId;
+      return task;
     });
 
-    return Tasks.bulkCreate(tasks);
+    return Task.bulkCreate(_tasks);
   }
 
   static async getCashForWorkTasks(params) {
 
-    return Tasks.findAndCountAll({
+    return Task.findAndCountAll({
       where: {
         CampaignId: params.campaign_id
       },
@@ -50,7 +51,7 @@ class TaskService {
   }
 
   static async updateTask(id, updateTaskObj) {
-    const task = await Tasks.findByPk(id);
+    const task = await Task.findByPk(id);
     if (!task)
       throw new Error("Invalid task id");
 
