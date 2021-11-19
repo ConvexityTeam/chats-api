@@ -72,14 +72,14 @@ class VendorService {
         }
     }
 
-    static async getAVendor(id) {
+    static async getVendorData(id) {
         const RoleId = AclRoles.Vendor;
         return User.findOne({
             where: {
                 id,
                 RoleId
             },
-            include: ['Store', 'Wallets', 'AssociatedOrganisations', 'Accounts']
+            include: ['Store', 'Wallets', 'Organisations', 'BankAccounts']
         });
     }
 

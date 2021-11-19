@@ -87,7 +87,7 @@ module.exports = (sequelize, DataTypes) => {
         as: "Print"
       });
       User.hasMany(models.BankAccount, {
-        as: "BankAccount"
+        as: "BankAccounts"
       });
       User.hasMany(models.VerificationToken, { as: "VerificationTokens"});
       User.belongsTo(models.Role, {

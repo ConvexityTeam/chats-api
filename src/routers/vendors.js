@@ -6,7 +6,7 @@ const VendorValidator = require('../validators/VendorValidator');
 
 
 router.get('/', VendorController.getAllVendors);
-router.get('/me', VendorAuth, VendorController.getVendor);
+
 
 router.post('/add-account', VendorController.addAccount)
 router.get('/stores/all', VendorController.getAllStores)
@@ -47,6 +47,8 @@ router.route('/orders/:id')
         VendorAuth,
         VendorController.getOrderById
       );
+
+router.get('/me', VendorAuth, VendorController.getVendor);
 
 router.get('/:id', Auth, VendorController.getVendor);
 
