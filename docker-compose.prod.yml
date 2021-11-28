@@ -8,23 +8,23 @@ services:
       - rabbitmq
     restart: unless-stopped
 
-  postgres:
-    image: postgres:11-alpine
-    container_name: postgres
-    networks:
-      - postgres
-    volumes:
-      - postgres:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - POSTGRES_DB=convexity
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    restart: unless-stopped
+  # postgres:
+  #   image: postgres:11-alpine
+  #   container_name: postgres
+  #   networks:
+  #     - postgres
+  #   volumes:
+  #     - postgres:/var/lib/postgresql/data
+  #     - /etc/localtime:/etc/localtime:ro
+  #   environment:
+  #     - POSTGRES_DB=convexity
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #   restart: unless-stopped
 
   backend:
     depends_on:
-      - postgres
+      # - postgres
       - rabbitmq
     container_name: backend
     build:
@@ -41,7 +41,7 @@ services:
       - 8080
     networks:
       - gateway
-      - postgres
+      # - postgres
       - rabbitmq
     restart: unless-stopped
     command: npm run start
@@ -50,7 +50,7 @@ services:
 
   consumer:
     depends_on:
-      - postgres
+      # - postgres
       - rabbitmq
       - backend
     container_name: consumer
@@ -64,7 +64,7 @@ services:
       - NODE_ENV=production
     networks:
       - gateway
-      - postgres
+      # - postgres
       - rabbitmq
     restart: unless-stopped
     security_opt:
@@ -77,9 +77,9 @@ networks:
     name: gateway
   rabbitmq:
     internal: true
-  postgres:
-    internal: true
+  # postgres:
+  #   internal: true
 
-volumes:
-  postgres:
-    external: true
+# volumes:
+#   postgres:
+#     external: true

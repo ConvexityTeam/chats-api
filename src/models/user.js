@@ -90,6 +90,7 @@ module.exports = (sequelize, DataTypes) => {
         as: "BankAccounts"
       });
       User.hasMany(models.VerificationToken, { as: "VerificationTokens"});
+      User.hasMany(models.TaskAssignment, {as: "Assignments"});
       User.belongsTo(models.Role, {
         foreignKey: "RoleId",
         as: "Role"
