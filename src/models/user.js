@@ -38,9 +38,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "UserId",
       });
 
-      User.hasMany(models.TaskUsers, {
-        as: "AssociatedJobs"
-      });
+
       User.hasMany(models.Wallet, {
         as: "Wallet",
         foreignKey: "UserId",
