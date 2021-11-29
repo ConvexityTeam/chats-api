@@ -429,6 +429,23 @@ class VendorService {
         })
     }
 
+    static async uploadVendorEvidence (vendorId){
+        const RoleId = AclRoles.Vendor;
+         const exist =  User.findAll({
+            where: {
+                id: vendorId,
+                RoleId
+            }
+        })
+
+        if(!exist){
+            throw new Error('Vendor Not Found')
+        }else{
+            return 
+        }
+    }
+
+
 }
 
 module.exports = VendorService;

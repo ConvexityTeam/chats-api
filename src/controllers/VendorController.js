@@ -465,6 +465,16 @@ class VendorController {
       return Response.send(res);
     }
   }
+
+  static async uploadEvidence(){
+
+    try{
+
+    }catch(error){
+
+    }
+
+  }
 }
 
 module.exports = VendorController;

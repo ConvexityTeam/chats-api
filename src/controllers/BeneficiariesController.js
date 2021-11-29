@@ -522,6 +522,120 @@ class BeneficiariesController {
       return Response.send(res);
     }
   }
+
+  static async beneficiariesByGender(req, res){
+ 
+    try{
+
+      const male = []
+      const female = []
+
+      const beneficiaries = await BeneficiaryService.getBeneficiariesByGender();
+      
+      if(beneficiaries.length > 0){
+        for (let i = 0; i < beneficiaries.length;  i++){
+
+          if(beneficiaries[i] == 'male'){
+            male.push(beneficiaries[i])
+          }
+          else{
+            female.push(beneficiaries[i])
+          }
+
+
+        }
+      }
+      
+
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', male,  female);
+        return Response.send(res);
+
+
+    }catch(error){
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
+
+  static async beneficiariesByAgeGroup(req, res){
+    const age = req.params.ageGroup;
+    try{
+
+      const beneficiaries = await BeneficiaryService.getBeneficiariesByAgeGroup(age);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', beneficiaries);
+
+        console.log(beneficiaries.dob,'bene')
+        return Response.send(res);
+    
+
+    }catch(error){
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
+
+  static async beneficiariesByMaritalStatus(req, res){
+    const marital_status = req.params.marital_status;
+    try{
+
+      const beneficiaries = await BeneficiaryService.getBeneficiariesByMaritalStatus(marital_status);
+      if(beneficiaries.length <= 0){
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiaries with this marital status.');
+        return Response.send(res);
+      }
+      else
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', beneficiaries);
+        return Response.send(res);
+
+    }catch(error){
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
+
+  static async beneficiariesByLocation(req, res){
+    const location = req.params.location;
+    try{
+
+      const beneficiaries = await BeneficiaryService.getBeneficiariesByLocation(location);
+
+      if(beneficiaries.length <= 0){
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiaries from this locaton.');
+        return Response.send(res);
+      }
+      else
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', beneficiaries);
+        return Response.send(res);
+
+
+    }catch(error){
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
+      return Response.send(res);
+    }
+  }
+
+  static async beneficiariesTotalBalance(req, res){
+    try{
+
+      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalBalance();
+      if(beneficiaries.length <= 0){
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.');
+        return Response.send(res);
+      }
+      else
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transactiom Retrieved.', beneficiaries);
+        return Response.send(res);
+
+    }catch(error){
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
+      return Response.send(res);
+    }
+  }
 }
 
 module.exports = BeneficiariesController;

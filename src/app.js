@@ -22,6 +22,8 @@ const cashforworkRouter = require("./routers/cash-for-work");
 const organisationRouter = require("./routers/organisation");
 const webhookRouter = require('./routers/webhooks');
 const taskRouter = require('./routers/task');
+const marketRouter = require('./routers/market');
+
 
 
 const app = express();
@@ -34,6 +36,8 @@ app.use(express.urlencoded({extended: true}));
 // const adminRouter = require("./routers/admin");
 
 // Routing endpoint
+
+app.use("/v1/market", marketRouter);
 app.use("/v1/users", usersRoute);
 app.use("/v1/transactions", transactionRouter);
 app.use("/v1/auth", authRouter);

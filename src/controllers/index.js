@@ -7,10 +7,12 @@ const OrganisationController = require('./OrganisationController');
 const ProductController = require('./ProductController');
 const CampaignController = require('./CampaignController');
 const ComplaintController = require('./ComplaintController');
+const MarketController = require('./MarketController');
 const WebhookController = require('./WebhookController');
 
 
 module.exports = {
+  MarketController,
   AuthController,
   NgoController,
   VendorController,

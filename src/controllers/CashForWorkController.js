@@ -643,6 +643,34 @@ class CashForWorkController {
       return util.send(res);
     }
   }
+
+
+  static async viewCashForWorkRefractor (req, res){
+        
+    try{
+
+      const cashforwork = await db.Beneficiary.findAll({where: {approved: true},
+      include: [{
+        model: db.Campaign,
+          as: 'Campaign',
+          where: {
+            type: 'cash-for-work'
+          }
+      }]
+    }); 
+
+      if (cashforwork.length > 0) {
+        util.setSuccess(200, 'Cash For Work Retrieved', cashforwork);
+    } else {
+        util.setSuccess(200, 'No Cash For Work found');
+    }
+    return util.send(res);
+    }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
 }
 
 module.exports = CashForWorkController;

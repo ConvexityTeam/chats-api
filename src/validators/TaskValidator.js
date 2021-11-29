@@ -32,6 +32,15 @@ class TaskValidator extends BaseValidator {
     ]
   }
 
+  static taskProgressId(){
+    return [
+      param('taskProgressId').isNumeric().withMessage('task progress Id must be numeric')
+      .notEmpty()
+      .withMessage('task progress Id must not be empty.'),
+     
+    ]
+  }
+
 }
 
 module.exports = TaskValidator;

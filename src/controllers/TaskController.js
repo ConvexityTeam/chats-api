@@ -46,6 +46,32 @@ class TaskController {
       return Response.send(res);
     }
   }
+
+  static async uploadEvidence(req, res){
+    const {taskProgressId} = req.params;
+    const imageUrl = req.file.path
+
+    console.log(req.file, taskProgressId)
+
+    try{
+    
+    const evidence = await TaskService.uploadProgressEvidence(taskProgressId, imageUrl);
+    if(evidence){
+      Response.setSuccess(HttpStatusCode.STATUS_OK, "Task Evidence Uploaded Successfully", evidence);
+    return Response.send(res)
+    }
+    else{
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, "Something went wrong while uploading evidence");
+      return Response.send(res)
+    }
+    
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
+      return Response.send(res);
+    }
+
+    
+  }
 }
 
 module.exports = TaskController;

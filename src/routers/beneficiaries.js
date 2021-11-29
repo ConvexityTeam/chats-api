@@ -16,6 +16,16 @@ const {
 } = require("../validators");
 const router = require("express").Router();
 
+
+router.get('/by_gender/:gender', BeneficiaryController.beneficiariesByGender);
+//not yet implemented
+router.get('/by_age_group', BeneficiaryController.beneficiariesByAgeGroup);
+router.get('/by_location/:location', BeneficiaryController.beneficiariesByLocation);
+router.get('/by_marital_status/:marital_status', BeneficiaryController.beneficiariesByMaritalStatus);
+
+router.get('/total_balance', BeneficiaryController.beneficiariesTotalBalance);
+
+
 router.get('/', BeneficiaryController.getAllUsers);
 router.delete('/:id', BeneficiaryController.deleteUser);
 router.post('/add-account', BeneficiaryController.addAccount);

@@ -14,8 +14,10 @@ const BantuService = require('./BantuService');
 const QueueService = require('./QueueService');
 const WebhookService = require('./WebhookService');
 const TaskService = require('./TaskService');
+const MarketService = require('./MarketService')
 
 module.exports = {
+  MarketService,
   UserService,
   NgoService,
   OrganisationService,

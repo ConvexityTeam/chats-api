@@ -7,7 +7,9 @@ const {
   networkPassphrase
 } = require("../config").bantuConfig;
 
-const server = new StellarSdk.Server(baseURL);
+const server = new StellarSdk.Server(baseURL,{
+  allowHttp: true
+});
 
 class BantuService {
 

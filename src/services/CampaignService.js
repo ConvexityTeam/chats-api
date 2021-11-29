@@ -266,6 +266,20 @@ class CampaignService {
       throw error;
     }
   }
+
+  static cashForWorkCampaignByApprovedBeneficiary(){
+
+    return Campaign.findAll({where: {type: 'cash-for-work'},
+    include: [{
+      model: Beneficiary,
+        as: 'Beneficiaries',
+        attribute: [],
+        where: {
+          approved: true
+        }
+    }]
+  }); 
+  }
 }
 
 module.exports = CampaignService;

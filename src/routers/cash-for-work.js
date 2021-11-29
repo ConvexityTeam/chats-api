@@ -3,7 +3,8 @@ const router = require("express").Router();
 const {Auth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
 
-router.use(Auth);
+// router.use(Auth);
+router.get("/approved/beneficiaries", CashForWorkController.viewCashForWorkRefractor);
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);
 router.get("/:cashforworkid", CashForWorkController.getCashForWork);

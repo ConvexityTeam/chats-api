@@ -6,6 +6,7 @@ const { NgoValidator, CommonValidator, VendorValidator } = require('../validator
 
 router.get('/', NgoController.getAllNGO);
 router.get('/:id', NgoController.getOneNGO);
+//router.get('/product_gender', NgoController.getAllProductPurchasedByGender);
 
 // auth/register
 router.post('/auth/onboard', AuthController.createNgoAccount);
@@ -39,6 +40,7 @@ router.post(
 
 router.post('/beneficiaries/register', FieldAgentAuth, IsOrgMember, AuthController.createBeneficiary)
 router.post('/beneficiaries/register-special-case', FieldAgentAuth, IsOrgMember, AuthController.sCaseCreateBeneficiary)
+
 
 
 module.exports = router;

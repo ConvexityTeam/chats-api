@@ -6,7 +6,8 @@ const {
 } = require('../libs');
 const {
     OrganisationService,
-    NgoService
+    NgoService,
+    ProductService
 } = require('../services');
 const { HttpStatusCode, SanitizeObject } = require('../utils');
 
@@ -65,6 +66,7 @@ class NgoController {
             return Response.send(res);
         }
     }
-}
+
+    }
 
 module.exports = NgoController;

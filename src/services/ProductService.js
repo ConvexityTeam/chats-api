@@ -1,9 +1,12 @@
 const {
   Product,
-  Market
+  Market,
+  User
+  
 } = require('../models');
 
 const VendorService = require('./VendorService');
+
 
 class ProductService {
   static addProduct(product, vendors, CampaignId) {
@@ -32,6 +35,9 @@ class ProductService {
       }]
     })
   }
+
+  
+
 }
 
 module.exports = ProductService;

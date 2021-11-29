@@ -1,4 +1,5 @@
 const {
+  param,
   body
 } = require('express-validator');
 const {
@@ -45,6 +46,24 @@ class BeneficiaryValidator extends BaseValidator {
       .customSanitizer(formInputToDate)
     ]
   }
+
+  static gender(){
+    return [
+      param('gender').isString().withMessage('gender must be string')
+      .notEmpty()
+      .withMessage('task progress Id must not be empty.'),
+     
+    ]
+  }
+  static ageGroup(){
+    return [
+      param('ageGroup').isNumeric().withMessage('gender must be numeric')
+      .notEmpty()
+      .withMessage('task progress Id must not be empty.'),
+     
+    ]
+  }
+  
 
   static async validateSelfRegister(req, res, next) {
     const form = new formidable.IncomingForm({

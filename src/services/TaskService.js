@@ -1,4 +1,4 @@
-const { Campaign, Task, TaskUsers, User } = require('../models');
+const { Campaign, Task, TaskUsers, User, TaskProgress, TaskProgressEvidence } = require('../models');
 const { publicAttr } = require('../constants/user.constants');
 
 class TaskService {
@@ -56,6 +56,16 @@ class TaskService {
       throw new Error("Invalid task id");
 
     return task.update(updateTaskObj);
+  }
+
+  static async uploadProgressEvidence(taskProgressId, imageUrl){
+    const taskProgress = await TaskProgress.findByPk(taskProgressId);
+
+    if(!taskProgress){
+    throw new Error("No progress task found");
+  }
+  else
+  return await TaskProgressEvidence.create({TaskProgressId: taskProgressId, imageUrl});
   }
 
 }
