@@ -22,9 +22,9 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Transaction, {
         as: "OrderTransaction",
         foreignKey: "BeneficiaryId",
-        scope: {
-          transaction_type: 'order'
-        }
+        // scope: {
+        //   transaction_type: 'order'
+        // }
       });
 
       User.belongsToMany(models.Campaign, {

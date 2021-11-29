@@ -3,7 +3,7 @@ const {
   AclRoles
 } = require('../utils');
 const {
-  // User,
+  User,
   Beneficiary,
   Campaign,
   Wallet,
@@ -19,12 +19,7 @@ const {
 const transaction = require('../models/transaction');
 
 
-const User = [
-  {RoleId: 5, first_name: 'Ahmad', last_name: 'Hussein', gender: 'male', dob: '1992-03-7'},
-  {RoleId: 5, first_name: 'Ummul-Khair', last_name: 'Mohammed', gender: 'female', dob: '2014-03-7'},
-  {RoleId: 5, first_name: 'Aisha', last_name: 'Musa', gender: 'male', dob: '1997-05-7'},
-  {RoleId: 5, first_name: 'Hassn', last_name: 'Isah', gender: 'male', dob: '1999-03-7'}
-]
+
 
 class BeneficiariesService {
   static async getAllUsers() {
@@ -225,7 +220,7 @@ class BeneficiariesService {
     })
   }
 
-  static async getBeneficiariesByGender() {
+  static async getBeneficiaries() {
     return User.findAll({
       where: {
         RoleId: AclRoles.Beneficiary
@@ -233,72 +228,21 @@ class BeneficiariesService {
     });
   }
 
-  //get all beneficiaries by marital status
-  static async getBeneficiariesByMaritalStatus(marital_status) {
-     return await User.findAll({
+
+  static async getBeneficiariesTotalAmount() {
+    return User.findAll({
       where: {
-        marital_status,
         RoleId: AclRoles.Beneficiary
-      }
-    });
-  }
-
-  //get all beneficiaries for a particular location
-  static async getBeneficiariesByLocation(location) {
-    return await User.findAll({
-     where: {
-       location,
-       RoleId: AclRoles.Beneficiary
-     }
-   });
-
-    
-   }
-
-    //get all beneficiaries Total Balance
-  static async getBeneficiariesTotalBalance() {
-    return await User.findAll({
-     where: {
-       RoleId: AclRoles.Beneficiary
-     },
-     include: [{model: Transaction, as: 'OrderTransaction'}]
-   });
-
-    
-   }
- 
-
-  static async getBeneficiariesByAgeGroup() {
-    const beneficiaries = await User.findAll();
-    
-     const beneficiariesByAgeGroup = await User.findAll({
-      where: {
-        RoleId: AclRoles.Beneficiary,
-        
-        // age: {
-        //   [Op.not]: null,
-        //   [Op.notIn]: ['u', 'undefined', 'x', '']
-        // }
       },
-      // attributes: [
-      //   [Sequelize.literal('COUNT (CASE WHEN age < 20 THEN age END)'), '<20'],
-      //   [Sequelize.literal('COUNT (CASE WHEN age >= 20 AND age <= 29 THEN age END)'), '20-29'],
-      //   [Sequelize.literal('COUNT (CASE WHEN age >= 30 AND age <= 39 THEN age END)'), '30-39'],
-      //   [Sequelize.literal('COUNT (CASE WHEN age >= 40 AND age <= 49 THEN age END)'), '40-49'],
-      //   [Sequelize.literal('COUNT (CASE WHEN age >= 50 THEN age END)'), '≥50'],
-       
-      // ]
-      attributes:['dob']
+      include: [{
+        model: Transaction,
+        as: 'OrderTransaction'
+      }]
     });
-
-    
-
-    if(beneficiariesByAgeGroup.length <= 0){
-      throw new Error('No Beneficiary Found')
-    }
-    else
-    return beneficiariesByAgeGroup;
   }
+
+  //get all beneficiaries by marital status
+  
 }
 
 

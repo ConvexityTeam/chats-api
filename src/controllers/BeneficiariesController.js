@@ -11,6 +11,8 @@ const sequelize = require("sequelize");
 const {
   Response
 } = require("../libs");
+
+const moment = require('moment')
 const {
   HttpStatusCode
 } = require("../utils");
@@ -527,28 +529,29 @@ class BeneficiariesController {
  
     try{
 
-      const male = []
-      const female = []
+      let male = 0
+      let female = 0
 
-      const beneficiaries = await BeneficiaryService.getBeneficiariesByGender();
+      const beneficiaries = await BeneficiaryService.getBeneficiaries();
       
       if(beneficiaries.length > 0){
         for (let i = 0; i < beneficiaries.length;  i++){
 
-          if(beneficiaries[i] == 'male'){
-            male.push(beneficiaries[i])
+          if(beneficiaries[i].gender == 'male'){
+            male++
           }
-          else{
-            female.push(beneficiaries[i])
+          else if(beneficiaries[i].gender == 'female'){
+            female++
           }
-
-
         }
+
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Gender Retrieved.',{male, female});
+        return Response.send(res);
       }
       
-
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', male,  female);
-        return Response.send(res);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Gender Retrieved.');
+      return Response.send(res);
+       
 
 
     }catch(error){
@@ -559,14 +562,48 @@ class BeneficiariesController {
   }
 
   static async beneficiariesByAgeGroup(req, res){
-    const age = req.params.ageGroup;
+   
     try{
 
-      const beneficiaries = await BeneficiaryService.getBeneficiariesByAgeGroup(age);
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', beneficiaries);
+      let eighteenTo29 = 0
+      let thirtyTo41 = 0
+      let forty2To53 = 0
+      let fifty4To65 = 0
+      let sixty6Up = 0
 
-        console.log(beneficiaries.dob,'bene')
+      
+      const beneficiaries = await BeneficiaryService.getBeneficiaries();
+    
+      if(beneficiaries.length > 0){
+        for (let i = 0; i < beneficiaries.length;  i++){
+         
+          if(parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) >= 18 &&  
+          parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) <= 29 ){
+            eighteenTo29++
+          }
+          else if(parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) >= 30 &&  
+          parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) <= 41 ){
+            thirtyTo41++
+          }
+          else if(parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) >= 42 &&  
+          parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) <= 53 ){
+            forty2To53++
+          }
+          if(parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) >= 54 &&  
+          parseInt(moment().format('YYYY') -  moment(beneficiaries[i].dob).format('YYYY')) <= 65 ){
+            fifty4To65++
+          }else {
+            sixty6Up++
+          }
+        }
+
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Age Group Retrieved.',{eighteenTo29, thirtyTo41, forty2To53, fifty4To65, sixty6Up});
         return Response.send(res);
+      }
+      
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Age Group Retrieved.');
+      return Response.send(res);
+
     
 
     }catch(error){
@@ -577,17 +614,35 @@ class BeneficiariesController {
   }
 
   static async beneficiariesByMaritalStatus(req, res){
-    const marital_status = req.params.marital_status;
+    
     try{
 
-      const beneficiaries = await BeneficiaryService.getBeneficiariesByMaritalStatus(marital_status);
-      if(beneficiaries.length <= 0){
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiaries with this marital status.');
+      let married = 0
+      let single = 0
+      let divorce = 0
+
+      const beneficiaries = await BeneficiaryService.getBeneficiaries();
+      
+      if(beneficiaries.length > 0){
+        for (let i = 0; i < beneficiaries.length;  i++){
+
+          if(beneficiaries[i].marital_status == 'single'){
+            single++
+          }
+          else if(beneficiaries[i].marital_status == 'married'){
+            married++
+          }
+          else if(beneficiaries[i].marital_status == 'divorce'){
+            divorce++
+          }
+        }
+
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Marital Status Retrieved.',{single, married, divorce});
         return Response.send(res);
       }
-      else
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', beneficiaries);
-        return Response.send(res);
+      
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Marital Status Retrieved.');
+      return Response.send(res);
 
     }catch(error){
       console.log(error);
@@ -597,18 +652,39 @@ class BeneficiariesController {
   }
 
   static async beneficiariesByLocation(req, res){
-    const location = req.params.location;
+    
     try{
 
-      const beneficiaries = await BeneficiaryService.getBeneficiariesByLocation(location);
+      let kaduna = 0
+      let abuja = 0
+      let lagos = 0
+      let jos = 0
 
-      if(beneficiaries.length <= 0){
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiaries from this locaton.');
+      const beneficiaries = await BeneficiaryService.getBeneficiaries();
+      
+      if(beneficiaries.length > 0){
+        for (let i = 0; i < beneficiaries.length;  i++){
+
+          if(beneficiaries[i].location == 'Lagos' || 'lagos'){
+            lagos++
+          }
+          else if(beneficiaries[i].location == 'Abuja' || 'abuja'){
+            abuja++
+          }
+          else if(beneficiaries[i].location == 'Kaduna' || 'kaduna'){
+            kaduna++
+          }
+          else if(beneficiaries[i].location == 'Jos' || 'jos'){
+            jos++
+          }
+        }
+
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.',{lagos, abuja, kaduna, jos});
         return Response.send(res);
       }
-      else
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Retrieved.', beneficiaries);
-        return Response.send(res);
+      
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.');
+      return Response.send(res);
 
 
     }catch(error){
@@ -621,7 +697,7 @@ class BeneficiariesController {
   static async beneficiariesTotalBalance(req, res){
     try{
 
-      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalBalance();
+      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount();
       if(beneficiaries.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.');
         return Response.send(res);
