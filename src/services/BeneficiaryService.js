@@ -241,6 +241,16 @@ class BeneficiariesService {
     });
   }
 
+
+  static async getBeneficiariesTotalAmount() {
+    return User.findAll({
+      where: {
+        RoleId: AclRoles.Beneficiary
+      },
+      
+    });
+  }
+
   //get all beneficiaries by marital status
   
 }

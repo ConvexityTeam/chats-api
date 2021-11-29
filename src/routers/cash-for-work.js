@@ -4,6 +4,8 @@ const {Auth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 // router.use(Auth);
+router.post("/beneficiary_task/evidence", CashForWorkController.uploadProgreeEvidenceByBeneficiary);
+router.post("/beneficiary_task/pick", CashForWorkController.pickTaskFromCampaign);
 router.get("/approved/beneficiaries", CashForWorkController.viewCashForWorkRefractor);
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);

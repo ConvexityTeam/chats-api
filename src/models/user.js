@@ -38,9 +38,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "UserId",
       });
 
-      User.hasMany(models.TaskUsers, {
-        as: "AssociatedJobs"
-      });
+
       User.hasMany(models.Wallet, {
         as: "Wallet",
         foreignKey: "UserId",
@@ -87,9 +85,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "Print"
       });
       User.hasMany(models.BankAccount, {
-        as: "BankAccount"
+        as: "BankAccounts"
       });
       User.hasMany(models.VerificationToken, { as: "VerificationTokens"});
+      User.hasMany(models.TaskAssignment, {as: "Assignments"});
       User.belongsTo(models.Role, {
         foreignKey: "RoleId",
         as: "Role"

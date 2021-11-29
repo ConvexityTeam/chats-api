@@ -7,6 +7,9 @@ const formidable = require("formidable");
 const uploadFile = require("./AmazonController");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
+const {
+  AclRoles
+} = require('../utils');
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
 });
@@ -675,31 +678,112 @@ class CashForWorkController {
 
 
   static async pickTaskFromCampaign (req, res){
+
+    const data = req.body;
+    const rules = {
+      UserId: "required|numeric",
+      TaskId: "required|numeric",
+    };
+
+    const validation = new Validator(data, rules);
         
     try{
+      if (validation.fails()) {
+        util.setError(400, validation.errors);
+        return util.send(res);
+      }else{
+      const exist = await db.User.findOne({ where: {RoleId: AclRoles.Beneficiary, id: data.UserId}}); 
 
-      const cashforwork = await db.Beneficiary.findAll({where: {approved: true},
-      include: [{
-        model: db.Campaign,
-          as: 'Campaign',
-          where: {
-            type: 'cash-for-work'
-          }
-      }]
-    }); 
+      if (exist) {
 
-      if (cashforwork.length > 0) {
-        util.setSuccess(200, 'Cash For Work Retrieved', cashforwork);
+      const task = await db.Task.findByPk(data.TaskId);
+      if(task && task.assigned != task.assignment_count){
+        const TaskAssignment = await db.TaskAssignment.create({UserId: data.UserId, TaskId: data.TaskId})
+        if(TaskAssignment){
+           await db.Task.update({
+          assigned: task.assigned + 1
+        },{where:{id: data.TaskId}})
+      util.setSuccess(200, 'Success Picking Task', TaskAssignment);
+        }else {
+           util.setError(400, 'Something Went Wrong While Picking Task');
+        }
+       
+      }else util.setSuccess(200, 'Cannot pick task');
+        
     } else {
-        util.setSuccess(200, 'No Cash For Work found');
+        util.setSuccess(404, 'Beneficiary Not Found');
     }
     return util.send(res);
+  }
     }catch(error){
       console.log(error.message);
       util.setError(500, "Internal Server Error"+ error);
       return util.send(res);
     }
   }
+
+
+  static async uploadProgreeEvidenceByBeneficiary(req, res){
+   
+    try{
+
+    
+    var form = new formidable.IncomingForm({ multiples: true });
+    form.parse(req, async (err, fields, files) => {
+      const rules = {
+        TaskAssignmentId: "required|numeric",
+        comment: "required|string",
+        source: "required|string",
+      };
+
+      const validation = new Validator(fields, rules);
+
+      if (validation.fails()) {
+        util.setError(400, validation.errors);
+        return util.send(res);
+      } else {
+
+        const request = await db.TaskAssignmentEvidence.findAll({where: { TaskAssignmentId: fields.TaskAssignmentId}});
+       
+        if (request) {
+          util.setError(
+            400,
+            "Progress Report has already been submitted for this task"
+          );
+          return util.send(res);
+        }
+
+      
+        let i = 0;
+        let uploadFilePromises = [];
+        files.images.forEach(async (image) => {
+          let ext = image.name.substring(image.name.lastIndexOf(".") + 1);
+          uploadFilePromises.push(
+            uploadFile(
+              image,
+              "pge-" + environ + "-" + fields.TaskAssignmentId + ++i + "." + ext,
+              "convexity-progress-evidence"
+            )
+          );
+        });
+
+        Promise.all(uploadFilePromises).then(async (responses) => {
+          responses.forEach(async (url) => {
+            await db.TaskProgressEvidence.create({ uploads: url,TaskAssignmentId,  comment: fields.comment, type: fields.type, source: 'beneficiary' });
+          });
+        });
+      
+
+        util.setSuccess(201, "Progress Report Submitted");
+        return util.send(res);
+      }
+    });
+  }catch(error){
+    util.setError(500, "Internal Server Error", error);
+    return util.send(res);
+  }
+  }
+  
 }
 
 module.exports = CashForWorkController;

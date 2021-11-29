@@ -39,7 +39,7 @@ class VendorController {
     const id = req.params.id || req.user.id;
 
     try {
-      const aVendor = await VendorService.getAVendor(id);
+      const aVendor = await VendorService.getVendorData(id);
       const vToObject = aVendor.toObject();
       vToObject.Wallets = aVendor.Wallets.map(wallet => wallet.toObject());
       if (!aVendor) {
@@ -49,6 +49,7 @@ class VendorController {
       }
       return util.send(res);
     } catch (error) {
+      console.log(error);
       util.setError(500, 'Request Failed. Please retry.');
       return util.send(res);
     }
