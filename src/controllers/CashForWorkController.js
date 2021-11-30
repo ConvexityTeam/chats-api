@@ -724,12 +724,15 @@ class CashForWorkController {
 
 
   static async uploadProgreeEvidenceByBeneficiary(req, res){
+
+    
    
     try{
 
     
-    var form = new formidable.IncomingForm({ multiples: true });
-    form.parse(req, async (err, fields, files) => {
+   
+      console.log(req.file, 'file')
+
       const rules = {
         TaskAssignmentId: "required|numeric",
         comment: "required|string",
@@ -743,41 +746,41 @@ class CashForWorkController {
         return util.send(res);
       } else {
 
-        const request = await db.TaskAssignmentEvidence.findAll({where: { TaskAssignmentId: fields.TaskAssignmentId}});
+        // const request = await db.TaskAssignmentEvidence.findAll({where: { TaskAssignmentId: fields.TaskAssignmentId}});
        
-        if (request) {
-          util.setError(
-            400,
-            "Progress Report has already been submitted for this task"
-          );
-          return util.send(res);
-        }
+        // if (request) {
+        //   util.setError(
+        //     400,
+        //     "Progress Report has already been submitted for this task"
+        //   );
+        //   return util.send(res);
+        // }
 
       
-        let i = 0;
-        let uploadFilePromises = [];
-        files.images.forEach(async (image) => {
-          let ext = image.name.substring(image.name.lastIndexOf(".") + 1);
-          uploadFilePromises.push(
-            uploadFile(
-              image,
-              "pge-" + environ + "-" + fields.TaskAssignmentId + ++i + "." + ext,
-              "convexity-progress-evidence"
-            )
-          );
-        });
+        // let i = 0;
+        // let uploadFilePromises = [];
+        // files.images.forEach(async (image) => {
+        //   let ext = image.name.substring(image.name.lastIndexOf(".") + 1);
+        //   uploadFilePromises.push(
+        //     uploadFile(
+        //       image,
+        //       "pge-" + environ + "-" + fields.TaskAssignmentId + ++i + "." + ext,
+        //       "convexity-progress-evidence"
+        //     )
+        //   );
+        // });
 
-        Promise.all(uploadFilePromises).then(async (responses) => {
-          responses.forEach(async (url) => {
-            await db.TaskProgressEvidence.create({ uploads: url,TaskAssignmentId,  comment: fields.comment, type: fields.type, source: 'beneficiary' });
-          });
-        });
+        // Promise.all(uploadFilePromises).then(async (responses) => {
+        //   responses.forEach(async (url) => {
+        //     await db.TaskAssignmentEvidence.create({ uploads: url,TaskAssignmentId,  comment: fields.comment, type: fields.type, source: 'beneficiary' });
+        //   });
+        // });
       
 
         util.setSuccess(201, "Progress Report Submitted");
         return util.send(res);
       }
-    });
+   
   }catch(error){
     util.setError(500, "Internal Server Error", error);
     return util.send(res);
