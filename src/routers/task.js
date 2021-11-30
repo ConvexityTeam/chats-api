@@ -2,16 +2,20 @@ const router = require('express').Router();
 const {
 	CampaignValidator,
 	FileValidator,
-	TaskValidator } = require('../validators');
-const { NgoSubAdminAuth, IsOrgMember } = require('../middleware');
+	TaskValidator
+} = require('../validators');
+const {
+	NgoSubAdminAuth,
+	IsOrgMember
+} = require('../middleware');
 const TaskController = require('../controllers/TaskController');
 
 router.post('/task_progress_evidence/:taskProgressId',
-NgoSubAdminAuth,
-IsOrgMember, 
-TaskValidator.taskProgressId(), 
-FileValidator.checkTaskProgressFile(), 
-TaskController.uploadEvidence );
+	NgoSubAdminAuth,
+	IsOrgMember,
+	TaskValidator.taskProgressId(),
+	FileValidator.checkTaskProgressFile(),
+	TaskController.uploadEvidence);
 
 router.route('/:organisation_id/:campaign_id')
 	.get(

@@ -1,5 +1,14 @@
-const { Campaign, Task, TaskUsers, User, TaskProgress, TaskProgressEvidence } = require('../models');
-const { publicAttr } = require('../constants/user.constants');
+const {
+  Campaign,
+  Task,
+  TaskUsers,
+  User,
+  TaskProgress,
+  TaskProgressEvidence
+} = require('../models');
+const {
+  publicAttr
+} = require('../constants/user.constants');
 
 class TaskService {
 
@@ -17,7 +26,7 @@ class TaskService {
       throw new Error("Invalid campaign id");
 
     if (campaign.status == "completed")
-      throw new Error("Campaign is already completed"); 
+      throw new Error("Campaign is already completed");
 
     const _tasks = tasks.map(task => {
       task.CampaignId = campaignId;
@@ -33,20 +42,16 @@ class TaskService {
       where: {
         CampaignId: params.campaign_id
       },
-      include: [
-        {
-          model: TaskUsers,
-          as: 'AssociatedWorkers',
-          attributes: [],
-          include: [
-            {
-              model: User,
-              as: 'Worker',
-              attributes: publicAttr
-            }
-          ]
-        }
-      ]
+      include: [{
+        model: TaskUsers,
+        as: 'AssociatedWorkers',
+        attributes: [],
+        include: [{
+          model: User,
+          as: 'Worker',
+          attributes: publicAttr
+        }]
+      }]
     });
   }
 
@@ -58,14 +63,16 @@ class TaskService {
     return task.update(updateTaskObj);
   }
 
-  static async uploadProgressEvidence(taskProgressId, imageUrl){
+  static async uploadProgressEvidence(taskProgressId, imageUrl) {
     const taskProgress = await TaskProgress.findByPk(taskProgressId);
 
-    if(!taskProgress){
-    throw new Error("No progress task found");
-  }
-  else
-  return await TaskProgressEvidence.create({TaskProgressId: taskProgressId, imageUrl});
+    if (!taskProgress) {
+      throw new Error("No progress task found");
+    } else
+      return await TaskProgressEvidence.create({
+        TaskProgressId: taskProgressId,
+        imageUrl
+      });
   }
 
 }
