@@ -1,6 +1,13 @@
-const { Response } = require('../libs');
-const { TaskService } = require('../services');
-const { SanitizeObject, HttpStatusCode } = require('../utils');
+const {
+  Response
+} = require('../libs');
+const {
+  TaskService
+} = require('../services');
+const {
+  SanitizeObject,
+  HttpStatusCode
+} = require('../utils');
 
 class TaskController {
   static async createCashForWorkTask(req, res) {
@@ -11,8 +18,7 @@ class TaskController {
       const createdTasks = await TaskService.createCashForWorkTask(tasks, campaignId);
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, "Tasks created successfully", createdTasks);
       return Response.send(res);
-    }
-    catch (error) {
+    } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }
@@ -25,8 +31,7 @@ class TaskController {
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork Campaign Tasks retreived", CashForWorkTasks);
       return Response.send(res);
-    }
-    catch (error) {
+    } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }
@@ -40,37 +45,37 @@ class TaskController {
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, "Task updated", updatedTask);
       return Response.send(res);
-    }
-    catch (error) {
+    } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }
   }
 
-  static async uploadEvidence(req, res){
-    const {taskProgressId} = req.params;
+  static async uploadEvidence(req, res) {
+    const {
+      taskProgressId
+    } = req.params;
     const imageUrl = req.file.path
 
     console.log(req.file, taskProgressId)
 
-    try{
-    
-    const evidence = await TaskService.uploadProgressEvidence(taskProgressId, imageUrl);
-    if(evidence){
-      Response.setSuccess(HttpStatusCode.STATUS_OK, "Task Evidence Uploaded Successfully", evidence);
-    return Response.send(res)
-    }
-    else{
-      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, "Something went wrong while uploading evidence");
-      return Response.send(res)
-    }
-    
-    }catch(error){
+    try {
+
+      const evidence = await TaskService.uploadProgressEvidence(taskProgressId, imageUrl);
+      if (evidence) {
+        Response.setSuccess(HttpStatusCode.STATUS_OK, "Task Evidence Uploaded Successfully", evidence);
+        return Response.send(res)
+      } else {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, "Something went wrong while uploading evidence");
+        return Response.send(res)
+      }
+
+    } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }
 
-    
+
   }
 }
 

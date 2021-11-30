@@ -29,7 +29,6 @@ router.route('/products')
     VendorController.vendorProducts
   )
 
-  router.post('/orders/order', VendorController.createOrder)
 router.route('/orders')
     .get(
       VendorAuth, 
