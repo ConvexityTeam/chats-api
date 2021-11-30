@@ -8,6 +8,9 @@ const uploadFile = require("./AmazonController");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const {
+  Response
+} = require("../libs");
+const {
   AclRoles
 } = require('../utils');
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
@@ -725,66 +728,59 @@ class CashForWorkController {
 
   static async uploadProgreeEvidenceByBeneficiary(req, res){
 
-    
-   
-    try{
-
-    
-   
-      console.log(req.file, 'file')
-
+    try {
+      var form = new formidable.IncomingForm();
+    form.parse(req, async (err, fields, files) => {
       const rules = {
         TaskAssignmentId: "required|numeric",
         comment: "required|string",
-        source: "required|string",
+        type: "required|string"
       };
-
       const validation = new Validator(fields, rules);
-
       if (validation.fails()) {
-        util.setError(400, validation.errors);
-        return util.send(res);
+        Response.setError(422, validation.errors);
+        return Response.send(res);
       } else {
-
-        // const request = await db.TaskAssignmentEvidence.findAll({where: { TaskAssignmentId: fields.TaskAssignmentId}});
-       
-        // if (request) {
-        //   util.setError(
-        //     400,
-        //     "Progress Report has already been submitted for this task"
-        //   );
-        //   return util.send(res);
-        // }
-
-      
-        // let i = 0;
-        // let uploadFilePromises = [];
-        // files.images.forEach(async (image) => {
-        //   let ext = image.name.substring(image.name.lastIndexOf(".") + 1);
-        //   uploadFilePromises.push(
-        //     uploadFile(
-        //       image,
-        //       "pge-" + environ + "-" + fields.TaskAssignmentId + ++i + "." + ext,
-        //       "convexity-progress-evidence"
-        //     )
-        //   );
-        // });
-
-        // Promise.all(uploadFilePromises).then(async (responses) => {
-        //   responses.forEach(async (url) => {
-        //     await db.TaskAssignmentEvidence.create({ uploads: url,TaskAssignmentId,  comment: fields.comment, type: fields.type, source: 'beneficiary' });
-        //   });
-        // });
-      
-
-        util.setSuccess(201, "Progress Report Submitted");
-        return util.send(res);
+        if (!files.uploads) {
+          Response.setError(422, "Task Assignment Evidence Required");
+          return Response.send(res);
+        } else {
+          const user = await db.User.findOne({where: {RoleId: AclRoles.Beneficiary}});
+          if (user) {
+            const extension = files.uploads.name.substring(
+              files.uploads.name.lastIndexOf(".") + 1
+            );
+            await uploadFile(
+              files.uploads,
+              "pge-" + environ + "-" + fields.TaskAssignmentId + "-i." + extension,
+              "convexity-task-assignment-evidence"
+            ).then((url) => {
+              TaskProgressEvidence.update({
+                uploads: url,
+                TaskAssignmentId: fields.TaskAssignmentId,
+                comment: fields.comment,
+                type: fields.type,
+                source: 'beneficiary'
+              });
+            }).catch((err)=> {
+              console.log(err)
+             
+            });
+            Response.setSuccess(200, "Success Uploading  Task Evidence");
+            return Response.send(res);
+          } else {
+            Response.setError(422, "User Not Found User");
+            return Response.send(res);
+          }
+        }
       }
-   
-  }catch(error){
-    util.setError(500, "Internal Server Error", error);
-    return util.send(res);
-  }
+    });
+    }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+    
   }
   
 }

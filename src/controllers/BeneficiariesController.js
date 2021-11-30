@@ -655,38 +655,38 @@ class BeneficiariesController {
     
     try{
 
-      let kaduna = 0
-      let abuja = 0
-      let lagos = 0
-      let jos = 0
+      let locations = []
 
       const beneficiaries = await BeneficiaryService.getBeneficiaries();
       
       if(beneficiaries.length > 0){
-        for (let i = 0; i < beneficiaries.length;  i++){
+       
+        const beneficiary = beneficiaries.map(bene =>  bene.location )
+        let arr =    beneficiary.filter(x => x !== null)
 
-          if(beneficiaries[i].location == 'Lagos' || 'lagos'){
-            lagos++
+       let repeat = 1
+     
+        for(let i = 0; i<arr.length; i++){
+          console.log(JSON.parse(arr[i]).country)
+          if(locations.length <= 0 && !locations.includes(JSON.parse(arr[i]).country)) {
+            locations.push({name: JSON.parse(arr[i]).country, repeat})
+          }else if(locations.length > 0 && locations.map(val => val.name).includes(JSON.parse(arr[i]).country)){
+            locations.find((obj => obj.name === JSON.parse(arr[i]).country)).repeat += 1;
+
           }
-          else if(beneficiaries[i].location == 'Abuja' || 'abuja'){
-            abuja++
-          }
-          else if(beneficiaries[i].location == 'Kaduna' || 'kaduna'){
-            kaduna++
-          }
-          else if(beneficiaries[i].location == 'Jos' || 'jos'){
-            jos++
-          }
+          
         }
+       
+        
 
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.',{lagos, abuja, kaduna, jos});
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.',locations);
         return Response.send(res);
       }
       
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.');
       return Response.send(res);
 
-
+    
     }catch(error){
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
