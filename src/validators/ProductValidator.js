@@ -57,7 +57,7 @@ class ProductValidator extends BaseValidator {
   }
 
   static vendorHasProduct(id, {req}) {
-      const vendorId = req.params.vendor_id || req.check.vendor_id || req.vendor.id;
+      const vendorId = req.params.vendor_id || req.body.vendor_id || req.vendor.id;
       return new Promise(async (resolve, reject) => {
         try {
           const product = await ProductService.findProductByVendorId(id, vendorId);
