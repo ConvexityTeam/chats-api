@@ -11,6 +11,7 @@ const ComplaintValidator = require('./ComplaintValidator');
 const WalletValidator = require('./WalletValidator');
 const FileValidator = require('./FileValidator');
 const TaskValidator = require('./TaskValidator');
+const ParamValidator = require('./ParamValidator')
 
 module.exports = {
   AuthValidator,
@@ -25,5 +26,6 @@ module.exports = {
   ComplaintValidator,
   WalletValidator,
   FileValidator,
-  TaskValidator
+  TaskValidator,
+  ParamValidator
 }

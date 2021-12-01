@@ -13,7 +13,8 @@ const {
   Sequelize
 } = require('sequelize');
 const {
-  userConst
+  userConst,
+  walletConst
 } = require('../constants');
 
 class BeneficiariesService {
@@ -89,6 +90,18 @@ class BeneficiariesService {
         id: id
       }
     });
+  }
+
+  /**
+   * 
+   * @param {interger} CampaignId Campaign Unique ID
+   * @param {integer} UserId Beneficiary Account ID
+   */
+   static async approveBeneficiary(CampaignId, UserId) {
+     const beneficiary = await Beneficiary.findOne({CampaignId, UserId});
+     if(!beneficiary) throw new Error('Beneficiary Not Found.');
+     beneficiary.update({approved: true});
+     return beneficiary;
   }
 
   static async createComplaint(data) {
@@ -212,6 +225,36 @@ class BeneficiariesService {
         as: 'Campaigns',
         attributes: []
       }]
+    })
+  }
+
+  static async findOrganisationVendorTransactions(OrganisationId) {
+    return Transaction.findAll({
+      include: [
+        {
+          model: Wallet,
+          as: 'SenderWallet',
+          attributes: {
+            exclude: walletConst.walletExcludes
+          },
+          where: {
+            OrganisationId
+          },
+          include: ['Campaign']
+        },
+        {
+          model: Wallet,
+          as: 'ReceiverWallet',
+          attributes: {
+            exclude: walletConst.walletExcludes
+          }
+        },
+        {
+          model: User,
+          as: 'Beneficiary',
+          attributes: userConst.publicAttr,
+        }
+      ]
     })
   }
 }

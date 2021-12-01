@@ -33,10 +33,7 @@ module.exports = (sequelize, DataTypes) => {
 
       Transaction.belongsTo(models.User, {
         foreignKey: 'BeneficiaryId',
-        as: 'Beneficiary',
-        scope: {
-          transaction_type: 'order'
-        }
+        as: 'Beneficiary'
       });
 
       Transaction.belongsTo(models.User, {
@@ -58,7 +55,7 @@ module.exports = (sequelize, DataTypes) => {
     VendorId: DataTypes.INTEGER,
     BeneficiaryId: DataTypes.INTEGER,
     OrganisationId: DataTypes.INTEGER,
-    transaction_type: DataTypes.ENUM('deposit', 'order', 'withdrawal', 'transfer', 'approval', 'spent'),
+    transaction_type: DataTypes.ENUM('deposit', 'withdrawal', 'transfer', 'approval', 'spent'),
     transaction_origin: DataTypes.ENUM('store', 'wallet'),
     transaction_hash: DataTypes.STRING,
     amount: DataTypes.FLOAT,

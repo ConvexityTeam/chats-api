@@ -136,7 +136,7 @@ class OrganisationService {
   static async beneficiariesTransactions(OrganisationId) {
     return Transaction.findAll({
       where: {
-        walletSenderId: Sequelize.where(Sequelize.col('SenderWallet.AccountUserId'), OrganisationId)
+        SenderWalletId: Sequelize.where(Sequelize.col('SenderWallet.UserId'), OrganisationId)
       },
       include: [{
           model: Wallet,

@@ -402,30 +402,38 @@ class VendorService {
         })
     }
 
-    static async organisationIdVendorsTransactions(OrganisationId, filter = null) {
+    static async organisationVendorsTransactions(OrganisationId, filter = null) {
         return Transaction.findAll({
             where: {
-                ...filter
+                ...filter,
+                transaction_origin: 'store'
             },
-            include: [{
-                model: User,
-                as: 'Vendor',
-                attributes: userConst.publicAttr,
-                include: [
-                    'Store',
-                    {
-                        model: Organisation,
-                        as: 'Organisations',
-                        attributes: [],
-                        where: {
-                            id: OrganisationId
-                        },
-                        through: {
-                            attributes: []
+            include: [
+                {
+                    model: User,
+                    as: 'Vendor',
+                    attributes: userConst.publicAttr,
+                    include: [
+                        'Store',
+                        {
+                            model: Organisation,
+                            as: 'Organisations',
+                            attributes: [],
+                            where: {
+                                id: OrganisationId
+                            },
+                            through: {
+                                attributes: []
+                            }
                         }
-                    }
-                ]
-            }]
+                    ]
+                },
+                {
+                    model: User,
+                    as: 'Beneficiary',
+                    attributes: userConst.publicAttr
+                }
+            ]
         })
     }
 
