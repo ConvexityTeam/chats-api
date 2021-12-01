@@ -55,7 +55,7 @@
     "pg-hstore": "^2.3.3",
     "prettier": "^2.1.1",
     "psl": "^1.8.0",
-    "qrcode": "^1.4.4",
+    "qrcode": "^1.5.0",
     "randomstring": "^1.2.1",
     "rascal": "^13.0.0",
     "regenerator-runtime": "^0.13.7",

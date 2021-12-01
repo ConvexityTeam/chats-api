@@ -26,8 +26,8 @@ module.exports = (sequelize, DataTypes) => {
   Order.init({
     reference:  DataTypes.STRING,
     VendorId: DataTypes.INTEGER,
+    CampaignId: DataTypes.INTEGER,
     status: DataTypes.ENUM('pending', 'processing', 'confirmed', 'delivered'),
-
   }, {
     sequelize,
     modelName: 'Order',

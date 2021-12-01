@@ -19,6 +19,35 @@ class ParamValidator extends BaseValidator {
     .withMessage('Vendor ID parameter must be numeric'),
     this.validate
   ]
+
+  static OrderId = [
+    param('order_id')
+    .notEmpty()
+    .withMessage('Order ID parameter is required.')
+    .isNumeric()
+    .withMessage('Order ID parameter must be numeric'),
+    this.validate
+  ]
+
+  static Reference = [
+    param('reference')
+    .notEmpty()
+    .withMessage('Reference parameter is required.')
+    .isAlphanumeric()
+    .withMessage('Alhpanumeric reference parameter allowed'),
+    this.validate
+  ]
+
+  static CampaignId = [
+    param('campaign_id')
+    .notEmpty()
+    .withMessage('Campaign ID parameter is required.')
+    .isAlphanumeric()
+    .withMessage('Campaign ID parameter must be numeric'),
+    this.validate
+  ]
+
+
 }
 
 module.exports = ParamValidator;

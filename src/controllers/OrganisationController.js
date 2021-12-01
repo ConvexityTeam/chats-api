@@ -378,6 +378,18 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+
+  static async approveCampaignVendor ( req, res) {
+    try {
+      const approved = await CampaignService.approvedVendor(req.campaign.id, req.body.vendor_id);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Vendor approved.', approved);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
+      return Response.send(res);
+    }
+  }
   static async updateProfile(req, res) {
     try {
       var form = new formidable.IncomingForm();

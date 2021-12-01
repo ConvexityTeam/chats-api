@@ -196,6 +196,16 @@ router.route('/:organisation_id/campaigns/:campaign_id')
     OrganisationController.updateOrgCampaign
   );
 
+router.route('/:organisation_id/campaigns/:campaign_id/vendors')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    VendorValidator.approveCampaignVendor,
+    OrganisationController.approveCampaignVendor
+  )
+
 router.route('/:organisation_id/campaigns/:campaign_id/products')
   .post(
     NgoSubAdminAuth,

@@ -98,7 +98,7 @@ class BeneficiariesService {
    * @param {integer} UserId Beneficiary Account ID
    */
    static async approveBeneficiary(CampaignId, UserId) {
-     const beneficiary = await Beneficiary.findOne({CampaignId, UserId});
+     const beneficiary = await Beneficiary.findOne({where: {CampaignId, UserId}});
      if(!beneficiary) throw new Error('Beneficiary Not Found.');
      beneficiary.update({approved: true});
      return beneficiary;

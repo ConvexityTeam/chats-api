@@ -1,3 +1,4 @@
+const OrderController = require('./OrderController')
 const AuthController = require('./AuthController');
 const NgoController  = require('./NgoController');
 const WalletController = require('./WalletController');
@@ -11,6 +12,7 @@ const WebhookController = require('./WebhookController');
 
 
 module.exports = {
+  OrderController,
   AuthController,
   NgoController,
   VendorController,
@@ -20,5 +22,5 @@ module.exports = {
   ProductController,
   CampaignController,
   ComplaintController,
-  WebhookController
+  WebhookController,
 }
