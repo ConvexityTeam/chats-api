@@ -5,6 +5,7 @@ const Validator = require("validatorjs");
 const { Op } = require("sequelize");
 const formidable = require("formidable");
 const uploadFile = require("./AmazonController");
+
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const {
@@ -652,23 +653,19 @@ class CashForWorkController {
 
 
   static async viewCashForWorkRefractor (req, res){
-        
+        const {UserId} = req.params
     try{
 
-      const cashforwork = await db.Beneficiary.findAll({where: {approved: true},
-      include: [{
-        model: db.Campaign,
-          as: 'Campaign',
-          where: {
-            type: 'cash-for-work'
-          }
-      }]
-    }); 
+      const beneficiary = await db.TaskAssignment.findAll({where: { UserId },
+      include:[{
+        model: db.TaskAssignmentEvidence,
+        as: 'SubmittedEvidences'
+      }]}); 
 
-      if (cashforwork.length > 0) {
-        util.setSuccess(200, 'Cash For Work Retrieved', cashforwork);
+      if (beneficiary) {
+        util.setSuccess(200, 'Task Assignment Retrieved', beneficiary);
     } else {
-        util.setSuccess(200, 'No Cash For Work found');
+        util.setSuccess(200, 'Task Assignment Not Recieved');
     }
     return util.send(res);
     }catch(error){
@@ -761,6 +758,120 @@ class CashForWorkController {
                 comment: fields.comment,
                 type: fields.type,
                 source: 'beneficiary'
+              });
+            }).catch((err)=> {
+              console.log(err)
+             
+            });
+            Response.setSuccess(200, "Success Uploading  Task Evidence");
+            return Response.send(res);
+          } else {
+            Response.setError(422, "User Not Found User");
+            return Response.send(res);
+          }
+        }
+      }
+    });
+    }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+    
+  }
+
+  static async uploadProgreeEvidenceFieldAgent(req, res){
+
+    try {
+      var form = new formidable.IncomingForm();
+    form.parse(req, async (err, fields, files) => {
+      const rules = {
+        TaskAssignmentId: "required|numeric",
+        comment: "required|string",
+        type: "required|string"
+      };
+      const validation = new Validator(fields, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      } else {
+        if (!files.uploads) {
+          Response.setError(422, "Task Assignment Evidence Required");
+          return Response.send(res);
+        } else {
+          const user = await db.User.findOne({where: {RoleId: AclRoles.FieldAgent}});
+          if (user) {
+            const extension = files.uploads.name.substring(
+              files.uploads.name.lastIndexOf(".") + 1
+            );
+            await uploadFile(
+              files.uploads,
+              "pge-" + environ + "-" + fields.TaskAssignmentId + "-i." + extension,
+              "convexity-task-assignment-evidence"
+            ).then((url) => {
+              TaskProgressEvidence.update({
+                uploads: url,
+                TaskAssignmentId: fields.TaskAssignmentId,
+                comment: fields.comment,
+                type: fields.type,
+                source: 'field_agent'
+              });
+            }).catch((err)=> {
+              console.log(err)
+             
+            });
+            Response.setSuccess(200, "Success Uploading  Task Evidence");
+            return Response.send(res);
+          } else {
+            Response.setError(422, "User Not Found User");
+            return Response.send(res);
+          }
+        }
+      }
+    });
+    }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+    
+  }
+
+  static async uploadProgreeEvidenceVendor(req, res){
+
+    try {
+      var form = new formidable.IncomingForm();
+    form.parse(req, async (err, fields, files) => {
+      const rules = {
+        TaskAssignmentId: "required|numeric",
+        comment: "required|string",
+        type: "required|string"
+      };
+      const validation = new Validator(fields, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      } else {
+        if (!files.uploads) {
+          Response.setError(422, "Task Assignment Evidence Required");
+          return Response.send(res);
+        } else {
+          const user = await db.User.findOne({where: {RoleId: AclRoles.Vendor}});
+          if (user) {
+            const extension = files.uploads.name.substring(
+              files.uploads.name.lastIndexOf(".") + 1
+            );
+            await uploadFile(
+              files.uploads,
+              "pge-" + environ + "-" + fields.TaskAssignmentId + "-i." + extension,
+              "convexity-task-assignment-evidence"
+            ).then((url) => {
+              TaskProgressEvidence.update({
+                uploads: url,
+                TaskAssignmentId: fields.TaskAssignmentId,
+                comment: fields.comment,
+                type: fields.type,
+                source: 'field_agent'
               });
             }).catch((err)=> {
               console.log(err)

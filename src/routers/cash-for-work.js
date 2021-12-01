@@ -1,12 +1,14 @@
 const router = require("express").Router();
 
-const {Auth} = require("../middleware");
+const {Auth, VendorAuth, FieldAgentAuth, BeneficiaryAuth, VendorBeneficiaryAuth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 // router.use(Auth);
-router.post("/beneficiary_task/evidence", CashForWorkController.uploadProgreeEvidenceByBeneficiary);
-router.post("/beneficiary_task/pick", CashForWorkController.pickTaskFromCampaign);
-router.get("/approved/beneficiaries", CashForWorkController.viewCashForWorkRefractor);
+router.post("/vendor_task/evidence", VendorAuth, CashForWorkController.uploadProgreeEvidenceVendor);
+router.post("/beneficiary_field_agent/evidence", FieldAgentAuth, CashForWorkController.uploadProgreeEvidenceFieldAgent);
+router.post("/beneficiary_task/evidence", BeneficiaryAuth, VendorBeneficiaryAuth , CashForWorkController.uploadProgreeEvidenceByBeneficiary);
+router.post("/beneficiary_task/pick",BeneficiaryAuth, VendorBeneficiaryAuth, CashForWorkController.pickTaskFromCampaign);
+router.get("/approved/beneficiaries/:UserId", CashForWorkController.viewCashForWorkRefractor);
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);
 router.get("/:cashforworkid", CashForWorkController.getCashForWork);

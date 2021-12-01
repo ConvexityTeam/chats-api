@@ -20,7 +20,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'UserId'
       });
       TaskAssignment.hasMany(models.TaskAssignmentEvidence, {
-        as: 'SubmittedEvidences'
+        as: 'SubmittedEvidences',
+        foreignKey: 'id'
       });
       TaskAssignment.hasOne(models.User, {
         as: 'Approver',
