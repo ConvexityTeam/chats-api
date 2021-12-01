@@ -1,6 +1,7 @@
 const {
   GodModeAuth,
-  BeneficiaryAuth
+  BeneficiaryAuth,
+  VendorBeneficiaryAuth
 } = require("../middleware");
 const {
   AuthController,
@@ -17,10 +18,14 @@ const {
 const router = require("express").Router();
 
 
-router.get('/gender', BeneficiaryController.beneficiariesByGender);
-router.get('/age_group', BeneficiaryController.beneficiariesByAgeGroup);
-router.get('/location', BeneficiaryController.beneficiariesByLocation);
-router.get('/marital_status', BeneficiaryController.beneficiariesByMaritalStatus);
+router.get('/gender', BeneficiaryAuth,
+VendorBeneficiaryAuth, BeneficiaryController.beneficiariesByGender);
+router.get('/age_group',BeneficiaryAuth,
+VendorBeneficiaryAuth, BeneficiaryController.beneficiariesByAgeGroup);
+router.get('/location', BeneficiaryAuth,
+VendorBeneficiaryAuth, BeneficiaryController.beneficiariesByLocation);
+router.get('/marital_status', BeneficiaryAuth,
+VendorBeneficiaryAuth, BeneficiaryController.beneficiariesByMaritalStatus);
 
 router.get('/total_balance', BeneficiaryController.beneficiariesTotalBalance);
 
