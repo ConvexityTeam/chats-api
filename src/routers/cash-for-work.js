@@ -1,14 +1,20 @@
 const router = require("express").Router();
 
-const {Auth, VendorAuth, FieldAgentAuth, BeneficiaryAuth, VendorBeneficiaryAuth} = require("../middleware");
+const {
+
+	FileValidator,
+	
+} = require('../validators');
+
+const {Auth, VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, VendorBeneficiaryAuth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 // router.use(Auth);
-router.post("/vendor_task/evidence", VendorAuth, CashForWorkController.uploadProgreeEvidenceVendor);
-router.post("/beneficiary_field_agent/evidence", FieldAgentAuth, CashForWorkController.uploadProgreeEvidenceFieldAgent);
-router.post("/beneficiary_task/evidence", BeneficiaryAuth, VendorBeneficiaryAuth , CashForWorkController.uploadProgreeEvidenceByBeneficiary);
+router.post("/vendor_task/evidence", VendorAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceVendor);
+router.post("/beneficiary_field_agent/evidence", FieldAgentAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceFieldAgent);
+router.post("/beneficiary_task/evidence", BeneficiaryAuth,  VendorBeneficiaryAuth , FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);
 router.post("/beneficiary_task/pick",BeneficiaryAuth, VendorBeneficiaryAuth, CashForWorkController.pickTaskFromCampaign);
-router.get("/approved/beneficiaries/:UserId", BeneficiaryAuth, VendorBeneficiaryAuth, CashForWorkController.viewCashForWorkRefractor);
+
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);
 router.get("/:cashforworkid", CashForWorkController.getCashForWork);

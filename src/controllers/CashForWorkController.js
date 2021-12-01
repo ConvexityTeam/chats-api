@@ -653,10 +653,10 @@ class CashForWorkController {
 
 
   static async viewCashForWorkRefractor (req, res){
-        const {UserId} = req.params
+        
     try{
 
-      const beneficiary = await db.TaskAssignment.findAll({where: { UserId },
+      const beneficiary = await db.TaskAssignment.findAll({where: { UserId: req.user.id },
       include:[{
         model: db.TaskAssignmentEvidence,
         as: 'SubmittedEvidences'
@@ -742,7 +742,7 @@ class CashForWorkController {
           Response.setError(422, "Task Assignment Evidence Required");
           return Response.send(res);
         } else {
-          const user = await db.User.findOne({where: {RoleId: AclRoles.Beneficiary}});
+          const user = await db.TaskAssignment.findOne({where: {UserId: req.user.id}});
           if (user) {
             const extension = files.uploads.name.substring(
               files.uploads.name.lastIndexOf(".") + 1
@@ -799,7 +799,7 @@ class CashForWorkController {
           Response.setError(422, "Task Assignment Evidence Required");
           return Response.send(res);
         } else {
-          const user = await db.User.findOne({where: {RoleId: AclRoles.FieldAgent}});
+          const user = await db.TaskAssignment.findOne({where: {UserId: req.user.id}});
           if (user) {
             const extension = files.uploads.name.substring(
               files.uploads.name.lastIndexOf(".") + 1
@@ -856,7 +856,7 @@ class CashForWorkController {
           Response.setError(422, "Task Assignment Evidence Required");
           return Response.send(res);
         } else {
-          const user = await db.User.findOne({where: {RoleId: AclRoles.Vendor}});
+          const user = await db.TaskAssignment.findOne({where: {UserId: req.user.id}});
           if (user) {
             const extension = files.uploads.name.substring(
               files.uploads.name.lastIndexOf(".") + 1
@@ -880,7 +880,7 @@ class CashForWorkController {
             Response.setSuccess(200, "Success Uploading  Task Evidence");
             return Response.send(res);
           } else {
-            Response.setError(422, "User Not Found User");
+            Response.setError(422, "User Has Not been Assign To Any Task");
             return Response.send(res);
           }
         }

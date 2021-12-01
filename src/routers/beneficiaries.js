@@ -1,7 +1,8 @@
 const {
   GodModeAuth,
   BeneficiaryAuth,
-  VendorBeneficiaryAuth
+  VendorBeneficiaryAuth,
+
 } = require("../middleware");
 const {
   AuthController,
@@ -17,6 +18,9 @@ const {
 } = require("../validators");
 const router = require("express").Router();
 
+const CashForWorkController = require("../controllers/CashForWorkController");
+
+router.get("/cash-for-work/tasks", BeneficiaryAuth, VendorBeneficiaryAuth, CashForWorkController.viewCashForWorkRefractor);
 
 router.get('/gender', BeneficiaryAuth,
 VendorBeneficiaryAuth, BeneficiaryController.beneficiariesByGender);
