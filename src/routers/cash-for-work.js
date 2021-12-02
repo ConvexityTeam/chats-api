@@ -13,7 +13,6 @@ const CashForWorkController = require("../controllers/CashForWorkController");
 router.post("/vendor_task/evidence", VendorAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceVendor);
 router.post("/field_agent_task/evidence", FieldAgentAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceFieldAgent);
 router.post("/beneficiary_task/evidence", BeneficiaryAuth,  VendorBeneficiaryAuth , FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);
-router.post("/beneficiary_task/pick",BeneficiaryAuth, VendorBeneficiaryAuth, CashForWorkController.pickTaskFromCampaign);
 
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);

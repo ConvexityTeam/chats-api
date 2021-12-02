@@ -21,6 +21,8 @@ const router = require("express").Router();
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 router.get("/cash-for-work/tasks", BeneficiaryAuth, VendorBeneficiaryAuth, CashForWorkController.viewCashForWorkRefractor);
+router.post("/cash-for-work/tasks",BeneficiaryAuth, VendorBeneficiaryAuth, CashForWorkController.pickTaskFromCampaign);
+
 
 router.get('/gender', BeneficiaryAuth,
 VendorBeneficiaryAuth, BeneficiaryController.beneficiariesByGender);
