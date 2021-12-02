@@ -195,7 +195,7 @@ class VendorService {
                 store: data.Vendor.Store.store_name
             });
 
-            return {order, cart_items, total_quantity, total_cost, QrCode };
+            return { order, cart_items, total_quantity, total_cost, QrCode };
         }
 
         return null;

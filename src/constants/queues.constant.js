@@ -6,4 +6,5 @@ module.exports = {
   TRANSFER_TO: 'transferTo',
   VERIFY_NIN: 'VerifyNIN',
   VERIFY_FIAT_DEPOSIT: 'verifyFiatDeposit',
+  PROCESS_VENDOR_ORDER: 'processVendorOrder',
 }

@@ -14,6 +14,7 @@ const BantuService = require('./BantuService');
 const QueueService = require('./QueueService');
 const WebhookService = require('./WebhookService');
 const TaskService = require('./TaskService');
+const OrderService = require('./OrderService');
 
 module.exports = {
   UserService,
@@ -31,5 +32,6 @@ module.exports = {
   BantuService,
   QueueService,
   WebhookService,
-  TaskService
+  TaskService,
+  OrderService
 }

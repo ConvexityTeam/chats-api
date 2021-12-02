@@ -1,5 +1,6 @@
 const {
-  VERIFY_FIAT_DEPOSIT
+  VERIFY_FIAT_DEPOSIT,
+  PROCESS_VENDOR_ORDER
 } = require('../constants/queues.constant')
 const {
   RabbitMq
@@ -10,10 +11,20 @@ const {
   BlockchainService
 } = require('../services');
 
-const {Sequelize, Transaction } = require('../models');
-const { generateTransactionRef } = require('../utils');
+const {
+  Sequelize,
+  Transaction
+} = require('../models');
+const {
+  generateTransactionRef
+} = require('../utils');
 
 const verifyFiatDepsoitQueue = RabbitMq['default'].declareQueue(VERIFY_FIAT_DEPOSIT, {
+  durable: true,
+  prefetch: 1
+});
+
+const processVendorOrderQueue = RabbitMq['default'].declareQueue(PROCESS_VENDOR_ORDER, {
   durable: true,
   prefetch: 1
 });
@@ -22,7 +33,12 @@ RabbitMq['default']
   .completeConfiguration()
   .then(() => {
     verifyFiatDepsoitQueue.activateConsumer(async msg => {
-        const {OrganisationId, approved, status, amount} = msg.getContent();
+        const {
+          OrganisationId,
+          approved,
+          status,
+          amount
+        } = msg.getContent();
         if (approved && (status != 'successful' || status != 'declined')) {
 
           WalletService.findMainOrganisationWallet(OrganisationId)
@@ -59,11 +75,16 @@ RabbitMq['default']
               msg.nack();
             })
         }
-
-
       })
       .then(_ => {
         console.log(`Running Consumer For Verify Fiat Deposit.`)
+      });
+    processVendorOrderQueue.activateConsumer(async msg => {
+        const content = msg.getContent();
+        console.log(content)
+      })
+      .then(_ => {
+        console.log(`Running Process Vendor Order Queue`)
       });
   })
   .catch(error => {

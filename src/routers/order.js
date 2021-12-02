@@ -2,6 +2,8 @@ const router = require('express').Router();
 
 const {
   Auth,
+  BeneficiaryAuth,
+  IsRequestWithValidPin
 } = require("../middleware");
 
 const {
@@ -24,7 +26,8 @@ const {
   BeneficiaryValidator,
   WalletValidator,
   FileValidator,
-  ParamValidator
+  ParamValidator,
+  OrderValidator
 } = require('../validators');
 
 
@@ -37,6 +40,14 @@ router.route('/:reference')
     ParamValidator.Reference,
     OrderController.getOrderByReference
   )
+
+  router.route('/:reference/pay')
+    .post(
+      BeneficiaryAuth,
+      OrderValidator.CompleteOrder,
+      IsRequestWithValidPin,
+      OrderController.completeOrder
+    )
 
 
 module.exports = router;
