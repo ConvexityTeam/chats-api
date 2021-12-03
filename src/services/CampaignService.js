@@ -8,6 +8,7 @@ const {
   Campaign,
   Complaint,
   Beneficiary,
+  Transaction,
   CampaignVendor
 } = require("../models");
 const {
@@ -16,6 +17,7 @@ const {
 } = require("../constants");
 const Transfer = require("../libs/Transfer");
 const QueueService = require('./QueueService');
+const { generateTransactionRef } = require('../utils');
 
 class CampaignService {
   static searchCampaignTitle(title, extraClause = null) {
@@ -95,9 +97,16 @@ class CampaignService {
   }
 
   static async approvedVendor(CampaignId, VendorId) {
-    const record = await CampaignVendor.findOne({where: {CampaignId, VendorId}});
-    if(record) {
-      await record.update({approved: true});
+    const record = await CampaignVendor.findOne({
+      where: {
+        CampaignId,
+        VendorId
+      }
+    });
+    if (record) {
+      await record.update({
+        approved: true
+      });
       return record;
     }
 
@@ -110,7 +119,9 @@ class CampaignService {
 
   static async getVendorCampaigns(VendorId) {
     return CampaignVendor.findAll({
-      where: {VendorId},
+      where: {
+        VendorId
+      },
       include: [
         'Campaign'
       ]
@@ -165,7 +176,9 @@ class CampaignService {
       },
       include: [{
         model: Campaign,
-        where: {...extraClasue},
+        where: {
+          ...extraClasue
+        },
         as: 'Campaign',
         include: ['Organisation']
       }]
@@ -291,18 +304,55 @@ class CampaignService {
     }
   }
 
-  static cashForWorkCampaignByApprovedBeneficiary(){
-
-    return Campaign.findAll({where: {type: 'cash-for-work'},
-    include: [{
-      model: Beneficiary,
+  static cashForWorkCampaignByApprovedBeneficiary() {
+    return Campaign.findAll({
+      where: {
+        type: 'cash-for-work'
+      },
+      include: [{
+        model: Beneficiary,
         as: 'Beneficiaries',
         attribute: [],
         where: {
           approved: true
         }
-    }]
-  }); 
+      }]
+    });
+  }
+
+  static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
+    const payload = {
+      CampaignId: campaign.id,
+      NgoWalletId: OrgWallet.uuid,
+      CampaignWalletId: campaignWallet.uuid,
+      beneficiaries: beneficiaries.map(beneficiary => {
+        const bWalletId = beneficiary.User.Wallets.length ? beneficiary.User.Wallets[0].uuid : null;
+        return [
+          beneficiary.UserId,
+          bWalletId
+        ]
+      })
+    };
+
+
+    await campaign.update({status: 'completed', is_funded: true, amount_disbursed: campaign.budget });
+    await Wallet.update({ balance: Sequelize.literal(`balance - ${campaign.budget}`)}, {
+      where: {uuid: OrgWallet.uuid}
+    });
+
+    // Queue fuding disbursing
+
+    return Transaction.create({
+      amount: campaign.budget,
+      reference: generateTransactionRef(),
+      status: 'processing',
+      transaction_origin: 'wallet',
+      transaction_type: 'transfer',
+      SenderWalletId: OrgWallet.uuid,
+      ReceiverWalletId: campaignWallet.uuid,
+      OrganisationId: campaign.OrganisationId,
+      narration: 'Approve Campaign Funding'
+    });
   }
 }
 

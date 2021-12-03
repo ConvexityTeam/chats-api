@@ -133,7 +133,7 @@ router.route('/:organisation_id/vendors/transactions')
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.vendorsTransactions 
+    OrganisationController.vendorsTransactions
   );
 
 router.route('/:organisation_id/vendors/summary')
@@ -194,7 +194,16 @@ router.route('/:organisation_id/campaigns/:campaign_id')
     CampaignValidator.updateCampaignRules(),
     CampaignValidator.validate,
     OrganisationController.updateOrgCampaign
-  );
+  )
+
+  router.route('/:organisation_id/campaigns/:campaign_id/fund')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.approveAndFund
+  )
 
 router.route('/:organisation_id/campaigns/:campaign_id/vendors')
   .post(

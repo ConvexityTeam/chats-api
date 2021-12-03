@@ -1,4 +1,3 @@
-const moment = require('moment')
 const {
   AclRoles
 } = require('../utils');
@@ -17,10 +16,7 @@ const {
   userConst,
   walletConst
 } = require('../constants');
-const transaction = require('../models/transaction');
-
-
-
+const moment = require('moment')
 
 class BeneficiariesService {
   static async getAllUsers() {
@@ -102,11 +98,18 @@ class BeneficiariesService {
    * @param {interger} CampaignId Campaign Unique ID
    * @param {integer} UserId Beneficiary Account ID
    */
-   static async approveBeneficiary(CampaignId, UserId) {
-     const beneficiary = await Beneficiary.findOne({where: {CampaignId, UserId}});
-     if(!beneficiary) throw new Error('Beneficiary Not Found.');
-     beneficiary.update({approved: true});
-     return beneficiary;
+  static async approveBeneficiary(CampaignId, UserId) {
+    const beneficiary = await Beneficiary.findOne({
+      where: {
+        CampaignId,
+        UserId
+      }
+    });
+    if (!beneficiary) throw new Error('Beneficiary Not Found.');
+    beneficiary.update({
+      approved: true
+    });
+    return beneficiary;
   }
 
   static async createComplaint(data) {
@@ -255,9 +258,8 @@ class BeneficiariesService {
   }
 
 
-  
   //get all beneficiaries by marital status
-  
+
   static async findOrganisationVendorTransactions(OrganisationId) {
     return Transaction.findAll({
       include: [
@@ -283,6 +285,30 @@ class BeneficiariesService {
           model: User,
           as: 'Beneficiary',
           attributes: userConst.publicAttr,
+        }
+      ]
+    })
+  }
+
+  static async getApprovedBeneficiaries(CampaignId) {
+    return Beneficiary.findAll({
+      where: {
+        CampaignId,
+        approved: true
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          include: [
+              {
+                model: Wallet,
+                as: 'Wallets',
+                where: {
+                  CampaignId
+                }
+              }
+          ]
         }
       ]
     })

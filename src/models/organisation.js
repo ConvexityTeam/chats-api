@@ -39,10 +39,19 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "OrganisationId"
       })
       Organisation.hasMany(models.Wallet, {
+        as: "CampaignWallets",
+        foreignKey: "OrganisationId",
+        scope: {
+          wallet_type: "organisation",
+        },
+      });
+
+      Organisation.hasOne(models.Wallet, {
         as: "Wallet",
         foreignKey: "OrganisationId",
         scope: {
           wallet_type: "organisation",
+          CampaignId: null
         },
       });
     }

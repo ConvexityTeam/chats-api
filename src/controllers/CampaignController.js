@@ -1,6 +1,7 @@
 const {
   CampaignService,
-  ComplaintService
+  ComplaintService,
+  BeneficiaryService
 } = require("../services");
 const db = require("../models");
 const {
@@ -262,96 +263,37 @@ class CampaignController {
     }
   }
 
-  static async fundWallets(req, res) {
+  // REFACTORED
+  static async approveAndFund(req, res) {
     try {
-      const campaign_exist = await db.Campaign.findOne({
-        where: {
-          id: req.body.CampaignId
-        },
-        include: [
-          'Organisation',
-          {
-            model: db.User,
-            as: "Beneficiaries",
-            through: db.Beneficiary,
-            where: {
-              RoleId: AclRoles.Beneficiary,
-              status: "activated"
-            }
-          },
-        ],
-      });
+      const campaign = req.campaign;
+      const organisation = req.organisation;
+      const campaignWallet = await campaign.getWallet();
+      const OrgWallet = await organisation.getWallet();
+      const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(campaign.id);
 
-      if (campaign_exist) {
-        if (!campaign_exist.Beneficiaries.length) {
-          Response.setError(
-            404,
-            "No Approved Beneficiaries currently attached to this campaign"
-          );
-          return Response.send(res);
-        }
-        // const organisation = await campaign_exist.OrganisationMember.getOrganisation();
-        const wallet = await campaign_exist.Organisation.getWallets({
-          where: {
-            CampaignId: campaign_exist.id
-          },
-        });
-
-        if (wallet[0].balance >= campaign_exist.budget) {
-          const beneficiaries_count = campaign_exist["Beneficiaries"].length;
-          const amount = Math.floor(
-            campaign_exist.budget / beneficiaries_count
-          );
-          campaign_exist["Beneficiaries"].forEach(async (beneficiary) => {
-            // const user = await beneficiary.getUser();
-            const user_wallet = await beneficiary.getWallet({
-              where: {
-                CampaignId: campaign_exist.id
-              },
-            });
-
-            await campaign_exist
-              .createTransaction({
-                walletSenderId: wallet[0].uuid,
-                walletRecieverId: user_wallet[0].uuid,
-                amount: amount,
-                narration: "Approved Spending for " + user.first_name + " " + user.last_name,
-              })
-              .then((transaction) => {
-                approveToSpendQueue.send(
-                  new Message({
-                    reciever: user_wallet[0].address,
-                    campaign: campaign_exist.id,
-                    ngoAddress: wallet[0].address,
-                    ngoPrivateKey: wallet[0].privateKey,
-                    transactionId: transaction.uuid,
-                    amount: amount,
-                  }, {
-                    contentType: "application/json"
-                  })
-                );
-              })
-              .catch((err) => {
-                console.log(err.message);
-              });
-          });
-
-          campaign_exist.update({
-            is_funded: true
-          });
-
-          Response.setSuccess(201, "Transactions Initiated Successfully");
-          return Response.send(res);
-        } else {
-          Response.setError(422, "Budget is greater than wallet Balance");
-          return Response.send(res);
-        }
-      } else {
-        Response.setError(422, "Invalid Campaign Id");
+      if(campaign.status == 'completed') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
         return Response.send(res);
       }
+
+      if(campaign.budget > OrgWallet.balance) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
+        return Response.send(res);
+      }
+
+      if(!beneficiaries) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
+        return Response.send(res);
+      } 
+
+      const funding = await CampaignService.handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries);
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`, funding);
+      return Response.send(res);
     } catch (error) {
-      Response.setError(400, error.message);
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }
   }
