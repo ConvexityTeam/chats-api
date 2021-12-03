@@ -2,10 +2,6 @@ const {
   Op
 } = require("sequelize");
 const {
-  OrganisationService,
-  VendorService
-} = require('../services');
-const {
   HttpStatusCode,
   SanitizeObject,
   generateOrganisationId
@@ -31,7 +27,10 @@ const BantuService = require("../services");
 const api = require("../libs/Axios");
 const {
   CampaignService,
-  QueueService
+  QueueService,
+  OrganisationService,
+  BeneficiaryService,
+  VendorService
 } = require("../services");
 const AwsUploadService = require("../services/AwsUploadService");
 
@@ -168,12 +167,24 @@ class OrganisationController {
 
   static async getBeneficiariesTransactions(req, res) {
     try {
-      const transactions = await OrganisationService.beneficiariesTransactions(req.organisation.id);
+      const transactions = await BeneficiaryService.findOrganisationVendorTransactions(req.organisation.id);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries transactions.', transactions);
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
+
+  static async vendorsTransactions(req, res) {
+    try {
+      const transactions = await VendorService.organisationVendorsTransactions(req.organisation.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendors transactions.', transactions);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please try again.');
       return Response.send(res);
     }
   }
@@ -352,6 +363,30 @@ class OrganisationController {
     } catch (error) {
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Campaign creation fail. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async approveCampaignBeneficiary (req, res) {
+    try {
+      const approval = await BeneficiaryService.approveBeneficiary(req.campaign.id, req.beneficiary_id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Approved.', approval);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async approveCampaignVendor ( req, res) {
+    try {
+      const approved = await CampaignService.approvedVendor(req.campaign.id, req.body.vendor_id);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Vendor approved.', approved);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
       return Response.send(res);
     }
   }

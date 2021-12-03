@@ -2,10 +2,12 @@ const {
     Sequelize,
     Op
 } = require('sequelize');
+
 const {
     userConst,
     walletConst
 } = require('../constants');
+
 const {
     User,
     Store,
@@ -22,6 +24,7 @@ const {
 const {
     OrgRoles,
     AclRoles,
+    generateQrcodeURL,
     GenearteVendorId
 } = require('../utils');
 
@@ -133,8 +136,10 @@ class VendorService {
     }
     // Refactor
 
-    static async vendorStoreProducts(vendorId) {
+    static async vendorStoreProducts(vendorId, where = {}) {
+
         return Product.findAll({
+            where,
             include: [{
                 model: Market,
                 as: 'Store',
@@ -158,12 +163,9 @@ class VendorService {
         });
     }
 
-    static async getOrder(id, extraClause = null) {
-        return Order.findOne({
-            where: {
-                ...extraClause,
-                id
-            },
+    static async getOrder(where = {}) {
+        const order = await Order.findOne({
+            where,
             include: [{
                     model: User,
                     as: 'Vendor',
@@ -177,7 +179,28 @@ class VendorService {
                 }
             ],
         });
+
+        if (order) {
+            const data = order.toJSON();
+            const cart_items = order.Cart.length;
+            const total_quantity = order.Cart.map(c => c.quantity).reduce((a, b) => a + b, 0);
+            const total_cost = order.Cart.map(c => c.total_amount).reduce((a, b) => a + b, 0);
+            const QrCode = await generateQrcodeURL({
+                CampaignId: data.CampaignId,    
+                reference: data.reference,
+                cart_items,
+                total_quantity,
+                total_cost,
+                vendor: `${data.Vendor.first_name || ''} ${data.Vendor.last_name || ''}`,
+                store: data.Vendor.Store.store_name
+            });
+
+            return { order, cart_items, total_quantity, total_cost, QrCode };
+        }
+
+        return null;
     }
+    
 
     static async findVendorStore(UserId) {
         return Market.findOne({
@@ -228,8 +251,7 @@ class VendorService {
                 RoleId: AclRoles.Vendor
             },
             attributes: userConst.publicAttr,
-            include: [
-                {
+            include: [{
                     model: Organisation,
                     as: 'Organisations',
                     through: {
@@ -256,7 +278,7 @@ class VendorService {
                         "ReceivedTransactions",
                         "SentTransactions"
                     ]
-                }     
+                }
             ]
         })
     }
@@ -402,30 +424,37 @@ class VendorService {
         })
     }
 
-    static async organisationIdVendorsTransactions(OrganisationId, filter = null) {
+    static async organisationVendorsTransactions(OrganisationId, filter = null) {
         return Transaction.findAll({
             where: {
-                ...filter
+                ...filter,
+                transaction_origin: 'store'
             },
             include: [{
-                model: User,
-                as: 'Vendor',
-                attributes: userConst.publicAttr,
-                include: [
-                    'Store',
-                    {
-                        model: Organisation,
-                        as: 'Organisations',
-                        attributes: [],
-                        where: {
-                            id: OrganisationId
-                        },
-                        through: {
-                            attributes: []
+                    model: User,
+                    as: 'Vendor',
+                    attributes: userConst.publicAttr,
+                    include: [
+                        'Store',
+                        {
+                            model: Organisation,
+                            as: 'Organisations',
+                            attributes: [],
+                            where: {
+                                id: OrganisationId
+                            },
+                            through: {
+                                attributes: []
+                            }
                         }
-                    }
-                ]
-            }]
+                    ]
+                },
+                {
+                    model: User,
+                    as: 'Beneficiary',
+                    attributes: userConst.publicAttr
+                }
+            ]
         })
     }
 

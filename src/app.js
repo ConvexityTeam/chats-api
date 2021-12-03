@@ -24,6 +24,7 @@ const webhookRouter = require('./routers/webhooks');
 const taskRouter = require('./routers/task');
 const marketRouter = require('./routers/market');
 
+const orderRouter = require('./routers/order');
 
 
 const app = express();
@@ -53,6 +54,7 @@ app.use("/v1/organisation", organisationRouter);
 app.use("/v1/organisations", organisationRouter);
 app.use('/v1/webhooks', webhookRouter)
 app.use('/v1/tasks', taskRouter);
+app.use('/v1/orders', orderRouter);
 
 app.get("/", (req, res) => {
   try {

@@ -1199,7 +1199,7 @@ class UsersController {
       }
       const pin = createHash(req.body.pin.trim());
       await UserService.update(req.user.id, {pin});
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'PIN set successfully.');
       return Response.send(res);
     }
     catch(error) {
@@ -1222,7 +1222,7 @@ class UsersController {
       }
       const pin = createHash(req.body.new_pin);
       await UserService.update(req.user.id, {pin});
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'PIN changed successfully.');
       return Response.send(res);
     } catch (error) {
       console.log('updateAccountPin', error);

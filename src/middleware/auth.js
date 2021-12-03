@@ -26,7 +26,7 @@ const Auth = (roleIds = null ) => (req, res, next) => {
       // TODO: check user status
 
       if (user && roleIds && roleIds.length && !roleIds.includes(parseInt(user.RoleId))) {
-        Response.setError(HttpStatusCode.STATUS_FORBIDDEN, "Access Denied, UnAuthorised Access");
+        Response.setError(HttpStatusCode.STATUS_FORBIDDEN, "Access Denied, Unauthorised Access");
         return Response.send(res);
       }
 

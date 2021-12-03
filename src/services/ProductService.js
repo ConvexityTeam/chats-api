@@ -20,10 +20,11 @@ class ProductService {
     ));
   }
 
-  static findProductByVendorId(id, vendorId) {
+  static findProductByVendorId(id, vendorId, extraClause = null) {
     return Product.findOne({
       where: {
-        id
+        id,
+        ...extraClause
       },
       include: [{
         model: Market,

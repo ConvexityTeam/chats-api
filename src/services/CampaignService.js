@@ -7,7 +7,8 @@ const {
   Wallet,
   Campaign,
   Complaint,
-  Beneficiary
+  Beneficiary,
+  CampaignVendor
 } = require("../models");
 const {
   userConst,
@@ -91,6 +92,29 @@ class CampaignService {
         }
         return null;
       });
+  }
+
+  static async approvedVendor(CampaignId, VendorId) {
+    const record = await CampaignVendor.findOne({where: {CampaignId, VendorId}});
+    if(record) {
+      await record.update({approved: true});
+      return record;
+    }
+
+    return CampaignVendor.create({
+      CampaignId,
+      VendorId,
+      approved: true
+    })
+  }
+
+  static async getVendorCampaigns(VendorId) {
+    return CampaignVendor.findAll({
+      where: {VendorId},
+      include: [
+        'Campaign'
+      ]
+    });
   }
 
   static getCampaignWithBeneficiaries(id) {

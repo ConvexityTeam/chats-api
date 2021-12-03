@@ -40,6 +40,13 @@ class WalletService {
       include: ['Campaign']
     });
   }
+
+  static findUserCampaignWallet(UserId, CampaignId) {
+    return Wallet.findOne({
+      where: {UserId, CampaignId},
+      include: ['Campaign']
+    });
+  }
 }
 
 module.exports = WalletService;

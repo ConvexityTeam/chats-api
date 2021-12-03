@@ -2,7 +2,7 @@ const db = require("../models");
 var bcrypt = require("bcryptjs");
 const util = require("../libs/Utils");
 const {
-  VendorService
+  VendorService, CampaignService
 } = require("../services");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
@@ -365,8 +365,7 @@ class VendorController {
       util.setSuccess(200, "Summary", {
         daily_transaction: transactions.count,
         transaction_value: transactions.rows.length ?
-          transactions.rows[0].sum_value :
-          0,
+          transactions.rows[0].sum_value : 0,
         product_sold: soldProducts ? soldProducts : 0,
       });
       return util.send(res);
@@ -389,26 +388,53 @@ class VendorController {
     }
   }
 
+
+  static async vendorCampaigns(req, res) {
+    try {
+      const campaigns = await CampaignService.getVendorCampaigns(req.user.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor campaigns', campaigns);
+      return Response.send(res);
+    }
+    catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Server error. Please retry`);
+      return Response.send(res);
+    }
+  }
+
+  static async vendorCampaignProducts(req, res) {
+    try {
+      const CampaignId = req.params.campaign_id;
+      const products = await VendorService.vendorStoreProducts(req.vendor.id, {CampaignId});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor Campaign products', products);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
   static async createOrder(req, res) {
     try {
       const {
         found_products,
-        body: data
+        body: {
+          campaign_id, 
+          products
+        }
       } = req;
       const VendorId = req.vendor.id;
       const reference = generateOrderRef();
 
-      const products = data.map(prod => ({
+      const cart = products.map(prod => ({
         quantity: prod.quantity,
         ProductId: prod.product_id,
         unit_price: found_products[prod.product_id].cost,
         total_amount: found_products[prod.product_id].cost * prod.quantity
       }));
 
-      const order = await VendorService.createOrder({
-        VendorId,
-        reference
-      }, products);
+      const order = await VendorService.createOrder({ VendorId, CampaignId: campaign_id, reference }, cart);
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Create Order', order);
       return Response.send(res);
     } catch (error) {
@@ -421,27 +447,11 @@ class VendorController {
   static async getOrderById(req, res) {
     try {
       const VendorId = req.user.id;
-      const id = req.params.id;
-      const order = await VendorService.getOrder(id, {
-        VendorId
-      });
+      const id = req.params.order_id;
+      const order = await VendorService.getOrder({ id, VendorId });
+
       if (order) {
-        const data = order.toJSON();
-        const cart_items = order.Cart.length;
-        const total_quantity = order.Cart.map(c => c.quantity).reduce((a, b) => a + b, 0);
-        const total_cost = order.Cart.map(c => c.total_amount).reduce((a, b) => a + b, 0);
-        const QrCode = await generateQrcodeURL({
-          reference: data.reference,
-          cart_items,
-          total_quantity,
-          total_cost,
-          vendor: `${data.Vendor.first_name || ''} ${data.Vendor.last_name || ''}`,
-          store: data.Vendor.Store.store_name
-        });
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor Order', {
-          ...data,
-          QrCode
-        });
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor Order', order);
         return Response.send(res)
       }
       Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Vendor order not found.`);
