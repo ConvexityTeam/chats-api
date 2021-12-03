@@ -342,7 +342,7 @@ class CampaignService {
 
     // Queue fuding disbursing
 
-    return Transaction.create({
+    const transaction = await Transaction.create({
       amount: campaign.budget,
       reference: generateTransactionRef(),
       status: 'processing',
@@ -353,6 +353,11 @@ class CampaignService {
       OrganisationId: campaign.OrganisationId,
       narration: 'Approve Campaign Funding'
     });
+
+    return {
+      campaign,
+      transaction
+    }
   }
 }
 
