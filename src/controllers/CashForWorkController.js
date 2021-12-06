@@ -1,4 +1,5 @@
 const CampaignService = require("../services/CampaignService");
+const  AwsUploadService = require("../services/AwsUploadService");
 const util = require("../libs/Utils");
 const db = require("../models");
 const Validator = require("validatorjs");
@@ -724,39 +725,36 @@ class CashForWorkController {
 
 
   static async uploadProgreeEvidenceByBeneficiary(req, res){
-
     try {
-      var form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
+      const {TaskAssignmentId, comment, type} = req.body
+      const files = req.file
       const rules = {
         TaskAssignmentId: "required|numeric",
         comment: "required|string",
         type: "required|string"
       };
-      const validation = new Validator(fields, rules);
+      const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, validation.errors);
         return Response.send(res);
       } else {
-        if (!files.uploads) {
+        if (!files) {
           Response.setError(422, "Task Assignment Evidence Required");
           return Response.send(res);
         } else {
-          const user = await db.TaskAssignment.findOne({where: {UserId: req.user.id}});
-          if (user) {
-            const extension = files.uploads.name.substring(
-              files.uploads.name.lastIndexOf(".") + 1
-            );
+          const task = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
+          if (task) {
+            const extension = req.file.mimetype.split('/').pop();
             await uploadFile(
-              files.uploads,
-              "pge-" + environ + "-" + fields.TaskAssignmentId + "-i." + extension,
-              "convexity-task-assignment-evidence"
+              files,
+              "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
+              "convexity-progress-evidence"
             ).then((url) => {
-              TaskProgressEvidence.update({
+              TaskProgressEvidence.create({
                 uploads: url,
-                TaskAssignmentId: fields.TaskAssignmentId,
-                comment: fields.comment,
-                type: fields.type,
+                TaskAssignmentId,
+                comment,
+                type,
                 source: 'beneficiary'
               });
             }).catch((err)=> {
@@ -766,12 +764,11 @@ class CashForWorkController {
             Response.setSuccess(200, "Success Uploading  Task Evidence");
             return Response.send(res);
           } else {
-            Response.setError(422, "User Not Found User");
+            Response.setError(422, "Task Not Found");
             return Response.send(res);
           }
         }
       }
-    });
     }catch(error){
       console.log(error.message);
       util.setError(500, "Internal Server Error"+ error);
@@ -783,38 +780,36 @@ class CashForWorkController {
   static async uploadProgreeEvidenceFieldAgent(req, res){
 
     try {
-      var form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
+      const {TaskAssignmentId, comment, type} = req.body
+      const files = req.file
       const rules = {
         TaskAssignmentId: "required|numeric",
         comment: "required|string",
         type: "required|string"
       };
-      const validation = new Validator(fields, rules);
+      const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, validation.errors);
         return Response.send(res);
       } else {
-        if (!files.uploads) {
+        if (!files) {
           Response.setError(422, "Task Assignment Evidence Required");
           return Response.send(res);
         } else {
-          const user = await db.TaskAssignment.findOne({where: {UserId: req.user.id}});
-          if (user) {
-            const extension = files.uploads.name.substring(
-              files.uploads.name.lastIndexOf(".") + 1
-            );
+          const task = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
+          if (task) {
+            const extension = req.file.mimetype.split('/').pop();
             await uploadFile(
-              files.uploads,
-              "pge-" + environ + "-" + fields.TaskAssignmentId + "-i." + extension,
-              "convexity-task-assignment-evidence"
+              files,
+              "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
+              "convexity-progress-evidence"
             ).then((url) => {
-              TaskProgressEvidence.update({
+              TaskProgressEvidence.create({
                 uploads: url,
-                TaskAssignmentId: fields.TaskAssignmentId,
-                comment: fields.comment,
-                type: fields.type,
-                source: 'field_agent'
+                TaskAssignmentId,
+                comment,
+                type,
+                source: 'field-agent'
               });
             }).catch((err)=> {
               console.log(err)
@@ -823,55 +818,50 @@ class CashForWorkController {
             Response.setSuccess(200, "Success Uploading  Task Evidence");
             return Response.send(res);
           } else {
-            Response.setError(422, "User Not Found User");
+            Response.setError(422, "Task Not Found");
             return Response.send(res);
           }
         }
-      }
-    });
-    }catch(error){
+      }    }catch(error){
       console.log(error.message);
       util.setError(500, "Internal Server Error"+ error);
       return util.send(res);
     }
-    
   }
 
   static async uploadProgreeEvidenceVendor(req, res){
 
     try {
-      var form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
+      const {TaskAssignmentId, comment, type} = req.body
+      const files = req.file
       const rules = {
         TaskAssignmentId: "required|numeric",
         comment: "required|string",
         type: "required|string"
       };
-      const validation = new Validator(fields, rules);
+      const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, validation.errors);
         return Response.send(res);
       } else {
-        if (!files.uploads) {
+        if (!files) {
           Response.setError(422, "Task Assignment Evidence Required");
           return Response.send(res);
         } else {
-          const user = await db.TaskAssignment.findOne({where: {UserId: req.user.id}});
-          if (user) {
-            const extension = files.uploads.name.substring(
-              files.uploads.name.lastIndexOf(".") + 1
-            );
+          const task = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
+          if (task) {
+            const extension = req.file.mimetype.split('/').pop();
             await uploadFile(
-              files.uploads,
-              "pge-" + environ + "-" + fields.TaskAssignmentId + "-i." + extension,
-              "convexity-task-assignment-evidence"
+              files,
+              "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
+              "convexity-progress-evidence"
             ).then((url) => {
-              TaskProgressEvidence.update({
+              TaskProgressEvidence.create({
                 uploads: url,
-                TaskAssignmentId: fields.TaskAssignmentId,
-                comment: fields.comment,
-                type: fields.type,
-                source: 'field_agent'
+                TaskAssignmentId,
+                comment,
+                type,
+                source: 'vendor'
               });
             }).catch((err)=> {
               console.log(err)
@@ -880,12 +870,11 @@ class CashForWorkController {
             Response.setSuccess(200, "Success Uploading  Task Evidence");
             return Response.send(res);
           } else {
-            Response.setError(422, "User Has Not been Assign To Any Task");
+            Response.setError(422, "Task Not Found");
             return Response.send(res);
           }
         }
       }
-    });
     }catch(error){
       console.log(error.message);
       util.setError(500, "Internal Server Error"+ error);
