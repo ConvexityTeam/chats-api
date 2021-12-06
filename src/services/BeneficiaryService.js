@@ -251,8 +251,8 @@ class BeneficiariesService {
         RoleId: AclRoles.Beneficiary
       },
       include: [{
-        model: Transaction,
-        as: 'OrderTransaction'
+        model: Wallet,
+        as: 'Wallet'
       }]
     });
   }

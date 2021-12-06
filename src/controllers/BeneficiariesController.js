@@ -664,12 +664,12 @@ class BeneficiariesController {
         const beneficiary = beneficiaries.map(bene =>  bene.location )
         let arr =    beneficiary.filter(x => x !== null)
 
-       let repeat = 1
+       let repeated = 1
      
         for(let i = 0; i<arr.length; i++){
           console.log(JSON.parse(arr[i]).country)
           if(locations.length <= 0 && !locations.includes(JSON.parse(arr[i]).country)) {
-            locations.push({name: JSON.parse(arr[i]).country, repeat})
+            locations.push({country: JSON.parse(arr[i]).country, repeated})
           }else if(locations.length > 0 && locations.map(val => val.name).includes(JSON.parse(arr[i]).country)){
             locations.find((obj => obj.name === JSON.parse(arr[i]).country)).repeat += 1;
 
@@ -696,16 +696,50 @@ class BeneficiariesController {
 
   static async beneficiariesTotalBalance(req, res){
     try{
-
+      let beneficiary;
+      let balance;
+      let balances = []
       const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount();
       if(beneficiaries.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.');
         return Response.send(res);
       }
       else
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transactiom Retrieved.', beneficiaries);
-        return Response.send(res);
+      // for(let i = 0; i<beneficiaries.length; i++){
+      //   let balance
+      // }
+       beneficiary = Array.isArray(beneficiaries) ? beneficiaries.map((user)=> user.Wallet) : []
+       
+       balance = Array.isArray(beneficiary) ? beneficiary.map((wallet) => wallet) : []
+       var newArray = balance.filter(value => Object.keys(value).length !== 0);
 
+       let repeated = 1
+     
+    
+
+          var valueArr = newArray.map(function(item){ 
+            
+            if(balances.length <= 0 && !balances.includes(item.balance)) {
+              balances.push({balace: item.balance, repeated})
+            }
+            else if(balances.length > 0 && balances.map(val => val.balace).includes(item.balance)){
+              balances.find((obj => obj.balace === item.balance)).repeated += 1;
+  
+            }
+          console.log(item)
+          
+          });
+          
+           
+            
+             
+      // else if(balances.length > 0 && balances.map(val => val.balaces).includes(JSON.parse(newArray[i]).balance)){
+      //   balances.find((obj => obj.balaces === JSON.parse(newArray[i]).balance)).repeat += 1;
+      // }
+       
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transactiom Retrieved.', balances);
+    return Response.send(res);
+    
     }catch(error){
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
