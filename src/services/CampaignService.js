@@ -96,7 +96,7 @@ class CampaignService {
       });
   }
 
-  static async approvedVendor(CampaignId, VendorId) {
+  static async approveVendorForCampaign(CampaignId, VendorId) {
     const record = await CampaignVendor.findOne({
       where: {
         CampaignId,

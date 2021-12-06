@@ -381,7 +381,7 @@ class OrganisationController {
 
   static async approveCampaignVendor ( req, res) {
     try {
-      const approved = await CampaignService.approvedVendor(req.campaign.id, req.body.vendor_id);
+      const approved = await CampaignService.approveVendorForCampaign(req.campaign.id, req.body.vendor_id);
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Vendor approved.', approved);
       return Response.send(res);
     } catch (error) {
