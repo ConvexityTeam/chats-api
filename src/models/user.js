@@ -124,6 +124,8 @@ module.exports = (sequelize, DataTypes) => {
     gender: DataTypes.STRING,
     status: DataTypes.ENUM("suspended", "activated", "pending"),
     location: DataTypes.STRING,
+    country: DataTypes.STRING,
+    currency: DataTypes.STRING,
     pin: DataTypes.STRING,
     address: DataTypes.STRING,
     vendor_id: DataTypes.STRING,
@@ -148,6 +150,7 @@ module.exports = (sequelize, DataTypes) => {
     const user = this.toJSON();
     delete user.password;
     delete user.tfa_secret;
+    delete user.pin;
     return user;
   }
   return User;

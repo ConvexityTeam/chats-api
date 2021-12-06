@@ -3,8 +3,12 @@ const {
   check
 } = require('express-validator');
 const {
+  countryCodes, currencyCodes
+} = require('../constants');
+const {
   BankAccount
 } = require('../models');
+const { formInputToDate } = require('../utils');
 const BaseValidator = require('./BaseValidator');
 
 class UserValidator extends BaseValidator {
@@ -58,18 +62,80 @@ class UserValidator extends BaseValidator {
 
   static addAccountValidation = [
     check('account_number')
-      .notEmpty()
-      .withMessage('Account number is required.')
-      .custom((value) => new Promise(async (resolve, reject) => {
-        const account = await BankAccount.findOne({ where: { account_number: value } });
-        if (account) return reject('Account number already taken.');
-        resolve(true);
-      })),
-      check('bank_name')
-      .notEmpty()
-      .withMessage('Bank name is required.'),
-      this.validate
-    ]
-  }
+    .notEmpty()
+    .withMessage('Account number is required.')
+    .custom((value) => new Promise(async (resolve, reject) => {
+      const account = await BankAccount.findOne({
+        where: {
+          account_number: value
+        }
+      });
+      if (account) return reject('Account number already taken.');
+      resolve(true);
+    })),
+    check('bank_name')
+    .notEmpty()
+    .withMessage('Bank name is required.'),
+    this.validate
+  ]
 
-  module.exports = UserValidator;
+  static updateProfileValidation = [
+    body('first_name')
+    // .optional({checkFalsy: true})
+    .notEmpty()
+    .withMessage('First name is required'),
+    body('last_name')
+    // .optional({checkFalsy: true})
+    .notEmpty()
+    .withMessage('Last name is required'),
+    body('phone')
+    .optional({
+      checkFalsy: true
+    })
+    .isMobilePhone()
+    .withMessage('Invalid mobile number format'),
+    body('country')
+    .optional({
+      checkFalsy: true
+    })
+    .isIn(countryCodes)
+    .withMessage('Inalid country code'),
+    body('currency')
+    .optional({
+      checkFalsy: true
+    })
+    .isIn(currencyCodes)
+    .withMessage('Inalid currency code'),
+    body('location')
+    .optional({
+      checkFalsy: true
+    }),
+    body('gender')
+    .optional({
+      checkFalsy: true
+    })
+    .isIn(['male', 'female'])
+    .withMessage('Allowed genders are male and female.'),
+    body('marital_status')
+    .optional({
+      checkFalsy: true
+    })
+    .isIn(['married', 'single', 'divorced'])
+    .withMessage('Allowed marital status are married, single and divorced.'),
+    body('dob')
+    .optional({
+      checkFalsy: true
+    })
+    .isDate({
+      format: 'DD-MM-YYYY',
+      strictMode: true
+    })
+    .withMessage(`Date of birth should be a valid date.`)
+    .customSanitizer(formInputToDate)
+    .isBefore()
+    .withMessage('Date of birth should be before today.'),
+    this.validate
+  ]
+}
+
+module.exports = UserValidator;

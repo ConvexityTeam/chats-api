@@ -15,8 +15,13 @@ const mailer = require("../libs/Mailer");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
 const uploadFile = require("./AmazonController");
-const {BeneficiaryService, UserService} = require("../services");
-const { Response } = require('../libs')
+const {
+  BeneficiaryService,
+  UserService
+} = require("../services");
+const {
+  Response
+} = require('../libs')
 
 const {
   Message
@@ -55,10 +60,6 @@ class UsersController {
       Response.setError(400, "Please provide complete details");
       return Response.send(res);
     }
-    // console.log(multer_config.profile_pic);
-    // req.body.profile_pic = multer_config.profile_pic;
-    console.table(req.files);
-    console.log(newUser);
     try {
       const createdUser = await UserService.addUser(newUser);
       Response.setSuccess(201, "User Added!", createdUser);
@@ -87,6 +88,19 @@ class UsersController {
     try {
       const accounts = await UserService.findUserAccounts(req.user.id);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Bank Accounts', accounts);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
+      return Response.send(res);
+    }
+  }
+
+  static async updateProfile(req, res) {
+    try {
+      const data = SanitizeObject(req.body, ['first_name', 'last_name', 'phone', 'country', 'currency', 'location', 'address', 'gender', 'marital_status', 'dob']);
+      await req.user.update(data);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Profile Updated', req.user.toObject());
       return Response.send(res);
     } catch (error) {
       console.log(error);
@@ -998,8 +1012,7 @@ class UsersController {
             walletRecieverId: recieverExist.uuid,
             amount: data.amount,
             narration: parentType === "organisation" ?
-              `Transfer to ${parentEntity.name}` :
-              `Transfer to ${parentEntity.first_name} ${parentEntity.last_name}`,
+              `Transfer to ${parentEntity.name}` : `Transfer to ${parentEntity.first_name} ${parentEntity.last_name}`,
           })
           .then((transaction) => {
             transferToQueue.send(
@@ -1193,16 +1206,17 @@ class UsersController {
 
   static async setAccountPin(req, res) {
     try {
-      if(req.user.pin) {
+      if (req.user.pin) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'PIN already set. Chnage PIN or contact support.');
         return Response.send(res)
       }
       const pin = createHash(req.body.pin.trim());
-      await UserService.update(req.user.id, {pin});
+      await UserService.update(req.user.id, {
+        pin
+      });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'PIN set successfully.');
       return Response.send(res);
-    }
-    catch(error) {
+    } catch (error) {
       console.log('setAccountPin', error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'PIN update failed..');
       return Response.send(res);
@@ -1211,17 +1225,19 @@ class UsersController {
 
   static async updateAccountPin(req, res) {
     try {
-      if(!req.user.pin) {
+      if (!req.user.pin) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'PIN not found. Set PIN first.');
         return Response.send(res)
       }
 
-      if(!compareHash(req.body.old_pin, req.user.pin)) {
+      if (!compareHash(req.body.old_pin, req.user.pin)) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid or wrong old PIN.');
         return Response.send(res)
       }
       const pin = createHash(req.body.new_pin);
-      await UserService.update(req.user.id, {pin});
+      await UserService.update(req.user.id, {
+        pin
+      });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'PIN changed successfully.');
       return Response.send(res);
     } catch (error) {
@@ -1235,7 +1251,10 @@ class UsersController {
   static async changePassword(req, res) {
     try {
       const user = req.user;
-      const { old_password, new_password } = SanitizeObject(req.body, ['old_password', 'new_password']);
+      const {
+        old_password,
+        new_password
+      } = SanitizeObject(req.body, ['old_password', 'new_password']);
 
       if (!compareHash(old_password, user.password)) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid old password');
@@ -1243,7 +1262,9 @@ class UsersController {
       }
 
       const password = createHash(new_password)
-      await UserService.update(user.id, { password });
+      await UserService.update(user.id, {
+        password
+      });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
       return Response.send(res);
     } catch (error) {
