@@ -36,10 +36,10 @@ class CampaignService {
   }
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
-    return Beneficiary.findOne({
+    return Beneficiary.findOne({where: {
       CampaignId,
       UserId
-    });
+    }});
   }
 
   static addCampaign(newCampaign) {
