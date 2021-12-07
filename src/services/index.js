@@ -16,6 +16,7 @@ const WebhookService = require('./WebhookService');
 const TaskService = require('./TaskService');
 const MarketService = require('./MarketService')
 const OrderService = require('./OrderService');
+const DepositService = require('./DepositService');
 
 module.exports = {
   MarketService,
@@ -35,5 +36,6 @@ module.exports = {
   QueueService,
   WebhookService,
   TaskService,
-  OrderService
+  OrderService,
+  DepositService
 }

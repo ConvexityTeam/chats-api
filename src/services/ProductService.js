@@ -2,20 +2,23 @@ const {
   Product,
   Market,
   User
-  
 } = require('../models');
 
 const VendorService = require('./VendorService');
+const CampaignService = require('./CampaignService');
 
 
 class ProductService {
   static addProduct(product, vendors, CampaignId) {
+    console.log(CampaignService)
     return Promise.all(vendors.map(
       async UserId => {
-        return (await VendorService.findVendorStore(UserId)).createProduct({
-          ...product,
-          CampaignId
-        })
+        await CampaignService.approveVendorForCampaign(CampaignId, UserId);
+        return (await VendorService.findVendorStore(UserId))
+          .createProduct({
+            ...product,
+            CampaignId
+          })
       }
     ));
   }
@@ -37,7 +40,7 @@ class ProductService {
     })
   }
 
-  
+
 
 }
 

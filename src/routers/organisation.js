@@ -70,6 +70,21 @@ router.route('/:organisation_id/logo')
     OrganisationController.changeOrganisationLogo
   )
 
+router.route('/:organisation_id/wallets/deposits')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    WalletController.depositRecords
+  );
+
+router.route('/:organisation_id/wallets/deposits/:reference')
+  .get(
+    NgoSubAdminAuth,
+    IsOrgMember,
+    ParamValidator.Reference,
+    WalletController.depositByReference
+  );
+
 router.route('/:organisation_id/wallets/paystack-deposit')
   .post(
     NgoSubAdminAuth,
@@ -196,7 +211,7 @@ router.route('/:organisation_id/campaigns/:campaign_id')
     OrganisationController.updateOrgCampaign
   )
 
-  router.route('/:organisation_id/campaigns/:campaign_id/fund')
+router.route('/:organisation_id/campaigns/:campaign_id/fund')
   .post(
     NgoAdminAuth,
     ParamValidator.OrganisationId,

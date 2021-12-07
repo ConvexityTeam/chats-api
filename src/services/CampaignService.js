@@ -36,10 +36,10 @@ class CampaignService {
   }
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
-    return Beneficiary.findOne({
+    return Beneficiary.findOne({where: {
       CampaignId,
       UserId
-    });
+    }});
   }
 
   static addCampaign(newCampaign) {
@@ -96,7 +96,7 @@ class CampaignService {
       });
   }
 
-  static async approvedVendor(CampaignId, VendorId) {
+  static async approveVendorForCampaign(CampaignId, VendorId) {
     const record = await CampaignVendor.findOne({
       where: {
         CampaignId,

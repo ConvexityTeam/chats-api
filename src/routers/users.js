@@ -48,11 +48,18 @@ router.route('/accounts')
     UsersController.addBankAccount
   )
 
+router.route('/profile')
+  .put(
+    Auth,
+    UserValidator.updateProfileValidation,
+    UsersController.updateProfile
+  );
+
 
 router.get("/", Auth, UsersController.getAllUsers);
 router.post("/", Auth, UsersController.addUser);
 router.get("/:id", Auth, UsersController.getAUser);
-router.put("/profile", Auth, UsersController.updatedUser);
+
 router.put("/profile-image", Auth, UsersController.updateProfileImage);
 router.put("/nfc_update", Auth, UsersController.updateNFC);
 router.delete("/:id", Auth, UsersController.deleteUser);
