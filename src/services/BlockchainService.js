@@ -2,9 +2,7 @@ const { tokenConfig } = require("../config");
 const { Encryption } = require("../libs")
 const axios = require('axios');
 
-const Axios = axios.create({
-  timeout: 100000
-});
+const Axios = axios.create();
 
 class BlockchainService {
   static async createAccountWallet() {

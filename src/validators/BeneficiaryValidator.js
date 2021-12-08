@@ -166,25 +166,26 @@ class BeneficiaryValidator extends BaseValidator {
         return Response.send(res);
       }
 
-      const campaign = req.campaign || await CampaignService.getCampaignById(campaignId);
+      const campaign = await CampaignService.getCampaignById(campaignId);
 
       if(!campaign) {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign not found.');
         return Response.send(res);
       }
 
-      if(! (await CampaignService.campaignBeneficiaryExists(campaignId, beneficiaryId))) {
+      const beneficiary = await CampaignService.campaignBeneficiaryExists(campaignId, beneficiaryId);
+
+      if(! beneficiary) {
         req.campaign = campaign;
         req.beneficiary_id = beneficiaryId;
-        next();
-        return;
+        return next();
       }
 
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'User is already a beneficiary.');
       return Response.send(res);
     } catch (error) {
       console.log(error);
-      Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Internal server error. Please try again or contact the administrator.');
+      Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Server Error: Please try again.');
       return Response.send(res);
     }
   }
