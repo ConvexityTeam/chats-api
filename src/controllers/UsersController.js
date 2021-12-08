@@ -109,6 +109,18 @@ class UsersController {
     }
   }
 
+  static async findProfile(req, res) {
+    try {
+      const profile = (await UserService.findUser(req.user.id)).toObject();
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'User profile', profile);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
+      return Response.send(res);
+    }
+  }
+
   static async updatedUser(req, res) {
     try {
       const data = req.body;
