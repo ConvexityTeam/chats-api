@@ -665,14 +665,15 @@ class BeneficiariesController {
         let arr =    beneficiary.filter(x => x !== null)
 
        let repeated = 1
-     
+       
+       let val;
         for(let i = 0; i<arr.length; i++){
-          console.log(JSON.parse(arr[i]).country)
-          if(locations.length <= 0 && !locations.includes(JSON.parse(arr[i]).country)) {
-            locations.push({country: JSON.parse(arr[i]).country, repeated})
-          }else if(locations.length > 0 && locations.map(val => val.name).includes(JSON.parse(arr[i]).country)){
-            locations.find((obj => obj.name === JSON.parse(arr[i]).country)).repeat += 1;
-
+        val = JSON.parse(arr[i])
+          console.log(val.country)
+          if(locations.length >= 0 && !locations.some(coun => coun.country === val.country)) {
+            locations.push({country: val.country, repeated})
+          }else if(locations.length > 0 && locations.some(coun => coun.country === val.country)){
+            locations.find((obj => obj.country === val.country)).repeated += 1 
           }
           
         }
@@ -699,46 +700,35 @@ class BeneficiariesController {
       let beneficiary;
       let balance;
       let balances = []
+      let repeated = 1
       const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount();
       if(beneficiaries.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.');
         return Response.send(res);
       }
-      else
-      // for(let i = 0; i<beneficiaries.length; i++){
-      //   let balance
-      // }
-       beneficiary = Array.isArray(beneficiaries) ? beneficiaries.map((user)=> user.Wallet) : []
+      else{
+        beneficiary = Array.isArray(beneficiaries) ? beneficiaries.map((user)=> user.Wallet) : []
        
        balance = Array.isArray(beneficiary) ? beneficiary.map((wallet) => wallet) : []
        var newArray = balance.filter(value => Object.keys(value).length !== 0);
+       var myNewArray = [].concat.apply([], newArray);
+        
+       for(let i = 0; i<myNewArray.length; i++){
 
-       let repeated = 1
-     
-    
+        if(balances.length >= 0 && ! balances.some(bal => bal.balance === myNewArray[i].balance)) {
+          balances.push({balance: myNewArray[i].balance, repeated})
+        }else if(balances.length > 0 && balances.some(bal => bal.balance === myNewArray[i].balance)){
+          balances.find((obj => obj.balance === (myNewArray[i]).balance)).repeated += 1;
 
-          var valueArr = newArray.map(function(item){ 
-            
-            if(balances.length <= 0 && !balances.includes(item.balance)) {
-              balances.push({balace: item.balance, repeated})
-            }
-            else if(balances.length > 0 && balances.map(val => val.balace).includes(item.balance)){
-              balances.find((obj => obj.balace === item.balance)).repeated += 1;
-  
-            }
-          console.log(item)
-          
-          });
-          
-           
-            
-             
-      // else if(balances.length > 0 && balances.map(val => val.balaces).includes(JSON.parse(newArray[i]).balance)){
-      //   balances.find((obj => obj.balaces === JSON.parse(newArray[i]).balance)).repeat += 1;
-      // }
-       
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transactiom Retrieved.', balances);
-    return Response.send(res);
+        }
+        
+       }
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',balances);
+      return Response.send(res);
+      }
+
+      
     
     }catch(error){
       console.log(error);
@@ -746,6 +736,7 @@ class BeneficiariesController {
       return Response.send(res);
     }
   }
+
 }
 
 module.exports = BeneficiariesController;

@@ -29,6 +29,7 @@ router.get('/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAg
 router.get('/location', NgoSubAdminAuth, BeneficiaryController.beneficiariesByLocation);
 router.get('/marital_status', NgoSubAdminAuth,BeneficiaryController.beneficiariesByMaritalStatus);
 
+
 router.get('/total_balance', BeneficiaryController.beneficiariesTotalBalance);
 
 

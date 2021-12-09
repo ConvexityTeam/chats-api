@@ -31,7 +31,9 @@ const {
 } = require('../validators');
 
 
-
+router.get('/product-purchased-gender', OrderController.productPurchasedByGender)
+router.get('/product-purchased-age', OrderController.productPurchasedByAgeGroup)
+router.get('/query-product-vendor', OrderController.productPurchased)
 
 // Refactord routes
 router.route('/:reference')
