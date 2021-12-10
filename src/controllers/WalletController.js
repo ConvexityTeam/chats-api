@@ -12,16 +12,12 @@ const {
 class WalletController {
   static async paystackDeposit(req, res) {
     try {
-      const {
-        organisation,
-        body: {
-          amount,
-          currency
-        }
-      } = req;
+      const data = SanitizeObject(req.body, ['amount', 'currency']);
+      if(!data.currency) data.currency = 'NGN';
+      const organisation = req.organisation;
       organisation.dataValues.email = req.user.email;
-      const data = await PaystackService.buildDepositData(organisation, amount, currency);
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Deposit data generated.', data);
+      const response = await PaystackService.buildDepositData(organisation, data.amount, data.currency);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Deposit data generated.', response);
       return Response.send(res);
     } catch (error) {
       console.log(error);

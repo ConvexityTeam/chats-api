@@ -13,6 +13,7 @@ const FileValidator = require('./FileValidator');
 const TaskValidator = require('./TaskValidator');
 const ParamValidator = require('./ParamValidator');
 const OrderValidator = require('./OrderValidator');
+const UtilValidator = require('./UtilValidator');
 
 module.exports = {
   AuthValidator,
@@ -29,5 +30,6 @@ module.exports = {
   FileValidator,
   TaskValidator,
   ParamValidator,
-  OrderValidator
+  OrderValidator,
+  UtilValidator
 }

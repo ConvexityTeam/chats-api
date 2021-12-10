@@ -23,6 +23,7 @@ const organisationRouter = require("./routers/organisation");
 const webhookRouter = require('./routers/webhooks');
 const taskRouter = require('./routers/task');
 const marketRouter = require('./routers/market');
+const utilRouter = require('./routers/utils');
 
 const orderRouter = require('./routers/order');
 
@@ -55,6 +56,7 @@ app.use("/v1/organisations", organisationRouter);
 app.use('/v1/webhooks', webhookRouter)
 app.use('/v1/tasks', taskRouter);
 app.use('/v1/orders', orderRouter);
+app.use('/v1/utils', utilRouter)
 
 app.get("/", (req, res) => {
   try {

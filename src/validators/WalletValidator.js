@@ -13,8 +13,7 @@ class WalletValidator extends BaseValidator {
       .custom((amount) => +amount > 0)
       .withMessage(`Deposit amount must be greater than 0.`),
       body('currency')
-      .notEmpty()
-      .withMessage('Deposit currency is required.')
+      .optional()
       .isAlpha()
       .withMessage('Only alphabets allowed.')
       .isUppercase()

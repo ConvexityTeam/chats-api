@@ -17,7 +17,11 @@ module.exports = (sequelize, DataTypes) => {
   BankAccount.init({
     UserId: DataTypes.STRING,
     account_number: DataTypes.INTEGER,
-    bank_name: DataTypes.STRING
+    account_name: DataTypes.STRING,
+    bank_code: DataTypes.STRING,
+    bank_name: DataTypes.STRING,
+    recipient_code: DataTypes.STRING,
+    type: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'BankAccount',

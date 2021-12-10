@@ -3,7 +3,7 @@ const {
   check
 } = require('express-validator');
 const {
-  countryCodes, currencyCodes
+  countryCodes, currencyCodes, bankCodes
 } = require('../constants');
 const {
   BankAccount
@@ -73,9 +73,12 @@ class UserValidator extends BaseValidator {
       if (account) return reject('Account number already taken.');
       resolve(true);
     })),
-    check('bank_name')
+    check('bank_code')
     .notEmpty()
-    .withMessage('Bank name is required.'),
+    .withMessage('Bank is required.')
+    .bail()
+    .isIn(bankCodes)
+    .withMessage('Bank not supported'),
     this.validate
   ]
 
