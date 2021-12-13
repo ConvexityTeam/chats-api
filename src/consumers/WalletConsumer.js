@@ -3,8 +3,12 @@ const {
   WalletService,
   BantuService
 } = require('../services');
-const { RabbitMq } = require('../libs')
-const { CREATE_WALLET } = require('../constants').queuesConst;
+const {
+  RabbitMq
+} = require('../libs')
+const {
+  CREATE_WALLET
+} = require('../constants').queuesConst;
 
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
   durable: true,
@@ -15,31 +19,27 @@ RabbitMq['default']
   .completeConfiguration()
   .then(function () {
     createWalletQueue.activateConsumer(async msg => {
-      const content = msg.getContent();
-      BlockchainService.createAccountWallet()
-        .then(({
-          AccountCreated
-        }) => {
-          return WalletService.updateOrCreate(content, AccountCreated);
-        })
-        .then( wallet => {
-          const data = BantuService.createPair();
-          return wallet.update(data);
-        })
-        .then(_ => {
+        const content = msg.getContent();
+        Promise.all([
+          BlockchainService.createAccountWallet(),
+          BantuService.createPair()
+        ]).then(([token, bantu]) => {
+          WalletService.updateOrCreate(content, {
+            ...token,
+            ...bantu
+          });
           msg.ack();
-        })
-        .catch(error => {
-          console.log(error);
+        }).catch(error => {
+          console.log(error.message);
           msg.nack();
         });
-    })
-    .then(_ => {
-      console.log(`Running Consumer For Create Wallet.`)
-    })
-    .catch(error => {
-      console.log(`Error Starting Create Wallet Consumer:`, error);
-    })
+      })
+      .then(_ => {
+        console.log(`Running Consumer For Create Wallet.`)
+      })
+      .catch(error => {
+        console.log(`Error Starting Create Wallet Consumer:`, error);
+      })
   })
   .catch(error => {
     console.log(`RabbitMq Error:`, error);
