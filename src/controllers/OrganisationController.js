@@ -362,15 +362,53 @@ class OrganisationController {
         })
     } catch (error) {
       console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Campaign creation fail. Please retry.");
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Campaign creation failed. Please retry.");
       return Response.send(res);
     }
   }
 
-  static async approveCampaignBeneficiary (req, res) {
+  static async getCampaignBeneficiaries(req, res) {
     try {
-      const approval = await BeneficiaryService.approveBeneficiary(req.campaign.id, req.beneficiary_id);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Approved.', approval);
+      const CampaignId = req.params.campaign_id;
+      const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', beneficiaries);
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async updateCampaignBeneficiary (req, res) {
+    try {
+      const data = SanitizeObject(req.body, ['approved']);
+      const campaign = req.campaign;
+
+      if(campaign.is_funded) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campagin Fund Already Disbursed.');
+        return Response.send(res);
+      }
+      const approval = await BeneficiaryService.updateCampaignBeneficiary(campaign.id, req.beneficiary_id, data);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Approval Updated!', approval);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async approvedAllbeneficiaries(req, res) {
+    try {
+      const campaign = req.campaign;
+
+      if(campaign.is_funded) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campagin Fund Already Disbursed.');
+        return Response.send(res);
+      }
+      const [approvals] = await BeneficiaryService.approveAllCampaignBeneficiaries(campaign.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {approvals});
       return Response.send(res);
     } catch (error) {
       console.log(error);

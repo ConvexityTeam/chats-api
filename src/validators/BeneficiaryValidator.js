@@ -12,6 +12,22 @@ const {Response} = require('../libs');
 const BaseValidator = require('./BaseValidator');
 
 class BeneficiaryValidator extends BaseValidator {
+  static ApprovedBeneficiary = [
+    body('beneficiary_id')
+    .notEmpty()
+    .withMessage('Valid beneficiary is required.')
+    .bail()
+    .isInt()
+    .withMessage('Beneficiary ID must be a valid integer.'),
+    body('approved')
+    .notEmpty()
+    .withMessage('Approval state is required.')
+    .bail()
+    .isBoolean()
+    .withMessage('Approval state must be a boolean.'),
+    this.validate
+  ];
+
   static selfRegisterRules() {
     return [
       body('first_name')
