@@ -8,7 +8,8 @@ const {
 const {
   WalletService,
   QueueService,
-  BlockchainService
+  BlockchainService,
+  DepositService
 } = require('../services');
 
 const {
@@ -34,45 +35,48 @@ RabbitMq['default']
   .then(() => {
     verifyFiatDepsoitQueue.activateConsumer(async msg => {
         const {
+          transactionReference,
           OrganisationId,
           approved,
           status,
           amount
         } = msg.getContent();
-        if (approved && (status != 'successful' || status != 'declined')) {
+        if (approved && status != 'successful' && status != 'declined') {
 
           WalletService.findMainOrganisationWallet(OrganisationId)
             .then(async wallet => {
+
               if (wallet) {
-                await BlockchainService.mintToken(wallet.address, amount);
+                const reference = generateTransactionRef();
+                const mint = await BlockchainService.mintToken(wallet.address, amount);
+                await DepositService.updateFiatDeposit(transactionReference, {status: 'successful'});
+                await Transaction.create({
+                  log: transactionReference,
+                  narration: 'Fiat Deposit Transaction',
+                  ReceiverWalletId: wallet.uuid,
+                  transaction_origin: 'wallet',
+                  transaction_type: 'deposit',
+                  status: 'success',
+                  is_approved: true,
+                  OrganisationId,
+                  reference,
+                  amount
+                });
+
                 await wallet.update({
                   balance: Sequelize.literal(`balance + ${amount}`),
                   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-                })
-                return Promise.resolve(wallet);
+                });
+                msg.ack();
               } else {
                 QueueService.createWallet(OrganisationId, 'organisation');
                 Promise.reject('Organisation wallet does not exist');
               }
             })
-            .then(wallet => {
-              const reference = generateTransactionRef()
-              Transaction.create({
-                narration: 'Fiat Deposit Transaction',
-                ReceiverWalletId: wallet.id,
-                transaction_origin: 'wallet',
-                transaction_type: 'deposit',
-                status: 'success',
-                is_approved: true,
-                OrganisationId,
-                reference,
-                amount
-              });
-              msg.ack();
-            })
             .catch(error => {
               console.log(error);
-              msg.nack();
+              // msg.nack();
+              msg.ack();
             })
         }
       })

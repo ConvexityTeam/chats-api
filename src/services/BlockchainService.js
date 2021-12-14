@@ -21,7 +21,7 @@ class BlockchainService {
       try {
         const payload = {mintTo, amount};
         const checksum = Encryption.encryptTokenPayload(payload);
-        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`, {
+        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`, null, {
           headers: {
             'X-CHECKSUM': checksum
           }
