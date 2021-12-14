@@ -91,15 +91,25 @@ class OrderService {
        
 }
 
-static async productPurchasedBy (name){
+static async productPurchasedBy (query){
 
 
-
+  
   const product = await Order.findAll({
         
         include: [{
                     model: User,
                     as: 'Vendor',
+                    where: {
+                      [Op.or]: {
+                        first_name: {
+                          [Op.like]: query
+                        },
+                        last_name: {
+                          [Op.like]: query
+                        }
+                      }
+                    },
                     attributes: userConst.publicAttr,
                     include: ['Store'],
                     

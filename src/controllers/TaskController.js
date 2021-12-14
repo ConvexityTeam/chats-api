@@ -19,6 +19,7 @@ class TaskController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, "Tasks created successfully", createdTasks);
       return Response.send(res);
     } catch (error) {
+      console.log(error, 'error')
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }
