@@ -198,11 +198,11 @@ class OrderController {
       const products = await OrderService.productPurchasedBy(query)
 
       if(products.length <= 0){
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Gender Recieved');
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved');
       return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased By Gender Recieved', products);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', products);
       return Response.send(res);
 
 

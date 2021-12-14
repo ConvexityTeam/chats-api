@@ -11,12 +11,14 @@ const {
   Sequelize,
   User,
   OrderProduct,
-  Order
+  Order,
+  Product
 } = require('../models');
 
 const Op = Sequelize.Op;
 
 const QueueService = require("./QueueService");
+const { ProductService } = require(".");
 
 class OrderService {
   static async processOrder(payerWallet, order, vendor, amount) {
@@ -96,29 +98,33 @@ static async productPurchasedBy (query){
 
   
   const product = await Order.findAll({
-        
+        where: {status: 'confirmed'},
         include: [{
                     model: User,
                     as: 'Vendor',
-                    where: {
+                    where: query ? {
                       [Op.or]: {
                         first_name: {
-                          [Op.like]: query
+                          [Op.like]: `%${query}%`
                         },
                         last_name: {
-                          [Op.like]: query
+                          [Op.like]: `%${query}%`
                         }
                       }
+                    }  : { 
+                      
                     },
                     attributes: userConst.publicAttr,
                     include: ['Store'],
                     
                 },
-                
+              
                 {
                     model: OrderProduct,
                     as: 'Cart',
-                    include: ['Product']
+                    
+                    include: [{model: Product, as: 'Product', where: query ? {tag: {[Op.like]: `%${query}%`}}: {}}],
+                    
                 }
             ],
         });
