@@ -98,7 +98,7 @@ class BeneficiariesService {
    * @param {interger} CampaignId Campaign Unique ID
    * @param {integer} UserId Beneficiary Account ID
    */
-  static async approveBeneficiary(CampaignId, UserId) {
+  static async updateCampaignBeneficiary(CampaignId, UserId, data) {
     const beneficiary = await Beneficiary.findOne({
       where: {
         CampaignId,
@@ -106,10 +106,12 @@ class BeneficiariesService {
       }
     });
     if (!beneficiary) throw new Error('Beneficiary Not Found.');
-    beneficiary.update({
-      approved: true
-    });
+    beneficiary.update(data);
     return beneficiary;
+  }
+
+  static async approveAllCampaignBeneficiaries(CampaignId) {
+    return Beneficiary.update({approved: true}, {where: {CampaignId}})
   }
 
   static async createComplaint(data) {
@@ -223,16 +225,49 @@ class BeneficiariesService {
 
 
   static async findOrgnaisationBeneficiaries(OrganisationId) {
+    // return Beneficiary.findAll({
+    //   where: {
+    //     ...extraClause,
+    //     OrganisationId
+    //   },
+    //   include: [
+    //     'Campaign',
+    //   ]
+    // })
     return User.findAll({
       where: {
         OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
       },
       attributes: userConst.publicAttr,
-      include: [{
-        model: Campaign,
-        as: 'Campaigns',
-        attributes: []
-      }]
+      include: [
+        {
+          model: Campaign,
+          as: 'Campaigns',
+          through:{
+            where: {
+              approved:  true
+            }
+          },
+          attributes: [],
+          require: true
+        }
+      ]
+    })
+  }
+
+  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
+    return Beneficiary.findAll({
+      where: {
+        ...extraClause,
+        CampaignId
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConst.publicAttr
+        }
+      ]
     })
   }
 
