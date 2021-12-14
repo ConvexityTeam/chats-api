@@ -1,6 +1,8 @@
 const {
   PaystackService,
-  DepositService
+  DepositService,
+  WalletService,
+  TransactionService
 } = require('../services');
 const {
   Response
@@ -9,11 +11,116 @@ const {
   HttpStatusCode,
   SanitizeObject
 } = require('../utils');
+const {
+  Op
+} = require('sequelize');
 class WalletController {
+  static async getOrgnaisationTransaction(req, res) {
+    try {
+      const OrganisationId = req.organisation.id;
+      const reference = req.params.reference;
+      if (!reference) {
+        const transactions = await TransactionService.findOrgnaisationTransactions(OrganisationId);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation Transactions', transactions);
+        return Response.send(res);
+      }
+
+      const transaction = await TransactionService.findTransaction({
+        OrganisationId,
+        reference
+      });
+      if (!transaction) {
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Transaction not found.');
+        return Response.send(res);
+      }
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Details', transaction);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Unexpected error occured.');
+      return Response.send(res);
+    }
+  }
+  static async getOrganisationWallet(req, res) {
+    try {
+      const OrganisationId = req.organisation.id;
+      const uuid = req.params.wallet_id;
+      if (uuid) {
+        return WalletController._handleSingleWallet(res, {
+          OrganisationId,
+          uuid
+        });
+      }
+
+      let {
+        total: total_deposit
+      } = await TransactionService.getTotalTransactionAmount({
+        OrganisationId,
+        status: 'success',
+        transaction_type: 'deposit'
+      });
+
+      let {
+        total: spend_for_campaign
+      } = await TransactionService.getTotalTransactionAmount({
+        OrganisationId,
+        status: 'success',
+        transaction_type: 'transfer',
+        CampaignId: {
+          [Op.not]: null
+        }
+      });
+
+      const wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
+
+      const MainWallet = wallet.toObject();
+      total_deposit = total_deposit || 0;
+      spend_for_campaign = spend_for_campaign || 0;
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
+        MainWallet,
+        total_deposit,
+        spend_for_campaign
+      });
+      return Response.send(res)
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Unexpected error occured.');
+      return Response.send(res);
+    }
+  }
+
+  static async getOrganisationCampaignWallet(req, res) {
+    try {
+      const CampaignId = req.params.campaign_id;
+      const OrganisationId = req.organisation.id;
+
+      if (CampaignId) {
+        const wallet = await WalletService.findCampaignFundWallet(OrganisationId, CampaignId);
+        if (!wallet) {
+          Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign wallet not found.');
+        } else {
+          Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Wallet', wallet.toObject())
+        }
+        return Response.send(res);
+      }
+
+      const wallets = await WalletService.findOrganisationCampaignWallets(OrganisationId);
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign wallets', wallets);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Unexpected error occured.');
+      return Response.send(res);
+    }
+  }
+
   static async paystackDeposit(req, res) {
     try {
       const data = SanitizeObject(req.body, ['amount', 'currency']);
-      if(!data.currency) data.currency = 'NGN';
+      if (!data.currency) data.currency = 'NGN';
       const organisation = req.organisation;
       organisation.dataValues.email = req.user.email;
       const response = await PaystackService.buildDepositData(organisation, data.amount, data.currency);
@@ -59,6 +166,16 @@ class WalletController {
   //   const asset = req.params.asset;
 
   // }
+
+  static async _handleSingleWallet(res, query) {
+    const wallet = await WalletService.findSingleWallet(query);
+    if (!wallet) {
+      Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Wallet not found');
+    } else {
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Wallet details', wallet.toObject());
+    }
+    return Response.send(res);
+  }
 }
 
 module.exports = WalletController;

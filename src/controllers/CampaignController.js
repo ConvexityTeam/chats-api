@@ -282,7 +282,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if(!beneficiaries) {
+      if(!beneficiaries.length) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
         return Response.send(res);
       } 

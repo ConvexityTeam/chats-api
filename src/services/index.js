@@ -18,6 +18,7 @@ const MarketService = require('./MarketService')
 const OrderService = require('./OrderService');
 const DepositService = require('./DepositService');
 const UtilService = require('./UtilService');
+const TransactionService = require('./TransactionService');
 
 module.exports = {
   MarketService,
@@ -39,5 +40,6 @@ module.exports = {
   TaskService,
   OrderService,
   DepositService,
-  UtilService
+  UtilService,
+  TransactionService
 }

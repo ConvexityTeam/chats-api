@@ -2,6 +2,14 @@ const { param } = require('express-validator');
 const BaseValidator = require('./BaseValidator');
 
 class ParamValidator extends BaseValidator {
+  static WalletIdOptional = [
+    param('wallet_id')
+    .optional({checkFalsy: true})
+    .isUUID()
+    .withMessage('Invalid wallet ID parameter format.'),
+    this.validate
+  ]
+
   static OrganisationId = [
     param('organisation_id')
     .notEmpty()
@@ -38,10 +46,26 @@ class ParamValidator extends BaseValidator {
     this.validate
   ]
 
+  static ReferenceOptional = [
+    param('reference')
+    .optional({checkFalsy: true})
+    .isAlphanumeric()
+    .withMessage('Alhpanumeric reference parameter allowed'),
+    this.validate
+  ]
+
   static CampaignId = [
     param('campaign_id')
     .notEmpty()
     .withMessage('Campaign ID parameter is required.')
+    .isAlphanumeric()
+    .withMessage('Campaign ID parameter must be numeric'),
+    this.validate
+  ]
+
+  static CampaignIdOptional = [
+    param('campaign_id')
+    .optional({checkFalsy: true})
     .isAlphanumeric()
     .withMessage('Campaign ID parameter must be numeric'),
     this.validate
