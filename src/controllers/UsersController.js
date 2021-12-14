@@ -17,7 +17,8 @@ const sequelize = require("sequelize");
 const uploadFile = require("./AmazonController");
 const {
   BeneficiaryService,
-  UserService
+  UserService,
+  PaystackService
 } = require("../services");
 const {
   Response
@@ -73,7 +74,25 @@ class UsersController {
 
   static async addBankAccount(req, res) {
     try {
-      const data = SanitizeObject(req.body, ['account_number', 'bank_name']);
+      const data = SanitizeObject(req.body, ['account_number', 'bank_code']);   
+      try {
+        const resolved = await PaystackService.resolveAccount(data.account_number, data.bank_code);
+        data.account_name = resolved.account_name;
+      } catch(err) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, err.message);
+        return Response.send(res);
+      }
+      
+      try {
+        const recipient = await PaystackService.createRecipientReference(data.account_name, data.account_number, data.bank_code);
+        data.bank_name = recipient.details.bank_name;
+        data.recipient_code = recipient.recipient_code;
+        data.type = recipient.type;
+      } catch(err) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, err.message);
+        return Response.send(res);
+      }
+
       const account = await UserService.addUserAccount(req.user.id, data);
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Bank Account Added', account);
       return Response.send(res);
@@ -101,6 +120,18 @@ class UsersController {
       const data = SanitizeObject(req.body, ['first_name', 'last_name', 'phone', 'country', 'currency', 'location', 'address', 'gender', 'marital_status', 'dob']);
       await req.user.update(data);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Profile Updated', req.user.toObject());
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
+      return Response.send(res);
+    }
+  }
+
+  static async findProfile(req, res) {
+    try {
+      const profile = (await UserService.findUser(req.user.id)).toObject();
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'User profile', profile);
       return Response.send(res);
     } catch (error) {
       console.log(error);

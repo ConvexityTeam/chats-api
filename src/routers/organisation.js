@@ -47,16 +47,53 @@ router.get("/financials/:id", OrganisationController.getFinancials);
 router.get("/beneficiaries-summary/:id", OrganisationController.getBeneficiariesFinancials);
 router.get("/metric/:id", OrganisationController.getMetric);
 
+router.route('/:organisation_id/wallets/transactions/:reference?')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.ReferenceOptional,
+    WalletController.getOrgnaisationTransaction
+  )
+
+router.route('/:organisation_id/wallets/campaigns/:campaign_id?')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignIdOptional,
+    WalletController.getOrganisationCampaignWallet
+  );
+
+router.route('/:organisation_id/wallets/paystack-deposit')
+  .post(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    WalletValidator.fiatDepositRules(),
+    WalletValidator.validate,
+    WalletController.paystackDeposit
+  );
+  router.route('/:organisation_id/wallets/:wallet_id?')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.WalletIdOptional,
+    WalletController.getOrganisationWallet
+  );
 
 // Refactord routes
 router.route('/:organisation_id/profile')
   .get(
     NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     OrganisationController.getProfile
   )
   .put(
     NgoAdminAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     OrganisationValidator.profileUpdateRules(),
     OrganisationValidator.validate,
@@ -65,38 +102,16 @@ router.route('/:organisation_id/profile')
 router.route('/:organisation_id/logo')
   .post(
     NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     FileValidator.checkLogoFile(),
     OrganisationController.changeOrganisationLogo
   )
 
-router.route('/:organisation_id/wallets/deposits')
-  .get(
-    NgoSubAdminAuth,
-    IsOrgMember,
-    WalletController.depositRecords
-  );
-
-router.route('/:organisation_id/wallets/deposits/:reference')
-  .get(
-    NgoSubAdminAuth,
-    IsOrgMember,
-    ParamValidator.Reference,
-    WalletController.depositByReference
-  );
-
-router.route('/:organisation_id/wallets/paystack-deposit')
-  .post(
-    NgoSubAdminAuth,
-    IsOrgMember,
-    WalletValidator.fiatDepositRules(),
-    WalletValidator.validate,
-    WalletController.paystackDeposit
-  );
-
 router.route('/:organisation_id/beneficiaries')
   .get(
     NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     BeneficiaryController.organisationBeneficiaries
   );
@@ -104,6 +119,7 @@ router.route('/:organisation_id/beneficiaries')
 router.route('/:organisation_id/beneficiaries/approve')
   .put(
     NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
     BeneficiaryValidator.IsCampaignBeneficiary,
@@ -114,6 +130,7 @@ router.route('/:organisation_id/beneficiaries/approve')
 router.route('/:organisation_id/beneficiaries/transactions')
   .get(
     NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     OrganisationController.getBeneficiariesTransactions
   )
@@ -121,6 +138,7 @@ router.route('/:organisation_id/beneficiaries/transactions')
 router.route('/:organisation_id/beneficiaries/:beneficiary_id')
   .get(
     NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     BeneficiaryValidator.BeneficiaryExists,
     BeneficiaryController.getBeneficiary
@@ -129,11 +147,13 @@ router.route('/:organisation_id/beneficiaries/:beneficiary_id')
 router.route('/:organisation_id/vendors')
   .get(
     FieldAgentAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     OrganisationController.getOrganisationVendors
   )
   .post(
     FieldAgentAuth,
+    ParamValidator.OrganisationId,
     IsOrgMember,
     VendorValidator.createVendorRules(),
     VendorValidator.validate,

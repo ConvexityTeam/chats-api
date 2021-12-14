@@ -9,7 +9,7 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         const { data } = await Axios.post(`${tokenConfig.baseURL}/user/register`);
-        resolve(data);
+        resolve(data.AccountCreated);
       } catch (error) {
         reject(error);
       }
@@ -21,7 +21,7 @@ class BlockchainService {
       try {
         const payload = {mintTo, amount};
         const checksum = Encryption.encryptTokenPayload(payload);
-        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`, {
+        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`, null, {
           headers: {
             'X-CHECKSUM': checksum
           }

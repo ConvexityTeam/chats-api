@@ -1,9 +1,94 @@
-const database = require('../models');
+const {
+    userConst
+} = require('../constants');
+const {
+    Transaction,
+    Sequelize,
+    Wallet,
+    User
+} = require('../models');
 
 class TransactionService {
+    static async findOrgnaisationTransactions(OrganisationId, extraClause = null) {
+        return Transaction.findAll({
+            where: {
+                ...extraClause,
+                OrganisationId
+            },
+            include: [
+                {
+                    model: Wallet,
+                    as: 'ReceiverWallet',
+                    attributes: [],
+                    include: [{
+                        model: User,
+                        as: 'User',
+                        attributes: userConst.publicAttr
+                    }]
+                },
+                {
+                    model: Wallet,
+                    as: 'SenderWallet',
+                    attributes: [],
+                    include: [{
+                        model: User,
+                        as: 'User',
+                        attributes: userConst.publicAttr
+                    }]
+                }
+            ],
+            order: [
+                ['createdAt', 'DESC']
+            ]
+
+        });
+    }
+
+    static async findTransaction(where) {
+        return Transaction.findOne({
+            where,
+            include: [{
+                    model: Wallet,
+                    as: 'ReceiverWallet',
+                    attributes: [],
+                    include: [{
+                        model: User,
+                        as: 'User',
+                        attributes: userConst.publicAttr
+                    }]
+                },
+                {
+                    model: Wallet,
+                    as: 'SenderWallet',
+                    attributes: [],
+                    include: [{
+                        model: User,
+                        as: 'User',
+                        attributes: userConst.publicAttr
+                    }]
+                }
+            ],
+
+        });
+    }
+
+
+
+    static async getTotalTransactionAmount(where = {}) {
+        return Transaction.findAll({
+            where,
+            attributes: [
+                [
+                    Sequelize.fn('SUM', Sequelize.col('amount')), 'total'
+                ]
+            ],
+            raw: true
+        });
+    }
+
     static async getAllTransactions() {
         try {
-            return await database.Transaction.findAll();
+            return await Transaction.findAll();
         } catch (error) {
             throw error;
         }
@@ -12,7 +97,7 @@ class TransactionService {
     static async addTransaction(newTransaction) {
         try {
             // return Transfer.processTransfer(userId, element.UserId, element.amount);
-            return await database.Transaction.create(newTransaction);
+            return await Transaction.create(newTransaction);
         } catch (error) {
             throw error;
         }
@@ -20,14 +105,14 @@ class TransactionService {
 
     static async updateTransaction(id, updateTransaction) {
         try {
-            const TransactionToUpdate = await database.Transaction.findOne({
+            const TransactionToUpdate = await Transaction.findOne({
                 where: {
                     id: Number(id)
                 }
             });
 
             if (TransactionToUpdate) {
-                await database.Transaction.update(updateTransaction, {
+                await Transaction.update(updateTransaction, {
                     where: {
                         id: Number(id)
                     }
@@ -43,7 +128,7 @@ class TransactionService {
 
     static async getATransaction(id) {
         try {
-            const theTransaction = await database.Transaction.findOne({
+            const theTransaction = await Transaction.findOne({
                 where: {
                     id: Number(id)
                 }
@@ -54,17 +139,16 @@ class TransactionService {
             throw error;
         }
     }
-
     static async deleteTransaction(id) {
         try {
-            const TransactionToDelete = await database.Transaction.findOne({
+            const TransactionToDelete = await Transaction.findOne({
                 where: {
                     id: Number(id)
                 }
             });
 
             if (TransactionToDelete) {
-                const deletedTransaction = await database.Transaction.destroy({
+                const deletedTransaction = await Transaction.destroy({
                     where: {
                         id: Number(id)
                     }

@@ -1,21 +1,41 @@
-const router = require('express').Router();
 
-const { AuthController, NgoController, OrganisationController} = require('../controllers');
-const { FieldAgentAuth, NgoAdminAuth, IsOrgMember } = require('../middleware');
-const { NgoValidator, CommonValidator, VendorValidator } = require('../validators');
+
+const {
+  AuthController,
+  NgoController,
+  OrganisationController
+} = require('../controllers');
+const {
+  FieldAgentAuth,
+  NgoAdminAuth,
+  NgoSubAdminAuth,
+  IsOrgMember
+} = require('../middleware');
+const {
+  NgoValidator,
+  CommonValidator,
+  VendorValidator,
+  ParamValidator
+} = require('../validators');
+const router = require('express').Router();
 
 router.get('/', NgoController.getAllNGO);
 router.get('/:id', NgoController.getOneNGO);
-//router.get('/product_gender', NgoController.getAllProductPurchasedByGender);
 
 // auth/register
 router.post('/auth/onboard', AuthController.createNgoAccount);
 
 // admin/create - email
 router.route(`/:organisation_id/members`)
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    NgoController.members
+  )
   .post(
-    NgoAdminAuth, 
-    IsOrgMember, 
+    NgoAdminAuth,
+    IsOrgMember,
     NgoValidator.createMemberRules(),
     NgoValidator.validate,
     CommonValidator.checkEmailNotTaken,
@@ -27,13 +47,14 @@ router.route(`/:organisation_id/members`)
 
 // vendors/create - generate vendor and password
 router.post(
-  '/vendors/create', 
-  FieldAgentAuth, 
-  IsOrgMember, 
-  VendorValidator.createVendorRules(), 
+  '/vendors/create',
+  FieldAgentAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  VendorValidator.createVendorRules(),
   VendorValidator.validate,
   VendorValidator.VendorStoreExists,
-   OrganisationController.createVendor
+  OrganisationController.createVendor
 )
 // vendors/deactivate'
 

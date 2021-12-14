@@ -49,10 +49,14 @@ router.route('/accounts')
   )
 
 router.route('/profile')
+  .get(
+    Auth,
+    UsersController.findProfile
+  )
   .put(
     Auth,
     UserValidator.updateProfileValidation,
-    UsersController.updateProfile
+    UsersController.updateProfile 
   );
 
 

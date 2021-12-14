@@ -20,6 +20,13 @@ class DepositService {
     });
   }
 
+  static async updateFiatDeposit(transactionReference, updateData) {
+    const deposit = await FundAccount.findOne({where: {transactionReference}});
+    if(!deposit) return null;
+    deposit.update(updateData);
+    return deposit;
+  }
+
 }
 
 module.exports = DepositService

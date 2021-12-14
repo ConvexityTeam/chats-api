@@ -1,7 +1,8 @@
 const {
     User,
     Campaign,
-    BankAccount
+    BankAccount,
+    OrganisationMembers
 } = require('../models');
 const {
     Op,
@@ -88,6 +89,24 @@ class UserService {
 
     // Refactored ==============
 
+    static findUser(id, extraClause = null) {
+        return User.findOne({
+            where: {
+                id,
+                ...extraClause
+            },
+            include: [
+                'Store',
+                {
+                    model: OrganisationMembers,
+                    as: 'AssociatedOrganisations',
+                    include: ['Organisation']
+                }
+
+            ]
+        });
+    }
+
     static findByEmail(email, extraClause = null) {
         return User.findOne({
             where: {
@@ -146,7 +165,9 @@ class UserService {
 
     static findUserAccounts(UserId) {
         return BankAccount.findAll({
-            where: {UserId},
+            where: {
+                UserId
+            },
             include: {
                 model: User,
                 as: "AccountHolder",

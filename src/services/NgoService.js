@@ -3,6 +3,10 @@ const {
 } = require("../utils").Types;
 
 const {
+  userConst
+} = require('../constants')
+
+const {
   User,
   OrganisationMembers
 } = require('../models');
@@ -36,6 +40,17 @@ class NgoService {
           reject(err);
         });
     });
+  }
+
+  static getMembers(OrganisationId) {
+    return OrganisationMembers.findAll({
+      where: { OrganisationId },
+      include: [{
+        model: User,
+        as: 'User',
+        attributes: userConst.publicAttr
+      }]
+    })
   }
 };
 

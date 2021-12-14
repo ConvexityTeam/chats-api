@@ -1,8 +1,36 @@
-const { walletConst } = require('../constants');
-const { Wallet } = require('../models')
+const {
+  Op
+} = require('sequelize');
+const {
+  walletConst,
+  userConst
+} = require('../constants');
+const {
+  Wallet,
+  User
+} = require('../models')
 class WalletService {
-  static updateOrCreate({ wallet_type, CampaignId, ownerId }, data) {
-    const where = { wallet_type };
+  static findSingleWallet(where) {
+    return Wallet.findOne({
+      where,
+      include: [
+        'Organisation',
+        {
+          model: User,
+          as: 'User',
+          attributes: userConst.publicAttr
+        }
+      ]
+    });
+  }
+  static updateOrCreate({
+    wallet_type,
+    CampaignId,
+    ownerId
+  }, data) {
+    const where = {
+      wallet_type
+    };
     if (wallet_type == 'user') {
       where.UserId = ownerId;
     }
@@ -13,27 +41,53 @@ class WalletService {
       where.CampaignId = CampaignId;
     }
 
-    return Wallet.findOne({where})
+    return Wallet.findOne({
+        where
+      })
       .then(async wallet => {
-        if(wallet) {
+        if (wallet) {
           await wallet.update(data);
-          return Wallet.findOne({where});
+          return Wallet.findOne({
+            where
+          });
         }
-        return Wallet.create({...where, ...data});
+        return Wallet.create({
+          ...where,
+          ...data
+        });
       });
   }
 
   static findMainOrganisationWallet(OrganisationId) {
-    return Wallet.findOne({where: {
-      OrganisationId,
-      wallet_type: 'organisation',
-      CampaignId: null
-    }});
+    return Wallet.findOne({
+      where: {
+        OrganisationId,
+        wallet_type: 'organisation',
+        CampaignId: null
+      }
+    });
+  }
+
+  static findOrganisationCampaignWallets(OrganisationId) {
+    return Wallet.findAll({
+      attributes: {
+        exclude: walletConst.walletExcludes
+      },
+      where: {
+        OrganisationId,
+        CampaignId: {
+          [Op.not]: null
+        }
+      },
+      include: ['Campaign']
+    });
   }
 
   static findUserWallets(UserId) {
     return Wallet.findAll({
-      where: {UserId},
+      where: {
+        UserId
+      },
       attributes: {
         exclude: walletConst.walletExcludes
       },
@@ -43,9 +97,22 @@ class WalletService {
 
   static findUserCampaignWallet(UserId, CampaignId) {
     return Wallet.findOne({
-      where: {UserId, CampaignId},
+      where: {
+        UserId,
+        CampaignId
+      },
       include: ['Campaign']
     });
+  }
+
+  static findCampaignFundWallet(OrganisationId, CampaignId) {
+    return Wallet.findOne({
+      where: {
+        OrganisationId,
+        CampaignId
+      },
+      include: ['Campaign']
+    })
   }
 }
 

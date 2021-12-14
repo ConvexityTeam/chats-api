@@ -244,6 +244,7 @@ class CampaignService {
   static async fundWallets(payload, userId, organisationId, campaignId) {
     try {
       // console.log(payload);
+      // Approve Fund For Campaign
       payload.forEach((element) => {
         // console.table(element);
         return Transfer.processTransfer(userId, element.UserId, element.amount);
