@@ -2,7 +2,9 @@
 const {
   Model
 } = require("sequelize");
-const { AclRoles } = require("../utils");
+const {
+  AclRoles
+} = require("../utils");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     capitalizeFirstLetter(str) {
@@ -87,8 +89,12 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.BankAccount, {
         as: "BankAccounts"
       });
-      User.hasMany(models.VerificationToken, { as: "VerificationTokens"});
-      User.hasMany(models.TaskAssignment, {as: "Assignments"});
+      User.hasMany(models.VerificationToken, {
+        as: "VerificationTokens"
+      });
+      User.hasMany(models.TaskAssignment, {
+        as: "Assignments"
+      });
       User.belongsTo(models.Role, {
         foreignKey: "RoleId",
         as: "Role"

@@ -1,7 +1,8 @@
 const {
   Product,
   Market,
-  User
+  User,
+  Sequelize
 } = require('../models');
 
 const VendorService = require('./VendorService');
@@ -10,7 +11,6 @@ const CampaignService = require('./CampaignService');
 
 class ProductService {
   static addProduct(product, vendors, CampaignId) {
-    console.log(CampaignService)
     return Promise.all(vendors.map(
       async UserId => {
         await CampaignService.approveVendorForCampaign(CampaignId, UserId);
@@ -21,6 +21,19 @@ class ProductService {
           })
       }
     ));
+  }
+
+  static findCampaignProducts(CampaignId) {
+    return Product.findAll({
+      where: {CampaignId},
+      attributes: [
+          [Sequelize.fn('DISTINCT', Sequelize.col('product_ref')), 'product_ref'],
+          'tag',
+          'cost',
+          'type'
+        ],
+        group: ['product_ref', 'tag', 'cost', 'type']
+    });
   }
 
   static findProductByVendorId(id, vendorId, extraClause = null) {
@@ -39,9 +52,6 @@ class ProductService {
       }]
     })
   }
-
-
-
 }
 
 module.exports = ProductService;

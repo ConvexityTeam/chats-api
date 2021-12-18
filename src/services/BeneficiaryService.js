@@ -111,7 +111,13 @@ class BeneficiariesService {
   }
 
   static async approveAllCampaignBeneficiaries(CampaignId) {
-    return Beneficiary.update({approved: true}, {where: {CampaignId}})
+    return Beneficiary.update({
+      approved: true
+    }, {
+      where: {
+        CampaignId
+      }
+    })
   }
 
   static async createComplaint(data) {
@@ -134,6 +140,23 @@ class BeneficiariesService {
       where: {
         id: id
       }
+    });
+  }
+
+  static async organisationBeneficiaryDetails(id, OrganisationId) {
+    return User.findOne({
+      where: {
+        id
+      },
+      attributes: userConst.publicAttr,
+      include: [{
+        model: Campaign,
+        as: 'Campaigns',
+        require: true,
+        where: {
+          OrganisationId
+        }
+      }]
     });
   }
 
@@ -225,33 +248,22 @@ class BeneficiariesService {
 
 
   static async findOrgnaisationBeneficiaries(OrganisationId) {
-    // return Beneficiary.findAll({
-    //   where: {
-    //     ...extraClause,
-    //     OrganisationId
-    //   },
-    //   include: [
-    //     'Campaign',
-    //   ]
-    // })
     return User.findAll({
       where: {
         OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
       },
       attributes: userConst.publicAttr,
-      include: [
-        {
-          model: Campaign,
-          as: 'Campaigns',
-          through:{
-            where: {
-              approved:  true
-            }
-          },
-          attributes: [],
-          require: true
-        }
-      ]
+      include: [{
+        model: Campaign,
+        as: 'Campaigns',
+        through: {
+          where: {
+            approved: true
+          }
+        },
+        attributes: [],
+        require: true
+      }]
     })
   }
 
@@ -261,13 +273,11 @@ class BeneficiariesService {
         ...extraClause,
         CampaignId
       },
-      include: [
-        {
-          model: User,
-          as: 'User',
-          attributes: userConst.publicAttr
-        }
-      ]
+      include: [{
+        model: User,
+        as: 'User',
+        attributes: userConst.publicAttr
+      }]
     })
   }
 
@@ -297,8 +307,7 @@ class BeneficiariesService {
 
   static async findOrganisationVendorTransactions(OrganisationId) {
     return Transaction.findAll({
-      include: [
-        {
+      include: [{
           model: Wallet,
           as: 'SenderWallet',
           attributes: {
@@ -331,21 +340,17 @@ class BeneficiariesService {
         CampaignId,
         approved: true
       },
-      include: [
-        {
-          model: User,
-          as: 'User',
-          include: [
-              {
-                model: Wallet,
-                as: 'Wallets',
-                where: {
-                  CampaignId
-                }
-              }
-          ]
-        }
-      ]
+      include: [{
+        model: User,
+        as: 'User',
+        include: [{
+          model: Wallet,
+          as: 'Wallets',
+          where: {
+            CampaignId
+          }
+        }]
+      }]
     })
   }
 }

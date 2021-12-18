@@ -17,7 +17,9 @@ const {
 } = require("../constants");
 const Transfer = require("../libs/Transfer");
 const QueueService = require('./QueueService');
-const { generateTransactionRef } = require('../utils');
+const {
+  generateTransactionRef
+} = require('../utils');
 
 class CampaignService {
   static searchCampaignTitle(title, extraClause = null) {
@@ -36,10 +38,12 @@ class CampaignService {
   }
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
-    return Beneficiary.findOne({where: {
-      CampaignId,
-      UserId
-    }});
+    return Beneficiary.findOne({
+      where: {
+        CampaignId,
+        UserId
+      }
+    });
   }
 
   static addCampaign(newCampaign) {
@@ -115,6 +119,20 @@ class CampaignService {
       VendorId,
       approved: true
     })
+  }
+
+
+  static campaignVendors(CampaignId) {
+    return CampaignVendor.findAll({
+      where: {
+        CampaignId
+      },
+      include: {
+        model: User,
+        as: 'Vendor',
+        attributes: userConst.publicAttr
+      }
+    });
   }
 
   static async getVendorCampaigns(VendorId) {
@@ -336,9 +354,17 @@ class CampaignService {
     };
 
 
-    await campaign.update({status: 'completed', is_funded: true, amount_disbursed: campaign.budget });
-    await Wallet.update({ balance: Sequelize.literal(`balance - ${campaign.budget}`)}, {
-      where: {uuid: OrgWallet.uuid}
+    await campaign.update({
+      status: 'completed',
+      is_funded: true,
+      amount_disbursed: campaign.budget
+    });
+    await Wallet.update({
+      balance: Sequelize.literal(`balance - ${campaign.budget}`)
+    }, {
+      where: {
+        uuid: OrgWallet.uuid
+      }
     });
 
     // Queue fuding disbursing

@@ -4,10 +4,7 @@ const {
 const util = require("../libs/Utils");
 const db = require("../models");
 const Validator = require("validatorjs");
-const {
-  Op
-} = require("sequelize");
-const sequelize = require("sequelize");
+
 const {
   Response
 } = require("../libs");
@@ -426,54 +423,6 @@ class BeneficiariesController {
 
   static async registerBeneficiary(req, res) {}
 
-  static async organisationBeneficiaries(req, res) {
-    try {
-      const organisation = req.organisation;
-      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation beneficiaries', beneficiaries);
-      return Response.send(res);
-    } catch (error) {
-      console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
-      return Response.send(res);
-    }
-  }
-
-  static async getBeneficiary(req, res) {
-    try {
-      let total_wallet_spent = 0;
-      let total_wallet_balance = 0;
-      let total_wallet_received = 0;
-
-      const id = req.params.beneficiary_id;
-      const _beneficiary = await BeneficiaryService.beneficiaryDetails(id);
-      const Wallets = _beneficiary.Wallets.map(wallet => {
-        total_wallet_balance += wallet.balance;
-        total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-        total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-        const w = wallet.toObject();
-        delete w.ReceivedTransactions;
-        delete w.SentTransactions;
-        return w;
-      });
-
-      const beneficiary = _beneficiary.toJSON();
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Details.', {
-        total_wallet_balance,
-        total_wallet_received,
-        total_wallet_spent,
-        ...beneficiary,
-        Wallets
-      });
-      return Response.send(res);
-    } catch (error) {
-      console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
-      return Response.send(res);
-    }
-  }
-
   static async getProfile(req, res) {
     try {
       let total_wallet_spent = 0;
@@ -719,17 +668,12 @@ class BeneficiariesController {
           balances.push({balance: myNewArray[i].balance, repeated})
         }else if(balances.length > 0 && balances.some(bal => bal.balance === myNewArray[i].balance)){
           balances.find((obj => obj.balance === (myNewArray[i]).balance)).repeated += 1;
-
         }
-        
        }
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',balances);
       return Response.send(res);
       }
-
-      
-    
     }catch(error){
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
