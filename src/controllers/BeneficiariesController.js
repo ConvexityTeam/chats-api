@@ -1,6 +1,7 @@
 const {
   BeneficiaryService,
-  WalletService
+  WalletService,
+  CampaignService
 } = require("../services");
 const util = require("../libs/Utils");
 const db = require("../models");
