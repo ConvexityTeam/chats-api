@@ -86,15 +86,15 @@ router.post(
   '/campaigns/:campaign_id/join',
   BeneficiaryAuth,
   BeneficiaryValidator.NotCampaignBeneficiary,
-  CampaignController.addBeneficiary
-)
+  BeneficiaryController.joinCampaign
+);
 
 router.put(
   '/campaigns/:campaign_id/leave',
   BeneficiaryAuth,
   BeneficiaryValidator.IsCampaignBeneficiary,
-  CampaignController.removeBeneficiary
-)
+  BeneficiaryController.leaveCampaign
+);
 
 router.route('/campaigns/:campaign_id/complaints')
   .get(

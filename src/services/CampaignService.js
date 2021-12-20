@@ -57,7 +57,7 @@ class CampaignService {
     });
   }
 
-  static addBeneficiary(CampaignId, UserId) {
+  static addBeneficiary(CampaignId, UserId, source = null) {
     return Beneficiary.findOne({
         where: {
           CampaignId,
@@ -70,7 +70,8 @@ class CampaignService {
         }
         return Beneficiary.create({
             CampaignId,
-            UserId
+            UserId,
+            source,
           })
           .then(newBeneficiary => {
             QueueService.createWallet(UserId, 'user', CampaignId)

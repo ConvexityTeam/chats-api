@@ -115,7 +115,8 @@ class BeneficiariesService {
       approved: true
     }, {
       where: {
-        CampaignId
+        CampaignId,
+        rejected: false
       }
     })
   }

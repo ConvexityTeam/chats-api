@@ -265,7 +265,7 @@ router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries')
     CampaignValidator.campaignBelongsToOrganisation,
     BeneficiaryValidator.ApprovedBeneficiary,
     BeneficiaryValidator.IsCampaignBeneficiary,
-    OrganisationController.updateCampaignBeneficiary
+    OrganisationController.updaeCampaignBeneficiary
   );
 
 router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries/approve')

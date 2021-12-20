@@ -416,10 +416,19 @@ class OrganisationController {
     }
   }
 
-  static async updateCampaignBeneficiary(req, res) {
+  static async updaeCampaignBeneficiary(req, res) {
     try {
-      const data = SanitizeObject(req.body, ['approved']);
       const campaign = req.campaign;
+      
+      const data = SanitizeObject(req.body, ['approved', 'rejected']);
+
+      if(data.approved && !data.rejected) {
+        data.rejected = false;
+      }
+
+      if(data.rejected && (typeof data.approved == 'undefined' || !!data.approved)) {
+        data.approved = false;
+      }
 
       if (campaign.is_funded) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campagin Fund Already Disbursed.');
@@ -434,6 +443,8 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+
+  static async 
 
   static async getOrganisationBeneficiaries(req, res) {
     try {
