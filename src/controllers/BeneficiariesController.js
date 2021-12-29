@@ -549,7 +549,7 @@ class BeneficiariesController {
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Gender Retrieved.');
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Gender Retrieved.', {male, female});
       return Response.send(res);
        
 
@@ -601,7 +601,7 @@ class BeneficiariesController {
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Age Group Retrieved.');
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Age Group Retrieved.', {eighteenTo29, thirtyTo41, forty2To53, fifty4To65, sixty6Up});
       return Response.send(res);
 
     
@@ -641,7 +641,7 @@ class BeneficiariesController {
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Marital Status Retrieved.');
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Marital Status Retrieved.',{single, married, divorce});
       return Response.send(res);
 
     }catch(error){
@@ -669,11 +669,10 @@ class BeneficiariesController {
        let val;
         for(let i = 0; i<arr.length; i++){
         val = JSON.parse(arr[i])
-          console.log(val.country)
-          if(locations.length >= 0 && !locations.some(coun => coun.country === val.country)) {
-            locations.push({country: val.country, repeated})
-          }else if(locations.length > 0 && locations.some(coun => coun.country === val.country)){
-            locations.find((obj => obj.country === val.country)).repeated += 1 
+          if(locations.length >= 0 && !locations.some(coun => coun.country === val.state)) {
+            locations.push({country: val.state, repeated})
+          }else if(locations.length > 0 && locations.some(coun => coun.country === val.state)){
+            locations.find((obj => obj.country === val.state)).repeated += 1 
           }
           
         }
@@ -684,13 +683,13 @@ class BeneficiariesController {
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.');
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.', locations);
       return Response.send(res);
 
     
     }catch(error){
       console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
   }
@@ -713,18 +712,18 @@ class BeneficiariesController {
        var newArray = balance.filter(value => Object.keys(value).length !== 0);
        var myNewArray = [].concat.apply([], newArray);
         
-       for(let i = 0; i<myNewArray.length; i++){
+      //  for(let i = 0; i<myNewArray.length; i++){
 
-        if(balances.length >= 0 && ! balances.some(bal => bal.balance === myNewArray[i].balance)) {
-          balances.push({balance: myNewArray[i].balance, repeated})
-        }else if(balances.length > 0 && balances.some(bal => bal.balance === myNewArray[i].balance)){
-          balances.find((obj => obj.balance === (myNewArray[i]).balance)).repeated += 1;
+      //   if(balances.length >= 0 && ! balances.some(bal => bal.balance === myNewArray[i].balance)) {
+      //     balances.push({balance: myNewArray[i].balance, repeated})
+      //   }else if(balances.length > 0 && balances.some(bal => bal.balance === myNewArray[i].balance)){
+      //     balances.find((obj => obj.balance === (myNewArray[i]).balance)).repeated += 1;
 
-        }
+      //   }
         
-       }
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',balances);
+      //  }
+        const bal = myNewArray.map(({balance}) => balance)
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',bal);
       return Response.send(res);
       }
 
@@ -732,7 +731,7 @@ class BeneficiariesController {
     
     }catch(error){
       console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
   }

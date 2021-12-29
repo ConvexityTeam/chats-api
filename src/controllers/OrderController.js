@@ -78,7 +78,7 @@ class OrderController {
       const product = await OrderService.productPurchased()
 
       if(product.length <= 0){
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Gender Recieved');
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Gender Recieved', {productsByMale, productsByFemale});
       return Response.send(res);
       }
       let maleRepeat = 1
@@ -130,7 +130,7 @@ class OrderController {
 
     }catch(error){
       console.log(error)
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please retry.', error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please retry.');
       return Response.send(res);
     }
   }
@@ -176,7 +176,7 @@ class OrderController {
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Age Group Retrieved.');
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Age Group Retrieved.', {eighteenTo29, thirtyTo41, forty2To53, fifty4To65, sixty6Up});
       return Response.send(res);
 
     
@@ -193,12 +193,12 @@ class OrderController {
     
     try{
       const query = req.query.name
-      console.log(query, 'query')
+     
   
       const products = await OrderService.productPurchasedBy(query)
 
       if(products.length <= 0){
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved');
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved', products);
       return Response.send(res);
       }
       
@@ -208,7 +208,7 @@ class OrderController {
 
     }catch(error){
       console.log(error)
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please retry.', error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please retry.');
       return Response.send(res);
     }
   }

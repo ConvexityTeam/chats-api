@@ -20,17 +20,17 @@ const router = require("express").Router();
 
 const CashForWorkController = require("../controllers/CashForWorkController");
 
-router.get("/cash-for-work/tasks", BeneficiaryAuth, CashForWorkController.viewCashForWorkRefractor);
-router.post("/cash-for-work/tasks",BeneficiaryAuth, CashForWorkController.pickTaskFromCampaign);
+router.get("/cash-for-work/tasks", CashForWorkController.viewCashForWorkRefractor);
+router.post("/cash-for-work/tasks", CashForWorkController.pickTaskFromCampaign);
 
 
 router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGender);
 router.get('/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAgeGroup);
-router.get('/location', NgoSubAdminAuth, BeneficiaryController.beneficiariesByLocation);
+router.get('/location', NgoSubAminAuth, BeneficiaryController.beneficiariesByLocation);
 router.get('/marital_status', NgoSubAdminAuth,BeneficiaryController.beneficiariesByMaritalStatus);
 
 
-router.get('/total_balance', BeneficiaryController.beneficiariesTotalBalance);
+router.get('/total_balance',NgoSubAminAuth, BeneficiaryController.beneficiariesTotalBalance);
 
 
 router.get('/', BeneficiaryController.getAllUsers);

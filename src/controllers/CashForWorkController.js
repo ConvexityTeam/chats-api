@@ -666,7 +666,7 @@ class CashForWorkController {
       if (beneficiary) {
         util.setSuccess(200, 'Task Assignment Retrieved', beneficiary);
     } else {
-        util.setSuccess(200, 'Task Assignment Not Recieved');
+        util.setSuccess(200, 'Task Assignment Not Recieved', beneficiary);
     }
     return util.send(res);
     }catch(error){
@@ -877,7 +877,7 @@ class CashForWorkController {
       }
     }catch(error){
       console.log(error.message);
-      util.setError(500, "Internal Server Error"+ error);
+      util.setError(500, "Internal Server Error");
       return util.send(res);
     }
     

@@ -7,6 +7,8 @@ const {Response} = require("../libs");
 const { HttpStatusCode } = require("../utils");
 
 const IsOrgMember = async (req, res, next) => {
+
+  console.log(req.params)
   try {
     const OrganisationId = req.body.organisation_id || req.params.organisation_id || req.query.organisation_id;
 

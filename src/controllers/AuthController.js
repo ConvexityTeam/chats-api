@@ -286,6 +286,8 @@ class AuthController {
   }
 
   static async createBeneficiary(req, res) {
+
+    console.log(req.body)
     // ensure that creator of beneficiary belongs to the organisation that owns campaing
     var form = new formidable.IncomingForm({
       multiples: true
