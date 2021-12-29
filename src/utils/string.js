@@ -44,6 +44,16 @@ exports.generateOrganisationId = () => {
   return `CHATSORG${random}`;
 }
 
+exports.generateProductRef = () => {
+  const random = randomstring.generate({
+    length: 7,
+    charset: 'alphanumeric',
+    capitalization: 'uppercase'
+  });
+
+  return `PID${random}`;
+}
+
 exports.extractDomain = (address) => {
   return address.toLowerCase()
     .split('://').pop()

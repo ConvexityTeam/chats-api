@@ -226,43 +226,6 @@ class CampaignController {
    * @async
    */
 
-  static async addBeneficiary(req, res) {
-    try {
-      const campaign = req.campaign;
-      const beneficiaryId = req.beneficiary_id;
-      if (campaign.status !== 'active') {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is not active.');
-        return Response.send(res);
-      }
-
-      const beneficiary = await CampaignService.addBeneficiary(campaign.id, beneficiaryId);
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Beneficiary Added.', beneficiary);
-      return Response.send(res);
-    } catch (error) {
-      console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
-      return Response.send(res);
-    }
-  }
-
-  static async removeBeneficiary(req, res) {
-    try {
-      const campaign = req.campaign;
-      const beneficiaryId = req.beneficiary_id;
-      if (campaign.status == 'completed') {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is already completed.');
-        return Response.send(res);
-      }
-      await CampaignService.removeBeneficiary(campaign.id, beneficiaryId);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary removed successfully');
-      return Response.send(res);
-    } catch (error) {
-      console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
-      return Response.send(res);
-    }
-  }
-
   // REFACTORED
   static async approveAndFund(req, res) {
     try {

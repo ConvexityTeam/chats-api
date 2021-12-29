@@ -98,7 +98,7 @@ class BeneficiariesService {
    * @param {interger} CampaignId Campaign Unique ID
    * @param {integer} UserId Beneficiary Account ID
    */
-  static async approveBeneficiary(CampaignId, UserId) {
+  static async updateCampaignBeneficiary(CampaignId, UserId, data) {
     const beneficiary = await Beneficiary.findOne({
       where: {
         CampaignId,
@@ -106,10 +106,19 @@ class BeneficiariesService {
       }
     });
     if (!beneficiary) throw new Error('Beneficiary Not Found.');
-    beneficiary.update({
-      approved: true
-    });
+    beneficiary.update(data);
     return beneficiary;
+  }
+
+  static async approveAllCampaignBeneficiaries(CampaignId) {
+    return Beneficiary.update({
+      approved: true
+    }, {
+      where: {
+        CampaignId,
+        rejected: false
+      }
+    })
   }
 
   static async createComplaint(data) {
@@ -132,6 +141,23 @@ class BeneficiariesService {
       where: {
         id: id
       }
+    });
+  }
+
+  static async organisationBeneficiaryDetails(id, OrganisationId) {
+    return User.findOne({
+      where: {
+        id
+      },
+      attributes: userConst.publicAttr,
+      include: [{
+        model: Campaign,
+        as: 'Campaigns',
+        require: true,
+        where: {
+          OrganisationId
+        }
+      }]
     });
   }
 
@@ -231,7 +257,27 @@ class BeneficiariesService {
       include: [{
         model: Campaign,
         as: 'Campaigns',
-        attributes: []
+        through: {
+          where: {
+            approved: true
+          }
+        },
+        attributes: [],
+        require: true
+      }]
+    })
+  }
+
+  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
+    return Beneficiary.findAll({
+      where: {
+        ...extraClause,
+        CampaignId
+      },
+      include: [{
+        model: User,
+        as: 'User',
+        attributes: userConst.publicAttr
       }]
     })
   }
@@ -262,8 +308,7 @@ class BeneficiariesService {
 
   static async findOrganisationVendorTransactions(OrganisationId) {
     return Transaction.findAll({
-      include: [
-        {
+      include: [{
           model: Wallet,
           as: 'SenderWallet',
           attributes: {
@@ -296,21 +341,17 @@ class BeneficiariesService {
         CampaignId,
         approved: true
       },
-      include: [
-        {
-          model: User,
-          as: 'User',
-          include: [
-              {
-                model: Wallet,
-                as: 'Wallets',
-                where: {
-                  CampaignId
-                }
-              }
-          ]
-        }
-      ]
+      include: [{
+        model: User,
+        as: 'User',
+        include: [{
+          model: Wallet,
+          as: 'Wallets',
+          where: {
+            CampaignId
+          }
+        }]
+      }]
     })
   }
 }

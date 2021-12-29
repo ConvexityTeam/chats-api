@@ -23,8 +23,15 @@ const OrgAdminRolesToAcl = {
   subadmin: AclRoles.NgoSubAdmin,
   fieldagent: AclRoles.FieldAgent,
 }
+
+const BeneficiarySource = {
+  beneficiary: 'beneficiary app',
+  agent: 'field app'
+}
+
 module.exports = {
   AclRoles,
   OrgRoles,
-  OrgAdminRolesToAcl
+  OrgAdminRolesToAcl,
+  BeneficiarySource
 }

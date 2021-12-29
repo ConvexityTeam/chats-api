@@ -20,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.ENUM("product", "service"),
     tag: DataTypes.STRING,
     cost: DataTypes.FLOAT,
+    product_ref: DataTypes.STRING,
     MarketId: DataTypes.INTEGER,
     CampaignId: DataTypes.INTEGER,
   }, {

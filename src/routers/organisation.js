@@ -74,7 +74,7 @@ router.route('/:organisation_id/wallets/paystack-deposit')
     WalletValidator.validate,
     WalletController.paystackDeposit
   );
-  router.route('/:organisation_id/wallets/:wallet_id?')
+router.route('/:organisation_id/wallets/:wallet_id?')
   .get(
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
@@ -113,18 +113,8 @@ router.route('/:organisation_id/beneficiaries')
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    BeneficiaryController.organisationBeneficiaries
+    OrganisationController.getOrganisationBeneficiaries
   );
-
-router.route('/:organisation_id/beneficiaries/approve')
-  .put(
-    NgoSubAdminAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
-    CampaignValidator.campaignBelongsToOrganisation,
-    BeneficiaryValidator.IsCampaignBeneficiary,
-    OrganisationController.approveCampaignBeneficiary
-  )
 
 
 router.route('/:organisation_id/beneficiaries/transactions')
@@ -141,7 +131,7 @@ router.route('/:organisation_id/beneficiaries/:beneficiary_id')
     ParamValidator.OrganisationId,
     IsOrgMember,
     BeneficiaryValidator.BeneficiaryExists,
-    BeneficiaryController.getBeneficiary
+    OrganisationController.getOrganisationBeneficiaryDetails
   )
 
 router.route('/:organisation_id/vendors')
@@ -241,23 +231,71 @@ router.route('/:organisation_id/campaigns/:campaign_id/fund')
   )
 
 router.route('/:organisation_id/campaigns/:campaign_id/vendors')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    OrganisationController.getCampaignVendors
+  )
   .post(
     NgoAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
+    ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     VendorValidator.approveCampaignVendor,
     OrganisationController.approveCampaignVendor
   )
 
-router.route('/:organisation_id/campaigns/:campaign_id/products')
-  .post(
+router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries')
+  .get(
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiaries
+  )
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    BeneficiaryValidator.ApprovedBeneficiary,
+    BeneficiaryValidator.IsCampaignBeneficiary,
+    OrganisationController.updaeCampaignBeneficiary
+  );
+
+router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries/approve')
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    OrganisationController.approvedAllbeneficiaries
+  )
+
+
+router.route('/:organisation_id/campaigns/:campaign_id/products')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    OrganisationController.getCampaignProducts
+  )
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     ProductValidator.addProductRules,
-    ProductController.addCampaignProduct
+    OrganisationController.addCampaignProduct
   );
 
 router.route('/:organisation_id/campaigns/:campaign_id/complaints')
@@ -265,6 +303,7 @@ router.route('/:organisation_id/campaigns/:campaign_id/complaints')
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
+    ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     ComplaintController.getCampaignConplaints
   )
@@ -274,6 +313,7 @@ router.route('/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id'
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
+    ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     ComplaintController.getCampaignConplaint
   );
@@ -283,6 +323,7 @@ router.patch(
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
+  ParamValidator.CampaignId,
   CampaignValidator.campaignBelongsToOrganisation,
   ComplaintValidator.complaintBelongsToCampaign,
   ComplaintController.resolveCampaignConplaint

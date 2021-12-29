@@ -4,7 +4,8 @@ const {
 const {
   HttpStatusCode,
   SanitizeObject,
-  generateOrganisationId
+  generateOrganisationId,
+  generateProductRef
 } = require('../utils');
 const UserService = require("../services/UserService");
 const {
@@ -30,7 +31,8 @@ const {
   QueueService,
   OrganisationService,
   BeneficiaryService,
-  VendorService
+  VendorService,
+  ProductService
 } = require("../services");
 const AwsUploadService = require("../services/AwsUploadService");
 
@@ -80,7 +82,9 @@ class OrganisationController {
       const key = `${Date.now()}.${ext}`;
       const buket = 'convexity-ngo-logo';
       const logo_link = await AwsUploadService.uploadFile(file, key, buket);
-      await OrganisationService.updateOrganisationProfile(req.organisation.id, {logo_link});
+      await OrganisationService.updateOrganisationProfile(req.organisation.id, {
+        logo_link
+      });
       const updated = await OrganisationService.findOneById(req.organisation.id);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation logo updated.', updated);
       return Response.send(res);
@@ -126,13 +130,9 @@ class OrganisationController {
   static async getAvailableOrgCampaigns(req, res) {
     try {
       const OrganisationId = req.params.organisation_id;
-      const {
-        type
-      } = SanitizeObject(req.query);
+      const _query = SanitizeObject(req.query, ['type']);
       const query = {
-        ...(type && {
-          type
-        }),
+        ..._query,
         status: 'active'
       }
       const campaigns = await CampaignService.getCampaigns({
@@ -362,15 +362,80 @@ class OrganisationController {
         })
     } catch (error) {
       console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Campaign creation fail. Please retry.");
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Campaign creation failed. Please retry.");
       return Response.send(res);
     }
   }
 
-  static async approveCampaignBeneficiary (req, res) {
+  static async addCampaignProduct(req, res) {
     try {
-      const approval = await BeneficiaryService.approveBeneficiary(req.campaign.id, req.beneficiary_id);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Approved.', approval);
+      const {
+        body,
+        campaign
+      } = req;
+      const products = await Promise.all(body.map(
+        _body => {
+          const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
+          data.product_ref = generateProductRef();
+          return ProductService.addProduct(data, _body.vendors, campaign.id);
+        }
+      ));
+
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Product added to stores', products);
+      Response.send(res)
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
+  static async getCampaignProducts(req, res) {
+    try {
+      const campaignId = req.params.campaign_id;
+      const prodcuts = await ProductService.findCampaignProducts(campaignId);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Products.', prodcuts);
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async getCampaignBeneficiaries(req, res) {
+    try {
+      const CampaignId = req.params.campaign_id;
+      const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', beneficiaries);
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async updaeCampaignBeneficiary(req, res) {
+    try {
+      const campaign = req.campaign;
+      
+      const data = SanitizeObject(req.body, ['approved', 'rejected']);
+
+      if(data.approved && !data.rejected) {
+        data.rejected = false;
+      }
+
+      if(data.rejected && (typeof data.approved == 'undefined' || !!data.approved)) {
+        data.approved = false;
+      }
+
+      if (campaign.is_funded) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campagin Fund Already Disbursed.');
+        return Response.send(res);
+      }
+      const approval = await BeneficiaryService.updateCampaignBeneficiary(campaign.id, req.beneficiary_id, data);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Approval Updated!', approval);
       return Response.send(res);
     } catch (error) {
       console.log(error);
@@ -379,7 +444,71 @@ class OrganisationController {
     }
   }
 
-  static async approveCampaignVendor ( req, res) {
+  static async 
+
+  static async getOrganisationBeneficiaries(req, res) {
+    try {
+      const organisation = req.organisation;
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation beneficiaries', beneficiaries);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
+
+  static async getOrganisationBeneficiaryDetails(req, res) {
+    try {
+      // let total_wallet_spent = 0;
+      // let total_wallet_balance = 0;
+      // let total_wallet_received = 0;
+
+      const id = req.params.beneficiary_id;
+      const beneficiary = await BeneficiaryService.organisationBeneficiaryDetails(id, req.organisation.id);
+      // const Wallets = _beneficiary.Wallets.map(wallet => {
+      //   total_wallet_balance += wallet.balance;
+      //   total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+      //   total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+      //   const w = wallet.toObject();
+      //   delete w.ReceivedTransactions;
+      //   delete w.SentTransactions;
+      //   return w;
+      // });
+
+      // const beneficiary = _beneficiary.toJSON();
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Details.', beneficiary);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Unexpected error occured.');
+      return Response.send(res);
+    }
+  }
+
+  static async approvedAllbeneficiaries(req, res) {
+    try {
+      const campaign = req.campaign;
+
+      if (campaign.is_funded) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campagin Fund Already Disbursed.');
+        return Response.send(res);
+      }
+      const [approvals] = await BeneficiaryService.approveAllCampaignBeneficiaries(campaign.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
+        approvals
+      });
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async approveCampaignVendor(req, res) {
     try {
       const approved = await CampaignService.approveVendorForCampaign(req.campaign.id, req.body.vendor_id);
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Vendor approved.', approved);
@@ -390,6 +519,19 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+
+  static async getCampaignVendors(req, res) {
+    try {
+      const vendors = await CampaignService.campaignVendors(req.params.campaign_id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries.', vendors);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error occurred.");
+      return Response.send(res);
+    }
+  }
+
   static async updateProfile(req, res) {
     try {
       var form = new formidable.IncomingForm();
