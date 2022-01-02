@@ -19,6 +19,9 @@ const jwt = require("jsonwebtoken");
 const {
   Response
 } = require("../libs");
+const {
+  Beneficiary
+} = require("../models");
 const Validator = require("validatorjs");
 const formidable = require("formidable");
 const uploadFile = require("./AmazonController");
@@ -259,18 +262,20 @@ class AuthController {
                   });
                 });
 
-                ninVerificationQueue.send(
-                  new Message(user, {
-                    contentType: "application/json"
-                  })
-                );
+                // ninVerificationQueue.send(
+                //   new Message(user, {
+                //     contentType: "application/json"
+                //   })
+                // );
                 if (campaignExist.type === "campaign") {
-                  await user.createBeneficiary({
-                      CampaignId: fields.campaign
-                    })
-                    .then(() => {
-                      QueueService.createWallet(user.id, 'user', fields.campaign);
-                    });
+                  await Beneficiary.create({
+                    UserId: user.id,
+                    CampaignId: campaignExist.id,
+                    approved: true,
+                    source: 'field app'
+                  }).then(() => {
+                    QueueService.createWallet(user.id, 'user', fields.campaign);
+                  });
                 }
                 Response.setSuccess(201, "Account Onboarded Successfully", user.id);
                 return Response.send(res);
@@ -314,7 +319,7 @@ class AuthController {
         const allowed_types = ["image/jpeg", "image/png", "image/jpg"];
 
         if (!files.profile_pic) {
-          Response.setError(400, "profile_pic Required");
+          Response.setError(400, "Profile picture required");
           return Response.send(res);
         }
         // else if (!allowed_types.includes(files.profile_pic.type)) {
@@ -419,9 +424,11 @@ class AuthController {
                         });
                       });
                       if (campaignExist.type === "campaign") {
-                        await user
-                          .createBeneficiary({
-                            CampaignId: fields.campaign,
+                        await Beneficiary.create({
+                            UserId: user.id,
+                            CampaignId: campaignExist.id,
+                            approved: true,
+                            source: 'field app'
                           })
                           .then(() => {
                             QueueService.createWallet(user.id, 'user', fields.campaign);
@@ -508,7 +515,7 @@ class AuthController {
                     QueueService.createWallet(user.id, 'user');
                     await db.Organisation.create({
                       name: data.organisation_name,
-                      email: data.email,  
+                      email: data.email,
                       website_url: data.website_url,
                       registration_id: generateOrganisationId()
 
