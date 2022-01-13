@@ -26,11 +26,11 @@ router.post("/cash-for-work/tasks", CashForWorkController.pickTaskFromCampaign);
 
 router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGender);
 router.get('/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAgeGroup);
-router.get('/location', NgoSubAminAuth, BeneficiaryController.beneficiariesByLocation);
+router.get('/location', NgoSubAdminAuth, BeneficiaryController.beneficiariesByLocation);
 router.get('/marital_status', NgoSubAdminAuth,BeneficiaryController.beneficiariesByMaritalStatus);
 
 
-router.get('/total_balance',NgoSubAminAuth, BeneficiaryController.beneficiariesTotalBalance);
+router.get('/total_balance',NgoSubAdminAuth, BeneficiaryController.beneficiariesTotalBalance);
 
 
 router.get('/', BeneficiaryController.getAllUsers);

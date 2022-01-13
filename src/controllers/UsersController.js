@@ -117,7 +117,7 @@ class UsersController {
 
   static async updateProfile(req, res) {
     try {
-      const data = SanitizeObject(req.body, ['first_name', 'last_name', 'phone', 'country', 'currency', 'location', 'address', 'gender', 'marital_status', 'dob']);
+      const data = SanitizeObject(req.body, ['first_name', 'last_name', 'phone', 'country','nin', 'currency', 'location', 'address', 'gender', 'marital_status', 'dob']);
       await req.user.update(data);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Profile Updated', req.user.toObject());
       return Response.send(res);

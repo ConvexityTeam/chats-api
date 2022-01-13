@@ -544,13 +544,8 @@ class BeneficiariesController {
         });
         return Response.send(res);
       }
-<<<<<<< HEAD
       
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Gender Retrieved.', {male, female});
-=======
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Gender Retrieved.');
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
       return Response.send(res);
 
 
@@ -605,13 +600,8 @@ class BeneficiariesController {
         });
         return Response.send(res);
       }
-<<<<<<< HEAD
       
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Age Group Retrieved.', {eighteenTo29, thirtyTo41, forty2To53, fifty4To65, sixty6Up});
-=======
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Age Group Retrieved.');
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
       return Response.send(res);
 
 
@@ -652,13 +642,8 @@ class BeneficiariesController {
         });
         return Response.send(res);
       }
-<<<<<<< HEAD
       
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Marital Status Retrieved.',{single, married, divorce});
-=======
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Marital Status Retrieved.');
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
       return Response.send(res);
 
     } catch (error) {
@@ -675,7 +660,6 @@ class BeneficiariesController {
       let locations = []
 
       const beneficiaries = await BeneficiaryService.getBeneficiaries();
-<<<<<<< HEAD
       
       if(beneficiaries.length > 0){
        
@@ -691,27 +675,6 @@ class BeneficiariesController {
             locations.push({country: val.state, repeated})
           }else if(locations.length > 0 && locations.some(coun => coun.country === val.state)){
             locations.find((obj => obj.country === val.state)).repeated += 1 
-=======
-
-      if (beneficiaries.length > 0) {
-
-        const beneficiary = beneficiaries.map(bene => bene.location)
-        let arr = beneficiary.filter(x => x !== null)
-
-        let repeated = 1
-
-        let val;
-        for (let i = 0; i < arr.length; i++) {
-          val = JSON.parse(arr[i])
-          console.log(val.country)
-          if (locations.length >= 0 && !locations.some(coun => coun.country === val.country)) {
-            locations.push({
-              country: val.country,
-              repeated
-            })
-          } else if (locations.length > 0 && locations.some(coun => coun.country === val.country)) {
-            locations.find((obj => obj.country === val.country)).repeated += 1
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
           }
 
         }
@@ -721,23 +684,14 @@ class BeneficiariesController {
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.', locations);
         return Response.send(res);
       }
-<<<<<<< HEAD
       
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.', locations);
-=======
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.');
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
       return Response.send(res);
 
 
     } catch (error) {
       console.log(error);
-<<<<<<< HEAD
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
-=======
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.' + error);
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
       return Response.send(res);
     }
   }
@@ -750,9 +704,8 @@ class BeneficiariesController {
       let repeated = 1
       const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount();
       if (beneficiaries.length <= 0) {
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.');
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', beneficiaries);
         return Response.send(res);
-<<<<<<< HEAD
       }
       else{
         beneficiary = Array.isArray(beneficiaries) ? beneficiaries.map((user)=> user.Wallet) : []
@@ -774,37 +727,10 @@ class BeneficiariesController {
         const bal = myNewArray.map(({balance}) => balance)
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',bal);
       return Response.send(res);
-=======
-      } else {
-        beneficiary = Array.isArray(beneficiaries) ? beneficiaries.map((user) => user.Wallet) : []
-
-        balance = Array.isArray(beneficiary) ? beneficiary.map((wallet) => wallet) : []
-        var newArray = balance.filter(value => Object.keys(value).length !== 0);
-        var myNewArray = [].concat.apply([], newArray);
-
-        for (let i = 0; i < myNewArray.length; i++) {
-
-          if (balances.length >= 0 && !balances.some(bal => bal.balance === myNewArray[i].balance)) {
-            balances.push({
-              balance: myNewArray[i].balance,
-              repeated
-            })
-          } else if (balances.length > 0 && balances.some(bal => bal.balance === myNewArray[i].balance)) {
-            balances.find((obj => obj.balance === (myNewArray[i]).balance)).repeated += 1;
-          }
-        }
-
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.', balances);
-        return Response.send(res);
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
       }
     } catch (error) {
       console.log(error);
-<<<<<<< HEAD
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
-=======
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.' + error);
->>>>>>> 78a258fc06c488fdd4457c68fe9257abe05f607c
       return Response.send(res);
     }
   }

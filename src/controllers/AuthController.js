@@ -127,7 +127,7 @@ class AuthController {
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
-      const data = SanitizeObject(req.body, ['first_name', 'last_name', 'email', 'phone', 'gender', 'address', 'password', 'dob']);
+      const data = SanitizeObject(req.body, ['email', 'phone', 'password']);
       data.password = createHash(data.password);
       data.RoleId = AclRoles.Beneficiary;
 
