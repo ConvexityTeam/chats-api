@@ -1,5 +1,3 @@
-
-
 const {
   AuthController,
   NgoController,
@@ -59,8 +57,8 @@ router.post(
 // vendors/deactivate'
 
 
-router.post('/beneficiaries/register', FieldAgentAuth, IsOrgMember, AuthController.createBeneficiary)
-router.post('/beneficiaries/register-special-case', FieldAgentAuth, IsOrgMember, AuthController.sCaseCreateBeneficiary)
+router.post('/:organisation_id/beneficiaries', FieldAgentAuth, ParamValidator.OrganisationId, IsOrgMember, AuthController.createBeneficiary)
+router.post('/:organisation_id/beneficiaries/special-case', FieldAgentAuth, ParamValidator.OrganisationId, IsOrgMember, AuthController.sCaseCreateBeneficiary)
 
 
 
