@@ -140,12 +140,10 @@ class AuthController {
       const RoleId = AclRoles.Beneficiary;
 
       var form = new formidable.IncomingForm({
-        multiples: true
+        multiples: false
       });
       form.parse(req, async (err, fields, files) => {
-        const {name, email} = fields
-
-        console.log(files)
+        const {phone, email} = fields
        
         const rules = {
           email: "email|required",
@@ -157,34 +155,41 @@ class AuthController {
 
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
-        Response.setError(400, validation.errors);
+        Response.setError(422, validation.errors);
         return Response.send(res);
       }else {
         if (!files.profile_pic) {
         
         } 
-          const userByEmail = await db.User.findOne({where: {email: fields.email}})
+          const userByEmail = await db.User.findOne({where: {email}})
           if(userByEmail){
             Response.setError(400, "User With This Email Exist");
             return Response.send(res);
         }else{
       const password =  createHash(fields.password);
 
-      const ext = files.profile_pic.name.substring(
+      const extension = files.profile_pic.name.substring(
         files.profile_pic.name.lastIndexOf(".") + 1
       );
 
-      const profile_pic = await uploadFile(
+      await uploadFile(
         files.profile_pic,
-        `${environ}-${Date.now()}.${ext}`,
+        "u-" + environ + "-i." + extension,
         "convexity-profile-images"
-      );
-      
-      const user = await UserService.addUser({RoleId, name, email, password, profile_pic});
+      ).then(async (url)=> {
+
+        if(url){
+           const user = await UserService.addUser({RoleId, phone, email, password, profile_pic});
       QueueService.createWallet(user.id, 'user');
 
       Response.setSuccess(201, "Account Onboarded Successfully", user);
       return Response.send(res);
+        }
+      }).catch((error)=> {
+        console.log(error, 'error')
+      })
+      
+     
         }
       }
     })
