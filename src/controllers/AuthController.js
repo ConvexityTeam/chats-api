@@ -128,25 +128,68 @@ class AuthController {
       });
   }
 
+  
+
+  
+
   static async beneficiaryRegisterSelf(req, res) {
+   
     try {
-      const data = SanitizeObject(req.body, ['email', 'phone', 'password']);
-      data.password = createHash(data.password);
-      data.RoleId = AclRoles.Beneficiary;
+      // const data = SanitizeObject(req.body, ['email', 'phone', 'password']);
+      // data.password = createHash(data.password);
+      const RoleId = AclRoles.Beneficiary;
 
-      const ext = getFileExtension(req.files.profile_pic.name);
+      var form = new formidable.IncomingForm({
+        multiples: true
+      });
+      form.parse(req, async (err, fields, files) => {
+        const {name, email} = fields
 
-      data.profile_pic = await uploadFile(
-        req.files.profile_pic,
+        console.log(files)
+       
+        const rules = {
+          email: "email|required",
+          password: "required",
+          phone: "numeric",
+
+        };
+
+
+      const validation = new Validator(fields, rules);
+      if (validation.fails()) {
+        Response.setError(400, validation.errors);
+        return Response.send(res);
+      }else {
+        if (!files.profile_pic) {
+        
+        } 
+          const userByEmail = await db.User.findOne({where: {email: fields.email}})
+          if(userByEmail){
+            Response.setError(400, "User With This Email Exist");
+            return Response.send(res);
+        }else{
+      const password =  createHash(fields.password);
+
+      const ext = files.profile_pic.name.substring(
+        files.profile_pic.name.lastIndexOf(".") + 1
+      );
+
+      const profile_pic = await uploadFile(
+        files.profile_pic,
         `${environ}-${Date.now()}.${ext}`,
         "convexity-profile-images"
       );
-
-      const user = await UserService.addUser(data);
+      
+      const user = await UserService.addUser({RoleId, name, email, password, profile_pic});
       QueueService.createWallet(user.id, 'user');
 
-      Response.setSuccess(201, "Account Onboarded Successfully", user.toObject());
+      Response.setSuccess(201, "Account Onboarded Successfully", user);
       return Response.send(res);
+        }
+      }
+    })
+
+      // 
     } catch (error) {
       console.log(error);
       Response.setError(500, 'On-boarding failed. Please try again later.')
@@ -292,7 +335,7 @@ class AuthController {
 
   static async createBeneficiary(req, res) {
 
-    console.log(req.body)
+
     // ensure that creator of beneficiary belongs to the organisation that owns campaing
     var form = new formidable.IncomingForm({
       multiples: true

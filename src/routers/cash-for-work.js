@@ -10,6 +10,11 @@ const {Auth, VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, VendorBeneficiaryAut
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 // router.use(Auth);
+router.get("/task/view-tasks",   CashForWorkController.viewTaskById);
+router.get("/task/view-task",   CashForWorkController.viewTaskUserSubmission);
+router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController.approveSubmissionAgent);
+router.post("/task/task-approved-vendor", VendorAuth,  CashForWorkController.approveSubmissionVendor);
+
 router.post("/task/vendor-evidence", VendorAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceVendor);
 router.post("/task/agent-evidence", FieldAgentAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceFieldAgent);
 router.post("/task/beneficiary-evidence", BeneficiaryAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);

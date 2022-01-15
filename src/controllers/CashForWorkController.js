@@ -882,6 +882,127 @@ class CashForWorkController {
     }
     
   }
+
+  static async viewTaskById(req, res){
+    const {id} = req.params
+    try {
+      const rules = {
+        id: "required|numeric"
+      };
+      const validation = new Validator(req.params, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }else{
+        const tasks = await db.TaskAssignment.findAll({where: {id},include: { model: db.Task, as: "Task" },});
+      if(tasks.length <= 0){
+        Response.setSuccess(200, "No Task Recieved", tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(200, "Task Recieved", tasks);
+      return Response.send(res);
+      }
+
+         }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
+
+  static async viewTaskUserSubmission(req, res){
+    const {UserId} = req.body
+    try {
+      const rules = {
+        UserId: "required|numeric"
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }else{
+        const tasks = await db.TaskAssignment.findAll({where: {UserId},include: [{ model: db.Task, as: "Task" }, {model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'}],});
+      if(tasks.length <= 0){
+        Response.setSuccess(200, "No Task Recieved", tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(200, "Task Recieved", tasks);
+      return Response.send(res);
+      }
+
+         }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
+
+
+  static async approveSubmissionAgent(req, res){
+    const {UserId, approved_by, approved_at} = req.body
+    try {
+      const rules = {
+        UserId: "required|numeric"
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }else{
+        const tasks = await db.TaskAssignment.findOne({where: {UserId}});
+      if(!tasks){
+        Response.setError(404, `User With This ID ${UserId}: Not Found`, tasks);
+        return Response.send(res);
+      }
+      await db.TaskAssignment.update({
+        approved: true,
+        approved_by,
+        approved_by_agent: true,
+        approved_at
+      },{where:{UserId}})
+      Response.setSuccess(200, "Task Approved Success");
+      return Response.send(res);
+      }
+
+         }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
+
+  static async approveSubmissionVendor(req, res){
+    const {UserId, approved_by, approved_at} = req.body
+    try {
+      const rules = {
+        UserId: "required|numeric"
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }else{
+        const tasks = await db.TaskAssignment.findOne({where: {UserId}});
+      if(!tasks){
+        Response.setError(404, `User With This ID ${UserId}: Not Found`, tasks);
+        return Response.send(res);
+      }
+      await db.TaskAssignment.update({
+        approved: true,
+        approved_by,
+        approved_by_vendor: true,
+        approved_at
+      },{where:{UserId}})
+      Response.setSuccess(200, "Task Approved Success");
+      return Response.send(res);
+      }
+
+         }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
   
 }
 
