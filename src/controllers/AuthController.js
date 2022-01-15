@@ -172,24 +172,17 @@ class AuthController {
         files.profile_pic.name.lastIndexOf(".") + 1
       );
 
-      await uploadFile(
+    const profile_pic =  await uploadFile(
         files.profile_pic,
         "u-" + environ + "-i." + extension,
         "convexity-profile-images"
-      ).then(async (url)=> {
-
-        if(url){
-           const user = await UserService.addUser({RoleId, phone, email, password, profile_pic});
+      )
+      
+      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic});
       QueueService.createWallet(user.id, 'user');
 
       Response.setSuccess(201, "Account Onboarded Successfully", user);
       return Response.send(res);
-        }
-      }).catch((error)=> {
-        console.log(error, 'error')
-      })
-      
-     
         }
       }
     })
