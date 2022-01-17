@@ -21,6 +21,7 @@ exports.verify2faToken = (secret, token) => {
   return speakeasy.totp.verify({
     secret,
     encoding: qrcodeEncoding,
-    token
+    token,
+    window: 2
   });
 }
