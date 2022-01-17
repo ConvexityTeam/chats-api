@@ -143,17 +143,16 @@ class AuthController {
         multiples: false
       });
       form.parse(req, async (err, fields, files) => {
-        const {phone, email} = fields
-       
+        const {phone, email, location, country} = fields
         const rules = {
           email: "email|required",
           password: "required",
-          phone: "numeric",
-
+          phone: ['required','regex:/^\d{3}-\d{3}-\d{4}$/'],
+          location: 'required',
+          country: 'required'
         };
-
-
       const validation = new Validator(fields, rules);
+      
       if (validation.fails()) {
         Response.setError(422, validation.errors);
         return Response.send(res);
@@ -178,15 +177,14 @@ class AuthController {
         "convexity-profile-images"
       )
       
-      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic});
+      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location, country});
+      if(user)
       QueueService.createWallet(user.id, 'user');
-
       Response.setSuccess(201, "Account Onboarded Successfully", user);
       return Response.send(res);
         }
       }
     })
-
       // 
     } catch (error) {
       console.log(error);

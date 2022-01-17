@@ -7,7 +7,8 @@ const {
 const {
   AuthController,
   BeneficiaryController,
-  CampaignController
+  CampaignController,
+  
 } = require('../controllers');
 
 const {
@@ -22,6 +23,7 @@ const CashForWorkController = require("../controllers/CashForWorkController");
 
 router.get("/cash-for-work/tasks", CashForWorkController.viewCashForWorkRefractor);
 router.post("/cash-for-work/tasks", CashForWorkController.pickTaskFromCampaign);
+router.get("/cash-for-work", CashForWorkController.viewTaskById);
 
 
 router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGender);

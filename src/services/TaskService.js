@@ -15,7 +15,7 @@ class TaskService {
   static async createCashForWorkTask(tasks, campaignId) {
 
     // check if campaign exists
-    console.log(campaignId, 'campaignId')
+
     const campaign = await Campaign.findOne({
       where: {
         id: campaignId,

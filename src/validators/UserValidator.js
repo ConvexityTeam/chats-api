@@ -139,6 +139,27 @@ class UserValidator extends BaseValidator {
     .withMessage('Date of birth should be before today.'),
     this.validate
   ]
+  static userRegister = [
+    body('email').isEmail().withMessage('Invalid email address'),
+    body('email').notEmpty().withMessage('Email address must not be empty'),
+    body('phone')
+    .optional({
+      checkFalsy: true
+    })
+    .isMobilePhone()
+    .withMessage('Invalid mobile number format'),
+    body('country')
+    .optional({
+      checkFalsy: true
+    })
+    .isIn(countryCodes)
+    .withMessage('Inalid country code'),
+    body('location')
+    .optional({
+      checkFalsy: true
+    }),
+    this.validate
+  ]
 }
 
 module.exports = UserValidator;

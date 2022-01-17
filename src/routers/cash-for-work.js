@@ -10,8 +10,6 @@ const {Auth, VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, VendorBeneficiaryAut
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 // router.use(Auth);
-router.get("/task/view-tasks",   CashForWorkController.viewTaskById);
-router.get("/task/view-task",   CashForWorkController.viewTaskUserSubmission);
 router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController.approveSubmissionAgent);
 router.post("/task/task-approved-vendor", VendorAuth,  CashForWorkController.approveSubmissionVendor);
 

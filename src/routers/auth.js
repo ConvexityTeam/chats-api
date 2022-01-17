@@ -5,7 +5,7 @@ const { AuthController } = require("../controllers");
 
 const multer = require("../middleware/multer-config"); //for uploading of profile picture and fingerprint
 const e2e = require("../middleware/e2e"); //End2End Encryption middleware
-const { AuthValidator } = require("../validators");
+const { AuthValidator, UserValidator } = require("../validators");
 // router.use(e2e);
 
 

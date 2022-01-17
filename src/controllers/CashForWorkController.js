@@ -884,24 +884,17 @@ class CashForWorkController {
   }
 
   static async viewTaskById(req, res){
-    const {id} = req.params
+    const {taskId} = req.body;
+
     try {
-      const rules = {
-        id: "required|numeric"
-      };
-      const validation = new Validator(req.params, rules);
-      if (validation.fails()) {
-        Response.setError(422, validation.errors);
-        return Response.send(res);
-      }else{
-        const tasks = await db.TaskAssignment.findAll({where: {id},include: { model: db.Task, as: "Task" },});
+        const tasks = await db.TaskAssignment.findAll({where: {TaskId: taskId},include: { model: db.Task, as: "Task" }});
       if(tasks.length <= 0){
         Response.setSuccess(200, "No Task Recieved", tasks);
         return Response.send(res);
       }
       Response.setSuccess(200, "Task Recieved", tasks);
       return Response.send(res);
-      }
+      
 
          }catch(error){
       console.log(error.message);
