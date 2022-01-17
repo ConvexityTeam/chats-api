@@ -2,7 +2,6 @@ stages:
   - deploy
 
 variables:
-  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
   APP_URL: $APP_URL
 
 before_script:
