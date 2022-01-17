@@ -39,19 +39,14 @@ class TaskService {
 
   static async getCashForWorkTasks(params) {
 
-    return Task.findAndCountAll({
+    return Task.findAll({
       where: {
         CampaignId: params.campaign_id
       },
       include: [{
-        model: TaskUsers,
-        as: 'AssociatedWorkers',
-        attributes: [],
-        include: [{
-          model: User,
-          as: 'Worker',
-          attributes: publicAttr
-        }]
+        model: User,
+        as: 'AssignedWorkers',
+        attributes: publicAttr
       }]
     });
   }
