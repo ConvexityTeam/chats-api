@@ -3,6 +3,7 @@ stages:
 
 variables:
   SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+  APP_URL: $APP_URL
 
 before_script:
   - eval $(ssh-agent -s)
@@ -12,6 +13,6 @@ before_script:
 deploy_staging:
   stage: deploy
   script:
-    - ssh ubuntu@$APP_URL -o StrictHostKeyChecking=no "cd app && git checkout develop && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build -d && exit"
+    - ssh ubuntu@${APP_URL} -o StrictHostKeyChecking=no "cd app && git checkout develop && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build -d && exit"
   only:
     - develop
