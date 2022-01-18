@@ -5,6 +5,10 @@ const {
   Sequelize
 } = require('../models');
 
+const {
+  AclRoles
+} = require("../utils");
+
 const VendorService = require('./VendorService');
 const CampaignService = require('./CampaignService');
 
@@ -23,18 +27,31 @@ class ProductService {
     ));
   }
 
+
+
+
   static findCampaignProducts(CampaignId) {
-    return Product.findAll({
-      where: {CampaignId},
-      attributes: [
-          [Sequelize.fn('DISTINCT', Sequelize.col('product_ref')), 'product_ref'],
+    const RoleId = AclRoles.Vendor
+    return User.findAll({
+      wher:{RoleId},
+      include:[{model: Market, as: 'Store',
+      include:[{
+        model: Product,
+        as: 'Products',
+        where: {CampaignId},
+        attributes: [
+          // [Sequelize.fn('DISTINCT', Sequelize.col('product_ref')), 'product_ref'],
+          'id',
           'tag',
           'cost',
           'type'
         ],
         group: ['product_ref', 'tag', 'cost', 'type']
+      }]
+    }]
+    
     });
-  }
+}
 
   static findProductByVendorId(id, vendorId, extraClause = null) {
     return Product.findOne({

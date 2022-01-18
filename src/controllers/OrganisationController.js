@@ -389,6 +389,76 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+  static async DeleteCampaignProduct(req, res) {
+
+    const {ProductId, UserId} = req.body;
+    try {
+        
+        const isVendor = await  VendorService.findVendorStore(UserId);
+        const isApprovedVendor = await CampaignService.approveVendorForCampaign(req.params.campaign_id, UserId);
+        const iSProduct = await db.Product.findByPk(ProductId)
+        if(!isVendor){
+          Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Vendor with this ${UserId} ID Not Found`);
+          Response.send(res)
+        }if(!isApprovedVendor){
+          Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Vendor Not Approved');
+          Response.send(res)
+        }if(!iSProduct){
+          Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Product with this ID  ${ProductId} Not Approved`);
+          Response.send(res)
+        }else{
+
+          await db.Product.destroy({
+            where: {
+              id: ProductId
+            }
+          })
+          Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Product Delted in stores', );
+          Response.send(res)
+        }
+      
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
+  static async UpdateCampaignProduct(req, res) {
+    console.log(req.body)
+    const {ProductId, UserId} = req.body
+    try {
+        
+        const isVendor = await  VendorService.findVendorStore(UserId);
+        const isApprovedVendor = await CampaignService.approveVendorForCampaign(req.params.campaign_id, UserId);
+        const iSProduct = await db.Product.findByPk(ProductId)
+        if(!isVendor){
+          Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Vendor with this ${UserId} ID Not Found`);
+          Response.send(res)
+        }if(!isApprovedVendor){
+          Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Vendor Not Approved');
+          Response.send(res)
+        }if(!iSProduct){
+          Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Product with this ID  ${ProductId} Not Approved`);
+          Response.send(res)
+        }else{
+          await db.Product.update({
+            ...req.body
+          }, {
+            where: {
+              id: ProductId
+            }
+          })
+          Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Product Updated in stores', );
+          Response.send(res)
+        }
+      
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
 
   static async getCampaignProducts(req, res) {
     try {
