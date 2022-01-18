@@ -297,6 +297,23 @@ router.route('/:organisation_id/campaigns/:campaign_id/products')
     ProductValidator.addProductRules,
     OrganisationController.addCampaignProduct
   );
+  router.post('/product/:organisation_id/:campaign_id/destroy',
+  NgoAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  ParamValidator.CampaignId,
+  CampaignValidator.campaignBelongsToOrganisation,
+   OrganisationController.DeleteCampaignProduct
+   )
+
+   router.post('/product/:organisation_id/:campaign_id/update',
+  NgoAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  ParamValidator.CampaignId,
+  CampaignValidator.campaignBelongsToOrganisation,
+   OrganisationController.UpdateCampaignProduct
+   )
 
 router.route('/:organisation_id/campaigns/:campaign_id/complaints')
   .get(
