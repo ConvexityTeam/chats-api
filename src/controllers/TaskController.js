@@ -12,7 +12,6 @@ const {
 class TaskController {
   static async createCashForWorkTask(req, res) {
     try {
-
       const tasks = req.body;
       const campaignId = req.params.campaign_id;
       const createdTasks = await TaskService.createCashForWorkTask(tasks, campaignId);

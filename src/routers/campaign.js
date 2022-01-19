@@ -12,7 +12,7 @@ router.route('/')
   
 router.get("/:id", Auth, CampaignController.getACampaign);
 router.put("/:id", Auth, CampaignController.updatedCampaign);
-router.delete("/:id", Auth, CampaignController.deleteCampaign);
+router.post("/:id", Auth, CampaignController.deleteCampaign);
 // router.post("/fund-beneficiaries-wallets", Auth, CampaignController.fundWallets);
 router.post( "/onboard-beneficiaries/:campaignId", Auth, CampaignController.beneficiariesToCampaign );
 router.get("/complaints/:campaignId", Auth, CampaignController.complaints);
