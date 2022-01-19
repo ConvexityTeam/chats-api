@@ -78,7 +78,7 @@ class VendorsAuthController {
             //check if email already exist
 
             const rules = {
-                first_name,
+                first_name: 'required',
                 address:'required',
                 store_name:'required',
                 email: "email|required",
