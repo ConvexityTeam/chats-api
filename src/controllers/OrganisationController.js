@@ -1200,7 +1200,7 @@ class OrganisationController {
       const yesterday = new Date((new Date).setDate((new Date).getDate() - 1));
       const previous_stat = await VendorService.organisationDailyVendorStat(organisation.id, yesterday);
       const today_stat = await VendorService.organisationDailyVendorStat(organisation.id);
-      const Transactions = await VendorService.organisationIdVendorsTransactions(organisation.id);
+      const Transactions = await VendorService.organisationVendorsTransactions(organisation.id);
       Response.setSuccess(200, 'Organisation vendors Summary', {
         organisation,
         vendors_count,

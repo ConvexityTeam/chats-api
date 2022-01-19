@@ -147,7 +147,7 @@ class AuthController {
         const rules = {
           email: "email|required",
           password: "required",
-          phone: ['required','regex:/^\d{3}-\d{3}-\d{4}$/'],
+          phone: ['required','regex:/^\+(?:[0-9]●?){6,14}[0-9]$/'],
           location: 'required',
           country: 'required'
         };
