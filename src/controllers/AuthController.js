@@ -147,7 +147,7 @@ class AuthController {
         const rules = {
           email: "email|required",
           password: "required",
-          phone: ['required','regex:/^\+(?:[0-9]●?){6,14}[0-9]$/'],
+          phone: ['required','regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/'],
           location: 'required',
           country: 'required'
         };
@@ -203,7 +203,7 @@ class AuthController {
         last_name: "required|alpha",
         email: "email",
         referal_id: "string",
-        phone: "required|numeric",
+        phone: ['required','regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/'],
         gender: "required|in:male,female",
         address: "string",
         location: "string",
@@ -343,7 +343,7 @@ class AuthController {
         last_name: "required|alpha",
         email: "email",
         referal_id: "string",
-        phone: "required|numeric",
+        phone: ['required','regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/'],
         gender: "required|alpha|in:male,female",
         address: "string",
         location: "string",
