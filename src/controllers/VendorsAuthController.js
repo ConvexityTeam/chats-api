@@ -16,6 +16,8 @@ var queue = amqp_1["default"].declareQueue("createWallet", {
     durable: true
 });
 
+const Validator = require("validatorjs");
+
 class VendorsAuthController {
 
     constructor() {
@@ -74,6 +76,23 @@ class VendorsAuthController {
                 location
             } = req.body;
             //check if email already exist
+
+            const rules = {
+                first_name: 'required',
+                address:'required',
+                store_name:'required',
+                email: "email|required",
+                password: "required",
+                phone: ['required','regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/'],
+                location: 'required',
+              };
+
+              const validation = new Validator(req.body, rules);
+
+              if (validation.fails()) {
+                util.setError(422, validation.errors);
+                return util.send(res);
+              }
             db.User.findOne({
                 where: {
                     email
