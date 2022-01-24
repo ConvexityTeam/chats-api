@@ -3,6 +3,8 @@ const {
     Op
 } = require('sequelize');
 
+const moment = require('moment')
+
 const {
     userConst,
     walletConst
@@ -473,7 +475,44 @@ class VendorService {
             return 
         }
     }
+    static async vendorChart(VendorId, period) {
 
+    
+        return Transaction.findAndCountAll({
+          where: {
+            VendorId,
+            is_approved: true,
+            createdAt: {
+                [Op.gte]: period === 'daily' ? moment().subtract(1, 'days').toDate() : 
+                period === 'weekly' ? moment().subtract(7, 'days').toDate() : 
+                period === 'monthly' ? moment().subtract(1, 'months').toDate() :
+                period === 'yearly' ?  moment().subtract(1, 'years').toDate() : null
+              },
+    
+          },
+          include: [{
+              model: Wallet,
+              as: 'SenderWallet',
+              attributes: {
+                exclude: walletConst.walletExcludes
+              },
+              include: ['Campaign']
+            },
+            {
+              model: Wallet,
+              as: 'ReceiverWallet',
+              attributes: {
+                exclude: walletConst.walletExcludes
+              }
+            },
+            {
+              model: User,
+              as: 'Vendor',
+              attributes: userConst.publicAttr,
+            }
+          ]
+        })
+      }
 
 }
 

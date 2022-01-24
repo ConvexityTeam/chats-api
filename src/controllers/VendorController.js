@@ -1,5 +1,6 @@
 const db = require("../models");
 var bcrypt = require("bcryptjs");
+const moment = require('moment')
 const util = require("../libs/Utils");
 const {
   VendorService, CampaignService
@@ -477,14 +478,48 @@ class VendorController {
     }
   }
 
-  static async uploadEvidence(){
+  static async vendorChart(req, res) {
+    const {UserId, period} = req.body;
 
-    try{
+    const count = {};
+    try {
 
-    }catch(error){
+      const rules = {
+        UserId: "required|numeric",
+        period: "required",
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        util.setError(422, validation.errors);
+        return util.send(res);
+      }
+      const transactions = await VendorService.vendorChart(Number(UserId), period);
 
+      if(transactions.length <= 0){
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', transactions);
+        return Response.send(res);
+      }
+      
+    
+    const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
+
+    // for (const element of periods) {
+    //   if (count[element]) {
+    //     count[element] += 1;
+    //   } else {
+    //     count[element] = 1;
+    //   }
+    // }
+
+     
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Recieved.', {periods, transactions});
+      return Response.send(res);
+      
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
+      return Response.send(res);
     }
-
   }
 }
 
