@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       });
       Campaign.hasOne(models.Wallet, {
-        as: 'Wallet',
+        as: 'Wallets',
         foreignKey: "CampaignId",
         scope: {
           wallet_type: 'organisation'

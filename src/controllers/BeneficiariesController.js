@@ -326,7 +326,7 @@ class BeneficiariesController {
   static async getBeneficiaryUser(req, res) {
     const beneficiary = req.params.beneficiary;
     const beneficiary_exist = await db.User.findByPk(beneficiary);
-    const campaigns = await db.Beneficiaries.findAll({
+    const campaigns = await db.Beneficiary.findAll({
       where: {
         UserId: beneficiary
       },
@@ -731,6 +731,50 @@ class BeneficiariesController {
     } catch (error) {
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
+
+
+  static async beneficiaryChart(req, res) {
+    const {UserId, period} = req.body;
+    
+    const count = {};
+    try {
+      const rules = {
+        UserId: "required|numeric",
+        period: "required",
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        util.setError(422, validation.errors);
+        return util.send(res);
+      }
+      const transactions = await BeneficiaryService.beneficiaryChart(Number(UserId), period);
+
+      if(transactions.length <= 0){
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', transactions);
+        return Response.send(res);
+      }
+      
+
+    const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
+
+    // for (const element of periods) {
+    //   if (count[element]) {
+    //     count[element] += 1;
+    //   } else {
+    //     count[element] = 1;
+    //   }
+    // }
+
+     
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Recieved.', {periods, transactions});
+      return Response.send(res);
+      
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
       return Response.send(res);
     }
   }

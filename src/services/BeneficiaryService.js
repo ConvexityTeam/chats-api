@@ -6,7 +6,8 @@ const {
   Beneficiary,
   Campaign,
   Wallet,
-  Transaction
+  Transaction,
+  sequelize
 } = require('../models');
 const {
   Op,
@@ -301,6 +302,45 @@ class BeneficiariesService {
         as: 'Wallet'
       }]
     });
+  }
+
+  static async beneficiaryChart(BeneficiaryId, period) {
+
+    
+    return Transaction.findAndCountAll({
+      where: {
+        BeneficiaryId,
+        is_approved: true,
+        createdAt: {
+            [Op.gte]: period === 'daily' ? moment().subtract(1, 'days').toDate() : 
+            period === 'weekly' ? moment().subtract(7, 'days').toDate() : 
+            period === 'monthly' ? moment().subtract(1, 'months').toDate() :
+            period === 'yearly' ?  moment().subtract(1, 'years').toDate() : null
+          },
+
+      },
+      include: [{
+          model: Wallet,
+          as: 'SenderWallet',
+          attributes: {
+            exclude: walletConst.walletExcludes
+          },
+          include: ['Campaign']
+        },
+        {
+          model: Wallet,
+          as: 'ReceiverWallet',
+          attributes: {
+            exclude: walletConst.walletExcludes
+          }
+        },
+        {
+          model: User,
+          as: 'Organisations',
+          attributes: userConst.publicAttr,
+        }
+      ]
+    })
   }
 
 
