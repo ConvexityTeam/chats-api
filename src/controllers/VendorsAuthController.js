@@ -83,7 +83,7 @@ class VendorsAuthController {
                 store_name:'required',
                 email: "email|required",
                 password: "required",
-                phone: ['required','regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/'],
+                phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
                 location: 'required',
               };
 
