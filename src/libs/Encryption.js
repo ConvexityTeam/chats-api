@@ -24,7 +24,6 @@ class Encryption {
 
   encryptTokenPayload(payload) {
     const key = tokenConfig.secret;
-
     if(!Array.isArray(payload)) {
       payload = [payload];
     }

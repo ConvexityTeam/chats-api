@@ -1,6 +1,9 @@
 const {
   VERIFY_FIAT_DEPOSIT,
-  PROCESS_VENDOR_ORDER
+  PROCESS_VENDOR_ORDER,
+  TRANSFER_TO,
+  FROM_NGO_TO_CAMPAIGN,
+  PAYSTACK_DEPOSIT
 } = require('../constants/queues.constant')
 const {
   RabbitMq
@@ -14,7 +17,9 @@ const {
 
 const {
   Sequelize,
-  Transaction
+  Transaction,
+  Wallet,
+  Campaign
 } = require('../models');
 const {
   generateTransactionRef
@@ -25,7 +30,20 @@ const verifyFiatDepsoitQueue = RabbitMq['default'].declareQueue(VERIFY_FIAT_DEPO
   prefetch: 1
 });
 
+
+
 const processVendorOrderQueue = RabbitMq['default'].declareQueue(PROCESS_VENDOR_ORDER, {
+  durable: true,
+  prefetch: 1
+});
+
+const processCampaignFund = RabbitMq['default'].declareQueue(FROM_NGO_TO_CAMPAIGN, {
+  durable: true,
+  prefetch: 1
+});
+
+
+const processPaystack = RabbitMq['default'].declareQueue(PAYSTACK_DEPOSIT, {
   durable: true,
   prefetch: 1
 });
@@ -79,10 +97,102 @@ RabbitMq['default']
               msg.ack();
             })
         }
+     
+     
       })
       .then(_ => {
         console.log(`Running Consumer For Verify Fiat Deposit.`)
       });
+
+      processCampaignFund.activateConsumer(async msg =>{
+        const {
+          OrgWallet,
+          campaignWallet,
+          beneficiaries,
+          campaign
+        } = msg.getContent();
+        
+        BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget).then(async(s)=>{
+          if(s){
+            await Campaign.update({
+            status: 'completed',
+            is_funded: true,
+            amount_disbursed: campaign.budget
+          },{where: {id: campaign.id}});
+          
+          await Wallet.update({
+            balance: Sequelize.literal(`balance - ${campaign.budget}`)
+          }, {
+            where: {
+              uuid: OrgWallet.uuid
+            }
+          });
+
+         await Transaction.create({
+            amount: campaign.budget,
+            reference: generateTransactionRef(),
+            status: 'processing',
+            transaction_origin: 'wallet',
+            transaction_type: 'transfer',
+            SenderWalletId: OrgWallet.uuid,
+            ReceiverWalletId: campaignWallet.uuid,
+            OrganisationId: campaign.OrganisationId,
+            narration: 'Approve Campaign Funding'
+          });
+          }
+
+          const wallet = beneficiaries.map((user)=> user.User.Wallets)
+          const mergeWallet = [].concat.apply([], wallet);
+          console.log(mergeWallet, 'ready1')
+          const budget = Number(campaign.budget) / mergeWallet.length
+          mergeWallet.map(async(wal)=> {
+
+            
+            
+            const uuid =   wal.length ? wal.uuid : null
+           const address = wal.address
+           console.log(budget, 'ready2')
+           await  Wallet.update({
+            balance: budget
+          },{where: {uuid}})
+             BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) ).then((b)=>{
+               if(b){
+                 msg.ack();
+                 console.log('Success')
+                 console.log('Completed Beneficiary')
+               }
+
+             }).catch((error)=>{
+               msg.nack()
+               console.log(error.message, 'error.')
+             })
+          })
+    
+        }).catch((error)=>{
+          msg.nack();
+          console.log(error.message, 'error..')
+        })
+        
+        
+
+        
+     
+
+        
+      })
+      processPaystack.activateConsumer(async(msg) => {
+
+        const {address, amount} = msg.getContent();
+        BlockchainService.mintToken(address, amount).then((response)=> {
+          
+          console.log('Success', response)
+        }).catch((error)=> {
+          if(error){
+            console.log(error)
+          }
+          
+        })
+      })
     processVendorOrderQueue.activateConsumer(async msg => {
         const content = msg.getContent();
         console.log(content)
@@ -94,3 +204,4 @@ RabbitMq['default']
   .catch(error => {
     console.log(`RabbitMq Error:`, error);
   });
+

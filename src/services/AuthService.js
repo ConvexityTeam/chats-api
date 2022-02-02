@@ -110,6 +110,32 @@ class AuthService {
     })
   }
 
+  static async disable2afCheck(user) {
+    return new Promise((resolve, reject) => {
+      User.findByPk(user.id)
+        .then((_user) => {
+          if (!_user) {
+            reject(new Error(`User not found`))
+            return;
+          }
+
+          User.update({ is_tfa_enabled: false }, { where: { id: user.id }})
+            .then(() => {
+              user.is_tfa_enabled = false;
+              resolve(user.toObject());
+            })
+            .catch(err => {
+              console.log(err);
+              reject(new Error('Update failed. Please retry.'));
+            });
+        })
+        .catch(() => {
+          reject(new Error(`User not found.`));
+        });
+    })
+  }
+
+
   static async createResetPassword(UserId, request_ip, expiresAfter = 20) {
     const token = createHash('123456');
     const expires_at = moment().add(expiresAfter, 'm').toDate();

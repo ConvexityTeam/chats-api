@@ -18,6 +18,7 @@ class BlockchainService {
 
   static async mintToken(mintTo, amount) {
     return new Promise(async (resolve, reject) => {
+      console.log(mintTo, amount, 'mintTo, amount')
       try {
         const payload = {mintTo, amount};
         const checksum = Encryption.encryptTokenPayload(payload);
@@ -36,10 +37,10 @@ class BlockchainService {
   static async approveToSpend(ngoAddress, ngoPassword, benWallet, amount) {
     return new Promise(async (resolve, reject) => {
       try {
-        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/approve/${ngoAddress}/${ngoPassword}/${benWallet}/${amount}`);
-        resolve(data);
+        const res = await Axios.post(`${tokenConfig.baseURL}/txn/approve/${ngoAddress}/${ngoPassword}/${benWallet}/${amount}`);
+        if(res.data)resolve(res.data);
       } catch (error) {
-        rejects(error);
+        reject(error.response.data);
       }
     });
   }
@@ -57,6 +58,7 @@ class BlockchainService {
         .post(`${tokenConfig.baseURL}/txn/transferfrom/${ngoAdress}/${reciepientAdress}/${beneficiaryAddress}/${beneficiaryPassword}/${amount}`);
         resolve(data);
       } catch (error) {
+
         reject(error);
       }
     });
@@ -65,10 +67,10 @@ class BlockchainService {
   static async transferTo( senderAddress, senderPass, reciepientAddress, amount ) {
     return new Promise(async (resolve, reject) => {
       try {
-        const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/transfer/${senderAddress}/${senderPass}/${reciepientAddress}/${amount}`);
+        const {data} = await Axios.post(`${tokenConfig.baseURL}/txn/transfer/${senderAddress}/${senderPass}/${reciepientAddress}/${amount}`);
         resolve(data);
       } catch (error) {
-        reject(error);
+        reject(error.response.data);
       }
     });
   }

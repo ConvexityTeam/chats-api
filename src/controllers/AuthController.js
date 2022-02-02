@@ -691,6 +691,21 @@ class AuthController {
     }
   }
 
+
+  static async disableTwoFactorAuth(req, res) {
+    // TODO: Validate token
+    try {
+      const user = await AuthService.disable2afCheck(req.user);
+      if(user)
+      Response.setSuccess(200, 'Two factor authentication disabled.', user);
+      return Response.send(res);
+
+    } catch (error) {
+      Response.setError(400, error.message);
+      return Response.send(res);
+    }
+  }
+
   static async requestPasswordReset(req, res) {
     try {
       const data = await AuthService.createResetPassword(req.user.id, req.ip);
