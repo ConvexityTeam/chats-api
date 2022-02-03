@@ -75,10 +75,23 @@ class NgoController {
             return Response.send(res);
         }
     }
-
+    
     static async members(req, res) {
         try {
             const memebrs = await NgoService.getMembers(req.organisation.id);
+            Response.setSuccess(HttpStatusCode.STATUS_OK, 'NGO members', memebrs);
+            return Response.send(res);
+        } catch (error) {
+            console.log(error)
+            Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Server Error: Please retry.`);
+            return Response.send(res);
+        }
+    }
+
+    static async viewProductVendorOnCampaign(req, res) {
+        
+        try {
+            const memebrs = await NgoService.viewProductVendorOnCampaign();
             Response.setSuccess(HttpStatusCode.STATUS_OK, 'NGO members', memebrs);
             return Response.send(res);
         } catch (error) {

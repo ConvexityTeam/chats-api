@@ -339,54 +339,66 @@ class CampaignService {
       }]
     });
   }
-
-  static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
-    const payload = {
-      CampaignId: campaign.id,
-      NgoWalletId: OrgWallet.uuid,
-      CampaignWalletId: campaignWallet.uuid,
-      beneficiaries: beneficiaries.map(beneficiary => {
-        const bWalletId = beneficiary.User.Wallets.length ? beneficiary.User.Wallets[0].uuid : null;
-        return [
-          beneficiary.UserId,
-          bWalletId
-        ]
-      })
-    };
-
-
-    await campaign.update({
-      status: 'completed',
-      is_funded: true,
-      amount_disbursed: campaign.budget
-    });
-    await Wallet.update({
-      balance: Sequelize.literal(`balance - ${campaign.budget}`)
-    }, {
+  static async getCampaignWallet(id, OrganisationId) {
+    return Campaign.findOne({
       where: {
-        uuid: OrgWallet.uuid
-      }
+        id: Number(id),
+        OrganisationId
+      },
+      include: {
+        model: Wallet,
+        as: 'Wallet'
+      },
+      // include: ["Beneficiaries"],
     });
-
-    // Queue fuding disbursing
-
-    const transaction = await Transaction.create({
-      amount: campaign.budget,
-      reference: generateTransactionRef(),
-      status: 'processing',
-      transaction_origin: 'wallet',
-      transaction_type: 'transfer',
-      SenderWalletId: OrgWallet.uuid,
-      ReceiverWalletId: campaignWallet.uuid,
-      OrganisationId: campaign.OrganisationId,
-      narration: 'Approve Campaign Funding'
-    });
-
-    return {
-      campaign,
-      transaction
-    }
   }
+  
+  static async getWallet(address) {
+    return Wallet.findAll({
+      where: {
+        address
+      },
+    });
+  }
+  
+
+  // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
+  //   const payload = {
+  //     CampaignId: campaign.id,
+  //     NgoWalletAddress: OrgWallet.address,
+  //     CampaignWalletAddress: campaignWallet.address,
+  //     amount: campaign.budget,
+  //     beneficiaries
+  //   };
+
+  //   // : beneficiaries.map(beneficiary => {
+  //   //   const bWalletId = beneficiary.User.Wallets.length ? beneficiary.User.Wallets[0].uuid : null;
+  //   //   return [
+  //   //     beneficiary.UserId,
+  //   //     bWalletId
+  //   //   ]
+  //   // })
+    
+
+  //   // Queue fuding disbursing
+  //   const org = await Wallet.findOne({where: {uuid: OrgWallet.uuid}})
+
+  //   if
+  //   await Wallet.update({
+  //     balance: Sequelize.literal(`balance - ${campaign.budget}`)
+  //   }, {
+  //     where: {
+  //       uuid: OrgWallet.uuid
+  //     }
+  //   });
+    
+    
+
+  //   return {
+  //     campaign,
+  //     transaction
+  //   }
+  // }
 }
 
 module.exports = CampaignService;

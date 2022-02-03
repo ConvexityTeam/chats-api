@@ -1,6 +1,7 @@
 const {
   OrgAdminRolesToAcl
 } = require("../utils").Types;
+const {Op} = require('sequelize')
 
 const {
   userConst
@@ -8,10 +9,12 @@ const {
 
 const {
   User,
+  Campaign,
   OrganisationMembers
 } = require('../models');
 const QueueService = require('./QueueService')
 const bcrypt = require("bcryptjs");
+const { production } = require("../config/database");
 
 
 class NgoService {
@@ -44,11 +47,23 @@ class NgoService {
 
   static getMembers(OrganisationId) {
     return OrganisationMembers.findAll({
-      where: { OrganisationId },
+      where: { OrganisationId, role: {
+        [Op.ne]: 'vendor'
+      }},
       include: [{
         model: User,
         as: 'User',
         attributes: userConst.publicAttr
+      }]
+    })
+  }
+
+
+  static viewProductVendorOnCampaign(){
+    return Campaign.findAll({
+      include:[{
+        model: Product,
+        as: 'CampaignProducts'
       }]
     })
   }

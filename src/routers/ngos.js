@@ -54,6 +54,13 @@ router.post(
   VendorValidator.VendorStoreExists,
   OrganisationController.createVendor
 )
+
+router.get(
+  '/campaign/vendor/product',
+  
+  NgoController.viewProductVendorOnCampaign
+)
+
 // vendors/deactivate'
 
 

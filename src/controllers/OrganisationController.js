@@ -711,6 +711,7 @@ class OrganisationController {
 
   static async mintToken2(req, res) {
     const data = req.body;
+    
     fs.writeFile("sample.txt", JSON.stringify(data), function (err) {
       if (err) {
         return res.json({

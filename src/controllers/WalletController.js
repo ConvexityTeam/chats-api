@@ -2,6 +2,7 @@ const {
   PaystackService,
   DepositService,
   WalletService,
+  QueueService,
   TransactionService
 } = require('../services');
 const {
@@ -120,10 +121,17 @@ class WalletController {
   static async paystackDeposit(req, res) {
     try {
       const data = SanitizeObject(req.body, ['amount', 'currency']);
+      const {organisation_id} = req.params
       if (!data.currency) data.currency = 'NGN';
       const organisation = req.organisation;
       organisation.dataValues.email = req.user.email;
+      const wallet = await WalletService.findMainOrganisationWallet(organisation_id);
+      console.log(wallet, 'wallet')
+      if(!wallet){
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Oganisation wallet not found.');
+      }
       const response = await PaystackService.buildDepositData(organisation, data.amount, data.currency);
+      QueueService.createPayStack(wallet.address, data.amount)
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Deposit data generated.', response);
       return Response.send(res);
     } catch (error) {

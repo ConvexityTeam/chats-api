@@ -1,12 +1,13 @@
 const router = require("express").Router();
 
 const { Auth } = require("../middleware"); //Auhorization middleware
-const { AuthController } = require("../controllers");
+const { AuthController, BeneficiaryController } = require("../controllers");
 
 const multer = require("../middleware/multer-config"); //for uploading of profile picture and fingerprint
 const e2e = require("../middleware/e2e"); //End2End Encryption middleware
 const { AuthValidator, UserValidator } = require("../validators");
 // router.use(e2e);
+
 
 
 
@@ -22,6 +23,7 @@ router.get("/user-detail/:id", Auth, AuthController.userDetails);
 router.post("/login", AuthController.signIn);
 router.get('/2fa/init', Auth, AuthController.setTwoFactorSecret);
 router.post('/2fa/enable', Auth, AuthController.enableTwoFactorAuth);
+router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
 
 router.route('/password/reset')
   .post(
