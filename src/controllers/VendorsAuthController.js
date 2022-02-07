@@ -73,7 +73,9 @@ class VendorsAuthController {
                 password,
                 address,
                 store_name,
-                location
+                country,
+                state,
+                coordinates
             } = req.body;
             //check if email already exist
 
@@ -84,7 +86,8 @@ class VendorsAuthController {
                 email: "email|required",
                 password: "required",
                 phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-                location: 'required',
+                country: 'string|required',
+                state: 'string|required',
               };
 
               const validation = new Validator(req.body, rules);
@@ -112,14 +115,14 @@ class VendorsAuthController {
                             phone: phone,
                             email: email,
                             password: encryptedPassword,
-                            location: location,
+                            location: JSON.stringify({country, state, coordinates}),
                             address: address,
                             last_login: (new Date())
                         }).then(async (account) => {
                             await account.createStore({
                                 store_name: store_name,
                                 address: address,
-                                location: location
+                                location: JSON.stringify({country, state, coordinates}),
                             })
                             queue.send(
                                 new Message({

@@ -514,8 +514,6 @@ class OrganisationController {
     }
   }
 
-  static async 
-
   static async getOrganisationBeneficiaries(req, res) {
     try {
       const organisation = req.organisation;

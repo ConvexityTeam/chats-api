@@ -137,27 +137,27 @@ class AuthController {
     try {
       // const data = SanitizeObject(req.body, ['email', 'phone', 'password']);
       // data.password = createHash(data.password);
+
       const RoleId = AclRoles.Beneficiary;
 
-      var form = new formidable.IncomingForm({
-        multiples: false
-      });
-      form.parse(req, async (err, fields, files) => {
-        const {phone, email, location, country} = fields
+      
+        const {phone, email, country, state, coordinates} = req.body
+        const files = req.file
         const rules = {
-          email: "email|required",
-          password: "required",
+          email: 'email|required',
+          password: 'required',
           phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-          location: 'required',
-          country: 'required'
+          country: 'string|required',
+          state: 'string|required',
         };
-      const validation = new Validator(fields, rules);
+        
+      const validation = new Validator(req.body, rules);
       
       if (validation.fails()) {
         Response.setError(422, validation.errors);
         return Response.send(res);
       }else {
-        if (!files.profile_pic) {
+        if (!files) {
         
         } 
           const userByEmail = await db.User.findOne({where: {email}})
@@ -165,26 +165,23 @@ class AuthController {
             Response.setError(400, "User With This Email Exist");
             return Response.send(res);
         }else{
-      const password =  createHash(fields.password);
+      const password =  createHash(req.body.password);
 
-      const extension = files.profile_pic.name.substring(
-        files.profile_pic.name.lastIndexOf(".") + 1
-      );
+      const  extension = req.file.mimetype.split('/').pop();
 
     const profile_pic =  await uploadFile(
-        files.profile_pic,
+        files,
         "u-" + environ + "-i." + extension,
         "convexity-profile-images"
       )
       
-      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location, country});
+      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: JSON.stringify({country, state, coordinates})});
       if(user)
       QueueService.createWallet(user.id, 'user');
       Response.setSuccess(201, "Account Onboarded Successfully", user);
       return Response.send(res);
         }
       }
-    })
       // 
     } catch (error) {
       console.log(error);
@@ -502,6 +499,7 @@ class AuthController {
   }
 
   static async createNgoAccount(req, res) {
+
     let user = null
     const data = req.body;
     const rules = {
@@ -537,7 +535,7 @@ class AuthController {
                   website_url: data.website_url,
                 },
               ],
-            },
+            }, 
           });
           if (!organisationExist) {
             bcrypt.genSalt(10, (err, salt) => {

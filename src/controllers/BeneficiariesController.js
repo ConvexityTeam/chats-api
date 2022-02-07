@@ -1,7 +1,8 @@
 const {
   BeneficiaryService,
   WalletService,
-  CampaignService
+  CampaignService,
+  QueueService
 } = require("../services");
 const util = require("../libs/Utils");
 const db = require("../models");
@@ -665,11 +666,12 @@ class BeneficiariesController {
        
         const beneficiary = beneficiaries.map(bene =>  bene.location )
         let arr =    beneficiary.filter(x => x !== null)
-
        let repeated = 1
        
        let val;
         for(let i = 0; i<arr.length; i++){
+
+          
         val = JSON.parse(arr[i])
           if(locations.length >= 0 && !locations.some(coun => coun.country === val.state)) {
             locations.push({country: val.state, repeated})
@@ -777,6 +779,28 @@ class BeneficiariesController {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
       return Response.send(res);
     }
+  }
+
+
+  static async withdrawFromBankAccount(req, res){
+    const {amount, address} = req.body
+    try{
+      const user = await db.User.findByPk(req.user.id);
+      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id}})
+      if(!user){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Beneficiary Not Found');
+        return Response.send(res);
+      }
+      if(!bankAccount){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Beneficiary Dos\'nt Have a Bank Account');
+        return Response.send(res);
+      }
+      QueueService.fundBankAccount()
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
+      return Response.send(res);
+    }
+
   }
 
 }

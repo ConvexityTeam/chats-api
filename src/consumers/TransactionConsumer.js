@@ -151,7 +151,6 @@ RabbitMq['default']
             
             const uuid =   wal.length ? wal.uuid : null
            const address = wal.address
-           console.log(budget, 'ready2')
            await  Wallet.update({
             balance: budget
           },{where: {uuid}})

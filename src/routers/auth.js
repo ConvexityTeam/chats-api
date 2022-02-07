@@ -5,14 +5,14 @@ const { AuthController, BeneficiaryController } = require("../controllers");
 
 const multer = require("../middleware/multer-config"); //for uploading of profile picture and fingerprint
 const e2e = require("../middleware/e2e"); //End2End Encryption middleware
-const { AuthValidator, UserValidator } = require("../validators");
+const { AuthValidator, UserValidator, FileValidator } = require("../validators");
 // router.use(e2e);
 
 
 
 
 router.post("/register", AuthController.createBeneficiary);
-router.post("/self-registration", AuthController.beneficiaryRegisterSelf);
+router.post("/self-registration", FileValidator.checkProfilePic(), AuthController.beneficiaryRegisterSelf);
 router.post("/ngo-register", AuthController.createNgoAccount);
 router.post("/register/special-case", AuthController.sCaseCreateBeneficiary);
 router.post("/nin-verification", AuthController.verifyNin);
