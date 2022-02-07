@@ -8,7 +8,12 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.dropType
+    // await queryInterface.dropType
+    await queryInterface.addColumn('Beneficiaries', 'source', {
+      allowNull: true,
+      type: Sequelize.ENUM('beneficiary app', 'field app'),
+      after: 'approved'
+    });
 
     await queryInterface.addColumn('Beneficiaries', 'rejected', {
       type: Sequelize.BOOLEAN,
@@ -24,6 +29,7 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
+    await queryInterface.removeColumn('Beneficiaries', 'source');
     await queryInterface.removeColumn('Beneficiaries', 'rejected');
   }
 };
