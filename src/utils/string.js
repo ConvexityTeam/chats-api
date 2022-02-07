@@ -1,5 +1,9 @@
 const randomstring = require("randomstring");
 
+exports.generateRandom = (length = 6) => {
+  return randomstring.generate({ length });
+}
+
 exports.GenearteVendorId = () => {
   const random = randomstring.generate({
     length: 5,

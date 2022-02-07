@@ -10,6 +10,7 @@ const CampaignController = require('./CampaignController');
 const ComplaintController = require('./ComplaintController');
 const MarketController = require('./MarketController');
 const WebhookController = require('./WebhookController');
+const AppController = require('./AppController');
 const UtilController = require('./UtilController');
 
 
@@ -26,5 +27,6 @@ module.exports = {
   CampaignController,
   ComplaintController,
   WebhookController,
+  AppController,
   UtilController
 }

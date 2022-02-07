@@ -10,11 +10,22 @@ const {
   OrganisationMembers,
   StoreTransaction
 } = require('../models');
-const { OrgRoles, AclRoles, GenearteVendorId } = require('../utils');
+const {
+  OrgRoles,
+  AclRoles,
+  GenearteVendorId,
+  generateRandom
+} = require('../utils');
 const QueueService = require('./QueueService');
 const bcrypt = require("bcryptjs");
-const { Op, Sequelize } = require('sequelize');
-const { userConst } = require('../constants');
+const {
+  Op,
+  Sequelize
+} = require('sequelize');
+const {
+  userConst
+} = require('../constants');
+const SmsService = require('./SmsService');
 
 
 class OrganisationService {
@@ -49,7 +60,11 @@ class OrganisationService {
 
 
   static async updateOrganisationProfile(id, data = {}) {
-    return Organisation.update(data, {where: {id}});
+    return Organisation.update(data, {
+      where: {
+        id
+      }
+    });
   }
 
   static async createMember(UserId, OrganisationId, role) {
@@ -97,8 +112,12 @@ class OrganisationService {
       let account = null;
       let store = null;
 
-      const { address, store_name, location } = data;
-      const rawPassword = 'password';
+      const {
+        address,
+        store_name,
+        location
+      } = data;
+      const rawPassword = generateRandom(8);
       const RoleId = AclRoles.Vendor;
       const OrganisationId = organisation.id;
       const password = bcrypt.hashSync(rawPassword, 10);
@@ -125,7 +144,7 @@ class OrganisationService {
           store = _store;
           QueueService.createWallet(account.id, 'user');
 
-          // send login password to vendor
+          SmsService.sendOtp(data.phone, `Your Convexity account password is: ${rawPassword}`);
 
           account = account.toObject();
           account.Store = store.toJSON();

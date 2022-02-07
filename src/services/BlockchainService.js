@@ -18,7 +18,7 @@ class BlockchainService {
 
   static async mintToken(mintTo, amount) {
     return new Promise(async (resolve, reject) => {
-      console.log(mintTo, amount, 'mintTo, amount')
+     
       try {
         const payload = {mintTo, amount};
         const checksum = Encryption.encryptTokenPayload(payload);

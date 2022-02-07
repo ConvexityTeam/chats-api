@@ -143,7 +143,7 @@ RabbitMq['default']
 
           const wallet = beneficiaries.map((user)=> user.User.Wallets)
           const mergeWallet = [].concat.apply([], wallet);
-          console.log(mergeWallet, 'ready1')
+          
           const budget = Number(campaign.budget) / mergeWallet.length
           mergeWallet.map(async(wal)=> {
 
@@ -157,19 +157,17 @@ RabbitMq['default']
              BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) ).then((b)=>{
                if(b){
                  msg.ack();
-                 console.log('Success')
-                 console.log('Completed Beneficiary')
-               }
+                 
+                             }
 
-             }).catch((error)=>{
+             }).catch(()=>{
                msg.nack()
-               console.log(error.message, 'error.')
-             })
+                            })
           })
     
-        }).catch((error)=>{
+        }).catch(()=>{
           msg.nack();
-          console.log(error.message, 'error..')
+          
         })
         
         
@@ -182,13 +180,11 @@ RabbitMq['default']
       processPaystack.activateConsumer(async(msg) => {
 
         const {address, amount} = msg.getContent();
-        BlockchainService.mintToken(address, amount).then((response)=> {
+        BlockchainService.mintToken(address, amount).then(()=> {
           
-          console.log('Success', response)
-        }).catch((error)=> {
-          if(error){
-            console.log(error)
-          }
+          
+        }).catch(()=> {
+          
           
         })
       })
