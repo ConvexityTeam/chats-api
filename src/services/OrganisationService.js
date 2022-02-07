@@ -37,6 +37,18 @@ class OrganisationService {
     return Organisation.findAll();
   }
 
+  static async getOrganisationWallet(id) {
+    return Organisation.findOne({
+      where: {
+        id: Number(id)
+      },
+      include: {
+        model: Wallet,
+        as: 'Wallet'
+      }
+    });
+  }
+
   static async addOrganisation(data, user) {
     return Organisation.create(data).then((organisation) => {
       organisation.createMember({

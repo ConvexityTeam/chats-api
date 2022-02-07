@@ -1,7 +1,9 @@
 const {
   CampaignService,
   ComplaintService,
-  BeneficiaryService
+  BeneficiaryService,
+  OrganisationService,
+  QueueService
 } = require("../services");
 const db = require("../models");
 const {
@@ -228,19 +230,28 @@ class CampaignController {
 
   // REFACTORED
   static async approveAndFund(req, res) {
+    const {organisation_id, campaign_id} = req.params;
     try {
-      const campaign = req.campaign;
-      const organisation = req.organisation;
-      const campaignWallet = await campaign.getWallet();
-      const OrgWallet = await organisation.getWallet();
-      const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(campaign.id);
+
+      // const campaign = req.campaign;
+      // const organisation = req.organisation;
+      // const campaignWallet = await campaign.getWallet();
+      // const OrgWallet = await organisation.getWallet();
+    
+      const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(campaign_id);
+      const campaign = await CampaignService.getCampaignWallet(campaign_id, organisation_id);
+      const campaignWallet = campaign.Wallet
+      const organisation = await OrganisationService.getOrganisationWallet(organisation_id);
+      const OrgWallet = organisation.Wallet
+
+    
 
       if(campaign.status == 'completed') {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
         return Response.send(res);
       }
 
-      if(campaign.budget > OrgWallet.balance) {
+      if((campaign.budget > OrgWallet.balance) || (OrgWallet.balance == 0)) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
         return Response.send(res);
       }
@@ -249,10 +260,9 @@ class CampaignController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
         return Response.send(res);
       } 
-
-      const funding = await CampaignService.handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries);
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`, funding);
+      QueueService.CampaignApproveAndFund({campaign, campaignWallet, OrgWallet, beneficiaries});
+     //const funding = await CampaignService.handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`, beneficiaries);
       return Response.send(res);
     } catch (error) {
       console.log(error)
