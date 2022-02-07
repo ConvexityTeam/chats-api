@@ -18,9 +18,13 @@ const MarketService = require('./MarketService')
 const OrderService = require('./OrderService');
 const DepositService = require('./DepositService');
 const UtilService = require('./UtilService');
+const SmsService = require('./SmsService');
+const MailerService = require('./MailerService');
 const TransactionService = require('./TransactionService');
 
 module.exports = {
+  SmsService,
+  MailerService,
   MarketService,
   UserService,
   NgoService,

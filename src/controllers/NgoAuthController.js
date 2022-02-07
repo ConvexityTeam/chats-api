@@ -1,7 +1,6 @@
 const db = require('../models');
 var bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
-const mailer = require('../libs/Mailer');
 const util = require('../libs/Utils');
 const {
     sequelize
@@ -507,7 +506,6 @@ class NgoAuthController {
                             }
                         }).then(updatedRecord => {
                             //mail user a new password
-                            mailer.mailPassword(email, updatedRecord.firstName, newPassword);
                             //respond with a success message
                             res.status(201).json({
                                 status: "success",
@@ -600,7 +598,6 @@ class NgoAuthController {
                             }
                         }).then(updatedRecord => {
                             //mail user a new password
-                            mailer.mailPassword(email, updatedRecord.firstName, newPassword);
                             //respond with a success message
                             res.status(201).json({
                                 status: "success",

@@ -24,8 +24,8 @@ const webhookRouter = require('./routers/webhooks');
 const taskRouter = require('./routers/task');
 const marketRouter = require('./routers/market');
 const utilRouter = require('./routers/utils');
-
 const orderRouter = require('./routers/order');
+const appRouter = require('./routers/app');
 
 
 const app = express();
@@ -38,7 +38,6 @@ app.use(express.urlencoded({extended: true}));
 // const adminRouter = require("./routers/admin");
 
 // Routing endpoint
-
 app.use("/v1/market", marketRouter);
 app.use("/v1/users", usersRoute);
 app.use("/v1/transactions", transactionRouter);
@@ -56,7 +55,8 @@ app.use("/v1/organisations", organisationRouter);
 app.use('/v1/webhooks', webhookRouter)
 app.use('/v1/tasks', taskRouter);
 app.use('/v1/orders', orderRouter);
-app.use('/v1/utils', utilRouter)
+app.use('/v1/utils', utilRouter);
+app.use('/v1/app', appRouter);
 
 app.get("/", (req, res) => {
   try {
