@@ -18,10 +18,9 @@ const { production } = require("../config/database");
 
 
 class NgoService {
-  static createAdminAccount(organisation, data, role, creator) {
+  static createAdminAccount(organisation, data, role, newPassword) {
     return new Promise(async (resolve, reject) => {
-      const rawPassword = 'password';
-      const password = bcrypt.hashSync(rawPassword, 10);
+      const password = bcrypt.hashSync(newPassword, 10);
       data.RoleId = OrgAdminRolesToAcl[role];
 
       User.create({

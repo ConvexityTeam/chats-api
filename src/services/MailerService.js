@@ -36,7 +36,7 @@ class MailerService {
     })
   }
 
-  sendPassword(email, name, passwoed) {
+  sendPassword(email, name, password) {
     const body = `
     <div>
       <p>Hello ${name},</p>
