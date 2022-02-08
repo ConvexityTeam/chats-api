@@ -57,7 +57,6 @@ router.post(
 
 router.get(
   '/campaign/vendor/product',
-  
   NgoController.viewProductVendorOnCampaign
 )
 

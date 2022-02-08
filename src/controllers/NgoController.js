@@ -2,17 +2,20 @@ const {
     User
 } = require('../models');
 const {
-    Response
+    Response,
+    
 } = require('../libs');
 const {
     OrganisationService,
     NgoService,
-    ProductService
+    ProductService,
+    MailerService
 } = require('../services');
 const {
     HttpStatusCode,
-    SanitizeObject
+    SanitizeObject,
 } = require('../utils');
+const utils = require('../libs/Utils');
 
 class NgoController {
     static async getAllNGO(req, res) {
@@ -65,8 +68,9 @@ class NgoController {
                 user,
                 organisation
             } = req;
-            const admin = await NgoService.createAdminAccount(organisation, data, role, user);
-
+            const newPassword = utils.generatePassword()
+            const admin = await NgoService.createAdminAccount(organisation, data, role, newPassword);
+          MailerService.sendPassword(user.email, user.first_name +" "+ user.last_name, newPassword)
             Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Account Created.', admin);
             return Response.send(res);
         } catch (error) {

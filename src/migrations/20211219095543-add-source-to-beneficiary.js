@@ -8,7 +8,7 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.dropType
+    // await queryInterface.dropType
     await queryInterface.addColumn('Beneficiaries', 'source', {
       allowNull: true,
       type: Sequelize.ENUM('beneficiary app', 'field app'),

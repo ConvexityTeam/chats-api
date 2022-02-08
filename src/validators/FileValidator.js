@@ -41,6 +41,24 @@ class FileValidator extends BaseValidator {
       this.validate
     ]
   }
+
+
+  static checkProfilePic(){
+    return [
+    multer.single('profile_pic'),
+      check('profile_pic')
+      .custom((value, {req}) => new Promise((resolve, reject) => {
+        const ext = req.file.mimetype.split('/').pop();
+        console.log(req.file, 'file')
+        const allowedExt = ['png', 'jpg', 'jpeg'];
+        if(!allowedExt.includes(ext)) {
+          reject(`Allowed file type are ${allowedExt.join(',')}.`)
+        }
+        resolve(true);
+      })),
+      this.validate
+    ]
+  }
   static checkTaskProgressFile(){
     return [
     multer.single('imageUrl'),
