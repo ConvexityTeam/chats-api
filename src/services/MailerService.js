@@ -36,7 +36,7 @@ class MailerService {
     })
   }
 
-  sendPassword(email, name, password) {
+  sendPassword(to, name, password) {
     const body = `
     <div>
       <p>Hello ${name},</p>
@@ -44,8 +44,23 @@ class MailerService {
       <p>CHATS - Convexity</p>
     </div>
     `;
-    return this._sendMail(email, 'Account Password', body);
-  }
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'Login credentials',
+      html: body
+    };
+    
+   return new Promise((resolve, reject) => {
+    this.transporter.sendMail(options, (err, data) => {
+        if(!err) {
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      })
+    })
+}
 }
 
 module.exports = new MailerService();
