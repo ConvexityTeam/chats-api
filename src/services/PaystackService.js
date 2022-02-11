@@ -2,10 +2,10 @@ const {
   paystackConfig
 } = require('../config');
 const {
-  FundAccount
+FundAccount
 } = require('../models');
 const {
-  generatePaystackRef
+generatePaystackRef
 } = require('../utils');
 const paystack = require('paystack-api')(paystackConfig.secretKey);
 class PaystackService {

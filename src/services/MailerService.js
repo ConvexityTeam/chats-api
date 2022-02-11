@@ -54,6 +54,7 @@ class MailerService {
    return new Promise((resolve, reject) => {
     this.transporter.sendMail(options, (err, data) => {
         if(!err) {
+          console.log('sent')
           resolve(data);
         } else {
           reject(err);

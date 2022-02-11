@@ -459,6 +459,9 @@ class CampaignController {
     try {
       const campaignId = req.params.campaign_id;
       const campaign = await CampaignService.getCampaignWithBeneficiaries(campaignId);
+
+      campaign.beneficiaries_count = campaign.Beneficiaries.length
+      // console.log(campaign.beneficiaries_count,'campaign.Beneficiaries.length')
       campaign.dataValues.beneficiary_share = campaign.beneficiaries_count > 0 ? (campaign.budget / campaign.beneficiaries_count).toFixed(2) : 0;
       campaign.dataValues.amount_spent = (campaign.amount_disbursed - campaign.BeneficiariesWallets.map(balance => balance).reduce((a, b) => a + b, 0)).toFixed(2)
       campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(campaignId);

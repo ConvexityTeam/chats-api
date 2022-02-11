@@ -84,6 +84,7 @@ router.route('/campaigns')
 //     CampaignController.getBeneficiaryCampaigns
 //   );
 
+
 router.post(
   '/campaigns/:campaign_id/join',
   BeneficiaryAuth,

@@ -60,7 +60,6 @@ RabbitMq['default']
           amount
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
-
           WalletService.findMainOrganisationWallet(OrganisationId)
             .then(async wallet => {
 
@@ -111,7 +110,10 @@ RabbitMq['default']
           beneficiaries,
           campaign
         } = msg.getContent();
-        
+        if((Math.sign(OrgWallet.balance - campaign.budget) == -1 ) || (Math.sign(OrgWallet.balance - campaign.budget) == -0)){
+
+          console.log('Insufficient wallet balance. Please fund organisation wallet.')
+        }else{
         BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget).then(async(s)=>{
           if(s){
             await Campaign.update({
@@ -145,11 +147,8 @@ RabbitMq['default']
           const mergeWallet = [].concat.apply([], wallet);
           
           const budget = Number(campaign.budget) / mergeWallet.length
-          mergeWallet.map(async(wal)=> {
-
-            
-            
-            const uuid =   wal.length ? wal.uuid : null
+          mergeWallet.map(async(wal)=> {    
+            const uuid =   wal.uuid
            const address = wal.address
            await  Wallet.update({
             balance: budget
@@ -157,8 +156,7 @@ RabbitMq['default']
              BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) ).then((b)=>{
                if(b){
                  msg.ack();
-                 
-                             }
+                }
 
              }).catch(()=>{
                msg.nack()
@@ -169,19 +167,15 @@ RabbitMq['default']
           msg.nack();
           
         })
-        
-        
-
-        
-     
-
-        
+      }
       })
+      
       processPaystack.activateConsumer(async(msg) => {
 
         const {address, amount} = msg.getContent();
         BlockchainService.mintToken(address, amount).then(()=> {
           
+
           
         }).catch(()=> {
           

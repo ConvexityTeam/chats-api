@@ -126,7 +126,6 @@ class WalletController {
       const organisation = req.organisation;
       organisation.dataValues.email = req.user.email;
       const wallet = await WalletService.findMainOrganisationWallet(organisation_id);
-      console.log(wallet, 'wallet')
       if(!wallet){
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Oganisation wallet not found.');
       }
