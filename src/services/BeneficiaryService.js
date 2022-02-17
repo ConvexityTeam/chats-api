@@ -283,24 +283,51 @@ class BeneficiariesService {
     })
   }
 
-  static async getBeneficiaries() {
+  static async getBeneficiaries(OrganisationId) {
     return User.findAll({
-      where: {
-        RoleId: AclRoles.Beneficiary
-      }
+     where: {
+       RoleId: AclRoles.Beneficiary,
+        OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
+      },
+      attributes: userConst.publicAttr,
+      include: [{
+        model: Campaign,
+        as: 'Campaigns',
+        through: {
+          where: {
+            approved: true
+          }
+        },
+        attributes: [],
+        require: true
+      }]
     });
   }
 
 
-  static async getBeneficiariesTotalAmount() {
+  static async getBeneficiariesTotalAmount(OrganisationId) {
     return User.findAll({
       where: {
-        RoleId: AclRoles.Beneficiary
+        RoleId: AclRoles.Beneficiary,
+        OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
       },
+      attributes: userConst.publicAttr,
       include: [{
+        model: Campaign,
+        as: 'Campaigns',
+        through: {
+          where: {
+            approved: true
+          }
+        },
+        attributes: [],
+        require: true
+      },{
         model: Wallet,
         as: 'Wallet'
       }]
+      
+      
     });
   }
 

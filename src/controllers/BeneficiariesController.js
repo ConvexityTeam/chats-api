@@ -527,7 +527,7 @@ class BeneficiariesController {
       let male = 0
       let female = 0
 
-      const beneficiaries = await BeneficiaryService.getBeneficiaries();
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
 
       if (beneficiaries.length > 0) {
         for (let i = 0; i < beneficiaries.length; i++) {
@@ -569,7 +569,7 @@ class BeneficiariesController {
       let sixty6Up = 0
 
 
-      const beneficiaries = await BeneficiaryService.getBeneficiaries();
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
 
       if (beneficiaries.length > 0) {
         for (let i = 0; i < beneficiaries.length; i++) {
@@ -622,7 +622,7 @@ class BeneficiariesController {
       let single = 0
       let divorce = 0
 
-      const beneficiaries = await BeneficiaryService.getBeneficiaries();
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
 
       if (beneficiaries.length > 0) {
         for (let i = 0; i < beneficiaries.length; i++) {
@@ -660,18 +660,16 @@ class BeneficiariesController {
 
       let locations = []
 
-      const beneficiaries = await BeneficiaryService.getBeneficiaries();
-      
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
+     
       if(beneficiaries.length > 0){
-       
         const beneficiary = beneficiaries.map(bene =>  bene.location )
         let arr =    beneficiary.filter(x => x !== null)
        let repeated = 1
        
        let val;
-        for(let i = 0; i<arr.length; i++){
-
-          
+       if(arr.location){
+        for(let i = 0; i<arr.length; i++){   
         val = JSON.parse(arr[i])
           if(locations.length >= 0 && !locations.some(coun => coun.country === val.state)) {
             locations.push({country: val.state, repeated})
@@ -680,7 +678,7 @@ class BeneficiariesController {
           }
 
         }
-
+      }
 
 
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.', locations);
@@ -704,7 +702,7 @@ class BeneficiariesController {
       let balance;
       let balances = []
       let repeated = 1
-      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount();
+      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount(req.user.id);
       if (beneficiaries.length <= 0) {
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', beneficiaries);
         return Response.send(res);

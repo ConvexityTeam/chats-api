@@ -11,11 +11,11 @@ class BlockchainService {
         const { data } = await Axios.post(`${tokenConfig.baseURL}/user/register`);
         resolve(data.AccountCreated);
       } catch (error) {
+        console.log(error.response)
         reject(error);
       }
     });
   }
-
   static async mintToken(mintTo, amount) {
     return new Promise(async (resolve, reject) => {
      

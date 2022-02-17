@@ -150,7 +150,7 @@ class AuthController {
           country: 'string|required',
           state: 'string|required',
         };
-        
+        console.log({country, state, coordinates}, 'nnnnnn')
       const validation = new Validator(req.body, rules);
       
       if (validation.fails()) {
@@ -171,18 +171,17 @@ class AuthController {
 
     const profile_pic =  await uploadFile(
         files,
-        "u-" + environ + "-i." + extension,
+        "u-" + environ + "-" + req.file.filename + "-i." + extension,
         "convexity-profile-images"
       )
       
-      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: JSON.stringify({country, state, coordinates})});
+      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: {country, state, coordinates}});
       if(user)
       QueueService.createWallet(user.id, 'user');
       Response.setSuccess(201, "Account Onboarded Successfully", user);
       return Response.send(res);
         }
       }
-      // 
     } catch (error) {
       console.log(error);
       Response.setError(500, 'On-boarding failed. Please try again later.')
@@ -723,6 +722,20 @@ class AuthController {
     // TODO: Validate token
     try {
       const user = await AuthService.disable2afCheck(req.user);
+      if(user)
+      Response.setSuccess(200, 'Two factor authentication disabled.', user);
+      return Response.send(res);
+
+    } catch (error) {
+      Response.setError(400, error.message);
+      return Response.send(res);
+    }
+  }
+
+  static async toggleTwoFactorAuth(req, res) {
+    // TODO: Validate token
+    try {
+      const user = await AuthService.toggle2afCheck(req.user);
       if(user)
       Response.setSuccess(200, 'Two factor authentication disabled.', user);
       return Response.send(res);

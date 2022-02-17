@@ -48,6 +48,11 @@ module.exports = (sequelize, DataTypes) => {
       Campaign.hasMany(models.Product,{
         as: 'CampaignProducts'
       })
+
+      Campaign.hasMany(models.User, {
+        as: 'CampaignVendors',
+        foreignKey: 'vendor_id'
+      })
     }
   }
 

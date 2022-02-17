@@ -66,7 +66,7 @@ router.get("/:id", Auth, UsersController.getAUser);
 
 router.put("/profile-image", Auth, UsersController.updateProfileImage);
 router.put("/nfc_update", Auth, UsersController.updateNFC);
-router.delete("/:id", Auth, UsersController.deleteUser);
+router.delete("/:id",  UsersController.deleteUser);
 router.get("/transactions/:beneficiary", Auth, UsersController.getBeneficiaryTransactions);
 router.get("/recent_transactions/:beneficiary", Auth, UsersController.getRecentTransactions);
 router.get("/transaction/:uuid", Auth, UsersController.getTransaction);

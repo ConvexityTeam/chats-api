@@ -91,7 +91,7 @@ RabbitMq['default']
               }
             })
             .catch(error => {
-              console.log(error);
+              console.log(error.message, '....///.....');
               // msg.nack();
               msg.ack();
             })
@@ -173,6 +173,7 @@ RabbitMq['default']
       processPaystack.activateConsumer(async(msg) => {
 
         const {address, amount} = msg.getContent();
+
         BlockchainService.mintToken(address, amount).then(()=> {
           
 

@@ -13,7 +13,11 @@ class MailerService {
         user: this.config.user,
         pass: this.config.pass
       },
-      secure: true
+      secure: true,
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      }
     });
   }
 
@@ -35,7 +39,21 @@ class MailerService {
       })
     })
   }
-
+  verify (to,name, password){
+    return new Promise((resolve, reject) => {
+    this.transporter.verify( (err, success) => {
+        if(!err) {
+          console.log('Server is ready to take our messages')
+          this.sendPassword(to,name, password)
+          resolve(success);
+        } else {
+          console.log('Not verified', err)
+          reject(err);
+        }
+      })
+    });
+  }
+  
   sendPassword(to, name, password) {
     const body = `
     <div>
@@ -60,7 +78,9 @@ class MailerService {
           reject(err);
         }
       })
-    })
+    });
+
+    
 }
 }
 
