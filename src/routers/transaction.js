@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { Auth } = require('../middleware/auth');
 const TransactionsController = require('../controllers/TransactionsController');
 
+router.get('/beneficairy-vendor/:id', Auth, TransactionsController.getUserATransaction);
 router.get('/', Auth, TransactionsController.getAllTransactions);
 router.get('/:id', Auth, TransactionsController.getATransaction);
 router.post('/', Auth, TransactionsController.addTransaction);

@@ -122,7 +122,7 @@ class OrganisationService {
       const OrganisationId = organisation.id;
       const password = bcrypt.hashSync(rawPassword, 10);
       const vendor_id = GenearteVendorId();
-
+      console.log(rawPassword,'rawPassword')
       User.create({
           ...data,
           vendor_id,
@@ -142,7 +142,7 @@ class OrganisationService {
         })
         .then(_store => {
           store = _store;
-          QueueService.createWallet(account.id, 'user');
+          //QueueService.createWallet(account.id, 'user');
 
           SmsService.sendOtp(data.phone, `Your Convexity account password is: ${rawPassword}`);
 

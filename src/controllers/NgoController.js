@@ -58,6 +58,8 @@ class NgoController {
         }
     }
 
+
+
     static async createAdminMember(req, res) {
         try {
             const {
@@ -69,8 +71,8 @@ class NgoController {
                 organisation
             } = req;
             const newPassword = utils.generatePassword()
-            const admin = await NgoService.createAdminAccount(organisation, data, role, newPassword);
-          MailerService.sendPassword(user.email, user.first_name +" "+ user.last_name, newPassword)
+           const admin = await NgoService.createAdminAccount(organisation, data, role, newPassword);
+        
             Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Account Created.', admin);
             return Response.send(res);
         } catch (error) {

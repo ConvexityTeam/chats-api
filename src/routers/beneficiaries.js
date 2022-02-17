@@ -28,7 +28,7 @@ router.get("/cash-for-work", CashForWorkController.viewTaskById);
 
 router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGender);
 router.get('/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAgeGroup);
-router.get('/location', BeneficiaryController.beneficiariesByLocation);
+router.get('/location',NgoSubAdminAuth, BeneficiaryController.beneficiariesByLocation);
 router.get('/marital_status', NgoSubAdminAuth,BeneficiaryController.beneficiariesByMaritalStatus);
 router.get('/chart',BeneficiaryController.beneficiaryChart);
 

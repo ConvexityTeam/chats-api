@@ -7,6 +7,7 @@ const {
     Wallet,
     User
 } = require('../models');
+const {Op} = require('sequelize')
 
 class TransactionService {
     static async findOrgnaisationTransactions(OrganisationId, extraClause = null) {
@@ -124,13 +125,30 @@ class TransactionService {
         } catch (error) {
             throw error;
         }
-    }
+    }transaction_type
 
     static async getATransaction(id) {
         try {
             const theTransaction = await Transaction.findOne({
                 where: {
                     id: Number(id)
+                }
+            });
+
+            return theTransaction;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async getUserATransaction(id) {
+        try {
+            const theTransaction = await Transaction.findOne({
+                where: {
+                    [Op.or]: [{
+                        BeneficiaryId: id,
+                        VendorId: id
+                    }]
                 }
             });
 

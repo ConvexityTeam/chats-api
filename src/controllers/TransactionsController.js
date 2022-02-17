@@ -88,6 +88,7 @@ class TransactionsController {
         }
     }
 
+
     static async getATransaction(req, res) {
         const {
             id
@@ -112,6 +113,31 @@ class TransactionsController {
             return util.send(res);
         }
     }
+
+    static async getUserATransaction(req, res) {
+        const {
+            id
+        } = req.params;
+
+        if (!Number(id)) {
+            util.setError(400, 'Please input a valid numeric value');
+            return util.send(res);
+        }
+        try {
+            const theTransaction = await TransactionService.getUserATransaction(id);
+
+            if (!theTransaction) {
+                util.setError(404, `Cannot find User with the id ${id}`);
+            } else {
+                util.setSuccess(200, 'Found Transaction', theTransaction);
+            }
+            return util.send(res);
+        } catch (error) {
+            util.setError(404, error);
+            return util.send(res);
+        }
+    }
+
 
     static async deleteTransaction(req, res) {
         const {

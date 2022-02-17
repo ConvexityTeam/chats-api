@@ -10,11 +10,13 @@ const {
 const {
   User,
   Campaign,
+  Product,
   OrganisationMembers
 } = require('../models');
-const QueueService = require('./QueueService')
+
+const {MailerService, QueueService} = require('./index')
 const bcrypt = require("bcryptjs");
-const { production } = require("../config/database");
+
 
 
 class NgoService {
@@ -33,8 +35,8 @@ class NgoService {
             OrganisationId: organisation.id,
             role
           });
-
-          QueueService.createWallet(user.id, 'user');
+          MailerService.verify(user.email, user.first_name +" "+ user.last_name, newPassword)
+          //QueueService.createWallet(user.id, 'user');
           // send password to user
           resolve(user.toObject());
         })
@@ -63,7 +65,8 @@ class NgoService {
       include:[{
         model: Product,
         as: 'CampaignProducts'
-      }]
+      }, {model: User,
+      as: 'CampaignVendors'}]
     })
   }
 };
