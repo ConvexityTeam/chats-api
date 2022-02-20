@@ -150,7 +150,7 @@ class AuthController {
           country: 'string|required',
           state: 'string|required',
         };
-        console.log({country, state, coordinates}, 'nnnnnn')
+        
       const validation = new Validator(req.body, rules);
       
       if (validation.fails()) {
@@ -174,8 +174,7 @@ class AuthController {
         "u-" + environ + "-" + req.file.filename + "-i." + extension,
         "convexity-profile-images"
       )
-      
-      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: {country, state, coordinates}});
+      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: {country, state, coordinates: coordinates? coordinates: null}});
       if(user)
       QueueService.createWallet(user.id, 'user');
       Response.setSuccess(201, "Account Onboarded Successfully", user);
