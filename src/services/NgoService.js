@@ -14,7 +14,8 @@ const {
   OrganisationMembers
 } = require('../models');
 
-const {MailerService, QueueService} = require('./index')
+const QueueService = require('./QueueService')
+const MailerService = require('./MailerService')
 const bcrypt = require("bcryptjs");
 
 
@@ -36,7 +37,7 @@ class NgoService {
             role
           });
           MailerService.verify(user.email, user.first_name +" "+ user.last_name, newPassword)
-          //QueueService.createWallet(user.id, 'user');
+          QueueService.createWallet(user.id, 'user');
           // send password to user
           resolve(user.toObject());
         })

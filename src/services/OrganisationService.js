@@ -142,7 +142,7 @@ class OrganisationService {
         })
         .then(_store => {
           store = _store;
-          //QueueService.createWallet(account.id, 'user');
+          QueueService.createWallet(account.id, 'user');
 
           SmsService.sendOtp(data.phone, `Your Convexity account password is: ${rawPassword}`);
 

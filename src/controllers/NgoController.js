@@ -71,6 +71,7 @@ class NgoController {
                 organisation
             } = req;
             const newPassword = utils.generatePassword()
+
            const admin = await NgoService.createAdminAccount(organisation, data, role, newPassword);
         
             Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Account Created.', admin);
