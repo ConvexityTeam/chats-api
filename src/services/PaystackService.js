@@ -8,6 +8,7 @@ const {
 generatePaystackRef
 } = require('../utils');
 const paystack = require('paystack-api')(paystackConfig.secretKey);
+
 class PaystackService {
   static async buildDepositData(organisation, _amount, _currency = null) {
     let dev_data = null;
@@ -52,6 +53,18 @@ class PaystackService {
     return new Promise(async (resolve, reject) => {
       try {
         const data = await paystack.transaction.verify(reference);
+        resolve(data)
+      } catch (error) {
+        reject(error);
+      }
+    })
+  }
+
+
+   static async withdraw() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const data = await paystack.transfer.create()
         resolve(data)
       } catch (error) {
         reject(error);

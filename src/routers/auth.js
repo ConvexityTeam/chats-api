@@ -25,6 +25,7 @@ router.get('/2fa/init', Auth, AuthController.setTwoFactorSecret);
 router.post('/2fa/enable', Auth, AuthController.enableTwoFactorAuth);
 router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
 router.post('/2fa/toggle', Auth, AuthController.toggleTwoFactorAuth);
+router.post('/2fa/state2fa', Auth, AuthController.state2fa);
 
 router.route('/password/reset')
   .post(

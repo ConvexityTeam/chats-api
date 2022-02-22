@@ -136,6 +136,22 @@ class AuthService {
   }
 
 
+  static async state2fa(user) {
+    return new Promise((resolve, reject) => {
+      User.findByPk(user.id)
+        .then((_user) => {
+          if (!_user) {
+            reject(new Error(`User not found`))
+            return;
+          }
+          resolve(_user.toObject());
+        })
+        .catch(() => {
+          reject(new Error(`User not found.`));
+        });
+    })
+  }
+
   static async toggle2afCheck(user) {
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
