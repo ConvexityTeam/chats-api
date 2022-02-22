@@ -744,7 +744,19 @@ class AuthController {
       return Response.send(res);
     }
   }
+static async state2fa(req, res) {
+    // TODO: Validate token
+    try {
+      const user = await AuthService.state2fa(req.user);
+      if(user)
+      Response.setSuccess(200, 'Two State', user);
+      return Response.send(res);
 
+    } catch (error) {
+      Response.setError(400, error.message);
+      return Response.send(res);
+    }
+  }
   static async requestPasswordReset(req, res) {
     try {
       const data = await AuthService.createResetPassword(req.user.id, req.ip);

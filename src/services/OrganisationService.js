@@ -26,6 +26,7 @@ const {
   userConst
 } = require('../constants');
 const SmsService = require('./SmsService');
+const MailerService = require('./MailerService')
 
 
 class OrganisationService {
@@ -143,8 +144,8 @@ class OrganisationService {
         .then(_store => {
           store = _store;
           QueueService.createWallet(account.id, 'user');
-
-          SmsService.sendOtp(data.phone, `Your Convexity account password is: ${rawPassword}`);
+          MailerService.verify(data.email, data.first_name + " " + data.last_name, rawPassword)
+          SmsService.sendOtp(data.phone, `Your Convexity account password is: ${rawPassword} and ID is: ${vendor_id}`);
 
           account = account.toObject();
           account.Store = store.toJSON();

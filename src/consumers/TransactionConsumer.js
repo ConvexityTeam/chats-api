@@ -3,6 +3,7 @@ const {
   PROCESS_VENDOR_ORDER,
   TRANSFER_TO,
   FROM_NGO_TO_CAMPAIGN,
+  PAYSTACK_WITHDRAW,
   PAYSTACK_DEPOSIT
 } = require('../constants/queues.constant')
 const {
@@ -12,13 +13,15 @@ const {
   WalletService,
   QueueService,
   BlockchainService,
-  DepositService
+  DepositService,
+  PaystackService
 } = require('../services');
 
 const {
   Sequelize,
   Transaction,
   Wallet,
+  BankAccount,
   Campaign
 } = require('../models');
 const {
@@ -44,6 +47,11 @@ const processCampaignFund = RabbitMq['default'].declareQueue(FROM_NGO_TO_CAMPAIG
 
 
 const processPaystack = RabbitMq['default'].declareQueue(PAYSTACK_DEPOSIT, {
+  durable: true,
+  prefetch: 1
+});
+
+const processPaystackWithdrawal = RabbitMq['default'].declareQueue(PAYSTACK_WITHDRAW, {
   durable: true,
   prefetch: 1
 });
@@ -114,8 +122,7 @@ RabbitMq['default']
 
           console.log('Insufficient wallet balance. Please fund organisation wallet.')
         }else{
-        BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget).then(async(s)=>{
-          if(s){
+      const org =  await  BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);
             await Campaign.update({
             status: 'completed',
             is_funded: true,
@@ -142,7 +149,6 @@ RabbitMq['default']
             narration: 'Approve Campaign Funding'
           });
           }
-
           const wallet = beneficiaries.map((user)=> user.User.Wallets)
           const mergeWallet = [].concat.apply([], wallet);
           
@@ -153,36 +159,50 @@ RabbitMq['default']
            await  Wallet.update({
             balance: budget
           },{where: {uuid}})
-             BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) ).then((b)=>{
-               if(b){
-                 msg.ack();
-                }
-
-             }).catch(()=>{
-               msg.nack()
-                            })
-          })
-    
-        }).catch(()=>{
-          msg.nack();
-          
-        })
-      }
+           await  BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) )
       })
-      
+      msg.ack()
+    }).catch(error => {
+              console.log(error.message, '....///.....');
+              // msg.nack();
+            })
       processPaystack.activateConsumer(async(msg) => {
 
         const {address, amount} = msg.getContent();
 
         BlockchainService.mintToken(address, amount).then(()=> {
           
-
+        
           
         }).catch(()=> {
           
           
         })
       })
+
+    // processPaystackWithdrawal.activateConsumer(async(msg)=> {
+
+    //   const {address, amount} = msg.getContent();
+
+    //     BlockchainService.mintToken(address, amount).then(()=> {
+          
+    //     const account = await BankAccount.findOne({where: UserId})
+    //     if(account){
+    //       PaystackService.withdraw({
+    //         type: 'nuban',
+    //         name,
+    //         account_number,
+    //         bank_code,
+            
+    //       })
+    //     }
+          
+    //     }).catch(()=> {
+          
+          
+    //     })
+      
+    // })
     processVendorOrderQueue.activateConsumer(async msg => {
         const content = msg.getContent();
         console.log(content)

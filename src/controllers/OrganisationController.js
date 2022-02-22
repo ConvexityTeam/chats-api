@@ -927,6 +927,7 @@ class OrganisationController {
   static async getMainWallet(req, res) {
     try {
       const id = req.params.organisationId;
+      console.log(id,'id')
       const organisation = await db.Organisations.findOne({
         where: {
           id,
