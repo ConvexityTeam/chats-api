@@ -20,6 +20,9 @@ module.exports = {
       defaultValue: false,
       after: 'source'
     });
+
+
+    
   },
 
   down: async (queryInterface, Sequelize) => {

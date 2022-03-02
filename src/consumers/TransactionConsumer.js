@@ -122,25 +122,25 @@ RabbitMq['default']
 
           console.log('Insufficient wallet balance. Please fund organisation wallet.')
         }else{
-      const org =  await  BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);
-            await Campaign.update({
-            status: 'completed',
+   const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);
+   console.log(org, 'orgWallet')   
+   await Campaign.update({
+            status: 'ongoing',
             is_funded: true,
             amount_disbursed: campaign.budget
           },{where: {id: campaign.id}});
-          
-          await Wallet.update({
+
+       const wal =   await Wallet.update({
             balance: Sequelize.literal(`balance - ${campaign.budget}`)
           }, {
             where: {
-              uuid: OrgWallet.uuid
+            uuid: OrgWallet.uuid
             }
           });
-
          await Transaction.create({
             amount: campaign.budget,
             reference: generateTransactionRef(),
-            status: 'processing',
+            status: 'success',
             transaction_origin: 'wallet',
             transaction_type: 'transfer',
             SenderWalletId: OrgWallet.uuid,
@@ -148,20 +148,23 @@ RabbitMq['default']
             OrganisationId: campaign.OrganisationId,
             narration: 'Approve Campaign Funding'
           });
-          }
+          
           const wallet = beneficiaries.map((user)=> user.User.Wallets)
           const mergeWallet = [].concat.apply([], wallet);
           
-          const budget = Number(campaign.budget) / mergeWallet.length
+          const budget = Number(campaign.budget) / beneficiaries.length
           mergeWallet.map(async(wal)=> {    
             const uuid =   wal.uuid
            const address = wal.address
            await  Wallet.update({
-            balance: budget
+            balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
-           await  BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) )
+         const  ben =  await  BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) )
+        
       })
       msg.ack()
+    }
+      
     }).catch(error => {
               console.log(error.message, '....///.....');
               // msg.nack();

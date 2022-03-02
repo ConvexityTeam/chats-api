@@ -2,7 +2,8 @@ const {
   GodModeAuth,
   BeneficiaryAuth,
   VendorBeneficiaryAuth,
-  NgoSubAdminAuth
+  NgoSubAdminAuth,
+  Auth
 } = require("../middleware");
 const {
   AuthController,
@@ -21,7 +22,7 @@ const router = require("express").Router();
 
 const CashForWorkController = require("../controllers/CashForWorkController");
 
-router.get("/cash-for-work/tasks", CashForWorkController.viewCashForWorkRefractor);
+router.get("/cash-for-work/tasks",Auth, CashForWorkController.viewCashForWorkRefractor);
 router.post("/cash-for-work/tasks", CashForWorkController.pickTaskFromCampaign);
 router.get("/cash-for-work", CashForWorkController.viewTaskById);
 

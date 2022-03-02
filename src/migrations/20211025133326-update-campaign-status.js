@@ -10,7 +10,7 @@ module.exports = {
      */
     await queryInterface.removeColumn('Campaigns', 'status');
     await queryInterface.addColumn('Campaigns', 'status', {
-      type: Sequelize.ENUM('pending', 'active', 'paused', 'completed'),
+      type: Sequelize.ENUM('pending', 'ongoing', 'active', 'paused', 'completed'),
       defaultValue: 'pending'
     });
     await queryInterface.addColumn('Campaigns', 'paused_date', {

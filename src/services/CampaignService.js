@@ -9,6 +9,7 @@ const {
   Complaint,
   Beneficiary,
   Transaction,
+  Task,
   CampaignVendor
 } = require("../models");
 const {
@@ -152,11 +153,11 @@ class CampaignService {
       where: {
         id
       },
-      attributes: {
-        include: [
-          [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-        ]
-      },
+      // attributes: {
+      //   include: [
+      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+      //   ]
+      // },
       include: [{
           model: User,
           as: 'Beneficiaries',
@@ -215,6 +216,7 @@ class CampaignService {
           [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
         ]
       },
+      include: [{model: Task, as: 'Jobs'}],
       include: ['Beneficiaries'],
       includeIgnoreAttributes: false,
       group: [
