@@ -39,12 +39,12 @@ class MailerService {
       })
     })
   }
-  verify (to,name, password){
+  verify (to,name, password, vendor_id){
     return new Promise((resolve, reject) => {
     this.transporter.verify( (err, success) => {
         if(!err) {
           console.log('Server is ready to take our messages')
-          this.sendPassword(to,name, password)
+          this.sendPassword(to,name, password, vendor_id)
           resolve(success);
         } else {
           console.log('Not verified', err)
@@ -54,11 +54,11 @@ class MailerService {
     });
   }
   
-  sendPassword(to, name, password) {
+  sendPassword(to, name, password, vendor_id) {
     const body = `
     <div>
       <p>Hello ${name},</p>
-      <p>Your Convexity password is: ${password}</p>
+      <p>Your Convexity password is: ${vendor_id ? password +"and Vendor ID is: " + vendor_id: password}</p>
       <p>CHATS - Convexity</p>
     </div>
     `;
