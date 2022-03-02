@@ -174,7 +174,7 @@ class AuthController {
         "u-" + environ + "-" + email + "-i." + extension,
         "convexity-profile-images"
       )
-      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: {country, state, coordinates: coordinates? coordinates: null}});
+      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: {country, state}});
       if(user)
       QueueService.createWallet(user.id, 'user');
       Response.setSuccess(201, "Account Onboarded Successfully", user);

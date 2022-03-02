@@ -122,8 +122,7 @@ RabbitMq['default']
 
           console.log('Insufficient wallet balance. Please fund organisation wallet.')
         }else{
-   const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);
-   console.log(org, 'orgWallet')   
+   const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
    await Campaign.update({
             status: 'ongoing',
             is_funded: true,
