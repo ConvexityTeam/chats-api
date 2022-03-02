@@ -144,7 +144,7 @@ class OrganisationService {
         .then(_store => {
           store = _store;
           QueueService.createWallet(account.id, 'user');
-          MailerService.verify(data.email, data.first_name + " " + data.last_name, rawPassword)
+          MailerService.verify(data.email, data.first_name + " " + data.last_name, rawPassword, vendor_id)
           SmsService.sendOtp(data.phone, `Your Convexity account password is: ${rawPassword} and ID is: ${vendor_id}`);
 
           account = account.toObject();
