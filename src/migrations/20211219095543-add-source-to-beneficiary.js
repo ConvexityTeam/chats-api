@@ -15,11 +15,19 @@ module.exports = {
       after: 'approved'
     });
 
+    await queryInterface.changeColumn('Campaigns', 'status', {
+      allowNull: true,
+      type: Sequelize.ENUM('pending', 'ongoing', 'active', 'paused', 'completed')
+    });
+
     await queryInterface.addColumn('Beneficiaries', 'rejected', {
       type: Sequelize.BOOLEAN,
       defaultValue: false,
       after: 'source'
     });
+
+
+    
   },
 
   down: async (queryInterface, Sequelize) => {
