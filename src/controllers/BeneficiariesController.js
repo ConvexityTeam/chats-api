@@ -661,8 +661,6 @@ class BeneficiariesController {
       let locations = []
 
       const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
-
-      console.log(beneficiaries, 'beneficiaries')
      
       if(beneficiaries.length > 0){
         const beneficiary = beneficiaries.map(bene =>  bene.location )
