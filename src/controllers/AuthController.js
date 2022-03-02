@@ -171,7 +171,7 @@ class AuthController {
 
     const profile_pic =  await uploadFile(
         files,
-        "u-" + environ + "-" + req.file.filename + "-i." + extension,
+        "u-" + environ + "-" + email + "-i." + extension,
         "convexity-profile-images"
       )
       const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: {country, state, coordinates: coordinates? coordinates: null}});

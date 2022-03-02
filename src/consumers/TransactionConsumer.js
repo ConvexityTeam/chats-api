@@ -130,14 +130,13 @@ RabbitMq['default']
             amount_disbursed: campaign.budget
           },{where: {id: campaign.id}});
 
-          await Wallet.update({
+       const wal =   await Wallet.update({
             balance: Sequelize.literal(`balance - ${campaign.budget}`)
           }, {
             where: {
             uuid: OrgWallet.uuid
             }
           });
-
          await Transaction.create({
             amount: campaign.budget,
             reference: generateTransactionRef(),
@@ -161,7 +160,7 @@ RabbitMq['default']
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
          const  ben =  await  BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) )
-         console.log(ben, 'benWallet')  
+        
       })
       msg.ack()
     }
