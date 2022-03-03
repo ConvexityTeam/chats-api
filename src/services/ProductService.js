@@ -33,7 +33,7 @@ class ProductService {
   static findCampaignProducts(CampaignId) {
     const RoleId = AclRoles.Vendor
     return User.findAll({
-      wher:{RoleId},
+        where: {RoleId},
       include:[{model: Market, as: 'Store',
       include:[{
         model: Product,
