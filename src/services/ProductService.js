@@ -6,8 +6,12 @@ const {
 } = require('../models');
 
 const {
-  AclRoles
+  AclRoles,
 } = require("../utils");
+
+const {
+    userConst,
+} = require('../constants');
 
 const VendorService = require('./VendorService');
 const CampaignService = require('./CampaignService');
@@ -34,6 +38,7 @@ class ProductService {
     const RoleId = AclRoles.Vendor
     return User.findAll({
         where: {RoleId},
+        attributes: userConst.publicAttr,
       include:[{model: Market, as: 'Store',
       include:[{
         model: Product,
