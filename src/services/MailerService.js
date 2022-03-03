@@ -58,7 +58,7 @@ class MailerService {
     const body = `
     <div>
       <p>Hello ${name},</p>
-      <p>Your Convexity password is: ${vendor_id ? password +"and Vendor ID is: " + vendor_id: password}</p>
+      <p>Your Convexity password is: ${ vendor_id ? password +" and Vendor ID is: " + vendor_id : password}</p>
       <p>CHATS - Convexity</p>
     </div>
     `;
