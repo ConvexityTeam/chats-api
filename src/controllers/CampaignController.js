@@ -246,23 +246,27 @@ class CampaignController {
 
     
 
-      // if(campaign.status == 'completed') {
-      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
-      //   return Response.send(res);
-      // }
+      if(campaign.status == 'completed') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
+        return Response.send(res);
+      }
+      if(campaign.status == 'ongoing') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already ongoing');
+        return Response.send(res);
+      }
 
-      // if((campaign.budget > OrgWallet.balance) || (OrgWallet.balance == 0)) {
-      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
-      //   return Response.send(res);
-      // }
+      if((campaign.budget > OrgWallet.balance) || (OrgWallet.balance == 0)) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
+        return Response.send(res);
+      }
 
-      // if(!beneficiaries.length) {
-      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
-      //   return Response.send(res);
-      // } 
-      //QueueService.CampaignApproveAndFund({campaign, campaignWallet, OrgWallet, beneficiaries});
+      if(!beneficiaries.length) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
+        return Response.send(res);
+      } 
+      QueueService.CampaignApproveAndFund({campaign, campaignWallet, OrgWallet, beneficiaries});
      //const funding = await CampaignService.handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`, campaign);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`, beneficiaries);
       return Response.send(res);
     } catch (error) {
       console.log(error)
