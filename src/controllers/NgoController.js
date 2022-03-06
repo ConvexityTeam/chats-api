@@ -43,7 +43,6 @@ class NgoController {
             Response.setError(400, 'Invalid Request Parameter');
             return Response.send(res);
         }
-
         try {
             const theNgo = await OrganisationService.getAOrganisation(id);
             if (!theNgo) {

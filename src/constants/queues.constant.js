@@ -9,5 +9,6 @@ module.exports = {
   VERIFY_NIN: 'VerifyNIN',
   VERIFY_FIAT_DEPOSIT: 'verifyFiatDeposit',
   PROCESS_VENDOR_ORDER: 'processVendorOrder',
-  PAYSTACK_WITHDRAW: 'paystackwithdraw'
+  PAYSTACK_WITHDRAW: 'paystackwithdraw',
+  PAY_FOR_PRODUCT: 'payForProduct'
 }

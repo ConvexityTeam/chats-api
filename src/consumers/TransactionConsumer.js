@@ -4,7 +4,8 @@ const {
   TRANSFER_TO,
   FROM_NGO_TO_CAMPAIGN,
   PAYSTACK_WITHDRAW,
-  PAYSTACK_DEPOSIT
+  PAYSTACK_DEPOSIT,
+  PAY_FOR_PRODUCT
 } = require('../constants/queues.constant')
 const {
   RabbitMq
@@ -52,6 +53,11 @@ const processPaystack = RabbitMq['default'].declareQueue(PAYSTACK_DEPOSIT, {
 });
 
 const processPaystackWithdrawal = RabbitMq['default'].declareQueue(PAYSTACK_WITHDRAW, {
+  durable: true,
+  prefetch: 1
+});
+
+const payForProduct = RabbitMq['default'].declareQueue(PAY_FOR_PRODUCT, {
   durable: true,
   prefetch: 1
 });
@@ -136,6 +142,13 @@ RabbitMq['default']
             uuid: OrgWallet.uuid
             }
           });
+            await Wallet.update({
+            balance: Sequelize.literal(`balance + ${campaign.budget}`)
+          }, {
+            where: {
+            uuid: campaign.Wallet.uuid
+            }
+          });
          await Transaction.create({
             amount: campaign.budget,
             reference: generateTransactionRef(),
@@ -158,7 +171,7 @@ RabbitMq['default']
            await  Wallet.update({
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
-         const  ben =  await  BlockchainService.approveToSpend(OrgWallet.address, OrgWallet.privateKey,address, Number(budget) )
+         const  ben =  await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
         
       })
       msg.ack()
@@ -205,6 +218,45 @@ RabbitMq['default']
     //     })
       
     // })
+
+
+    payForProduct.activateConsumer(async msg => {
+      const {vendor, beneficiary, campaignWallet, VendorWallet, BenWallet, product} = msg.getContent();
+       await   BlockchainService.transferFrom(campaignWallet.address, VendorWallet.address,BenWallet.address, BenWallet.privateKey,  product.cost).then(async()=> {
+
+        await  Wallet.update({
+            balance: Sequelize.literal(`balance - ${product.cost}`)
+          },{where: {uuid: BenWallet.uuid} })
+
+          await  Wallet.update({
+            balance: Sequelize.literal(`balance + ${product.cost}`)
+          },{where: {uuid: VendorWallet.uuid} });
+          
+          await  Wallet.update({
+            balance: Sequelize.literal(`balance - ${product.cost}`)
+          },{where: {uuid: campaignWallet.uuid} })
+
+          await Transaction.create({
+            amount: product.cost,
+            reference: generateTransactionRef(),
+            status: 'success',
+            transaction_origin: 'wallet',
+            transaction_type: 'transfer',
+            SenderWalletId: BenWallet.uuid,
+            ReceiverWalletId: VendorWallet.uuid,
+            BeneficiaryId: beneficiary.id,
+            VendorId: vendor.id,
+            narration: `${product.tag}`
+          });
+          msg.ack()
+         }).catch((error)=>{
+          console.log(error, 'error transfer')
+         })
+    }).catch((error)=>{
+      console.log(`RabbitMq Error:`, error);
+    })
+
+    
     processVendorOrderQueue.activateConsumer(async msg => {
         const content = msg.getContent();
         console.log(content)
