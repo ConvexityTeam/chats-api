@@ -17,6 +17,7 @@ const {
   HttpStatusCode,
   BeneficiarySource
 } = require("../utils");
+const { type } = require("../libs/Utils");
 class BeneficiariesController {
 
   static async getAllUsers(req, res) {
@@ -665,23 +666,23 @@ class BeneficiariesController {
       if(beneficiaries.length > 0){
         const beneficiary = beneficiaries.map(bene =>  bene.location )
         let arr =    beneficiary.filter(x => x !== null)
-       let repeated = 1
+      //  let repeated = 1
        
-       let val;
-       if(arr.location){
-        for(let i = 0; i<arr.length; i++){   
-        val = JSON.parse(arr[i])
-          if(locations.length >= 0 && !locations.some(coun => coun.country === val.state)) {
-            locations.push({country: val.state, repeated})
-          }else if(locations.length > 0 && locations.some(coun => coun.country === val.state)){
-            locations.find((obj => obj.country === val.state)).repeated += 1 
-          }
+      //  let val;
+      //  if(arr.location){
+      //   for(let i = 0; i<arr.length; i++){   
+      //   val = JSON.parse(arr[i])
+      //     if(locations.length >= 0 && !locations.some(coun => coun.country === val.state)) {
+      //       locations.push({country: val.state, repeated})
+      //     }else if(locations.length > 0 && locations.some(coun => coun.country === val.state)){
+      //       locations.find((obj => obj.country === val.state)).repeated += 1 
+      //     }
 
-        }
-      }
+      //   }
+      //}
 
 
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.', locations);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.', arr);
         return Response.send(res);
       }
       
@@ -799,6 +800,66 @@ class BeneficiariesController {
       return Response.send(res);
     }
 
+  }
+
+  static async BeneficiaryPayForProduct(req, res){
+    const {vendorId, productId, campaignId} = req.params;
+    const uuid = req.body.uuid
+    const rules = {
+      uuid: "required|string"
+    };
+
+    const validation = new Validator(req.body, rules);
+    try{
+      if (!Number(vendorId)) {
+      util.setError(400, "Please input a valid vendor ID");
+      return util.send(res);
+    }
+    else if (!Number(productId)) {
+      util.setError(400, "Please input a valid product ID");
+      return util.send(res);
+    }
+   else if (validation.fails()) {
+      util.setError(422, validation.errors);
+      return util.send(res);
+    }
+    //c4dc0ac9-ae1c-44e6-a727-49502fe8657d
+    //25c7ac70-1c3b-463b-9a66-ed3f72c2b092
+    //b82417e6-4524-448a-98fe-a62e5ec893a0
+    //8217e5e4-4846-4c3b-926b-4e32bd3dd1be
+      const beneficiary = await db.User.findOne({
+        where: {id: req.user.id},
+        attributes: ['id', 'first_name', 'last_name'],
+        include:[{model: db.Wallet, as: 'Wallets',where: {uuid}}]
+      })
+    const campaignWallet = await db.Wallet.findOne({where: {CampaignId: campaignId}});
+    const vendor = await BeneficiaryService.payForProduct(vendorId, productId);
+    if(!beneficiary){
+      Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Beneficiary Not Found');
+      return Response.send(res);
+    }
+   else if(!vendor){
+      Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Vendor or Product Not Found');
+      return Response.send(res);
+    }
+     const VendorWallet = vendor.Wallets[0]
+      const BenWallet = beneficiary.Wallets[0]
+
+      const benBalance = BenWallet.balance
+      const product = vendor.Store.Products[0]
+      if(benBalance < product.cost){
+        Response.setSuccess(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient beneficiary wallet balance',BenWallet);
+      return Response.send(res);
+      }
+    QueueService.payForProduct(vendor, beneficiary, campaignWallet, VendorWallet, BenWallet, product)
+    Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction Succes', {vendor, beneficiary, campaignWallet})
+    return Response.send(res);
+
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+ error);
+    return Response.send(res);
+    }
+    
   }
 
 }

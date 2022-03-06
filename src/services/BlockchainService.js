@@ -45,35 +45,42 @@ class BlockchainService {
     });
   }
 
-  static async transferFrom(
-    ngoAdress,
-    beneficiaryAddress,
-    beneficiaryPassword,
-    reciepientAdress,
-    amount
-  ) {
+  static async transferFrom(tokenowneraddr, to, spenderaddr, spenderpwsd,amount) {
     return new Promise(async (resolve, reject) => {
       try {
-        const { data } = await Axios
-        .post(`${tokenConfig.baseURL}/txn/transferfrom/${ngoAdress}/${reciepientAdress}/${beneficiaryAddress}/${beneficiaryPassword}/${amount}`);
-        resolve(data);
-      } catch (error) {
-
-        reject(error);
-      }
-    });
-  }
-
-  static async transferTo( senderAddress, senderPass, reciepientAddress, amount ) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const {data} = await Axios.post(`${tokenConfig.baseURL}/txn/transfer/${senderAddress}/${senderPass}/${reciepientAddress}/${amount}`);
-        resolve(data);
+        const res = await Axios.post(`${tokenConfig.baseURL}/txn/transferfrom/${tokenowneraddr}/${to}/${spenderaddr}/${spenderpwsd}/${amount}`);
+        if(res.data)resolve(res.data);
       } catch (error) {
         reject(error.response.data);
       }
     });
   }
+
+
+  static async allowance (tokenOwner, spenderAddr){
+    return new Promise(async (resolve, reject)=> {
+      try{
+        const {data} = await Axios.get(`${tokenConfig.baseURL}/account/allowance/${tokenOwner}/${spenderAddr}`);
+        resolve(data)
+      }catch(error){
+        reject(error)
+      }
+    })
+  }
+
+
+  static async allowance (address){
+    return new Promise(async (resolve, reject)=> {
+      try{
+        const {data} = await Axios.get(`${tokenConfig.baseURL}/account/balance/${address}`);
+        resolve(data)
+      }catch(error){
+        reject(error)
+      }
+    })
+  }
+
+  
 }
 
 

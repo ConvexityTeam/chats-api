@@ -6,7 +6,9 @@ const {
   Beneficiary,
   Campaign,
   Wallet,
+  Product,
   Transaction,
+  Market,
   sequelize
 } = require('../models');
 const {
@@ -420,6 +422,29 @@ class BeneficiariesService {
         }]
       }]
     })
+  }
+
+  static async payForProduct (VendorId, ProductId){
+   return User.findOne({
+        where: {id: VendorId},
+        attributes: userConst.publicAttr,
+      include:[{model: Market, as: 'Store',
+      include:[{
+        model: Product,
+        as: 'Products',
+        where: {id: ProductId},
+        attributes: [
+          // [Sequelize.fn('DISTINCT', Sequelize.col('product_ref')), 'product_ref'],
+          'id',
+          'tag',
+          'cost',
+          'type'
+        ],
+        group: ['product_ref', 'tag', 'cost', 'type']
+      }]
+    },{model: Wallet, as: 'Wallets'}]
+    
+    });
   }
 }
 

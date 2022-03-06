@@ -26,6 +26,8 @@ router.get("/cash-for-work/tasks",Auth, CashForWorkController.viewCashForWorkRef
 router.post("/cash-for-work/tasks", CashForWorkController.pickTaskFromCampaign);
 router.get("/cash-for-work", CashForWorkController.viewTaskById);
 
+router.post("/:campaignId/pay-for-product-service/:vendorId/:productId",BeneficiaryAuth, BeneficiaryController.BeneficiaryPayForProduct)
+
 
 router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGender);
 router.get('/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAgeGroup);
@@ -34,7 +36,6 @@ router.get('/marital_status', NgoSubAdminAuth,BeneficiaryController.beneficiarie
 router.get('/chart',BeneficiaryController.beneficiaryChart);
 
 router.get('/total_balance',NgoSubAdminAuth, BeneficiaryController.beneficiariesTotalBalance);
-
 
 router.get('/', BeneficiaryController.getAllUsers);
 router.delete('/:id', BeneficiaryController.deleteUser);
