@@ -61,13 +61,16 @@ class PaystackService {
   }
 
 
-   static async withdraw() {
+   static async withdraw(source, amount, recipient, reason) {
     return new Promise(async (resolve, reject) => {
       try {
-        const data = await paystack.transfer.create()
-        resolve(data)
+        const response = await paystack.transfer.create({
+        source, amount, recipient, reason
+        })
+         if (!response.status) throw new Error('Request failed.');
+        resolve(response.data)
       } catch (error) {
-        reject(error);
+        reject(new Error('Could not make a withdrawal'));
       }
     })
   }
