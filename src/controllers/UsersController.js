@@ -17,7 +17,8 @@ const uploadFile = require("./AmazonController");
 const {
   BeneficiaryService,
   UserService,
-  PaystackService
+  PaystackService,
+  QueueService
 } = require("../services");
 const {
   Response
@@ -73,7 +74,8 @@ class UsersController {
 
   static async addBankAccount(req, res) {
     try {
-      const data = SanitizeObject(req.body, ['account_number', 'bank_code']);   
+      const data = SanitizeObject(req.body, ['account_number', 'bank_code']); 
+        
       try {
         const resolved = await PaystackService.resolveAccount(data.account_number, data.bank_code);
         data.account_name = resolved.account_name;
@@ -1267,6 +1269,115 @@ class UsersController {
     }
   }
 
+  static async beneficiaryWithdrawFromBankAccount(req, res){
+    const {amount, campaignId} = req.params;
+  
+    const rules = {
+      uuid: "required|string"
+    };
+
+    const validation = new Validator(req.body, rules);
+    try{
+      if (validation.fails()) {
+      Response.setError(422, validation.errors);
+      return Response.send(res);
+    }if (!Number(amount)) {
+      Response.setError(400, "Please input a valid amount");
+      return Response.send(res);
+    }
+    else if (!Number(campaignId)) {
+      Response.setError(400, "Please input a valid campaign ID");
+      return Response.send(res);
+    }
+      const user = await db.User.findByPk(req.user.id);
+      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id}})
+      const userWallet = await db.Wallet.findByPk(req.body.uuid);
+      const campaignWallet = await db.Wallet.findOne({where: {CampaignId: campaignId}})
+      
+      if(!bankAccount){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Dos\'nt Have a Bank Account');
+        return Response.send(res);
+      }
+      if(!userWallet){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Wallet Not Found');
+        return Response.send(res);
+      }
+      if(!user){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Not Found');
+        return Response.send(res);
+      }
+      if(!campaignWallet){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign Wallet Not Found');
+        return Response.send(res);
+      }
+      if(!userWallet.balance > campaignWallet.balance){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Insufficient Fund');
+        return Response.send(res);
+      }
+      if(userWallet.balance < amount){
+        Response.setSuccess(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient Wallet Balance');
+        return Response.send(res);
+      }
+      
+      QueueService.fundBeneficiaryBankAccount(bankAccount, campaignWallet, userWallet, user, amount);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction SuccessFull', bankAccount);
+        return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
+      return Response.send(res);
+    }
+
+  }
+
+
+  static async vendorWithdrawFromBankAccount(req, res){
+    const {amount, uuid} = req.params;
+
+    const validation = new Validator(req.body, rules);
+    try{
+     if (!Number(amount)) {
+      Response.setError(400, "Please input a valid amount");
+      return Response.send(res);
+    }
+    if (typeof uuid !== 'string') {
+      Response.setError(400, "Please input a valid uuid");
+      return Response.send(res);
+    }
+      const user = await db.User.findByPk(req.user.id);
+      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id}})
+      const userWallet = await db.Wallet.findByPk(req.body.uuid);
+      
+      if(!bankAccount){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Dos\'nt Have a Bank Account');
+        return Response.send(res);
+      }
+      if(!userWallet){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Wallet Not Found');
+        return Response.send(res);
+      }
+      if(!user){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Not Found');
+        return Response.send(res);
+      }
+      if(!userWallet.balance > campaignWallet.balance){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Insufficient Fund');
+        return Response.send(res);
+      }
+      if(userWallet.balance < amount){
+        Response.setSuccess(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient Wallet Balance');
+        return Response.send(res);
+      }
+      
+      //QueueService.fundVendorBankAccount(bankAccount, userWallet, user, amount);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction SuccessFull', bankAccount);
+        return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
+      return Response.send(res);
+    }
+
+  }
+  
 
   static async changePassword(req, res) {
     try {
@@ -1294,6 +1405,8 @@ class UsersController {
     }
   }
 }
+
+
 
 
 function getDifference(dob) {

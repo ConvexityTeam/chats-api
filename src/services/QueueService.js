@@ -2,7 +2,7 @@ const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");
 const { RabbitMq } = require("../libs");
-const { CREATE_WALLET, VERIFY_FIAT_DEPOSIT, PROCESS_VENDOR_ORDER, FROM_NGO_TO_CAMPAIGN, PAYSTACK_DEPOSIT, TRANSFER_TO, PAY_FOR_PRODUCT } = require("../constants/queues.constant");
+const { CREATE_WALLET, VERIFY_FIAT_DEPOSIT, PROCESS_VENDOR_ORDER, FROM_NGO_TO_CAMPAIGN, PAYSTACK_DEPOSIT, TRANSFER_TO, PAY_FOR_PRODUCT, PAYSTACK_WITHDRAW, PAYSTACK_VENDOR_WITHDRAW, PAYSTACK_BENEFICIARY_WITHDRAW } = require("../constants/queues.constant");
 
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
   durable: true
@@ -24,7 +24,11 @@ const approveCampaignAndFund = RabbitMq['default'].declareQueue(FROM_NGO_TO_CAMP
   durable: true
 });
 
-const fundBankAccount = RabbitMq['default'].declareQueue(TRANSFER_TO, {
+const fundVendorBankAccount = RabbitMq['default'].declareQueue(PAYSTACK_VENDOR_WITHDRAW, {
+  durable: true
+});
+
+const fundBeneficiaryBankAccount = RabbitMq['default'].declareQueue(PAYSTACK_BENEFICIARY_WITHDRAW, {
   durable: true
 });
 
@@ -76,8 +80,18 @@ class QueueService {
     )
   }
 
-  static fundBankAccount (payload){
-    fundBankAccount.send(
+  static fundBeneficiaryBankAccount (bankAccount, campaignWallet, userWallet, user, amount){
+    const payload = {bankAccount, campaignWallet, userWallet, user, amount}
+    fundBeneficiaryBankAccount.send(
+      new Message(payload, {
+        contentType: "application/json"
+      })
+    )
+  }
+
+  static fundVendorBankAccount (bankAccount,  userWallet, user, amount){
+    const payload = {bankAccount, userWallet, user, amount}
+    fundVendorBankAccount.send(
       new Message(payload, {
         contentType: "application/json"
       })

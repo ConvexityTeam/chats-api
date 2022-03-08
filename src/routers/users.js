@@ -2,6 +2,7 @@ const router = require('express').Router();
 
 const {
   Auth,
+  VendorAuth,
   VendorBeneficiaryAuth
 } = require("../middleware/auth");
 const UsersController = require("../controllers/UsersController");
@@ -13,6 +14,9 @@ const {
 } = require('../middleware');
 
 // Refactored
+
+router.post('/account/:amount/withdraw/:campaignId',VendorBeneficiaryAuth, UsersController.beneficiaryWithdrawFromBankAccount)
+router.post('/account/:amount/withdraw',VendorAuth, UsersController.vendorWithdrawFromBankAccount)
 
 router.route('/pin')
   .put(

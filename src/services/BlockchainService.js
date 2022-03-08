@@ -45,6 +45,19 @@ class BlockchainService {
     });
   }
 
+
+  static async transferTo(senderaddr, senderpwsd, receiver,amount) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const res = await Axios.post(`${tokenConfig.baseURL}/txn/transfer/${senderaddr}/${senderpwsd}/${receiver}/${amount}`);
+        if(res.data)resolve(res.data);
+      } catch (error) {
+        reject(error.response.data);
+      }
+    });
+  }
+
+
   static async transferFrom(tokenowneraddr, to, spenderaddr, spenderpwsd,amount) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -69,10 +82,30 @@ class BlockchainService {
   }
 
 
-  static async allowance (address){
+  static async balance (address){
     return new Promise(async (resolve, reject)=> {
       try{
         const {data} = await Axios.get(`${tokenConfig.baseURL}/account/balance/${address}`);
+        resolve(data)
+      }catch(error){
+        reject(error)
+      }
+    })
+  }
+
+
+
+  static async redeem (senderaddr, senderpswd, amount){
+    const mintTo = senderaddr;
+    const payload = {mintTo, amount};
+    const checksum = Encryption.encryptTokenPayload(payload);
+    return new Promise(async (resolve, reject)=> {
+      try{
+        const {data} = await Axios.post(`${tokenConfig.baseURL}/txn/redeem/${senderaddr}/${senderpswd}/${amount}`, null, {
+          headers: {
+            'X-CHECKSUM': checksum
+          }
+        });
         resolve(data)
       }catch(error){
         reject(error)

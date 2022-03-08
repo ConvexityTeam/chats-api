@@ -781,26 +781,7 @@ class BeneficiariesController {
   }
 
 
-  static async withdrawFromBankAccount(req, res){
-    const {amount, address} = req.body
-    try{
-      const user = await db.User.findByPk(req.user.id);
-      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id}})
-      if(!user){
-        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Beneficiary Not Found');
-        return Response.send(res);
-      }
-      if(!bankAccount){
-        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Beneficiary Dos\'nt Have a Bank Account');
-        return Response.send(res);
-      }
-      QueueService.fundBankAccount()
-    }catch(error){
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
-      return Response.send(res);
-    }
-
-  }
+  
 
   static async BeneficiaryPayForProduct(req, res){
     const {vendorId, productId, campaignId} = req.params;

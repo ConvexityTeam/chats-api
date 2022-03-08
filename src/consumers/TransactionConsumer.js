@@ -5,7 +5,9 @@ const {
   FROM_NGO_TO_CAMPAIGN,
   PAYSTACK_WITHDRAW,
   PAYSTACK_DEPOSIT,
-  PAY_FOR_PRODUCT
+  PAY_FOR_PRODUCT,
+  PAYSTACK_BENEFICIARY_WITHDRAW,
+  PAYSTACK_VENDOR_WITHDRAW
 } = require('../constants/queues.constant')
 const {
   RabbitMq
@@ -26,7 +28,7 @@ const {
   Campaign
 } = require('../models');
 const {
-  generateTransactionRef
+  generateTransactionRef, AclRoles
 } = require('../utils');
 
 const verifyFiatDepsoitQueue = RabbitMq['default'].declareQueue(VERIFY_FIAT_DEPOSIT, {
@@ -52,7 +54,12 @@ const processPaystack = RabbitMq['default'].declareQueue(PAYSTACK_DEPOSIT, {
   prefetch: 1
 });
 
-const processPaystackWithdrawal = RabbitMq['default'].declareQueue(PAYSTACK_WITHDRAW, {
+const processBeneficiaryPaystackWithdrawal = RabbitMq['default'].declareQueue(PAYSTACK_BENEFICIARY_WITHDRAW, {
+  durable: true,
+  prefetch: 1
+});
+
+const processVendorPaystackWithdrawal = RabbitMq['default'].declareQueue(PAYSTACK_VENDOR_WITHDRAW, {
   durable: true,
   prefetch: 1
 });
@@ -195,29 +202,60 @@ RabbitMq['default']
         })
       })
 
-    // processPaystackWithdrawal.activateConsumer(async(msg)=> {
+    processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {
 
-    //   const {address, amount} = msg.getContent();
+      const {bankAccount, campaignWallet, userWallet, user, amount} = msg.getContent();
+        await  BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount).then(async (mint)=> {
+       const transferFrom = await BlockchainService.transferFrom(campaignWallet.address, userWallet.address, userWallet.address, amount)
+        const pay =  await PaystackService.withdraw("wallet", amount, bankAccount.recipient_code, "spending")
+         await Wallet.update({
+           balance: Sequelize.literal(`balance - ${amount}`)
+         },{where: {uuid: wallet.uuid}})
 
-    //     BlockchainService.mintToken(address, amount).then(()=> {
+         await Transaction.create({
+           amount: amount,
+            reference: generateTransactionRef(),
+            status: 'success',
+            transaction_origin: 'wallet',
+            transaction_type: 'withdrawal',
+            BeneficiaryId: user.id,
+            narration: 'Wallet withdrawal to bank account'
+         })
+        }).catch((error)=> {
+          console.log(error)
+        })
+
+        }).catch(()=> {
+          console.log('RABBITMQ ERROR')
           
-    //     const account = await BankAccount.findOne({where: UserId})
-    //     if(account){
-    //       PaystackService.withdraw({
-    //         type: 'nuban',
-    //         name,
-    //         account_number,
-    //         bank_code,
-            
-    //       })
-    //     }
-          
-    //     }).catch(()=> {
-          
-          
-    //     })
-      
-    // })
+        })
+
+        processVendorPaystackWithdrawal.activateConsumer(async msg => {
+          const {bankAccount, userWallet, user, amount} = msg.getContent();
+
+          await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount).then(async ()=>{
+        const withdraw = await PaystackService.withdraw("wallet", amount, bankAccount.recipient_code, "spending")
+            if(withdraw){
+        await Wallet.update({
+           balance: Sequelize.literal(`balance - ${amount}`)
+         },{where: {uuid: userWallet.uuid}})
+
+         await Transaction.create({
+           amount: amount,
+            reference: generateTransactionRef(),
+            status: 'success',
+            transaction_origin: 'wallet',
+            transaction_type: 'withdrawal',
+            VendorId:  user.id,
+            narration: 'Wallet withdrawal to bank account'
+         })
+            }
+          }).catch(error => {
+            console.log('REDEEM ERROR', error)
+          })
+        }).catch(error => {
+          console.log('RABBITMQ ERROR', error)
+        })
 
 
     payForProduct.activateConsumer(async msg => {
