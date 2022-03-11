@@ -1,7 +1,9 @@
 const {
   Product,
   Market,
+  Campaign,
   User,
+  CampaignVendor,
   Sequelize
 } = require('../models');
 
@@ -35,26 +37,10 @@ class ProductService {
 
 
   static findCampaignProducts(CampaignId) {
-    const RoleId = AclRoles.Vendor
-    return User.findAll({
-        where: {RoleId},
-        attributes: userConst.publicAttr,
-      include:[{model: Market, as: 'Store',
-      include:[{
-        model: Product,
-        as: 'Products',
-        where: {CampaignId},
-        attributes: [
-          // [Sequelize.fn('DISTINCT', Sequelize.col('product_ref')), 'product_ref'],
-          'id',
-          'tag',
-          'cost',
-          'type'
-        ],
-        group: ['product_ref', 'tag', 'cost', 'type']
-      }]
+    return Product.findAll({
+      where: {CampaignId},
+      include: [{model: CampaignVendor, as: 'ProductVendors',
     }]
-    
     });
 }
 
