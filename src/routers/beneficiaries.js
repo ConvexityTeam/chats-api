@@ -33,7 +33,7 @@ router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGend
 router.get('/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAgeGroup);
 router.get('/location',NgoSubAdminAuth, BeneficiaryController.beneficiariesByLocation);
 router.get('/marital_status', NgoSubAdminAuth,BeneficiaryController.beneficiariesByMaritalStatus);
-router.get('/chart',BeneficiaryController.beneficiaryChart);
+router.get('/chart/:period',BeneficiaryAuth, BeneficiaryController.beneficiaryChart);
 
 router.get('/total_balance',NgoSubAdminAuth, BeneficiaryController.beneficiariesTotalBalance);
 

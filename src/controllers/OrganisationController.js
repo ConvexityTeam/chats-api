@@ -471,8 +471,23 @@ class OrganisationController {
   static async getCampaignProducts(req, res) {
     try {
       const campaignId = req.params.campaign_id;
-      const prodcuts = await ProductService.findCampaignProducts(campaignId);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Products.', prodcuts);
+      const product = await db.Product.findAll()
+      const data = await ProductService.findCampaignProducts(campaignId);
+
+      if(data.length < 0){
+         Response.errors(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Record Not Found');
+      return Response.send(res)
+      }
+      const products = data.map(val => val.Store.Products)
+
+      const prod = products.map(pro =>{
+        pro,
+        data
+      })
+
+
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Products.', prod);
       return Response.send(res)
     } catch (error) {
       console.log(error);

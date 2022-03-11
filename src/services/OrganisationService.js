@@ -26,7 +26,7 @@ const {
   userConst
 } = require('../constants');
 const SmsService = require('./SmsService');
-const MailerService = require('./MailerService')
+const MailerService = require('./MailerService');
 
 
 class OrganisationService {

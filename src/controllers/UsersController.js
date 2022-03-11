@@ -29,6 +29,8 @@ const {
 } = require("@droidsolutions-oss/amqp-ts");
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const codeGenerator = require("./QrCodeController");
+const ZohoService = require("../services/ZohoService");
+const sanitizeObject = require("../utils/sanitizeObject");
 
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
@@ -1368,7 +1370,7 @@ class UsersController {
         return Response.send(res);
       }
       
-      //QueueService.fundVendorBankAccount(bankAccount, userWallet, user, amount);
+      QueueService.fundVendorBankAccount(bankAccount, userWallet, user, amount);
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction SuccessFull', bankAccount);
         return Response.send(res);
     }catch(error){
@@ -1376,6 +1378,17 @@ class UsersController {
       return Response.send(res);
     }
 
+  }
+
+  static async createTicket(req, res){
+    try{
+      const data = SanitizeObject(req.body, ['subject', 'description','phone','email','category']);
+
+   await ZohoService.createTicket({...data});
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, error.message);
+      return Response.send(res);
+    }
   }
   
 
