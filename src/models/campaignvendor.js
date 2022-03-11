@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       CampaignVendor.belongsTo(models.User, { foreignKey: 'VendorId', as: 'Vendor' });
       CampaignVendor.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' });
+      CampaignVendor.hasMany(models.Product, { foreignKey: 'CampaignId', as: 'CampaignVendors' });
     }
   };
   CampaignVendor.init({
