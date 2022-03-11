@@ -18,6 +18,8 @@ const {
 router.post('/account/:amount/withdraw/:campaignId',VendorBeneficiaryAuth, UsersController.beneficiaryWithdrawFromBankAccount)
 router.post('/account/:amount/withdraw',VendorAuth, UsersController.vendorWithdrawFromBankAccount)
 
+router.post('/support', UsersController.createTicket)
+
 router.route('/pin')
   .put(
     Auth,

@@ -552,7 +552,7 @@ class BeneficiariesController {
 
 
 
-    } catch (error) {
+    } catch(error) {
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
@@ -659,40 +659,38 @@ class BeneficiariesController {
 
     try {
 
-      let locations = []
-
+      let counts = {}
       const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
-     
+      
       if(beneficiaries.length > 0){
         const beneficiary = beneficiaries.map(bene =>  bene.location )
-        let arr =    beneficiary.filter(x => x !== null)
-      //  let repeated = 1
        
-      //  let val;
-      //  if(arr.location){
-      //   for(let i = 0; i<arr.length; i++){   
-      //   val = JSON.parse(arr[i])
-      //     if(locations.length >= 0 && !locations.some(coun => coun.country === val.state)) {
-      //       locations.push({country: val.state, repeated})
-      //     }else if(locations.length > 0 && locations.some(coun => coun.country === val.state)){
-      //       locations.find((obj => obj.country === val.state)).repeated += 1 
-      //     }
+      const location = beneficiary.map(loc => JSON.parse(loc))
+     const filterState = location.map(state => state.length !== 0 && state.state)
+      const cleanArray = filterState.filter(function (el) {
+    return  el != null;
+  });
+  
+  for (const element of cleanArray) {
+      if (counts[element]) {
+        counts[element] += 1;
+      } else {
+        counts[element] = 1;
+      }
+    }
 
-      //   }
-      //}
-
-
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved.', arr);
+      
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  counts);
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.', locations);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.', beneficiaries);
       return Response.send(res);
 
 
     } catch (error) {
       console.log(error);
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+error);
       return Response.send(res);
     }
   }
@@ -701,11 +699,21 @@ class BeneficiariesController {
     try {
       let beneficiary;
       let balance;
-      let balances = []
-      let repeated = 1
+     let zeroTo100k = 0
+      let hundredKTo200K = 0
+      let  twoHundredKTo300K= 0
+      let threeHundredKTo400K = 0
+      let fourHundredKTo500K = 0
+      let fiveHundredKTo600K = 0
+      let sixHundredKTo700K = 0
+      let sevenHundredKTo800K = 0
+      let eightHundredKTo900K = 0
+      let nineHundredKToOneMill = 0
+      let oneMillionAbove = 0
       const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount(req.user.id);
       if (beneficiaries.length <= 0) {
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', beneficiaries);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', {zeroTo100k, hundredKTo200K,twoHundredKTo300K, threeHundredKTo400K, 
+        fourHundredKTo500K, fiveHundredKTo600K, sixHundredKTo700K, sevenHundredKTo800K, eightHundredKTo900K,nineHundredKToOneMill});
         return Response.send(res);
       }
       else{
@@ -714,19 +722,35 @@ class BeneficiariesController {
        balance = Array.isArray(beneficiary) ? beneficiary.map((wallet) => wallet) : []
        var newArray = balance.filter(value => Object.keys(value).length !== 0);
        var myNewArray = [].concat.apply([], newArray);
-        
-      //  for(let i = 0; i<myNewArray.length; i++){
+      const bal = myNewArray.map(({balance}) => balance)
 
-      //   if(balances.length >= 0 && ! balances.some(bal => bal.balance === myNewArray[i].balance)) {
-      //     balances.push({balance: myNewArray[i].balance, repeated})
-      //   }else if(balances.length > 0 && balances.some(bal => bal.balance === myNewArray[i].balance)){
-      //     balances.find((obj => obj.balance === (myNewArray[i]).balance)).repeated += 1;
-
-      //   }
-        
-      //  }
-        const bal = myNewArray.map(({balance}) => balance)
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',bal);
+       for (let i = 0; i < bal.length; i++) {
+       if (parseInt(bal) >= 0 && parseInt(bal) <= 100000) {
+            zeroTo100k++
+          } else if (parseInt(bal) >= 100001 && parseInt(bal) <= 200000) {
+            hundredKTo200K++
+          } else if (parseInt(bal) >= 200001 && parseInt(bal) <= 300000) {
+            twoHundredKTo300K++
+          }
+          if (parseInt(bal) >= 300001 && parseInt(bal) <= 400000) {
+            threeHundredKTo400K++
+          }if (parseInt(bal) >= 400001 && parseInt(bal) <= 500000) {
+            fourHundredKTo500K++
+          }if (parseInt(bal) >= 500001 && parseInt(bal) <= 600000) {
+            fiveHundredKTo600K++
+          }if (parseInt(bal) >= 600001 && parseInt(bal) <= 700000) {
+            sixHundredKTo700K++
+          }if (parseInt(bal) >= 700001 && parseInt(bal) <= 800000) {
+            sevenHundredKTo800K++
+          }if (parseInt(bal) >= 800001 && parseInt(bal) <= 900000) {
+            eightHundredKTo900K++
+          }if (parseInt(bal) >= 900001 && parseInt(bal) <= 1000000) {
+            nineHundredKToOneMill++
+          }
+        }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',
+      {zeroTo100k, hundredKTo200K,twoHundredKTo300K, threeHundredKTo400K, 
+        fourHundredKTo500K, fiveHundredKTo600K, sixHundredKTo700K, sevenHundredKTo800K, eightHundredKTo900K,nineHundredKToOneMill});
       return Response.send(res);
       }
     } catch (error) {
@@ -738,20 +762,9 @@ class BeneficiariesController {
 
 
   static async beneficiaryChart(req, res) {
-    const {UserId, period} = req.body;
-    
-    const count = {};
+    const {period} = req.params;
     try {
-      const rules = {
-        UserId: "required|numeric",
-        period: "required",
-      };
-      const validation = new Validator(req.body, rules);
-      if (validation.fails()) {
-        util.setError(422, validation.errors);
-        return util.send(res);
-      }
-      const transactions = await BeneficiaryService.beneficiaryChart(Number(UserId), period);
+      const transactions = await BeneficiaryService.beneficiaryChart(req.user.id, period);
 
       if(transactions.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', transactions);
@@ -760,14 +773,6 @@ class BeneficiariesController {
       
 
     const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
-
-    // for (const element of periods) {
-    //   if (count[element]) {
-    //     count[element] += 1;
-    //   } else {
-    //     count[element] = 1;
-    //   }
-    // }
 
      
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Recieved.', {periods, transactions});

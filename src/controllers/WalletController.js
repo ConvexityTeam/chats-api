@@ -3,7 +3,8 @@ const {
   DepositService,
   WalletService,
   QueueService,
-  TransactionService
+  TransactionService,
+  CampaignService
 } = require('../services');
 const {
   Response
@@ -170,10 +171,44 @@ class WalletController {
     }
   }
 
-  // static async depositAddress(req, res) {
-  //   const asset = req.params.asset;
+  static async CampaignBalance(req, res) {
+    const {campaign_id, organisation_id} = req.params
 
-  // }
+    try{
+      const campaign = await CampaignService.getCampaignWallet(campaign_id, organisation_id)
+      if(campaign){
+        const balance = campaign.Wallet.balance
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Balance Retrieved .', balance);
+      return Response.send(res);
+      }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `No Campaign with ID: ${campaign_id}`);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Request failed.'+ error);
+      return Response.send(res);
+    }
+
+  }
+
+
+  static async CampaignBalance(req, res) {
+    const {campaign_id, organisation_id} = req.params
+
+    try{
+      const campaign = await WalletService.findUserWallets(campaign_id, organisation_id)
+      if(campaign){
+        const balance = campaign.Wallet.balance
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Balance Retrieved .', balance);
+      return Response.send(res);
+      }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `No Campaign with ID: ${campaign_id}`);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Request failed.'+ error);
+      return Response.send(res);
+    }
+
+  }
 
   static async _handleSingleWallet(res, query) {
     const wallet = await WalletService.findSingleWallet(query);

@@ -47,6 +47,13 @@ router.get("/financials/:id", OrganisationController.getFinancials);
 router.get("/beneficiaries-summary/:id", OrganisationController.getBeneficiariesFinancials);
 router.get("/metric/:id", OrganisationController.getMetric);
 
+router.get('/campaign/:campaign_id/balance/:organisation_id', 
+NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignIdOptional,
+    WalletController.CampaignBalance)
+
 router.route('/:organisation_id/wallets/transactions/:reference?')
   .get(
     NgoSubAdminAuth,

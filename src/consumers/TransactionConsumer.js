@@ -137,11 +137,10 @@ RabbitMq['default']
         }else{
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
    await Campaign.update({
-            status: 'ongoing',
+            status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
             amount_disbursed: campaign.budget
           },{where: {id: campaign.id}});
-
        const wal =   await Wallet.update({
             balance: Sequelize.literal(`balance - ${campaign.budget}`)
           }, {
