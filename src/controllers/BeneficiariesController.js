@@ -658,8 +658,7 @@ class BeneficiariesController {
   static async beneficiariesByLocation(req, res) {
 
     try {
-
-      let counts = {}
+      let Lagos = 0, Abuja = 0, Kaduna = 0, Jos = 0
       const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
       
       if(beneficiaries.length > 0){
@@ -670,21 +669,32 @@ class BeneficiariesController {
       const cleanArray = filterState.filter(function (el) {
     return  el != null;
   });
+
   
-  for (const element of cleanArray) {
-      if (counts[element]) {
-        counts[element] += 1;
-      } else {
-        counts[element] = 1;
-      }
-    }
+
+  for(let i=0; i<cleanArray.length; i++){
+    if(cleanArray[i] === 'Abuja') Abuja++
+  if(cleanArray[i] === 'Lagos') Lagos++
+  if(cleanArray[i] === 'Kaduna') Kaduna++
+   if(cleanArray[i] === 'Jos') Jos++
+  }
+
+  
+  
+  // for (const element of cleanArray) {
+  //     if (counts[element]) {
+  //       counts[element] += 1;
+  //     } else {
+  //       counts[element] = 1;
+  //     }
+  //   }
 
       
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  counts);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  {Abuja, Lagos, Kaduna, Jos});
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.', beneficiaries);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.', {Abuja, Lagos, Kaduna, Jos});
       return Response.send(res);
 
 

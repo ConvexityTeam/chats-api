@@ -19,6 +19,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "CampaignId",
         as: "Campaign",
       });
+
+      
     }
   }
   Task.init(
