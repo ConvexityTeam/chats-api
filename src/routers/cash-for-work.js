@@ -6,12 +6,13 @@ const {
 	
 } = require('../validators');
 
-const {Auth, VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, VendorBeneficiaryAuth} = require("../middleware");
+const {Auth, VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, VendorBeneficiaryAuth, NgoSubAdminAuth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 // router.use(Auth);
-router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController.approveSubmissionAgent);
+router.get("/task/evidence/:taskId",  NgoSubAdminAuth,  CashForWorkController.viewSubmittedEvidence);
 router.post("/task/task-approved-vendor", VendorAuth,  CashForWorkController.approveSubmissionVendor);
+router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController.approveSubmissionAgent);
 
 router.post("/task/vendor-evidence", VendorAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceVendor);
 router.post("/task/agent-evidence", FieldAgentAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceFieldAgent);

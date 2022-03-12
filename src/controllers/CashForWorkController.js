@@ -750,7 +750,7 @@ class CashForWorkController {
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
             ).then((url) => {
-              TaskProgressEvidence.create({
+              TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
@@ -804,7 +804,7 @@ class CashForWorkController {
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
             ).then((url) => {
-              TaskProgressEvidence.create({
+              TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
@@ -856,7 +856,7 @@ class CashForWorkController {
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
             ).then((url) => {
-              TaskProgressEvidence.create({
+              TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
@@ -930,7 +930,30 @@ class CashForWorkController {
     }
   }
 
+static async viewSubmittedEvidence(req, res){
+    const {taskId} = req.params
+    try {
+     
+        const tasks = await db.User.findAll({
+          include: [{ model: db.TaskAssignment, as: "Assignments",
+          where: {TaskId: taskId},
+           include: {
+            model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'
+          }}]
+          });
+      if(tasks.length <= 0){
+        Response.setSuccess(200, "No Task Recieved", tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(200, "Task Recieved", tasks);
+      return Response.send(res);
 
+         }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
   static async approveSubmissionAgent(req, res){
     const {UserId, approved_by, approved_at} = req.body
     try {

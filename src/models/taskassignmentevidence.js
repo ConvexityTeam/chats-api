@@ -17,6 +17,9 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   };
+
+
+  
   TaskAssignmentEvidence.init({
     TaskAssignmentId: DataTypes.INTEGER,
     comment: DataTypes.TEXT,

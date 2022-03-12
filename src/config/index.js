@@ -6,6 +6,7 @@ const bantuConfig = require('./bantu');
 const awsConfig = require('./aws');
 const termiiConfig = require('./termii');
 const mailerConfig = require('./mailer');
+const zohoCrmConfig = require('./zohocrm');
 
 module.exports = {
   databaseConfig,
@@ -15,5 +16,6 @@ module.exports = {
   mailerConfig,
   tokenConfig,
   bantuConfig,
-  awsConfig
+  awsConfig,
+  zohoCrmConfig
 }
