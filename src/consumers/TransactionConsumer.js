@@ -295,8 +295,17 @@ RabbitMq['default']
 
     
     processVendorOrderQueue.activateConsumer(async msg => {
-        const content = msg.getContent();
+        const {channel,
+      campaignWallet,
+      vendorWallet,
+      beneficiaryWallet,
+      vendor,
+      order,
+      amount} = msg.getContent();
         console.log(content)
+
+               await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
+               order.update({status: 'confirmed'});
       })
       .then(_ => {
         console.log(`Running Process Vendor Order Queue`)

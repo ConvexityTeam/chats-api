@@ -42,20 +42,29 @@ class OrderController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
         return Response.send(res)
       }
+      const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId}) 
+      const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
+      const beneficiaryWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId);
 
-      const wallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId);
-
-      if(!wallet) {
+      if(!beneficiaryWallet) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
         return Response.send(res)
       }
+      if(!vendorWallet) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Vendor Wallet Not Found..');
+        return Response.send(res)
+      }
+      if(!campaignWallet) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign Wallet Not Found..');
+        return Response.send(res)
+      }
 
-      if(wallet.balance < data.total_cost) {
+      if(beneficiaryWallet.balance < data.total_cost) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient campaign wallet balance.');
         return Response.send(res)
       }
 
-      const transaction = await OrderService.processOrder(wallet, data.order, data.order.Vendor, data.total_cost);
+      const transaction = await OrderService.processOrder(beneficiaryWallet,vendorWallet,campaignWallet, data.order, data.order.Vendor, data.total_cost);
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Order details', transaction );
       return Response.send(res);

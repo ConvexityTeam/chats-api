@@ -723,6 +723,22 @@ class CashForWorkController {
     }
   }
 
+static async evidence(req, res){
+
+  try{
+    const evi = await db.TaskAssignmentEvidence.findAll();
+
+    Response.setSuccess(200, "Task Evidence", evi);
+    return Response.send(res);
+  }catch(error){
+     console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+  }
+
+}
+
+
 
   static async uploadProgreeEvidenceByBeneficiary(req, res){
     try {
