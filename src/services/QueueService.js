@@ -63,8 +63,20 @@ class QueueService {
     )
   }
 
-  static processOrder(channel, customerWalletId, vendorUserId, OrderId, amount) {
-    const payload = {channel, customerWalletId, vendorUserId, OrderId, amount};
+  static processOrder(channel,
+      campaignWallet,
+      vendorWallet,
+      beneficiaryWallet,
+      vendor,
+      order,
+      amount) {
+    const payload = {channel,
+      campaignWallet,
+      vendorWallet,
+      beneficiaryWallet,
+      vendor,
+      order,
+      amount};
     processOrderQueue.send(
       new Message(payload, {
         contentType: "application/json"
