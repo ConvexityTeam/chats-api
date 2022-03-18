@@ -42,9 +42,9 @@ class OrderController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
         return Response.send(res)
       }
-      const campaignWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId);
+      const beneficiaryWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId);
       const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
-      const beneficiaryWallet = await WalletService.findSingleWallet({UserId: req.user.id})
+      const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId})
 
       if(!beneficiaryWallet) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
