@@ -23,55 +23,21 @@ const { ProductService } = require(".");
 class OrderService {
   static async processOrder(beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount) {
 
-    const updateOp = {
-      balance: Sequelize.literal(`balance - ${amount}`)
-    };
-    const updateOv = {
-      balance: Sequelize.literal(`balance - ${amount}`)
-    };
-
-    const channel = beneficiaryWallet.Campaign.funded_with;
-
-    if (channel == 'fiat') {
-      updateOp['fiat_balance'] = Sequelize.literal(`fiat_balance - ${amount}`)
-    }
-
-    if (channel == 'crypto') {
-      updateOp['crypto_balance'] = Sequelize.literal(`crypto_balance - ${amount}`)
-    }
-
-    if (channel == 'fiat') {
-      updateOv['fiat_balance'] = Sequelize.literal(`fiat_balance + ${amount}`)
-    }
-
-    if (channel == 'crypto') {
-      updateOv['crypto_balance'] = Sequelize.literal(`crypto_balance + ${amount}`)
-    }
-
     order.update({status: 'processing'});
-
-    await  Wallet.update(updateOp,{where: {uuid: beneficiaryWallet.uuid} })
-
-          await  Wallet.update(updateOv,{where: {uuid: vendorWallet.uuid} });
-          
-          await  Wallet.update(updateOp,{where: {uuid: campaignWallet.uuid} })
-
-
     const transaction = await Transaction.create({
       amount,
       reference: generateTransactionRef(),
       status: 'processing',
       transaction_origin: 'store',
       transaction_type: 'spent',
-      SenderWalletId: payerWallet.uuid,
+      SenderWalletId: beneficiaryWallet.uuid,
       OrderId: order.id,
       VendorId: vendor.id,
-      BeneficiaryId: payerWallet.UserId,
+      BeneficiaryId: beneficiaryWallet.UserId,
       narration: 'Vendor Order'
     });
 
     QueueService.processOrder(
-      channel,
       campaignWallet,
       vendorWallet,
       beneficiaryWallet,
