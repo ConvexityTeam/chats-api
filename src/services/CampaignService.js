@@ -166,13 +166,14 @@ class CampaignService {
             attributes: []
           }
         },
+        {model: Task, as: 'Jobs'},
         {
           model: Wallet,
           as: 'BeneficiariesWallets',
           attributes: walletConst.walletExcludes
         }
       ],
-      group: ['Campaign.id', 'Beneficiaries.id', 'BeneficiariesWallets.uuid']
+      group: ['Campaign.id', 'Beneficiaries.id', 'Jobs.id', 'BeneficiariesWallets.uuid']
     })
   }
 
@@ -211,17 +212,16 @@ class CampaignService {
       where: {
         ...where
       },
-      attributes: {
-        include: [
-          [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-        ]
-      },
-      include: [{model: Task, as: 'Jobs'}],
-      include: ['Beneficiaries'],
-      includeIgnoreAttributes: false,
-      group: [
-        "Campaign.id"
-      ],
+      // attributes: {
+      //   include: [
+      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+      //   ]
+      // },
+       include: [{model: Task, as: 'Jobs'}, {model: User, as: 'Beneficiaries'}],
+      // includeIgnoreAttributes: false,
+      // group: [
+      //   "Campaign.id"
+      // ],
     });
   }
 

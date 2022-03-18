@@ -139,7 +139,28 @@ class OrganisationController {
         ...query,
         OrganisationId
       });
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
+      let campaignsArray = []
+      for (let campaign of campaigns) {
+         let beneficiaries_count = await campaign.countBeneficiaries();
+          campaignsArray.push({
+            id: campaign.id,
+            title: campaign.title,
+            type: campaign.type,
+            description: campaign.description,
+            status: campaign.status,
+            amount_disbursed: campaign.amount_disbursed,
+            budget: campaign.budget,
+            funded_with: campaign.funded_with,
+            location: campaign.location,
+            start_date: campaign.start_date,
+            end_date: campaign.end_date,
+            createdAt: campaign.createdAt,
+            updatedAt: campaign.updatedAt,
+            beneficiaries_count: beneficiaries_count,
+            Jobs: campaign.Jobs
+          });
+        }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaignsArray);
       return Response.send(res);
     } catch (error) {
       console.log(error);

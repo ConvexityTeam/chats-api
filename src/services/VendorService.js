@@ -167,7 +167,7 @@ class VendorService {
 
     static async getOrder(where = {}) {
         const order = await Order.findOne({
-            where,
+            
             include: [{
                     model: User,
                     as: 'Vendor',

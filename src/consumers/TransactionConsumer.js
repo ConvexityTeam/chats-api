@@ -295,17 +295,53 @@ RabbitMq['default']
 
     
     processVendorOrderQueue.activateConsumer(async msg => {
-        const {channel,
+        const {
       campaignWallet,
       vendorWallet,
       beneficiaryWallet,
       vendor,
       order,
       amount} = msg.getContent();
-        console.log(content)
 
-               await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
-               order.update({status: 'confirmed'});
+               await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount).then(async()=>{
+                 const updateOp = {
+      balance: Sequelize.literal(`balance - ${amount}`)
+    };
+    const updateOv = {
+      balance: Sequelize.literal(`balance - ${amount}`)
+    };
+
+    const channel = campaignWallet.Campaign.funded_with;
+
+    if (channel == 'fiat') {
+      updateOp['fiat_balance'] = Sequelize.literal(`fiat_balance - ${amount}`)
+    }
+
+    if (channel == 'crypto') {
+      updateOp['crypto_balance'] = Sequelize.literal(`crypto_balance - ${amount}`)
+    }
+
+    if (channel == 'fiat') {
+      updateOv['fiat_balance'] = Sequelize.literal(`fiat_balance + ${amount}`)
+    }
+
+    if (channel == 'crypto') {
+      updateOv['crypto_balance'] = Sequelize.literal(`crypto_balance + ${amount}`)
+    }
+
+    await  Wallet.update(updateOp,{where: {uuid: beneficiaryWallet.uuid} })
+
+          await  Wallet.update(updateOv,{where: {uuid: vendorWallet.uuid} });
+          
+          await  Wallet.update(updateOp,{where: {uuid: campaignWallet.uuid} })
+
+
+                order.update({status: 'confirmed'});
+               })
+               
+               
+      }).catch(()=> {
+        
       })
       .then(_ => {
         console.log(`Running Process Vendor Order Queue`)
