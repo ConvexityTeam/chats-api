@@ -259,8 +259,7 @@ class CampaignController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
         return Response.send(res);
       }
-
-      if(!beneficiaries.length) {
+      if(campaign.type === 'campaign' && !beneficiaries.length) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
         return Response.send(res);
       } 

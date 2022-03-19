@@ -22,7 +22,6 @@ const { ProductService } = require(".");
 
 class OrderService {
   static async processOrder(beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount) {
-
     order.update({status: 'processing'});
     const transaction = await Transaction.create({
       amount,
@@ -38,12 +37,7 @@ class OrderService {
     });
 
     QueueService.processOrder(
-      campaignWallet,
-      vendorWallet,
-      beneficiaryWallet,
-      vendor,
-      order,
-      amount
+     beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount
     );
  
     // Queue for process

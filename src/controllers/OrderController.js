@@ -31,7 +31,7 @@ class OrderController {
 
   static async completeOrder(req, res) {
     try {
-      const reference = req.params.reference;
+      const {reference, organisationId} = req.params
       const data = await VendorService.getOrder({reference});
       if(!data) {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');
@@ -44,7 +44,7 @@ class OrderController {
       }
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId);
       const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
-      const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId})
+      const campaignWallet = await WalletService.findOrganisationCampaignWallet(organisationId, data.order.CampaignId)
 
       if(!beneficiaryWallet) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
@@ -63,7 +63,6 @@ class OrderController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance.');
         return Response.send(res)
       }
-
       const transaction = await OrderService.processOrder(beneficiaryWallet,vendorWallet,campaignWallet, data.order, data.order.Vendor, data.total_cost);
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Order details', transaction);
