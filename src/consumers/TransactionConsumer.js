@@ -299,7 +299,6 @@ RabbitMq['default']
       beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount} = msg.getContent();
 
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
-                console.log(ref, 'REFFF')
          const updateOp = {
       balance: Sequelize.literal(`balance - ${amount}`)
     };
