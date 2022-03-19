@@ -23,6 +23,12 @@ class WalletService {
       ]
     });
   }
+static findCampainSingleWallet(CampaignId) {
+    return Wallet.findOne({
+      where: {CampaignId}
+  })
+}
+
   static updateOrCreate({
     wallet_type,
     CampaignId,
@@ -78,6 +84,20 @@ class WalletService {
         CampaignId: {
           [Op.not]: null
         }
+      },
+      include: ['Campaign']
+    });
+  }
+
+
+  static findOrganisationCampaignWallet(OrganisationId, CampaignId) {
+    return Wallet.findOne({
+      attributes: {
+        exclude: walletConst.walletExcludes
+      },
+      where: {
+        OrganisationId,
+        CampaignId
       },
       include: ['Campaign']
     });

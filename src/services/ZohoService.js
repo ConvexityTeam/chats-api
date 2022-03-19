@@ -8,12 +8,12 @@ class ZohoService {
     static async generateOAuthToken(){
     return new Promise(async (resolve, reject) => {
       try {
-       const {data} = await Axios.post(`https://accounts.zoho.com/oauth/v2/token?response_type=authorization_code&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&redirect_uri=https://chats.vercel.app`)
+       const {data} = await Axios.post(`https://accounts.zoho.com/oauth/v2/token?code=1000.17c1f22a06d01d79282828d85c796fda.f661ea9b3dc178275a7c2485b43087be&grant_type=authorization_code&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&redirect_uri=https://chats.vercel.app`)
         
        resolve(data)
       }catch(error) {
         
-        reject(error);
+        reject(error.response);
       }
     });
   }

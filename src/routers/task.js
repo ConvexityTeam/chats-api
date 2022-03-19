@@ -9,6 +9,7 @@ const {
 	IsOrgMember
 } = require('../middleware');
 const TaskController = require('../controllers/TaskController');
+router.post('/amend-cash-for-work/task/:taskId',NgoSubAdminAuth, TaskController.amendTask)
 
 router.post('/task_progress_evidence/:taskProgressId',
 	NgoSubAdminAuth,

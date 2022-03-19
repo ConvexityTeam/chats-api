@@ -1,6 +1,7 @@
 const {
   Response
 } = require('../libs');
+const db = require('../models');
 const {
   TaskService
 } = require('../services');
@@ -45,6 +46,23 @@ class TaskController {
       const updatedTask = await TaskService.updateTask(taskId, task);
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, "Task updated", updatedTask);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
+      return Response.send(res);
+    }
+  }
+
+  static async amendTask(req, res) {
+    try {
+      const taskId = req.params.taskId;
+      const task = await db.Task.findByPk(taskId)
+      if(!task){
+      Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Task Not Found");
+      return Response.send(res);
+      }
+    const updated =  await db.Task.update({isCompleted: true},{where:{id: taskId}})
+      Response.setSuccess(HttpStatusCode.STATUS_OK, "Task updated", updated);
       return Response.send(res);
     } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);

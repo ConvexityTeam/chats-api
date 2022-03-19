@@ -334,12 +334,9 @@ class BeneficiariesService {
   }
 
   static async beneficiaryChart(BeneficiaryId, period) {
-
-    
     return Transaction.findAndCountAll({
       where: {
         BeneficiaryId,
-        is_approved: true,
         createdAt: {
             [Op.gte]: period === 'daily' ? moment().subtract(1, 'days').toDate() : 
             period === 'weekly' ? moment().subtract(7, 'days').toDate() : 

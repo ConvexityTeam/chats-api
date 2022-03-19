@@ -224,6 +224,24 @@ class CampaignService {
       // ],
     });
   }
+  static getCash4W(OrganisationId) {
+    return Campaign.findAll({
+      where: {
+        type: 'cash-for-work',
+        OrganisationId
+      },
+      // attributes: {
+      //   include: [
+      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+      //   ]
+      // },
+       include: [{model: Task, as: 'Jobs', where:{isCompleted: true}}, {model: User, as: 'Beneficiaries'}],
+      // includeIgnoreAttributes: false,
+      // group: [
+      //   "Campaign.id"
+      // ],
+    });
+  }
 
   static updateSingleCampaign(id, update) {
     return Campaign.update(update, {

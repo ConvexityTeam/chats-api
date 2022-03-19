@@ -186,6 +186,20 @@ class OrganisationController {
     }
   }
 
+
+  static async getAllOrgCash4W(req, res) {
+    try {
+      const OrganisationId = req.params.organisation_id;
+      const campaigns = await CampaignService.getCash4W(OrganisationId);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Cash-For-Work.', campaigns);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+  }
+
   static async getBeneficiariesTransactions(req, res) {
     try {
       const transactions = await BeneficiaryService.findOrganisationVendorTransactions(req.organisation.id);

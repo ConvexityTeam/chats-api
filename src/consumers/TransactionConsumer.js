@@ -296,15 +296,11 @@ RabbitMq['default']
     
     processVendorOrderQueue.activateConsumer(async msg => {
         const {
-      campaignWallet,
-      vendorWallet,
-      beneficiaryWallet,
-      vendor,
-      order,
-      amount} = msg.getContent();
+      beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount} = msg.getContent();
 
-               await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount).then(async()=>{
-                 const updateOp = {
+         const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
+                console.log(ref, 'REFFF')
+         const updateOp = {
       balance: Sequelize.literal(`balance - ${amount}`)
     };
     const updateOv = {
@@ -316,7 +312,6 @@ RabbitMq['default']
     if (channel == 'fiat') {
       updateOp['fiat_balance'] = Sequelize.literal(`fiat_balance - ${amount}`)
     }
-
     if (channel == 'crypto') {
       updateOp['crypto_balance'] = Sequelize.literal(`crypto_balance - ${amount}`)
     }
@@ -338,11 +333,6 @@ RabbitMq['default']
 
                 order.update({status: 'confirmed'});
                })
-               
-               
-      }).catch(()=> {
-        
-      })
       .then(_ => {
         console.log(`Running Process Vendor Order Queue`)
       });

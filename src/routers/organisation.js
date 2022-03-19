@@ -210,6 +210,14 @@ router.route('/:organisation_id/campaigns/all')
     OrganisationController.getAllOrgCampaigns
   );
 
+  router.route('/:organisation_id/cash4works')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    OrganisationController.getAllOrgCash4W
+  );
+
 router.route('/:organisation_id/campaigns/:campaign_id')
   .get(
     NgoAdminAuth,
