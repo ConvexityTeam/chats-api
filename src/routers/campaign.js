@@ -11,6 +11,7 @@ router.route('/')
     CampaignController.getAllCampaigns
   );
   
+  
 router.get("/:id", Auth, CampaignController.getACampaign);
 router.put("/:id", Auth, CampaignController.updatedCampaign);
 router.post("/:id", Auth, CampaignController.deleteCampaign);

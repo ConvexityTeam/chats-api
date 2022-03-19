@@ -189,9 +189,26 @@ class OrganisationController {
 
   static async getAllOrgCash4W(req, res) {
     try {
+      let task_completed = 0, task_uncompleted = 0, total_tasks = 0;
       const OrganisationId = req.params.organisation_id;
-      const campaigns = await CampaignService.getCash4W(OrganisationId);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Cash-For-Work.', campaigns);
+      const cashforworks = await CampaignService.getCash4W(OrganisationId);
+
+      const campaignJobs = cashforworks.map(campaign => campaign.Jobs)
+     const merge = [].concat.apply([], campaignJobs);
+
+      const Jobs = merge.map(jobs => {
+        if(jobs.isCompleted == true){
+           task_completed++
+        }
+        if(jobs.isCompleted == false){
+          task_uncompleted ++
+        }
+      })
+      total_tasks = Jobs.length
+
+      
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Cash-For-Work.', {task_completed, task_uncompleted, total_tasks, cashforworks});
       return Response.send(res);
     } catch (error) {
       console.log(error);

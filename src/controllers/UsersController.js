@@ -1382,21 +1382,21 @@ class UsersController {
 
   static async createTicket(req, res){
     const {email, subject, phone, description} = req.body
-    const rules = {
-        subject: "required|alpha",
-        description: "required|alpha",
-        phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'], 
-        email: 'email|required',
-    }
+    // const rules = {
+    //     subject: "required|alpha",
+    //     description: "required|alpha",
+    //     phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'], 
+    //     email: 'email|required',
+    // }
 
     try{
-      const validation = new Validator(req.body, rules);
-      if (validation.fails()) {
-        Response.setError(422, validation.errors);
-        return Response.send(res);
-      } else {
+      // const validation = new Validator(req.body, rules);
+      // if (validation.fails()) {
+      //   Response.setError(422, validation.errors);
+      //   return Response.send(res);
+      // } else {
    await ZohoService.generateOAuthToken(email, subject, phone, description);
-      }
+      
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, error.message);
       return Response.send(res);
