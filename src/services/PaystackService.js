@@ -67,7 +67,6 @@ class PaystackService {
         const response = await paystack.transfer.create({
         source, amount, recipient, reason
         })
-         if (!response.status) throw new Error('Request failed.');
         resolve(response.data)
       } catch (error) {
         reject(new Error('Could not make a withdrawal'));

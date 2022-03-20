@@ -59,9 +59,11 @@ class BlockchainService {
 
 
   static async transferFrom(tokenowneraddr, to, spenderaddr, spenderpwsd,amount) {
+
     return new Promise(async (resolve, reject) => {
       try {
         const res = await Axios.post(`${tokenConfig.baseURL}/txn/transferfrom/${tokenowneraddr}/${to}/${spenderaddr}/${spenderpwsd}/${amount}`);
+        console.log(res,'transfer')
         if(res.data)resolve(res.data);
       } catch (error) {
         reject(error.response.data);
@@ -106,9 +108,10 @@ class BlockchainService {
             'X-CHECKSUM': checksum
           }
         });
+        console.log(data)
         resolve(data)
       }catch(error){
-        reject(error)
+        reject(error.response.data);
       }
     })
   }
