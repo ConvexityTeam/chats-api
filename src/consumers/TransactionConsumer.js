@@ -303,7 +303,7 @@ RabbitMq['default']
       balance: Sequelize.literal(`balance - ${amount}`)
     };
     const updateOv = {
-      balance: Sequelize.literal(`balance - ${amount}`)
+      balance: Sequelize.literal(`balance + ${amount}`)
     };
 
     const channel = campaignWallet.Campaign.funded_with;
