@@ -1,7 +1,13 @@
 const {
   Message
 } = require("@droidsolutions-oss/amqp-ts");
+const {
+  Transaction
+} = require('../models');
 const { RabbitMq } = require("../libs");
+const {
+  generateTransactionRef, AclRoles
+} = require('../utils');
 const { CREATE_WALLET, VERIFY_FIAT_DEPOSIT, PROCESS_VENDOR_ORDER, FROM_NGO_TO_CAMPAIGN, PAYSTACK_DEPOSIT, TRANSFER_TO, PAY_FOR_PRODUCT, PAYSTACK_WITHDRAW, PAYSTACK_VENDOR_WITHDRAW, PAYSTACK_BENEFICIARY_WITHDRAW } = require("../constants/queues.constant");
 
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
@@ -81,22 +87,46 @@ class QueueService {
     )
   }
 
-  static fundBeneficiaryBankAccount (bankAccount, campaignWallet, userWallet, user, amount){
-    const payload = {bankAccount, campaignWallet, userWallet, user, amount}
+  static async fundBeneficiaryBankAccount (bankAccount, campaignWallet, userWallet, userId, amount){
+    
+
+  const transaction =  await Transaction.create({
+           amount: amount,
+            reference: generateTransactionRef(),
+            status: 'processing',
+            transaction_origin: 'wallet',
+            transaction_type: 'withdrawal',
+            BeneficiaryId: userId,
+            narration: 'Wallet withdrawal to bank account'
+         })
+    const payload = {bankAccount, campaignWallet, userWallet, userId, amount, transaction}
     fundBeneficiaryBankAccount.send(
       new Message(payload, {
         contentType: "application/json"
       })
     )
+    return transaction;
+    
   }
 
-  static fundVendorBankAccount (bankAccount,  userWallet, user, amount){
-    const payload = {bankAccount, userWallet, user, amount}
+  static async fundVendorBankAccount (bankAccount,  userWallet, userId, amount){
+    const transaction =  await Transaction.create({
+           amount: amount,
+            reference: generateTransactionRef(),
+            status: 'processing',
+            transaction_origin: 'wallet',
+            transaction_type: 'withdrawal',
+            BeneficiaryId: userId,
+            narration: 'Wallet withdrawal to bank account'
+         })
+    const payload = {bankAccount, userWallet, userId, amount,transaction}
     fundVendorBankAccount.send(
       new Message(payload, {
         contentType: "application/json"
       })
     )
+
+    return transaction
   }
 
   static payForProduct (vendor, beneficiary,campaignWallet, VendorWallet, BenWallet, product){

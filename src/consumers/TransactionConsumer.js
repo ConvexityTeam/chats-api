@@ -203,55 +203,46 @@ RabbitMq['default']
 
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {
 
-      const {bankAccount, campaignWallet, userWallet, user, amount} = msg.getContent();
-        await  BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount).then(async (mint)=> {
-       const transferFrom = await BlockchainService.transferFrom(campaignWallet.address, userWallet.address, userWallet.address, amount)
-        const pay =  await PaystackService.withdraw("wallet", amount, bankAccount.recipient_code, "spending")
+      const {bankAccount, campaignWallet, userWallet, userId, amount, transaction} = msg.getContent();
+      
+    const redeem =  await  BlockchainService.redeem(campaignWallet.address, campaignWallet.privateKey, amount)
+      if(redeem){
+         const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
+        if(ref){
+        const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")    
+        await Wallet.update({
+           balance: Sequelize.literal(`balance - ${amount}`)
+         },{where: {uuid: campaignWallet.uuid}})
          await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
-         },{where: {uuid: wallet.uuid}})
-
-         await Transaction.create({
-           amount: amount,
-            reference: generateTransactionRef(),
-            status: 'success',
-            transaction_origin: 'wallet',
-            transaction_type: 'withdrawal',
-            BeneficiaryId: user.id,
-            narration: 'Wallet withdrawal to bank account'
-         })
-        }).catch((error)=> {
-          console.log(error)
-        })
-
+         },{where: {uuid: userWallet.uuid}})
+         await Transaction.update({
+           status: 'success'
+          },{where: {uuid: transaction.uuid}})
+        }
+       
+      
+      }
+    
+       
         }).catch(()=> {
           console.log('RABBITMQ ERROR')
           
         })
 
         processVendorPaystackWithdrawal.activateConsumer(async msg => {
-          const {bankAccount, userWallet, user, amount} = msg.getContent();
+          const {bankAccount, userWallet, userId, amount, transaction} = msg.getContent();
+          
 
-          await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount).then(async ()=>{
-        const withdraw = await PaystackService.withdraw("wallet", amount, bankAccount.recipient_code, "spending")
-            if(withdraw){
+        const redeem =   await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
+        const withdraw = await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")
         await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
          },{where: {uuid: userWallet.uuid}})
 
-         await Transaction.create({
-           amount: amount,
-            reference: generateTransactionRef(),
-            status: 'success',
-            transaction_origin: 'wallet',
-            transaction_type: 'withdrawal',
-            VendorId:  user.id,
-            narration: 'Wallet withdrawal to bank account'
-         })
-            }
-          }).catch(error => {
-            console.log('REDEEM ERROR', error)
-          })
+         await Transaction.update({
+           status: 'success'
+          },{where: {uuid: transaction.uuid}})
         }).catch(error => {
           console.log('RABBITMQ ERROR', error)
         })

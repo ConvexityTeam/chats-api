@@ -3,7 +3,8 @@ const router = require('express').Router();
 const {
   Auth,
   VendorAuth,
-  VendorBeneficiaryAuth
+  VendorBeneficiaryAuth,
+  BeneficiaryAuth
 } = require("../middleware/auth");
 const UsersController = require("../controllers/UsersController");
 const {
@@ -15,8 +16,8 @@ const {
 
 // Refactored
 
-router.post('/account/:amount/withdraw/:campaignId',VendorBeneficiaryAuth, UsersController.beneficiaryWithdrawFromBankAccount)
-router.post('/account/:amount/withdraw',VendorAuth, UsersController.vendorWithdrawFromBankAccount)
+router.post('/account/:amount/withdraw/:accountno/:campaignId',BeneficiaryAuth, UsersController.beneficiaryWithdrawFromBankAccount)
+router.post('/account/:amount/withdraw/vendor/:accountno',VendorAuth, UsersController.vendorWithdrawFromBankAccount)
 
 router.post('/support', UsersController.createTicket)
 
