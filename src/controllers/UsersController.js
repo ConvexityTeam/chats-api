@@ -78,7 +78,6 @@ class UsersController {
   static async addBankAccount(req, res) {
     try {
       const data = SanitizeObject(req.body, ['account_number', 'bank_code']); 
-        
       try {
         const resolved = await PaystackService.resolveAccount(data.account_number, data.bank_code);
         data.account_name = resolved.account_name;
@@ -1273,7 +1272,7 @@ class UsersController {
   }
 
   static async beneficiaryWithdrawFromBankAccount(req, res){
-    const {amount, campaignId} = req.params;
+    const {amount, campaignId, accountno} = req.params;
     try{
      if (!Number(amount)) {
       Response.setError(400, "Please input a valid amount");
@@ -1283,7 +1282,11 @@ class UsersController {
       Response.setError(400, "Please input a valid campaign ID");
       return Response.send(res);
     }
-      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id}})
+    else if (!Number(accountno)) {
+      Response.setError(400, "Please input a valid campaign ID");
+      return Response.send(res);
+    }
+      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id, account_number: accountno}})
       const userWallet = await WalletService.findUserCampaignWallet(req.user.id,campaignId)
       const campaignWallet = await WalletService.findSingleWallet({CampaignId: campaignId})
       if(!bankAccount){
@@ -1319,19 +1322,18 @@ class UsersController {
 
 
   static async vendorWithdrawFromBankAccount(req, res){
-    const {amount, walletId} = req.params;
-
+    const {amount,accountno } = req.params;
     try{
      if (!Number(amount)) {
       Response.setError(400, "Please input a valid amount");
       return Response.send(res);
     }
-    if (typeof walletId !== 'string') {
-      Response.setError(400, "Please input a valid wallet ID");
+    if (!Number(accountno)) {
+      Response.setError(400, "Please input a valid account number");
       return Response.send(res);
     }
-      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id}})
-      const userWallet = await db.Wallet.findByPk(walletId);
+      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id, account_number: accountno}})
+      const userWallet = await db.Wallet.findOne({where: {UserId: req.user.id}});
       
       if(!bankAccount){
         Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Dos\'nt Have a Bank Account');
