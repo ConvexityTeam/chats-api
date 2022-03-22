@@ -31,7 +31,7 @@ class OrderController {
 
   static async completeOrder(req, res) {
     try {
-      const {reference} = req.params
+      const {reference, userwallet_id, campaignwallet_id} = req.params
       const data = await VendorService.getOrder({reference});
       if(!data) {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');
@@ -42,9 +42,9 @@ class OrderController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
         return Response.send(res)
       }
-      const beneficiaryWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId);
+      const beneficiaryWallet = await WalletService.findSingleWallet({uuid: userwallet_id, UserId: req.user.id});
       const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
-      const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId})
+      const campaignWallet = await WalletService.findSingleWallet({uuid: campaignwallet_id, CampaignId: data.order.CampaignId})
 
       if(!beneficiaryWallet) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
