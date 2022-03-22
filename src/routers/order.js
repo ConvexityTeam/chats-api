@@ -43,7 +43,7 @@ router.route('/:reference')
     OrderController.getOrderByReference
   )
 
-  router.route('/:reference/pay/:organisationId')
+  router.route('/:reference/pay')
     .post(
       BeneficiaryAuth,
       OrderValidator.CompleteOrder,
