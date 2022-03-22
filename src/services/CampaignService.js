@@ -359,6 +359,23 @@ class CampaignService {
       }]
     });
   }
+
+  static cash4work(id, campaignId) {
+    return User.findOne({
+      where: {id},
+      attributes: userConst.publicAttr,  
+      include: [{
+        model: Campaign, as: 'Campaigns',
+        where: {
+        type: 'cash-for-work',
+        id: campaignId
+      },
+      include: {model: Task, as: 'Jobs'}
+      }],
+    });
+  }
+
+
   static async getCampaignWallet(id, OrganisationId) {
     return Campaign.findOne({
       where: {

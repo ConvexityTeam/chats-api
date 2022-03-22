@@ -696,7 +696,6 @@ class CashForWorkController {
       const exist = await db.User.findOne({ where: {RoleId: AclRoles.Beneficiary, id: data.UserId}}); 
 
       if (exist) {
-
       const task = await db.Task.findByPk(data.TaskId);
       if(task && task.assigned != task.assignment_count){
         const TaskAssignment = await db.TaskAssignment.create({UserId: data.UserId, TaskId: data.TaskId})
@@ -919,6 +918,27 @@ static async evidence(req, res){
     }
   }
 
+
+  static async viewCash4WorkTask(req, res){
+    const {taskId} = req.body;
+
+    try {
+        const tasks = await CampaignService.cashForWorkCampaignByApprovedBeneficiary
+      if(tasks.length <= 0){
+        Response.setSuccess(200, "No Task Recieved", tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(200, "Task Recieved", tasks);
+      return Response.send(res);
+      
+
+         }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
+
   static async viewTaskUserSubmission(req, res){
     const {UserId} = req.body
     try {
@@ -1032,6 +1052,22 @@ static async viewSubmittedEvidence(req, res){
          }catch(error){
       console.log(error.message);
       util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
+
+  static async getAllCashForWorkTask (req, res){
+    const {campaignId} = req.params
+    try{
+      const tasks = await CampaignService.cash4work(req.user.id, campaignId)
+      if(!tasks){
+        Response.setError(404, `No task retrieved`, tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(404, `Cash for work task retrieved`, tasks);
+        return Response.send(res);
+    }catch(error){
+       util.setError(500, "Internal Server Error"+ error);
       return util.send(res);
     }
   }
