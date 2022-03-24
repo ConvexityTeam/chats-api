@@ -141,7 +141,7 @@ class AuthController {
       const RoleId = AclRoles.Beneficiary;
 
       
-        const {phone, email, country, state, coordinates} = req.body
+        const {phone, email, country, state, coordinates, device_imei} = req.body
         const files = req.file
         const rules = {
           email: 'email|required',
@@ -149,6 +149,7 @@ class AuthController {
           phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
           country: 'string|required',
           state: 'string|required',
+          device_imei: 'string|required'
         };
         
       const validation = new Validator(req.body, rules);
@@ -161,10 +162,15 @@ class AuthController {
         
         } 
           const userByEmail = await db.User.findOne({where: {email}})
+          const userDevice = await db.User.findOne({where: {device_imei}})
           if(userByEmail){
             Response.setError(400, "User With This Email Exist");
             return Response.send(res);
-        }else{
+        }if(userDevice){
+            Response.setError(400, "User With Device Exist");
+            return Response.send(res);
+        }
+        else{
       const password =  createHash(req.body.password);
 
       const  extension = req.file.mimetype.split('/').pop();
