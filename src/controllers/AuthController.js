@@ -181,7 +181,7 @@ class AuthController {
         "convexity-profile-images"
       )
 
-      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: JSON.stringify({country, state, coordinates})});
+      const user = await UserService.addUser({RoleId, phone, email, password, device_imei, profile_pic, location: JSON.stringify({country, state, coordinates})});
       if(user)
       QueueService.createWallet(user.id, 'user');
       Response.setSuccess(201, "Account Onboarded Successfully", user);
