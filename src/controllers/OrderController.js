@@ -44,7 +44,7 @@ class OrderController {
       }
       const beneficiaryWallet = await WalletService.findSingleWallet({uuid: userwallet_id, UserId: req.user.id});
       const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
-      const campaignWallet = await WalletService.findSingleWallet({uuid: campaignwallet_id, CampaignId: data.order.CampaignId})
+      const campaignWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
 
       if(!beneficiaryWallet) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
@@ -59,7 +59,7 @@ class OrderController {
         return Response.send(res)
       }
 
-      if(beneficiaryWallet.balance < data.total_cost) {
+      if(campaignWallet.balance < data.total_cost) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance.');
         return Response.send(res)
       }
