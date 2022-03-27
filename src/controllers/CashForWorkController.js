@@ -761,14 +761,13 @@ static async evidence(req, res){
           const task = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
           if (task) {
             const extension = req.file.mimetype.split('/').pop();
-
+            
         const url =  await uploadFile(
               files,
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
             )
-            if(url) {
-              await TaskAssignmentEvidence.create({
+              await db.TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
@@ -777,7 +776,6 @@ static async evidence(req, res){
               });
               Response.setSuccess(200, "Success Uploading  Task Evidence");
             return Response.send(res);
-            }
             
           } else {
             Response.setError(422, "Task Not Found");
@@ -820,7 +818,7 @@ static async evidence(req, res){
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
             ).then(async(url) => {
-            await  TaskAssignmentEvidence.create({
+            await  db.TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
@@ -872,7 +870,7 @@ static async evidence(req, res){
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
             ).then(async(url) => {
-            await  TaskAssignmentEvidence.create({
+            await  db.TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
