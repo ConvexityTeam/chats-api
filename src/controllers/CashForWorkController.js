@@ -15,6 +15,7 @@ const {
 const {
   AclRoles
 } = require('../utils');
+const { async } = require("regenerator-runtime");
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
 });
@@ -764,8 +765,8 @@ static async evidence(req, res){
               files,
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
-            ).then((url) => {
-              TaskAssignmentEvidence.create({
+            ).then(async(url) => {
+             await TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
@@ -818,8 +819,8 @@ static async evidence(req, res){
               files,
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
-            ).then((url) => {
-              TaskAssignmentEvidence.create({
+            ).then(async(url) => {
+            await  TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
@@ -870,8 +871,8 @@ static async evidence(req, res){
               files,
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
-            ).then((url) => {
-              TaskAssignmentEvidence.create({
+            ).then(async(url) => {
+            await  TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,

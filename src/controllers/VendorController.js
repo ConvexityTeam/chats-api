@@ -479,27 +479,14 @@ class VendorController {
   }
 
   static async vendorChart(req, res) {
-    const {UserId, period} = req.body;
-
-    const count = {};
+    const {period} = req.params;
     try {
-
-      const rules = {
-        UserId: "required|numeric",
-        period: "required",
-      };
-      const validation = new Validator(req.body, rules);
-      if (validation.fails()) {
-        util.setError(422, validation.errors);
-        return util.send(res);
-      }
-      const transactions = await VendorService.vendorChart(Number(UserId), period);
+      const transactions = await VendorService.vendorChart(req.user.id, period);
 
       if(transactions.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', transactions);
         return Response.send(res);
       }
-      
     
     const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
 

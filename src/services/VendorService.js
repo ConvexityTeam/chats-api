@@ -481,14 +481,12 @@ class VendorService {
         return Transaction.findAndCountAll({
           where: {
             VendorId,
-            is_approved: true,
             createdAt: {
                 [Op.gte]: period === 'daily' ? moment().subtract(1, 'days').toDate() : 
                 period === 'weekly' ? moment().subtract(7, 'days').toDate() : 
                 period === 'monthly' ? moment().subtract(1, 'months').toDate() :
                 period === 'yearly' ?  moment().subtract(1, 'years').toDate() : null
-              },
-    
+              }
           },
           include: [{
               model: Wallet,

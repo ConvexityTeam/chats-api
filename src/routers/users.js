@@ -17,7 +17,7 @@ const {
 // Refactored
 
 router.post('/account/:amount/withdraw/:accountno/:campaignId',BeneficiaryAuth, UsersController.beneficiaryWithdrawFromBankAccount)
-router.post('/account/:amount/withdraw/vendor/:accountno',VendorAuth, UsersController.vendorWithdrawFromBankAccount)
+router.post('/account/:amount/withdraw/:accountno',VendorAuth, UsersController.vendorWithdrawFromBankAccount)
 
 router.post('/support', UsersController.createTicket)
 
