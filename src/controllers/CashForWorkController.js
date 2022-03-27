@@ -761,24 +761,24 @@ static async evidence(req, res){
           const task = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
           if (task) {
             const extension = req.file.mimetype.split('/').pop();
-            await uploadFile(
+
+        const url =  await uploadFile(
               files,
               "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
               "convexity-progress-evidence"
-            ).then(async(url) => {
-             await TaskAssignmentEvidence.create({
+            )
+            if(url) {
+              await TaskAssignmentEvidence.create({
                 uploads: url,
                 TaskAssignmentId,
                 comment,
                 type,
                 source: 'beneficiary'
               });
-            }).catch((err)=> {
-              console.log(err)
-             
-            });
-            Response.setSuccess(200, "Success Uploading  Task Evidence");
+              Response.setSuccess(200, "Success Uploading  Task Evidence");
             return Response.send(res);
+            }
+            
           } else {
             Response.setError(422, "Task Not Found");
             return Response.send(res);

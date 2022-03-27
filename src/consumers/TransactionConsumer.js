@@ -236,7 +236,6 @@ RabbitMq['default']
 
         const redeem =   await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
         const withdraw = await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")
-        console.log(withdraw, 'withdraw')
         await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
          },{where: {uuid: userWallet.uuid}})
