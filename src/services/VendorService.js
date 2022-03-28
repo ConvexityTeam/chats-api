@@ -476,8 +476,6 @@ class VendorService {
         }
     }
     static async vendorChart(VendorId, period) {
-
-    
         return Transaction.findAndCountAll({
           where: {
             VendorId,
