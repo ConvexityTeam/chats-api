@@ -239,7 +239,6 @@ RabbitMq['default']
         await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
          },{where: {uuid: userWallet.uuid}})
-
          await Transaction.update({
            status: 'success'
           },{where: {uuid: transaction.uuid}})
