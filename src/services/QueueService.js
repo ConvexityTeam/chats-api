@@ -116,7 +116,7 @@ class QueueService {
             status: 'processing',
             transaction_origin: 'wallet',
             transaction_type: 'withdrawal',
-            BeneficiaryId: userId,
+            VendorId: userId,
             narration: 'Wallet withdrawal to bank account'
          })
     const payload = {bankAccount, userWallet, userId, amount,transaction}
