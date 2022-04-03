@@ -1288,7 +1288,7 @@ class UsersController {
     }
       const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id, account_number: accountno}})
       const userWallet = await WalletService.findUserCampaignWallet(req.user.id,campaignId)
-      const campaignWallet = await WalletService.findSingleWallet({CampaignId: campaignId})
+      const campaignWallet = await WalletService.findSingleWallet({CampaignId: campaignId, UserId: null})
       if(!bankAccount){
         Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Dos\'nt Have a Bank Account');
         return Response.send(res);

@@ -173,12 +173,12 @@ class WalletController {
 
   static async CampaignBalance(req, res) {
     const {campaign_id, organisation_id} = req.params
-
+    console.log(campaign_id, organisation_id,'campaign_id, organisation_id')
     try{
       const campaign = await CampaignService.getCampaignWallet(campaign_id, organisation_id)
       if(campaign){
-        const balance = campaign.Wallet.balance
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Balance Retrieved .', balance);
+        //const balance = campaign.Wallet.balance
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Balance Retrieved .', campaign);
       return Response.send(res);
       }
       Response.setSuccess(HttpStatusCode.STATUS_OK, `No Campaign with ID: ${campaign_id}`);
