@@ -25,7 +25,8 @@ const {
   Transaction,
   Wallet,
   BankAccount,
-  Campaign
+  Campaign,
+  Order
 } = require('../models');
 const {
   generateTransactionRef, AclRoles
@@ -135,7 +136,9 @@ RabbitMq['default']
 
           console.log('Insufficient wallet balance. Please fund organisation wallet.')
         }else{
+
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
+   console.log(org,'org')
    await Campaign.update({
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
@@ -178,7 +181,7 @@ RabbitMq['default']
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
          const  ben =  await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
-        
+        console.log(ben)
       })
       msg.ack()
     }
@@ -204,11 +207,13 @@ RabbitMq['default']
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {
 
       const {bankAccount, campaignWallet, userWallet, userId, amount, transaction} = msg.getContent();
-      
+
     const redeem =  await  BlockchainService.redeem(campaignWallet.address, campaignWallet.privateKey, amount)
-      if(redeem){
+    if(redeem){
+      console.log(campaignWallet, 'campaignWallet', userWallet, 'userWallet')
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
-        if(ref){
+        
+         if(ref){
         const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")    
         await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
@@ -232,8 +237,6 @@ RabbitMq['default']
 
         processVendorPaystackWithdrawal.activateConsumer(async msg => {
           const {bankAccount, userWallet, userId, amount, transaction} = msg.getContent();
-          
-
         const redeem =   await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
         const withdraw = await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")
         await Wallet.update({
@@ -245,7 +248,6 @@ RabbitMq['default']
         }).catch(error => {
           console.log('RABBITMQ ERROR', error)
         })
-
 
     payForProduct.activateConsumer(async msg => {
       const {vendor, beneficiary, campaignWallet, VendorWallet, BenWallet, product} = msg.getContent();
@@ -287,40 +289,23 @@ RabbitMq['default']
     processVendorOrderQueue.activateConsumer(async msg => {
         const {
       beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount} = msg.getContent();
-
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
-         const updateOp = {
-      balance: Sequelize.literal(`balance - ${amount}`)
-    };
-    const updateOv = {
-      balance: Sequelize.literal(`balance + ${amount}`)
-    };
 
-    const channel = campaignWallet.Campaign.funded_with;
+      Order.update({status: 'confirmed'},{where: { reference: order.reference} });
 
-    if (channel == 'fiat') {
-      updateOp['fiat_balance'] = Sequelize.literal(`fiat_balance - ${amount}`)
-    }
-    if (channel == 'crypto') {
-      updateOp['crypto_balance'] = Sequelize.literal(`crypto_balance - ${amount}`)
-    }
+    await  Wallet.update({
+            balance: Sequelize.literal(`balance - ${amount}`)
+          },{where: {uuid: beneficiaryWallet.uuid} })
 
-    if (channel == 'fiat') {
-      updateOv['fiat_balance'] = Sequelize.literal(`fiat_balance + ${amount}`)
-    }
-
-    if (channel == 'crypto') {
-      updateOv['crypto_balance'] = Sequelize.literal(`crypto_balance + ${amount}`)
-    }
-
-    await  Wallet.update(updateOp,{where: {uuid: beneficiaryWallet.uuid} })
-
-          await  Wallet.update(updateOv,{where: {uuid: vendorWallet.uuid} });
-          
-          await  Wallet.update(updateOp,{where: {uuid: campaignWallet.uuid} })
+          await  Wallet.update({
+            balance: Sequelize.literal(`balance + ${amount}`)
+          },{where: {uuid: vendorWallet.uuid} })
 
 
-                order.update({status: 'confirmed'});
+          await  Wallet.update({
+            balance: Sequelize.literal(`balance - ${amount}`)
+          },{where: {uuid: campaignWallet.uuid} })
+                
                })
       .then(_ => {
         console.log(`Running Process Vendor Order Queue`)

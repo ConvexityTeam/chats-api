@@ -33,18 +33,20 @@ class OrderController {
     try {
       const {reference, userwallet_id, campaignwallet_id} = req.params
       const data = await VendorService.getOrder({reference});
-      if(!data) {
-        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');
-        return Response.send(res)
-      }
+      // if(!data) {
+      //   Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');
+      //   return Response.send(res)
+      // }
 
-      if(data.order.status !== 'pending') {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
-        return Response.send(res)
-      }
-      const beneficiaryWallet = await WalletService.findSingleWallet({uuid: userwallet_id, UserId: req.user.id});
+      // if(data.order.status !== 'pending') {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
+      //   return Response.send(res)
+      // }
+
+
+      const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId, UserId: null})
       const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
-      const campaignWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
+      const beneficiaryWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
 
       if(!beneficiaryWallet) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
