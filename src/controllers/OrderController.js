@@ -33,15 +33,15 @@ class OrderController {
     try {
       const {reference, userwallet_id, campaignwallet_id} = req.params
       const data = await VendorService.getOrder({reference});
-      // if(!data) {
-      //   Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');
-      //   return Response.send(res)
-      // }
+      if(!data) {
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');
+        return Response.send(res)
+      }
 
-      // if(data.order.status !== 'pending') {
-      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
-      //   return Response.send(res)
-      // }
+      if(data.order.status !== 'pending') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
+        return Response.send(res)
+      }
 
 
       const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId, UserId: null})
