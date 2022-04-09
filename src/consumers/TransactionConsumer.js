@@ -204,7 +204,6 @@ RabbitMq['default']
           }); 
         }).catch(()=> {
           
-          
         })
       })
 
