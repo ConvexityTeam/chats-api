@@ -244,14 +244,14 @@ class CampaignController {
       const organisation = await OrganisationService.getOrganisationWallet(organisation_id);
       const OrgWallet = organisation.Wallet
 
-      if(campaign.status == 'completed') {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
-        return Response.send(res);
-      }
-      if(campaign.status == 'ongoing') {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already ongoing');
-        return Response.send(res);
-      }
+      // if(campaign.status == 'completed') {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
+      //   return Response.send(res);
+      // }
+      // if(campaign.status == 'ongoing') {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already ongoing');
+      //   return Response.send(res);
+      // }
 
       if((campaign.budget > OrgWallet.balance) || (OrgWallet.balance == 0)) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');

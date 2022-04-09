@@ -401,8 +401,6 @@ class OrganisationController {
 
       const OrgWallet = await OrganisationService.getOrganisationWallet(OrganisationId);
 
-      console.log(OrgWallet, 'OrgWallet');
-
         if((data.budget > OrgWallet.balance) || (OrgWallet.balance == 0)) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient Org wallet balance. Try reducing Budget');
         return Response.send(res);

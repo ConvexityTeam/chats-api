@@ -1287,8 +1287,8 @@ class UsersController {
       return Response.send(res);
     }
       const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id, account_number: accountno}})
-      const userWallet = await WalletService.findUserCampaignWallet(req.user.id,campaignId)
-      const campaignWallet = await WalletService.findSingleWallet({CampaignId: campaignId, UserId: null})
+      const campaignWallet = await WalletService.findUserCampaignWallet(req.user.id,campaignId)
+      const userWallet = await WalletService.findSingleWallet({CampaignId: null, UserId: req.user.id})
       if(!bankAccount){
         Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Dos\'nt Have a Bank Account');
         return Response.send(res);
@@ -1301,11 +1301,7 @@ class UsersController {
         Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign Wallet Not Found');
         return Response.send(res);
       }
-      if(!userWallet.balance > campaignWallet.balance){
-        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Insufficient Fund');
-        return Response.send(res);
-      }
-      if(userWallet.balance < amount){
+      if(campaignWallet.balance < amount){
         Response.setSuccess(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient Wallet Balance');
         return Response.send(res);
       }

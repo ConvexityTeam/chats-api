@@ -173,15 +173,16 @@ RabbitMq['default']
           const mergeWallet = [].concat.apply([], wallet);
           
           const budget = Number(campaign.budget) / beneficiaries.length
-          mergeWallet.map(async(wal)=> {    
-            const uuid =   wal.uuid
-           const address = wal.address
+          for(let i = 0; i<mergeWallet.length; i++){
+            const uuid =   mergeWallet[i].uuid
+           const address = mergeWallet[i].address
+          const  ben =  await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
            await  Wallet.update({
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
-         const  ben =  await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
-        console.log(ben)
-      })
+        console.log(ben, [i])
+          }
+          
       msg.ack()
     }
       
