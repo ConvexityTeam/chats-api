@@ -181,8 +181,7 @@ RabbitMq['default']
           },{where: {uuid}})
           }
       msg.ack()
-    }
-      
+    } 
     }).catch(error => {
               console.log(error.message, '....///.....');
               // msg.nack();
