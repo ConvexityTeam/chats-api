@@ -192,19 +192,15 @@ RabbitMq['default']
       processPaystack.activateConsumer(async(msg) => {
 
         const {address, amount} = msg.getContent();
-
-        BlockchainService.mintToken(address, amount).then(async()=> {
-        
+     const paystack_deposit = await  BlockchainService.mintToken(address, amount)      
         await Wallet.update({
             balance: Sequelize.literal(`balance + ${amount}`)
           }, {
             where: {
             address
-            }
-          }); 
-        }).catch(()=> {
+            }})
           
-        })
+        }).catch(()=> {
       })
 
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {

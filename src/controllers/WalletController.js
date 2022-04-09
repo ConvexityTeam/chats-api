@@ -130,7 +130,6 @@ class WalletController {
       if(!wallet){
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Oganisation wallet not found.');
       }
-    
       const response = await PaystackService.buildDepositData(organisation, data.amount, data.currency);
       QueueService.createPayStack(wallet.address, data.amount)
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Deposit data generated.', response);
