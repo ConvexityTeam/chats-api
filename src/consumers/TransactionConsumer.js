@@ -180,7 +180,6 @@ RabbitMq['default']
            await  Wallet.update({
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
-        console.log(ben, [i])
           }
           
       msg.ack()
