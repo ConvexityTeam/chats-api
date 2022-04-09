@@ -1286,32 +1286,32 @@ class UsersController {
       Response.setError(400, "Please input a valid campaign ID");
       return Response.send(res);
     }
-      //const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id, account_number: accountno}})
+      const bankAccount = await db.BankAccount.findOne({where: {UserId: req.user.id, account_number: accountno}})
       const userWallet = await WalletService.findUserCampaignWallet(req.user.id,campaignId)
       const campaignWallet = await WalletService.findSingleWallet({CampaignId: campaignId, UserId: null})
-      // if(!bankAccount){
-      //   Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Dos\'nt Have a Bank Account');
-      //   return Response.send(res);
-      // }
-      // if(!userWallet){
-      //   Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Wallet Not Found');
-      //   return Response.send(res);
-      // }
-      // if(!campaignWallet){
-      //   Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign Wallet Not Found');
-      //   return Response.send(res);
-      // }
-      // if(!userWallet.balance > campaignWallet.balance){
-      //   Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Insufficient Fund');
-      //   return Response.send(res);
-      // }
-      // if(userWallet.balance < amount){
-      //   Response.setSuccess(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient Wallet Balance');
-      //   return Response.send(res);
-      // }
+      if(!bankAccount){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Dos\'nt Have a Bank Account');
+        return Response.send(res);
+      }
+      if(!userWallet){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'User Wallet Not Found');
+        return Response.send(res);
+      }
+      if(!campaignWallet){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign Wallet Not Found');
+        return Response.send(res);
+      }
+      if(!userWallet.balance > campaignWallet.balance){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Insufficient Fund');
+        return Response.send(res);
+      }
+      if(userWallet.balance < amount){
+        Response.setSuccess(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient Wallet Balance');
+        return Response.send(res);
+      }
       
-      // const transaction = await QueueService.fundBeneficiaryBankAccount(bankAccount, campaignWallet, userWallet, req.user.id, amount);
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction SuccessFull',{campaignWallet, userWallet});
+      const transaction = await QueueService.fundBeneficiaryBankAccount(bankAccount, campaignWallet, userWallet, req.user.id, amount);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction SuccessFull',transaction);
         return Response.send(res);
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+error);
