@@ -168,7 +168,6 @@ RabbitMq['default']
             OrganisationId: campaign.OrganisationId,
             narration: 'Approve Campaign Funding'
           });
-          
           const wallet = beneficiaries.map((user)=> user.User.Wallets)
           const mergeWallet = [].concat.apply([], wallet);
           
@@ -181,7 +180,6 @@ RabbitMq['default']
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
           }
-          
       msg.ack()
     }
       
