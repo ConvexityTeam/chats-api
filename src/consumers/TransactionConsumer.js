@@ -137,7 +137,7 @@ RabbitMq['default']
         }else{
 
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
-   console.log(org,'org')
+
    await Campaign.update({
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
@@ -207,7 +207,7 @@ RabbitMq['default']
 
     const redeem =  await  BlockchainService.redeem(campaignWallet.address, campaignWallet.privateKey, amount)
     if(redeem){
-      console.log(campaignWallet, 'campaignWallet', userWallet, 'userWallet')
+
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
         
          if(ref){
