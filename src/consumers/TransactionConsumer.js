@@ -101,7 +101,6 @@ RabbitMq['default']
                   reference,
                   amount
                 });
-
                 await wallet.update({
                   balance: Sequelize.literal(`balance + ${amount}`),
                   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
@@ -193,15 +192,15 @@ RabbitMq['default']
       processPaystack.activateConsumer(async(msg) => {
 
         const {address, amount} = msg.getContent();
-
-        BlockchainService.mintToken(address, amount).then(()=> {
-          
-        
+     const paystack_deposit = await  BlockchainService.mintToken(address, amount)      
+        await Wallet.update({
+            balance: Sequelize.literal(`balance + ${amount}`)
+          }, {
+            where: {
+            address
+            }})
           
         }).catch(()=> {
-          
-          
-        })
       })
 
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {

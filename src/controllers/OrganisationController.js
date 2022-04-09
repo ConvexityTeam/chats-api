@@ -526,9 +526,6 @@ class OrganisationController {
       const product = await db.Product.findAll()
       const products = await ProductService.findCampaignProducts(campaignId);
 
-      
-
-
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Products.', products);
       return Response.send(res)
     } catch (error) {

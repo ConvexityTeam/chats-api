@@ -21,7 +21,6 @@ RabbitMq['default']
     createWalletQueue.activateConsumer(async msg => {
       
         const content = msg.getContent();
-        console.log(content,'content')
         Promise.all([
           BlockchainService.createAccountWallet(),
           BantuService.createPair()
