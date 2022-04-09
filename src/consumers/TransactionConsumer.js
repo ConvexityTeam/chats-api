@@ -101,7 +101,6 @@ RabbitMq['default']
                   reference,
                   amount
                 });
-
                 await wallet.update({
                   balance: Sequelize.literal(`balance + ${amount}`),
                   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
@@ -194,10 +193,15 @@ RabbitMq['default']
 
         const {address, amount} = msg.getContent();
 
-        BlockchainService.mintToken(address, amount).then(()=> {
-          
+        BlockchainService.mintToken(address, amount).then(async()=> {
         
-          
+        await Wallet.update({
+            balance: Sequelize.literal(`balance + ${amount}`)
+          }, {
+            where: {
+            address
+            }
+          }); 
         }).catch(()=> {
           
           
