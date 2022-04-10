@@ -203,14 +203,13 @@ RabbitMq['default']
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {
 
       const {bankAccount, campaignWallet, userWallet, userId, amount, transaction} = msg.getContent();
-
     const redeem =  await  BlockchainService.redeem(campaignWallet.address, campaignWallet.privateKey, amount)
     if(redeem){
 
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
         
          if(ref){
-        const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")    
+        const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending") 
         await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
          },{where: {uuid: campaignWallet.uuid}})
