@@ -209,8 +209,7 @@ RabbitMq['default']
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
         
          if(ref){
-        const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")    
-        console.log(pay, 'pay')
+        const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending") 
         await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
          },{where: {uuid: campaignWallet.uuid}})
