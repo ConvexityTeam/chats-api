@@ -137,7 +137,6 @@ RabbitMq['default']
         }else{
 
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
-
    await Campaign.update({
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
@@ -176,7 +175,7 @@ RabbitMq['default']
             const uuid =   mergeWallet[i].uuid
            const address = mergeWallet[i].address
           const  ben =  await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
-           await  Wallet.update({
+          await  Wallet.update({
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
           }
@@ -203,12 +202,14 @@ RabbitMq['default']
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {
 
       const {bankAccount, campaignWallet, userWallet, userId, amount, transaction} = msg.getContent();
-    const redeem =  await  BlockchainService.redeem(campaignWallet.address, campaignWallet.privateKey, amount)
-    if(redeem){
+    //
+    //if(redeem){
 
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
         
          if(ref){
+        const redeem = await  BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
+        if(redeem){
         const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending") 
         await Wallet.update({
            balance: Sequelize.literal(`balance - ${amount}`)
@@ -220,9 +221,9 @@ RabbitMq['default']
            status: 'success'
           },{where: {uuid: transaction.uuid}})
         }
-       
+         }
       
-      }
+      //}
     
        
         }).catch(()=> {
@@ -248,6 +249,7 @@ RabbitMq['default']
       const {vendor, beneficiary, campaignWallet, VendorWallet, BenWallet, product} = msg.getContent();
        await   BlockchainService.transferFrom(campaignWallet.address, VendorWallet.address,BenWallet.address, BenWallet.privateKey,  product.cost).then(async()=> {
 
+        
         await  Wallet.update({
             balance: Sequelize.literal(`balance - ${product.cost}`)
           },{where: {uuid: BenWallet.uuid} })
