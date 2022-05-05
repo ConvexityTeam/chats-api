@@ -1,5 +1,6 @@
 const {
-  FundAccount
+  FundAccount,
+  Wallet
 } = require("../models");
 const QueueService = require('./QueueService');
 
@@ -19,6 +20,10 @@ class WebhookService {
         });
         record.dataValues.approved = true;
         QueueService.verifyFiatDeposit(record);
+        const isOrganisation =  await Wallet.findOne({where: {OrganisationId: record.OrganisationId}})
+       if(isOrganisation){
+          QueueService.createPayStack(isOrganisation.address, record.amount)
+       }
         return record;
       }
       return null;
