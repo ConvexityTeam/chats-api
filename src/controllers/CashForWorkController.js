@@ -818,9 +818,8 @@ static async evidence(req, res){
             return Response.send(res);
               }
     }catch(error){
-      console.log(error.message);
-      util.setError(500, "Internal Server Error"+ error);
-      return util.send(res);
+      Response.setError(500, "Internal Server Error.test"+ error);
+      return Response.send(res);
     }
     
   }
