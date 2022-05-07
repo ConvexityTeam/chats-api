@@ -737,23 +737,12 @@ static async evidence(req, res){
   }
 
 }
+/*
 
-
-
-  static async uploadProgreeEvidenceByBeneficiary(req, res){
-    try {
-      const {TaskAssignmentId, comment, type} = req.body
-      const files = req.file
-      const rules = {
-        TaskAssignmentId: "required|numeric",
-        comment: "required|string",
-        type: "required|string"
-      };
-      const validation = new Validator(req.body, rules);
-      if (validation.fails()) {
-        Response.setError(422, validation.errors);
-        return Response.send(res);
-      } else {
+const {TaskAssignmentId, comment, type} = req.body
+      
+      
+       else {
         if (!files) {
           Response.setError(422, "Task Assignment Evidence Required");
           return Response.send(res);
@@ -783,6 +772,50 @@ static async evidence(req, res){
           }
         }
       }
+*/
+
+
+  static async uploadProgreeEvidenceByBeneficiary(req, res){
+    const files = req.file
+      const rules = {
+        TaskAssignmentId: "required|numeric",
+        comment: "required|string",
+        type: "required|string"
+      };
+
+    try {
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }
+      if (!files) {
+          Response.setError(422, "Please upload file evidence");
+          return Response.send(res);
+        }
+       const isTaskExist = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
+       if(!isTaskExist){
+         Response.setError(422, "Task Task Assignment Not Found");
+        return Response.send(res);
+       }
+       const extension = req.file.mimetype.split('/').pop();
+            
+        const url =  await uploadFile(
+              files,
+              "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
+              "convexity-progress-evidence"
+            )
+         const newEvidence =  await db.TaskAssignmentEvidence.create({
+                uploads: url,
+                TaskAssignmentId,
+                comment,
+                type,
+                source: 'beneficiary'
+              });
+              if(newEvidence){
+              Response.setSuccess(200, "Success Uploading  Task Evidence");
+            return Response.send(res);
+              }
     }catch(error){
       console.log(error.message);
       util.setError(500, "Internal Server Error"+ error);
