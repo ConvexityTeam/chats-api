@@ -219,6 +219,8 @@ class WalletController {
     }
     return Response.send(res);
   }
+
+  
 }
 
 module.exports = WalletController;
