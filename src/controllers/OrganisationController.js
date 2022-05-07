@@ -32,7 +32,8 @@ const {
   OrganisationService,
   BeneficiaryService,
   VendorService,
-  ProductService
+  ProductService,
+  WalletService
 } = require("../services");
 const AwsUploadService = require("../services/AwsUploadService");
 
@@ -1275,6 +1276,56 @@ class OrganisationController {
       return Response.send(res);
     }
 
+  }
+
+
+  static async record (req, res){
+    const organisationId = req.user.id;
+    const param = req.params.param
+
+    function sum(value, param){
+      const sum = value.reduce((accumulator, curValue) => accumulator + curValue, 0)
+      Response.setSuccess(200, `${param}`, sum);
+      return Response.send(res);
+    }
+    
+    try{
+      const isOrganisationCamp = await CampaignService.getAllCampaigns({OrganisationId: organisationId, is_funded: true})
+      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(organisationId)
+   function getDifference() {
+  return isOrganisationCampWallet.filter(wallet => {
+    return isOrganisationCamp.some(campaign => {
+      return wallet.CampaignId === campaign.id;
+    });
+  });
+}
+
+      //campaign budget
+      switch(param) {
+    case 'campaign_budget':  
+         const budget = isOrganisationCamp.map(val => val.budget)
+          sum(budget, param)
+        break;
+    case 'amount_disbursed':  
+        //amount disbursed
+      const amountDisbursed = isOrganisationCamp.map(val => val.amount_disbursed)
+      sum(amountDisbursed, param)
+        break;
+
+    case 'campaign_balance':
+         const balance = getDifference().map(val => val.balance)
+        sum(balance, param)
+
+        break;
+
+    default:
+        // body of default
+}    
+    }catch(error){
+      console.log(error);
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
   }
 }
 
