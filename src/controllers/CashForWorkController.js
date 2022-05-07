@@ -739,7 +739,7 @@ static async evidence(req, res){
 }
 /*
 
-const {TaskAssignmentId, comment, type} = req.body
+
       
       
        else {
@@ -776,6 +776,7 @@ const {TaskAssignmentId, comment, type} = req.body
 
 
   static async uploadProgreeEvidenceByBeneficiary(req, res){
+    const {TaskAssignmentId, comment, type} = req.body
     const files = req.file
       const rules = {
         TaskAssignmentId: "required|numeric",
