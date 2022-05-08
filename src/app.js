@@ -26,6 +26,7 @@ const marketRouter = require('./routers/market');
 const utilRouter = require('./routers/utils');
 const orderRouter = require('./routers/order');
 const appRouter = require('./routers/app');
+const productRouter = require('./routers/product');
 
 
 const app = express();
@@ -57,7 +58,7 @@ app.use('/v1/tasks', taskRouter);
 app.use('/v1/orders', orderRouter);
 app.use('/v1/utils', utilRouter);
 app.use('/v1/app', appRouter);
-
+app.use('/v1/products', productRouter);
 app.get("/", (req, res) => {
   try {
     Response.setSuccess(HttpStatusCode.STATUS_OK, "Welcome to CHATS App ");

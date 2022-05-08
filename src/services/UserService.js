@@ -18,7 +18,9 @@ const {
 class UserService {
     static async getAllUsers() {
         try {
-            return await User.findAll();
+            return await User.findAll({
+                attributes: userConst.publicAttr
+            });
         } catch (error) {
             throw error;
         }

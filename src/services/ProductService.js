@@ -44,6 +44,14 @@ class ProductService {
     });
 }
 
+static findCampaignProduct(CampaignId, productId) {
+    return Product.findOne({
+      where: {CampaignId, productId},
+      include: [{model: CampaignVendor, as: 'ProductVendors',
+    }]
+    });
+}
+
   static findProductByVendorId(id, vendorId, extraClause = null) {
     return Product.findOne({
       where: {
