@@ -522,8 +522,16 @@ class OrganisationController {
   static async getCampaignProducts(req, res) {
     try {
       const campaignId = req.params.campaign_id;
-      const product = await db.Product.findAll()
       const products = await ProductService.findCampaignProducts(campaignId);
+      const user = await UserService.getAllUsers()
+      
+
+  products.forEach((product) => {
+    product.ProductVendors.forEach((data) => {
+      var filteredKeywords = user.filter((user) => user.id === data.VendorId);
+        data.dataValues.vendor = filteredKeywords[0]
+    });
+});
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Products.', products);
       return Response.send(res)
@@ -533,6 +541,8 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+
+  
 
   static async getCampaignBeneficiaries(req, res) {
     try {

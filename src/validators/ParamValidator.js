@@ -63,6 +63,15 @@ class ParamValidator extends BaseValidator {
     this.validate
   ]
 
+  static ProductId = [
+    param('productId')
+    .notEmpty()
+    .withMessage('Product ID parameter is required.')
+    .isAlphanumeric()
+    .withMessage('Product ID parameter must be numeric'),
+    this.validate
+  ]
+
   static CampaignIdOptional = [
     param('campaign_id')
     .optional({checkFalsy: true})
