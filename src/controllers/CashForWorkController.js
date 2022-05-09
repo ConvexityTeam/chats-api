@@ -799,24 +799,27 @@ static async evidence(req, res){
          Response.setError(422, "Task Task Assignment Not Found");
         return Response.send(res);
        }
-       const extension = req.file.mimetype.split('/').pop();
-            
+       
+        const  extension = req.file.mimetype.split('/').pop();
         const url =  await uploadFile(
               files,
-              "u-" + environ + "-" + TaskAssignmentId + "-i." + extension,
+              "u-"+environ+"-"+TaskAssignmentId+"-i." + extension,
               "convexity-progress-evidence"
             )
-         const newEvidence =  await db.TaskAssignmentEvidence.create({
-                uploads: url,
+            
+         await db.TaskAssignmentEvidence.create({
+                uploads: [url],
                 TaskAssignmentId,
                 comment,
                 type,
                 source: 'beneficiary'
               });
-              if(newEvidence){
-              Response.setSuccess(200, "Success Uploading  Task Evidence");
+            await db.TaskAssignment.update({
+        uploaded_evidence: true
+      },{where:{UserId: isTaskExist.UserId}})
+            Response.setSuccess(200, "Success Uploading  Task Evidence");
             return Response.send(res);
-              }
+              
     }catch(error){
       Response.setError(500, "Internal Server Error.test"+ error);
       return Response.send(res);
@@ -852,7 +855,7 @@ static async evidence(req, res){
               "convexity-progress-evidence"
             ).then(async(url) => {
             await  db.TaskAssignmentEvidence.create({
-                uploads: url,
+                uploads: [url],
                 TaskAssignmentId,
                 comment,
                 type,
@@ -904,7 +907,7 @@ static async evidence(req, res){
               "convexity-progress-evidence"
             ).then(async(url) => {
             await  db.TaskAssignmentEvidence.create({
-                uploads: url,
+                uploads: [url],
                 TaskAssignmentId,
                 comment,
                 type,

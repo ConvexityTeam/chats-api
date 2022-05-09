@@ -478,6 +478,7 @@ class AuthController {
                             QueueService.createWallet(user.id, 'user', fields.campaign);
                           });
                       }
+            
                       Response.setSuccess(
                         201,
                         "Account Onboarded Successfully",
