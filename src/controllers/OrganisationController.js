@@ -1310,7 +1310,6 @@ class OrganisationController {
   });
 }
 
-
 const campaign_budget = isOrganisationCamp.map(val => val.budget).reduce((accumulator, curValue) => accumulator + curValue, 0)
 const amount_disbursed = isOrganisationCamp.map(val => val.amount_disbursed).reduce((accumulator, curValue) => accumulator + curValue, 0)
 const balance = getDifference().map(val => val.balance).reduce((accumulator, curValue) => accumulator + curValue, 0)
