@@ -30,8 +30,10 @@ class SmsService {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await this.httpService.post('/sms/send', data);
+        console.log('sms sent')
         resolve(response.data);
       } catch (error) {
+        console.log('sms error')
         reject(error)
       }
     });

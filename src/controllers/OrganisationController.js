@@ -524,15 +524,20 @@ class OrganisationController {
       const campaignId = req.params.campaign_id;
       const products = await ProductService.findCampaignProducts(campaignId);
       const user = await UserService.getAllUsers()
+      const campaign = await db.Campaign.findOne({where:{id: campaignId}})
       
 
   products.forEach((product) => {
+    product.dataValues.campaign_status = campaign.status
     product.ProductVendors.forEach((data) => {
       var filteredKeywords = user.filter((user) => user.id === data.VendorId);
+      
         data.dataValues.vendor = filteredKeywords[0]
-        
     });
 });
+
+
+
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Products.', products);
       return Response.send(res)
@@ -1292,13 +1297,6 @@ class OrganisationController {
 
   static async record (req, res){
     const organisationId = req.user.id;
-    const param = req.params.param
-
-    function sum(value, param){
-      const sum = value.reduce((accumulator, curValue) => accumulator + curValue, 0)
-      Response.setSuccess(200, `${param}`, sum);
-      return Response.send(res);
-    }
     
     try{
       const isOrganisationCamp = await CampaignService.getAllCampaigns({OrganisationId: organisationId, is_funded: true})
@@ -1311,27 +1309,13 @@ class OrganisationController {
   });
 }
 
-      //campaign budget
-      switch(param) {
-    case 'campaign_budget':  
-         const budget = isOrganisationCamp.map(val => val.budget)
-          sum(budget, param)
-        break;
-    case 'amount_disbursed':  
-        //amount disbursed
-      const amountDisbursed = isOrganisationCamp.map(val => val.amount_disbursed)
-      sum(amountDisbursed, param)
-        break;
+const campaign_budget = isOrganisationCamp.map(val => val.budget).reduce((accumulator, curValue) => accumulator + curValue, 0)
+const amount_disbursed = isOrganisationCamp.map(val => val.amount_disbursed).reduce((accumulator, curValue) => accumulator + curValue, 0)
+const balance = getDifference().map(val => val.balance).reduce((accumulator, curValue) => accumulator + curValue, 0)
+      Response.setSuccess(200,  'transaction', {campaign_budget, amount_disbursed, balance});
+      return Response.send(res);
 
-    case 'campaign_balance':
-         const balance = getDifference().map(val => val.balance)
-        sum(balance, param)
 
-        break;
-
-    default:
-        // body of default
-}    
     }catch(error){
       console.log(error);
       Response.setError(500, `Internal server error. Contact support.`);

@@ -3,7 +3,7 @@ var bcrypt = require("bcryptjs");
 const moment = require('moment')
 const util = require("../libs/Utils");
 const {
-  VendorService, CampaignService
+  VendorService, CampaignService, UserService
 } = require("../services");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
@@ -490,15 +490,6 @@ class VendorController {
     
     const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
 
-    // for (const element of periods) {
-    //   if (count[element]) {
-    //     count[element] += 1;
-    //   } else {
-    //     count[element] = 1;
-    //   }
-    // }
-
-     
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Recieved.', {periods, transactions});
       return Response.send(res);
       
@@ -508,6 +499,35 @@ class VendorController {
       return Response.send(res);
     }
   }
+
+  static async verifySMStoken(req, res){
+    const token = req.params.smstoken
+    let smsToken = {}
+    try{
+      const isVerify = await db.VoucherToken.findOne({where: {token}})
+      
+      if(!isVerify) {
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'token not valid');
+      return Response.send(res);
+      }
+      const campaign = await CampaignService.getCampaignById(isVerify.campaignId)
+     if(campaign.status == 'completed') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
+        return Response.send(res);
+      }
+      const beneficiary = await UserService.findBeneficiary(isVerify.beneficiaryId)
+      smsToken.CampaignId = campaign.id
+      smsToken.Campaign_title = campaign.title
+      smsToken.Approve_to_spend = isVerify.amount
+      smsToken.Beneficiary = beneficiary
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Recieved.', smsToken);
+      return Response.send(res);
+    }catch(error){
+
+    }
+  }
+  
 }
 
 module.exports = VendorController;

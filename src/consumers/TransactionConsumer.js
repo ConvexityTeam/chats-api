@@ -215,7 +215,6 @@ RabbitMq['default']
             })
             istoken = false
           }
-          console.log('done')
           }
       msg.ack()
     } 
@@ -327,7 +326,7 @@ RabbitMq['default']
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
 
       Order.update({status: 'confirmed'},{where: { reference: order.reference} });
-
+          
     await  Wallet.update({
             balance: Sequelize.literal(`balance - ${amount}`)
           },{where: {uuid: beneficiaryWallet.uuid} })
@@ -339,9 +338,15 @@ RabbitMq['default']
 
           await  Wallet.update({
             balance: Sequelize.literal(`balance - ${amount}`)
-          },{where: {uuid: campaignWallet.uuid} })
-                
+          },{where: {uuid: campaignWallet.uuid} }) 
+          
+            await VoucherToken.updat({
+              amount: Sequelize.literal(`balance - ${amount}`)
+            },{where:{campaignId: campaignWallet.CampaignId, beneficiaryId: beneficiaryWallet.UserId}})
+       
                })
+               
+               
       .then(_ => {
         console.log(`Running Process Vendor Order Queue`)
       });
