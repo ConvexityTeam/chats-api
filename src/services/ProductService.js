@@ -46,7 +46,7 @@ class ProductService {
 
 static findCampaignProduct(CampaignId, productId) {
     return Product.findOne({
-      where: {CampaignId, productId},
+      where: {CampaignId, id: productId},
       include: [{model: CampaignVendor, as: 'ProductVendors',
     }]
     });
