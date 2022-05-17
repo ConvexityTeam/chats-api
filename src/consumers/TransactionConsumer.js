@@ -17,7 +17,8 @@ const {
   QueueService,
   BlockchainService,
   DepositService,
-  PaystackService
+  PaystackService,
+  SmsService
 } = require('../services');
 
 const {
@@ -25,10 +26,13 @@ const {
   Transaction,
   Wallet,
   BankAccount,
+  VoucherToken,
   Campaign,
   Order
 } = require('../models');
 const {
+  GenearteSMSToken,
+generateQrcodeURL,
   generateTransactionRef, AclRoles
 } = require('../utils');
 
@@ -129,13 +133,14 @@ RabbitMq['default']
           OrgWallet,
           campaignWallet,
           beneficiaries,
-          campaign
+          campaign, 
+          token_type
         } = msg.getContent();
+        
         if((Math.sign(OrgWallet.balance - campaign.budget) == -1 ) || (Math.sign(OrgWallet.balance - campaign.budget) == -0)){
 
           console.log('Insufficient wallet balance. Please fund organisation wallet.')
         }else{
-
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
    await Campaign.update({
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
@@ -178,6 +183,38 @@ RabbitMq['default']
           await  Wallet.update({
             balance: Sequelize.literal(`balance + ${budget}`)
           },{where: {uuid}})
+          }
+
+          
+          
+    const User = beneficiaries.map((user)=> user.User)
+          for(let i = 0; i<User.length; i++){
+            let istoken = false
+            let  QrCode;
+            const smsToken = GenearteSMSToken()
+            
+            if(token_type === 'papertoken'){
+             QrCode = await generateQrcodeURL({
+                OrganisationId: campaign.OrganisationId,
+                Campaign: {id: campaign.id, title: campaign.title},
+                Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_Name ?User[i].first_name  +" "+ User[i].last_Name: null},
+                amount: budget
+            });
+            istoken = true
+            }else if (token_type === 'smstoken') {
+              SmsService.sendOtp(User[i].phone, `Hello ${User[i].first_name || User[i].last_Name ?User[i].first_name  +" "+ User[i].last_Name: ''} your token is ${smsToken}{}`)
+            istoken = true
+            }
+            if(istoken){
+           await VoucherToken.create({
+              beneficiaryId: User[i].id,
+              campaignId: campaign.id,
+              tokenType: token_type,
+              token: token_type === 'papertoken' ? QrCode : smsToken,
+              amount: budget
+            })
+            istoken = false
+          }
           }
       msg.ack()
     } 
@@ -289,7 +326,7 @@ RabbitMq['default']
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
 
       Order.update({status: 'confirmed'},{where: { reference: order.reference} });
-
+          
     await  Wallet.update({
             balance: Sequelize.literal(`balance - ${amount}`)
           },{where: {uuid: beneficiaryWallet.uuid} })
@@ -301,9 +338,15 @@ RabbitMq['default']
 
           await  Wallet.update({
             balance: Sequelize.literal(`balance - ${amount}`)
-          },{where: {uuid: campaignWallet.uuid} })
-                
+          },{where: {uuid: campaignWallet.uuid} }) 
+          
+            await VoucherToken.updat({
+              amount: Sequelize.literal(`balance - ${amount}`)
+            },{where:{campaignId: campaignWallet.CampaignId, beneficiaryId: beneficiaryWallet.UserId}})
+       
                })
+               
+               
       .then(_ => {
         console.log(`Running Process Vendor Order Queue`)
       });

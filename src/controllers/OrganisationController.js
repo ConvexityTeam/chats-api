@@ -533,7 +533,6 @@ class OrganisationController {
       var filteredKeywords = user.filter((user) => user.id === data.VendorId);
       
         data.dataValues.vendor = filteredKeywords[0]
-
     });
 });
 

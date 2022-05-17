@@ -3,8 +3,11 @@ const {
   ComplaintService,
   BeneficiaryService,
   OrganisationService,
-  QueueService
+  SmsService,
+  QueueService,
+  UserService
 } = require("../services");
+
 const db = require("../models");
 const {
   Op
@@ -18,6 +21,9 @@ const {
 const {
   HttpStatusCode,
   SanitizeObject,
+  generateQrcodeURL,
+  GenearteVendorId,
+  GenearteSMSToken,
   AclRoles
 } = require("../utils");
 
@@ -231,6 +237,7 @@ class CampaignController {
   // REFACTORED
   static async approveAndFund(req, res) {
     const {organisation_id, campaign_id} = req.params;
+    console.log(req.body.token_type, '...,')
     try {
 
       // const campaign = req.campaign;
@@ -244,24 +251,24 @@ class CampaignController {
       const organisation = await OrganisationService.getOrganisationWallet(organisation_id);
       const OrgWallet = organisation.Wallet
 
-      if(campaign.status == 'completed') {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
-        return Response.send(res);
-      }
-      if(campaign.status == 'ongoing') {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already ongoing');
-        return Response.send(res);
-      }
+      // if(campaign.status == 'completed') {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already completed');
+      //   return Response.send(res);
+      // }
+      // if(campaign.status == 'ongoing') {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign already ongoing');
+      //   return Response.send(res);
+      // }
 
-      if((campaign.budget > OrgWallet.balance) || (OrgWallet.balance == 0)) {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
-        return Response.send(res);
-      }
-      if(campaign.type === 'campaign' && !beneficiaries.length) {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
-        return Response.send(res);
-      } 
-      QueueService.CampaignApproveAndFund({campaign, campaignWallet, OrgWallet, beneficiaries});
+      // if((campaign.budget > OrgWallet.balance) || (OrgWallet.balance == 0)) {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
+      //   return Response.send(res);
+      // }
+      // if(campaign.type === 'campaign' && !beneficiaries.length) {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign has no approved beneficiaries. Please approve beneficiaries.');
+      //   return Response.send(res);
+      // } 
+      QueueService.CampaignApproveAndFund({campaign, campaignWallet, OrgWallet, beneficiaries, token_type: req.body.token_type});
      //const funding = await CampaignService.handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries);
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`, beneficiaries);
       return Response.send(res);
@@ -271,6 +278,37 @@ class CampaignController {
       return Response.send(res);
     }
   }
+  
+  
+
+  static async campaignTokens (req, res){
+    const {campaign_id, page, token_type} = req.params
+   let limit = 10;
+  let offset = 0;
+  
+    let where = {
+      'tokenType': token_type,
+      campaignId: campaign_id,
+
+    }
+    try{
+     const tokencount = await db.VoucherToken.findAndCountAll({where})
+     const user = await UserService.getAllUsers()
+    
+     let pages = Math.ceil(tokencount.count / limit)
+     offset = limit * (page - 1)
+     const tokens = await db.VoucherToken.findAll({where, limit, offset})
+      tokens.forEach((data) => {
+      var filteredKeywords = user.filter((user) => user.id === data.beneficiaryId);
+        data.dataValues.Beneficiary = filteredKeywords[0]
+});
+     Response.setSuccess(HttpStatusCode.STATUS_OK, `Found ${tokens.length} ${token_type}.`, {tokens, page_count: pages, });
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
+      return Response.send(res);
+    }
+  } 
   static async addCampaign(req, res) {
     if (!req.body.title || !req.body.budget || !req.body.start_date) {
       Response.setError(400, "Please Provide complete details");

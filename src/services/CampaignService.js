@@ -8,6 +8,7 @@ const {
   Campaign,
   Complaint,
   Beneficiary,
+  VoucherToken,
   Transaction,
   Task,
   CampaignVendor
@@ -34,6 +35,11 @@ class CampaignService {
     });
   }
 
+  static getCampaignToken(campaignId){
+    return VoucherToken.findAll({where: {campaignId}})
+  }
+
+  
   static getCampaignById(id) {
     return Campaign.findByPk(id);
   }
