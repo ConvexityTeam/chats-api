@@ -53,6 +53,20 @@ class MailerService {
       })
     });
   }
+  verifyToken (smsToken, to, name){
+    return new Promise((resolve, reject) => {
+    this.transporter.verify( (err, success) => {
+        if(!err) {
+          console.log('Server is ready to take our messages')
+          this.sendSMSToken(smsToken, to, name)
+          resolve(success);
+        } else {
+          console.log('Not verified', err)
+          reject(err);
+        }
+      })
+    });
+  }
   
   sendPassword(to, name, password, vendor_id) {
     const body = `
@@ -79,8 +93,33 @@ class MailerService {
         }
       })
     });
+}
+sendSMSToken(smsToken, to, name){
 
+const body = `
+    <div>
+      <p>Hello ${name},</p>
+      <p>Your Convexity token is: ${smsToken}</p>
+      <p>CHATS - Convexity</p>
+    </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'SMS Token',
+      html: body
+    };
     
+   return new Promise((resolve, reject) => {
+    this.transporter.sendMail(options, (err, data) => {
+        if(!err) {
+          console.log('sent')
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      })
+    });
 }
 }
 

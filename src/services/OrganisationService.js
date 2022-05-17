@@ -123,7 +123,6 @@ class OrganisationService {
       const OrganisationId = organisation.id;
       const password = bcrypt.hashSync(rawPassword, 10);
       const vendor_id = GenearteVendorId();
-      console.log(rawPassword,'rawPassword')
       User.create({
           ...data,
           vendor_id,

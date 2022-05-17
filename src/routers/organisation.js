@@ -250,7 +250,13 @@ router.route('/:organisation_id/campaigns/:campaign_id/fund')
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.approveAndFund
   )
+router.route('/:token_type/:campaign_id/tokens/:page')
+  .get(
+    
+    CampaignController.campaignTokens
+  )
 
+  
 router.route('/:organisation_id/campaigns/:campaign_id/vendors')
   .get(
     NgoSubAdminAuth,

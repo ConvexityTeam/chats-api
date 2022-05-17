@@ -530,6 +530,7 @@ class OrganisationController {
     product.ProductVendors.forEach((data) => {
       var filteredKeywords = user.filter((user) => user.id === data.VendorId);
         data.dataValues.vendor = filteredKeywords[0]
+        
     });
 });
 

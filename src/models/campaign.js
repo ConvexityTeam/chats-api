@@ -53,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
         as: 'CampaignVendors',
         foreignKey: 'vendor_id'
       })
+      Campaign.hasMany(models.VoucherToken,{foreignKey: 'beneficiaryId', as: "CampaignTokens"})
     }
   }
 

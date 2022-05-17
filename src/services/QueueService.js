@@ -80,6 +80,7 @@ class QueueService {
   }
 
   static CampaignApproveAndFund (payload){
+    console.log(payload.token_type)
     approveCampaignAndFund.send(
       new Message(payload, {
         contentType: "application/json"
