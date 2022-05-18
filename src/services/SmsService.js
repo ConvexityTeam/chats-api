@@ -47,7 +47,7 @@ class SmsService {
 
     return {
       type: 'plain',
-      channel: 'generic',
+      channel: 'dnd',
       from,
       api_key,
       ...extra
