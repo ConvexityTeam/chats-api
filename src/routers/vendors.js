@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const { VendorController, AuthController } = require('../controllers');
-const { Auth, VendorAuth } = require('../middleware');
+const { Auth, VendorAuth, BeneficiaryAuth,IsRequestWithValidPin } = require('../middleware');
 const { ParamValidator } = require('../validators');
 const VendorValidator = require('../validators/VendorValidator');
 
@@ -21,6 +21,8 @@ router.get('/store/products/:storeId', VendorController.getProductByStore)
 router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
 router.post('/verify/sms-token/:smstoken',VendorAuth, VendorController.verifySMStoken)
+router.post('/token/confirm-payment',
+ VendorController.comfirmsmsTOKEN)
 
 router.route('/products')
   .get(

@@ -1365,6 +1365,7 @@ class UsersController {
     //     phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'], 
     //     email: 'email|required',
     // }
+   
 
     try{
       // const validation = new Validator(req.body, rules);
@@ -1372,10 +1373,10 @@ class UsersController {
       //   Response.setError(422, validation.errors);
       //   return Response.send(res);
       // } else {
-   await ZohoService.generateOAuthToken(email, subject, phone, description);
-      
+  
+      await ZohoService.zohiInitializer().then(data => console.log('hello'))
     }catch(error){
-      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, error.message);
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST);
       return Response.send(res);
     }
   }
