@@ -294,7 +294,7 @@ class CampaignController {
 
 tokens.forEach((data) => {
  foundbeneneficiary.map((user) => {
-        SmsService.sendOtp('+2348034074748', `Hello ${user.first_name || user.last_Name ?user.first_name  +" "+ user.last_Name: ''} your convexity token is ${data.token}, you are approved to spend ${data.amount}`)
+        SmsService.sendOtp(user.phone, `Hello ${user.first_name || user.last_Name ?user.first_name  +" "+ user.last_Name: ''} your convexity token is ${data.token}, you are approved to spend ${data.amount}`)
 
   })
    
