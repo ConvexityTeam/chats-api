@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
   VoucherToken.init({
     beneficiaryId: DataTypes.INTEGER,
     campaignId: DataTypes.INTEGER,
+    organisationId: DataTypes.INTEGER,
     tokenType: DataTypes.ENUM('smstoken', 'papertoken'),
     token: DataTypes.TEXT,
     amount: DataTypes.FLOAT

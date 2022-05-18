@@ -207,6 +207,7 @@ RabbitMq['default']
             }
             if(istoken){
            await VoucherToken.create({
+             organisationId: campaign.OrganisationId,
               beneficiaryId: User[i].id,
               campaignId: campaign.id,
               tokenType: token_type,
