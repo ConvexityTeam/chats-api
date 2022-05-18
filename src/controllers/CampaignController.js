@@ -279,7 +279,36 @@ class CampaignController {
     }
   }
   
-  
+  static async sendSMStoken(req, res){
+     
+    try{
+    const beneficiary = req.body.beneficiaryIds
+
+     const user = await UserService.getAllUsers()
+      let foundbeneneficiary = []
+     const tokens = await db.VoucherToken.findAll()
+        beneficiary.forEach((data) => {
+      var phone = user.filter((user) => user.id === data);
+        foundbeneneficiary.push(phone[0])
+});
+
+tokens.forEach((data) => {
+ foundbeneneficiary.map((user) => {
+        SmsService.sendOtp(user.phone, `Hello ${user.first_name || user.last_Name ?user.first_name  +" "+ user.last_Name: ''} your token is ${data.token}`)
+
+  })
+   
+  })
+
+
+
+Response.setSuccess(HttpStatusCode.STATUS_OK, `SMS token sent to ${foundbeneneficiary.length} beneficiaries.`, foundbeneneficiary);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
+      return Response.send(res);
+    }
+  }
 
   static async campaignTokens (req, res){
     const {campaign_id, page, token_type} = req.params
