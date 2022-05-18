@@ -52,7 +52,6 @@ router.get('/campaigns/transaction',
 NgoSubAdminAuth,
     OrganisationController.record)
     router.post('/beneficiaries/sms-token',
-    NgoSubAdminAuth, 
     CampaignController.sendSMStoken)
 
 router.get('/campaign/:campaign_id/balance/:organisation_id', 
