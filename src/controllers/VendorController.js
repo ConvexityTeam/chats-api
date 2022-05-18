@@ -528,22 +528,7 @@ class VendorController {
       return Response.send(res);
     }
   }
-  static async comfirmsmsTOKEN(req, res){
-    const pin = req.body.pin
-    const id = req.body.beneficiaryId
-    try{
-      const isPin = await UserService.findSingleUser({pin, id})
-      if(!isPin){
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid beneficiary or pin.');
-      return Response.send(res);
-      }
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Payment confirmed');
-      return Response.send(res);
-    }catch(error){
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
-      return Response.send(res);
-    }
-  }
+  
   
 }
 

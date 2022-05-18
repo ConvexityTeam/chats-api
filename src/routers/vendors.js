@@ -21,8 +21,7 @@ router.get('/store/products/:storeId', VendorController.getProductByStore)
 router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
 router.post('/verify/sms-token/:smstoken',VendorAuth, VendorController.verifySMStoken)
-router.post('/token/confirm-payment',
- VendorController.comfirmsmsTOKEN)
+
 
 router.route('/products')
   .get(
