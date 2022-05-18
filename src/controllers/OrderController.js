@@ -9,7 +9,7 @@ const {
 } = require("../utils");
 
 
-const { VendorService, WalletService, OrderService } = require('../services');
+const { VendorService, WalletService,UserService, OrderService } = require('../services');
 class OrderController {
   static  async getOrderByReference(req, res){
     try {
@@ -28,10 +28,61 @@ class OrderController {
       return Response.send(res);
     }
   }
+    static async comfirmsmsTOKEN(req, res){
+    const pin = req.body.pin
+    const id = req.body.beneficiaryId
+    const {reference} = req.params
+    try{
+      const data = await VendorService.getOrder({reference});
+      const isPin = await UserService.findSingleUser({pin, id})
+      if(!isPin){
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid beneficiary or pin.');
+      return Response.send(res);
+      }
+      
+      if(!data) {
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');
+        return Response.send(res)
+      }
 
+      if(data.order.status !== 'pending') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
+        return Response.send(res)
+      }
+
+
+      const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId, UserId: null})
+      const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
+      const beneficiaryWallet = await WalletService.findUserCampaignWallet(id, data.order.CampaignId)
+
+      if(!beneficiaryWallet) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
+        return Response.send(res)
+      }
+      if(!vendorWallet) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Vendor Wallet Not Found..');
+        return Response.send(res)
+      }
+      if(!campaignWallet) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign Wallet Not Found..');
+        return Response.send(res)
+      }
+
+      if(campaignWallet.balance < data.total_cost) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance.');
+        return Response.send(res)
+      }
+      const transaction = await OrderService.processOrder(beneficiaryWallet,vendorWallet,campaignWallet, data.order, data.order.Vendor, data.total_cost);
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Order details', transaction);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
+      return Response.send(res);
+    }
+  }
   static async completeOrder(req, res) {
     try {
-      const {reference, userwallet_id, campaignwallet_id} = req.params
+      const {reference} = req.params
       const data = await VendorService.getOrder({reference});
       if(!data) {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Order not found.');

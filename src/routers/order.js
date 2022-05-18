@@ -3,7 +3,8 @@ const router = require('express').Router();
 const {
   Auth,
   BeneficiaryAuth,
-  IsRequestWithValidPin
+  IsRequestWithValidPin,
+  VendorAuth
 } = require("../middleware");
 
 const {
@@ -50,6 +51,8 @@ router.route('/:reference')
       IsRequestWithValidPin,
       OrderController.completeOrder
     )
-
+router.post('/token/confirm-payment/:reference',
+VendorAuth,
+ OrderController.comfirmsmsTOKEN)
 
 module.exports = router;
