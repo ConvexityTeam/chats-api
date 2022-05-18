@@ -1,9 +1,21 @@
 const { zohoCrmConfig } = require("../config");
-
+const ZohoClient = require('@zohocrm/nodejs-sdk-2.0')
 const axios = require('axios');
 const Axios = axios.create();
 
 class ZohoService {
+
+  static async zohiInitializer(){
+    return new Promise(async (resolve, reject) => {
+      try {
+       const ZohoInit = await ZohoClient.Initializer()
+        console.log(ZohoInit,'ZohoInit')
+       resolve(data)
+      }catch(error) {
+        reject(error.response);
+      }
+    });
+  }
 
     static async generateOAuthToken(){
     return new Promise(async (resolve, reject) => {
