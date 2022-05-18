@@ -28,6 +28,16 @@ module.exports = {
           key: "id",
         },
       },
+      organisationId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: "Organisations",
+          },
+          key: "id",
+        },
+      },
       tokenType: {
         allowNull: false,
         type: Sequelize.ENUM('smstoken', 'papertoken'),
