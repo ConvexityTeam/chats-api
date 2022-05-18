@@ -934,7 +934,7 @@ static async evidence(req, res){
   }
 
   static async viewTaskById(req, res){
-    const {taskId} = req.body;
+    const {taskId} = req.params;
 
     try {
         const tasks = await db.TaskAssignment.findAll({where: {TaskId: taskId},include: { model: db.Task, as: "Task" }});
