@@ -450,23 +450,14 @@ class OrganisationController {
   }
   static async DeleteCampaignProduct(req, res) {
 
-    const {ProductId, UserId} = req.body;
+    const {ProductId} = req.body;
     try {
         
-        const isVendor = await  VendorService.findVendorStore(UserId);
-        const isApprovedVendor = await CampaignService.approveVendorForCampaign(req.params.campaign_id, UserId);
         const iSProduct = await db.Product.findByPk(ProductId)
-        if(!isVendor){
-          Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Vendor with this ${UserId} ID Not Found`);
-          Response.send(res)
-        }if(!isApprovedVendor){
-          Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Vendor Not Approved');
-          Response.send(res)
-        }if(!iSProduct){
+        if(!iSProduct){
           Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Product with this ID  ${ProductId} Not Approved`);
-          Response.send(res)
+         return Response.send(res)
         }else{
-
           await db.Product.destroy({
             where: {
               id: ProductId
@@ -484,22 +475,13 @@ class OrganisationController {
   }
 
   static async UpdateCampaignProduct(req, res) {
-    console.log(req.body)
-    const {ProductId, UserId} = req.body
+    const {ProductId} = req.body
     try {
         
-        const isVendor = await  VendorService.findVendorStore(UserId);
-        const isApprovedVendor = await CampaignService.approveVendorForCampaign(req.params.campaign_id, UserId);
-        const iSProduct = await db.Product.findByPk(ProductId)
-        if(!isVendor){
-          Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Vendor with this ${UserId} ID Not Found`);
-          Response.send(res)
-        }if(!isApprovedVendor){
-          Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Vendor Not Approved');
-          Response.send(res)
-        }if(!iSProduct){
+       const iSProduct = await db.Product.findByPk(ProductId)
+        if(!iSProduct){
           Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Product with this ID  ${ProductId} Not Approved`);
-          Response.send(res)
+         return Response.send(res)
         }else{
           await db.Product.update({
             ...req.body
@@ -526,20 +508,17 @@ class OrganisationController {
       const user = await UserService.getAllUsers()
       const campaign = await db.Campaign.findOne({where:{id: campaignId}})
       
-
+let i = 0
+let j = 0
   products.forEach((product) => {
     product.dataValues.campaign_status = campaign.status
-    product.ProductVendors.forEach((data) => {
-      var filteredKeywords = user.filter((user) => user.id === data.VendorId);
-      
-        data.dataValues.vendor = filteredKeywords[0]
-    });
+    
+      var filteredKeywords = user.filter((user) => user.id === product.Store.UserId);
+        product.dataValues.vendor = filteredKeywords[0]
+    
 });
 
-
-
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Products.', products);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign Products.`, products);
       return Response.send(res)
     } catch (error) {
       console.log(error);
@@ -547,7 +526,18 @@ class OrganisationController {
       return Response.send(res);
     }
   }
-
+static async getProductVendors(req, res) {
+    try {
+      const VendorId = req.params.vendor_id;
+      const vendor = await ProductService.ProductVendors(VendorId);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', vendor);
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
   
 
   static async getCampaignBeneficiaries(req, res) {

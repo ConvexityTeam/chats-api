@@ -24,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     product_ref: DataTypes.STRING,
     MarketId: DataTypes.INTEGER,
     CampaignId: DataTypes.INTEGER,
+    
   }, {
     sequelize,
     modelName: 'Product',

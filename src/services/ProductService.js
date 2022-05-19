@@ -22,6 +22,7 @@ const CampaignService = require('./CampaignService');
 class ProductService {
   static addProduct(product, vendors, CampaignId) {
     return Promise.all(vendors.map(
+      
       async UserId => {
         await CampaignService.approveVendorForCampaign(CampaignId, UserId);
         return (await VendorService.findVendorStore(UserId))
@@ -29,6 +30,7 @@ class ProductService {
             ...product,
             CampaignId
           })
+          
       }
     ));
   }
@@ -39,10 +41,17 @@ class ProductService {
   static findCampaignProducts(CampaignId) {
     return Product.findAll({
       where: {CampaignId},
-      include: [{model: CampaignVendor, as: 'ProductVendors',
-    }]
+      order: [['updatedAt', 'ASC']],
+      include: [{model: Market, as: 'Store'}]
     });
 }
+
+static ProductVendors(CampaignId) {
+    return CampaignVendor.findAll({
+      where: {CampaignId}
+    });
+}
+
 
 static findCampaignProduct(CampaignId, productId) {
     return Product.findOne({
