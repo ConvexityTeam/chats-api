@@ -215,6 +215,7 @@ class CampaignService {
   static getCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
+      order: [['updatedAt', 'DESC']],
       where: {
         ...where
       },

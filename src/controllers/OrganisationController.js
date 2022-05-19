@@ -176,7 +176,7 @@ class OrganisationController {
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getCampaigns({
         ...query,
-        OrganisationId
+        OrganisationId,
       });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Campaigns.', campaigns);
       return Response.send(res);
