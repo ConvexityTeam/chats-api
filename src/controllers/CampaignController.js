@@ -327,7 +327,7 @@ Response.setSuccess(HttpStatusCode.STATUS_OK, `SMS token sent to ${foundbenenefi
     
      let pages = Math.ceil(tokencount.count / limit)
      offset = limit * (page - 1)
-     const tokens = await db.VoucherToken.findAll({where, limit, offset, order: [['updatedAt', 'DESC']]})
+     const tokens = await db.VoucherToken.findAll({where, limit, offset, order: [['updatedAt', 'ASC']]})
       tokens.forEach((data) => {
       var filteredKeywords = user.filter((user) => user.id === data.beneficiaryId);
         data.dataValues.Beneficiary = filteredKeywords[0]
