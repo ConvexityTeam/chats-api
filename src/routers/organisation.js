@@ -305,7 +305,11 @@ router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries/approve')
     CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.approvedAllbeneficiaries
   )
+router.route('/products/:vendor_id')
+  .get(
 
+    OrganisationController.getProductVendors
+  )
 
 router.route('/:organisation_id/campaigns/:campaign_id/products')
   .get(
