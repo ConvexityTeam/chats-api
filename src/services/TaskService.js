@@ -41,7 +41,7 @@ class TaskService {
 
     return Task.findAll({
       where: {
-        id: params.task_id
+        CampaignId: params.campaign_id
       },
       include: [{
         model: User,
