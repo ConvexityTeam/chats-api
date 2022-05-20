@@ -6,7 +6,9 @@ const Validator = require("validatorjs");
 const { Op } = require("sequelize");
 const formidable = require("formidable");
 const uploadFile = require("./AmazonController");
-
+const {
+    userConst
+} = require('../constants');
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const {
@@ -1002,18 +1004,20 @@ static async evidence(req, res){
   }
 
 static async viewSubmittedEvidence(req, res){
-    const {taskId} = req.params
+    const {user_id, task_id} = req.params
     try {
      
-        const tasks = await db.User.findAll({
-          include: [{ model: db.TaskAssignment, as: "Assignments",
-          where: {TaskId: taskId},
+        const tasks = await db.User.findOne({
+           attributes: userConst.publicAttr,
+          where: {id: user_id},
+          include: { model: db.TaskAssignment, as: "Assignments",
+          where: {TaskId: task_id},
            include: {
             model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'
-          }}]
+          }}
           });
-      if(tasks.length <= 0){
-        Response.setSuccess(200, "No Task Recieved", tasks);
+      if(!tasks){
+        Response.setSuccess(200, "No Task Recieved", []);
         return Response.send(res);
       }
       Response.setSuccess(200, "Task Recieved", tasks);

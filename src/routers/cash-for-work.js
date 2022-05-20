@@ -12,7 +12,7 @@ const CashForWorkController = require("../controllers/CashForWorkController");
 // router.use(Auth);
 router.get("/evidence",  CashForWorkController.evidence);
 
-router.get("/task/evidence/:taskId",  NgoSubAdminAuth,  CashForWorkController.viewSubmittedEvidence);
+router.get("/:task_id/evidence/:user_id",    CashForWorkController.viewSubmittedEvidence);
 router.post("/task/task-approved-vendor", VendorAuth,  CashForWorkController.approveSubmissionVendor);
 router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController.approveSubmissionAgent);
 

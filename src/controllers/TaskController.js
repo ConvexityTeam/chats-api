@@ -29,7 +29,10 @@ class TaskController {
     try {
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
-
+      if(!CashForWorkTasks){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Task Not Found");
+      return Response.send(res);
+      }
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork Campaign Tasks retreived", CashForWorkTasks);
       return Response.send(res);
     } catch (error) {

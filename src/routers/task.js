@@ -17,7 +17,12 @@ router.post('/task_progress_evidence/:taskProgressId',
 	TaskValidator.taskProgressId(),
 	FileValidator.checkTaskProgressFile(),
 	TaskController.uploadEvidence);
-
+router.route('/cash-for-work/task/:task_id')
+	.get(
+		NgoSubAdminAuth,
+		TaskValidator.taskId(),
+		TaskController.getCashForWorkTasks
+	)
 router.route('/:organisation_id/:campaign_id')
 	.get(
 		NgoSubAdminAuth,
