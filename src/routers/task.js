@@ -26,9 +26,7 @@ router.route('/cash-for-work/task/:task_id')
 	
 router.route('/:organisation_id/:campaign_id')
 	.get(
-		NgoSubAdminAuth,
-		IsOrgMember,
-		CampaignValidator.campaignBelongsToOrganisation,
+		
 		TaskController.getCashForWorkTasks
 	)
 	.post(

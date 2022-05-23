@@ -225,7 +225,7 @@ class CampaignService {
       //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
       //   ]
       // },
-       include: [{model: Task, as: 'Jobs'}, {model: User, as: 'Beneficiaries'}],
+       include: [{model: Task, as: 'Jobs'}, {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr,}],
       // includeIgnoreAttributes: false,
       // group: [
       //   "Campaign.id"
