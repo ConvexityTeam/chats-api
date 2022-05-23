@@ -27,8 +27,8 @@ class TaskController {
 
   static async getCashForWorkTasks(req, res) {
     try {
-      let completedTask = 0
-      let taskCount = 0
+      let completed_tasks = 0
+      let task_count = 0
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
        
@@ -36,12 +36,11 @@ class TaskController {
         Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Task Not Found");
       return Response.send(res);
       }
-    
+      
       CashForWorkTasks.forEach((data)=> {
-       data.isCompleted ? completedTask ++ : completedTask
-      taskCount++
+       data.dataValues.completed_tasks = data.completed_tasks ? completed_tasks ++ : completed_tasks 
       })
-      CashForWorkTasks.push({taskCount, completedTask})
+     
        
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork Campaign Tasks retreived", CashForWorkTasks);
       return Response.send(res);

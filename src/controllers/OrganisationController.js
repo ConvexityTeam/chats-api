@@ -172,12 +172,22 @@ class OrganisationController {
 
   static async getAllOrgCampaigns(req, res) {
     try {
+      let completed_task = 0
       const OrganisationId = req.params.organisation_id;
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getCampaigns({
         ...query,
         OrganisationId,
       });
+      campaigns.forEach((data)=> {
+        data.dataValues.beneficiaries_count = data.Beneficiaries.length,
+        data.dataValues.task_count = data.Jobs.length
+        data.dataValues.completed_task = completed_task
+        data.Jobs.forEach((task)=> {
+        task.isCompleted ? completed_task++ : task
+        })
+
+      })
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
