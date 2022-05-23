@@ -1374,7 +1374,7 @@ class UsersController {
       //   return Response.send(res);
       // } else {
   
-      await ZohoService.zohiInitializer().then(data => console.log('hello'))
+      await ZohoService.zohiInitializer()
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_BAD_REQUEST);
       return Response.send(res);

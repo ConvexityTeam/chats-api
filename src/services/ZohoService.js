@@ -6,13 +6,18 @@ const Axios = axios.create();
 class ZohoService {
 
   static async zohiInitializer(){
+    let config = {
+      client_id: '',
+      client_secret: ''
+    }
     return new Promise(async (resolve, reject) => {
       try {
-       const ZohoInit = await ZohoClient.Initializer()
+       const ZohoInit =  new ZohoClient.Initializer()
         console.log(ZohoInit,'ZohoInit')
-       resolve(data)
+       resolve(ZohoInit)
       }catch(error) {
-        reject(error.response);
+        console.log(error,'error zoho')
+        reject(error);
       }
     });
   }
@@ -20,11 +25,11 @@ class ZohoService {
     static async generateOAuthToken(){
     return new Promise(async (resolve, reject) => {
       try {
-       const {data} = await Axios.post(`https://accounts.zoho.com/oauth/v2/token?code=${zohoCrmConfig.code}&grant_type=authorization_code&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&redirect_uri=https://chats.vercel.app`)
+       const {data} = await Axios.post(`https://accounts.zoho.com/oauth/v2/token&grant_type=authorization_code&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&redirect_uri=https://chats.vercel.app`)
         console.log(data,'ticket')
        resolve(data)
       }catch(error) {
-        
+        console.log(error,'error')
         reject(error.response);
       }
     });
