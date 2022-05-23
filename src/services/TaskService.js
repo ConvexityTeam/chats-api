@@ -51,6 +51,20 @@ class TaskService {
     });
   }
 
+  static async getCashForBeneficiaries(params) {
+
+    return Task.findAll({
+      where: {
+        id: params.task_id
+      },
+      include: [{
+        model: User,
+        as: 'AssignedWorkers',
+        attributes: publicAttr
+      }]
+    });
+  }
+
   static async updateTask(id, updateTaskObj) {
     const task = await Task.findByPk(id);
     if (!task)

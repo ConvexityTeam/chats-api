@@ -21,8 +21,9 @@ router.route('/cash-for-work/task/:task_id')
 	.get(
 		NgoSubAdminAuth,
 		TaskValidator.taskId(),
-		TaskController.getCashForWorkTasks
+		TaskController.getTaskBeneficiaies
 	)
+	
 router.route('/:organisation_id/:campaign_id')
 	.get(
 		NgoSubAdminAuth,

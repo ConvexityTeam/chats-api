@@ -27,13 +27,40 @@ class TaskController {
 
   static async getCashForWorkTasks(req, res) {
     try {
+      let completedTask = 0
+      let taskCount = 0
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
+       
       if(!CashForWorkTasks){
         Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Task Not Found");
       return Response.send(res);
       }
+    
+      CashForWorkTasks.forEach((data)=> {
+       data.isCompleted ? completedTask ++ : completedTask
+      taskCount++
+      })
+      CashForWorkTasks.push({taskCount, completedTask})
+       
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork Campaign Tasks retreived", CashForWorkTasks);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
+      return Response.send(res);
+    }
+  }
+
+  static async getTaskBeneficiaies(req, res) {
+    try {
+      const params = SanitizeObject(req.params);
+      const CashForWorkTasks = await TaskService.getCashForBeneficiaries(params);
+      if(!CashForWorkTasks){
+        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Task Not Found");
+      return Response.send(res);
+      }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork  Tasks Beneficiaries", CashForWorkTasks);
       return Response.send(res);
     } catch (error) {
       console.log(error);
