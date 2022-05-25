@@ -801,10 +801,9 @@ static async evidence(req, res){
         }
        const isTaskExist = await db.TaskAssignment.findOne({where: {id: TaskAssignmentId}});
        if(!isTaskExist){
-         Response.setError(422, "Task Task Assignment Not Found");
+         Response.setError(422, "Task Assignment Not Found");
         return Response.send(res);
        }
-      let i = 0
       await Promise.all(
      files.map(async (file)=> {
         const  extension = file.mimetype.split('/').pop();
@@ -813,7 +812,6 @@ static async evidence(req, res){
               "u-"+environ+"-"+TaskAssignmentId+""+file.originalname+"-i." + extension,
               "convexity-progress-evidence"
             )
-            i++
         uploadArray.push(url)
      
        })
@@ -831,8 +829,9 @@ static async evidence(req, res){
             await db.TaskAssignment.update({
         uploaded_evidence: true
       },{where:{UserId: isTaskExist.UserId}})
+        await db.TaskAssignment.update({status: 'completed'}, {where: {id: TaskAssignmentId}})
         Response.setSuccess(200, "Success Uploading  Task Evidence", uploadArray);
-            return Response.send(res);
+        return Response.send(res);
       }
             
               

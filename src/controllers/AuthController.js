@@ -141,7 +141,7 @@ class AuthController {
       const RoleId = AclRoles.Beneficiary;
 
       
-        const {phone, email, country, state, coordinates,pin, device_imei} = req.body
+        const {phone, email, country, state, coordinates, device_imei} = req.body
         const files = req.file
         const rules = {
           email: 'email|required',
@@ -149,7 +149,6 @@ class AuthController {
           phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
           country: 'string|required',
           state: 'string|required',
-          pin: 'size:4|required'
           // device_imei: 'string|required'
         };
         
@@ -183,7 +182,7 @@ class AuthController {
         "convexity-profile-images"
       )
 
-      const user = await UserService.addUser({RoleId, phone, email,pin, password, profile_pic, location: JSON.stringify({country, state, coordinates})});
+      const user = await UserService.addUser({RoleId, phone, email, password, profile_pic, location: JSON.stringify({country, state, coordinates})});
       if(user)
       QueueService.createWallet(user.id, 'user');
       Response.setSuccess(201, "Account Onboarded Successfully", user);
@@ -216,6 +215,7 @@ class AuthController {
         dob: "required|date|before:today",
         nfc: "string",
         campaign: "required|numeric",
+        pin: 'size:4|required'
       };
 
       const validation = new Validator(fields, rules);
@@ -288,6 +288,7 @@ class AuthController {
                 referal_id: fields.referal_id,
                 nfc: fields.nfc,
                 dob: fields.dob,
+                pin: fields.pin
               })
               .then(async (user) => {
                 QueueService.createWallet(user.id, 'user');
@@ -355,6 +356,7 @@ class AuthController {
         dob: "required|date|before:today",
         nfc: "string",
         campaign: "required|numeric",
+        pin: 'size:4|required'
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
@@ -425,6 +427,7 @@ class AuthController {
                       address: fields.address,
                       referal_id: fields.referal_id,
                       dob: fields.dob,
+                      pin: fields.pin
                     })
                     .then(async (user) => {
                       QueueService.createWallet(user.id, 'user');

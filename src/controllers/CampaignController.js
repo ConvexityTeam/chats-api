@@ -280,6 +280,21 @@ class CampaignController {
     }
   }
 
+  static async rejectSubmission (req, res){
+    const {taskAssignmentId} = req.params
+    try{
+      const assignment = await db.TaskAssignment.findByPk(taskAssignmentId)
+      if(!assignment){
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Task Assignment Not Found');
+        return Response.send(res);
+      }
+      await db.TaskAssignment.update({status: 'rejected'}, {where: {id: taskAssignmentId}})
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
+      return Response.send(res);
+    }
+  }
+
   static async fundApprovedBeneficiary (req, res){
     const {organisation_id, campaign_id} = req.params;
     const {beneficiaryId, taskAssignmentId} = req.body
@@ -294,7 +309,7 @@ class CampaignController {
     
       const amount_disburse = task.amount / task.assignment_count
       if(!task_assignment){
-        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Task Not Found`, task_assignment);
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Task Assignment Not Found`, task_assignment);
       return Response.send(res);
       }
       const transaction = await QueueService.FundBeneficiary(beneficiaryWallet, campaignWallet, task_assignment, amount_disburse)
