@@ -9,9 +9,10 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         const { data } = await Axios.post(`${tokenConfig.baseURL}/user/register`);
+        cosole.log(data,'token')
         resolve(data.AccountCreated);
       } catch (error) {
-        console.log(error.response)
+        console.log(error)
         reject(error);
       }
     });
