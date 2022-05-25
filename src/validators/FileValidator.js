@@ -24,7 +24,7 @@ class FileValidator extends BaseValidator {
   }
   static checkTaskProgressEvidenceFile(){
     return [
-    multer.array('uploads'),
+    multer.any('uploads'),
       check('uploads')
       .custom((value, {req}) => new Promise((resolve, reject) => {
         //console.log(req.files, 'file')

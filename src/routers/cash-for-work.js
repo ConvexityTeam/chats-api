@@ -8,6 +8,7 @@ const {
 
 const {Auth, VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, VendorBeneficiaryAuth, NgoSubAdminAuth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
+const CampaignController = require('../controllers/CampaignController')
 
 // router.use(Auth);
 router.get("/evidence",  CashForWorkController.evidence);
@@ -19,7 +20,7 @@ router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController
 router.post("/task/vendor-evidence", VendorAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceVendor);
 router.post("/task/agent-evidence", FieldAgentAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceFieldAgent);
 router.post("/task/beneficiary-evidence",  FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);
-
+router.post('task/reject-submission/:taskAssignmentId',  CampaignController.rejectSubmission)
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);
 router.get("/:cashforworkid", CashForWorkController.getCashForWork);
