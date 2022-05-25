@@ -520,11 +520,16 @@ class OrganisationController {
       
 let i = 0
 let j = 0
-  products.forEach((product) => {
+
+  products.forEach((product, index) => {
     product.dataValues.campaign_status = campaign.status
     
-      var filteredKeywords = user.filter((user) => user.id === product.Store.UserId);
-      product.Store.dataValues.ProductVendor = filteredKeywords[0]
+   product.ProductVendors.forEach((vendor)=>{
+     let filteredVendor =   user.filter((user) => user.id === vendor.VendorId);
+    vendor.dataValues.VendorName = filteredVendor[0].first_name +" "+filteredVendor[0].last_name
+    })
+  // console.log(product.ProductVendors)
+      
     
 });
 

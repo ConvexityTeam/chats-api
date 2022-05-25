@@ -791,22 +791,22 @@ static async evidence(req, res){
 
     try {
       const validation = new Validator(req.body, rules);
-      // if (validation.fails()) {
-      //   Response.setError(422, validation.errors);
-      //   return Response.send(res);
-      // }
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }
       if (!files) {
           Response.setError(422, "Please upload file evidence");
           return Response.send(res);
         }
-        console.log(files)
-      //  const isTaskExist = await db.TaskAssignment.findOne({where: {id: TaskAssignmentId}});
-      //  if(!isTaskExist){
-      //    Response.setError(422, "Task Task Assignment Not Found");
-      //   return Response.send(res);
-      //  }
+       const isTaskExist = await db.TaskAssignment.findOne({where: {id: TaskAssignmentId}});
+       if(!isTaskExist){
+         Response.setError(422, "Task Task Assignment Not Found");
+        return Response.send(res);
+       }
       let i = 0
-     const uploded =  files.map(async (file)=> {
+      await Promise.all(
+     files.map(async (file)=> {
         const  extension = file.mimetype.split('/').pop();
         const url =  await uploadFile(
               file,
@@ -814,22 +814,27 @@ static async evidence(req, res){
               "convexity-progress-evidence"
             )
             i++
-        return url
+        uploadArray.push(url)
+     
        })
-uploadArray.push(uploadArray)
-            console.log(uploadArray, "uploadArray")
-      //    await db.TaskAssignmentEvidence.create({
-      //           uploads: [url],
-      //           TaskAssignmentId,
-      //           comment,
-      //           type,
-      //           source: 'beneficiary'
-      //         });
-      //       await db.TaskAssignment.update({
-      //   uploaded_evidence: true
-      // },{where:{UserId: isTaskExist.UserId}})
-            Response.setSuccess(200, "Success Uploading  Task Evidence", uploded);
+      )
+
+         
+      if(uploadArray.length){
+        await db.TaskAssignmentEvidence.create({
+                uploads: uploadArray,
+                TaskAssignmentId,
+                comment,
+                type,
+                source: 'beneficiary'
+              });
+            await db.TaskAssignment.update({
+        uploaded_evidence: true
+      },{where:{UserId: isTaskExist.UserId}})
+        Response.setSuccess(200, "Success Uploading  Task Evidence", uploadArray);
             return Response.send(res);
+      }
+            
               
     }catch(error){
       Response.setError(500, "Internal Server Error.test"+ error);

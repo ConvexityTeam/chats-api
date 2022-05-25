@@ -42,7 +42,7 @@ class ProductService {
     return Product.findAll({
       where: {CampaignId},
       order: [['updatedAt', 'ASC']],
-      include: [{model: Market, as: 'Store'}]
+      include: [{model: CampaignVendor, as: 'ProductVendors'}]
     });
 }
 
