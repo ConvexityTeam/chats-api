@@ -6,6 +6,7 @@ const {
   PAYSTACK_WITHDRAW,
   PAYSTACK_DEPOSIT,
   PAY_FOR_PRODUCT,
+  FUND_BENEFICIARY,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_VENDOR_WITHDRAW
 } = require('../constants/queues.constant')
@@ -28,6 +29,7 @@ const {
   BankAccount,
   VoucherToken,
   Campaign,
+  TaskAssignment,
   Order
 } = require('../models');
 const {
@@ -42,7 +44,10 @@ const verifyFiatDepsoitQueue = RabbitMq['default'].declareQueue(VERIFY_FIAT_DEPO
 });
 
 
-
+const processFundBeneficiary = RabbitMq['default'].declareQueue(FUND_BENEFICIARY, {
+  durable: true,
+  prefetch: 1
+});
 const processVendorOrderQueue = RabbitMq['default'].declareQueue(PROCESS_VENDOR_ORDER, {
   durable: true,
   prefetch: 1
@@ -284,43 +289,29 @@ RabbitMq['default']
           console.log('RABBITMQ ERROR', error)
         })
 
-    payForProduct.activateConsumer(async msg => {
-      const {vendor, beneficiary, campaignWallet, VendorWallet, BenWallet, product} = msg.getContent();
-       await   BlockchainService.transferFrom(campaignWallet.address, VendorWallet.address,BenWallet.address, BenWallet.privateKey,  product.cost).then(async()=> {
-
-        
+    processFundBeneficiary.activateConsumer(async msg => {
+      const {beneficiaryWallet, campaignWallet, task_assignment, amount_disburse, transaction} = msg.getContent();
+        const  ben =  await  BlockchainService.approveToSpend(campaignWallet.address, campaignWallet.privateKey,beneficiaryWallet.address, amount_disburse )
         await  Wallet.update({
-            balance: Sequelize.literal(`balance - ${product.cost}`)
-          },{where: {uuid: BenWallet.uuid} })
+            balance: Sequelize.literal(`balance + ${amount_disburse}`)
+          },{where: {uuid: beneficiaryWallet.uuid} })
 
-          await  Wallet.update({
-            balance: Sequelize.literal(`balance + ${product.cost}`)
-          },{where: {uuid: VendorWallet.uuid} });
           
           await  Wallet.update({
-            balance: Sequelize.literal(`balance - ${product.cost}`)
+            balance: Sequelize.literal(`balance - ${amount_disburse}`)
           },{where: {uuid: campaignWallet.uuid} })
-
-          await Transaction.create({
-            amount: product.cost,
-            reference: generateTransactionRef(),
-            status: 'success',
-            transaction_origin: 'wallet',
-            transaction_type: 'transfer',
-            SenderWalletId: BenWallet.uuid,
-            ReceiverWalletId: VendorWallet.uuid,
-            BeneficiaryId: beneficiary.id,
-            VendorId: vendor.id,
-            narration: `${product.tag}`
-          });
+          await Transaction.update({
+           status: 'success'
+          },{where: {uuid: transaction.uuid}})
+          await TaskAssignment.update({
+            status: 'completed'
+          },{where: {id: task_assignment.id}})
+          
           msg.ack()
          }).catch((error)=>{
           console.log(error, 'error transfer')
          })
-    }).catch((error)=>{
-      console.log(`RabbitMq Error:`, error);
-    })
-
+    
     
     processVendorOrderQueue.activateConsumer(async msg => {
         const {

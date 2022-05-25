@@ -8,12 +8,14 @@ const { RabbitMq } = require("../libs");
 const {
   generateTransactionRef, AclRoles
 } = require('../utils');
-const { CREATE_WALLET, VERIFY_FIAT_DEPOSIT, PROCESS_VENDOR_ORDER, FROM_NGO_TO_CAMPAIGN, PAYSTACK_DEPOSIT, TRANSFER_TO, PAY_FOR_PRODUCT, PAYSTACK_WITHDRAW, PAYSTACK_VENDOR_WITHDRAW, PAYSTACK_BENEFICIARY_WITHDRAW } = require("../constants/queues.constant");
+const { CREATE_WALLET, VERIFY_FIAT_DEPOSIT, PROCESS_VENDOR_ORDER,FUND_BENEFICIARY, FROM_NGO_TO_CAMPAIGN, PAYSTACK_DEPOSIT, TRANSFER_TO, PAY_FOR_PRODUCT, PAYSTACK_WITHDRAW, PAYSTACK_VENDOR_WITHDRAW, PAYSTACK_BENEFICIARY_WITHDRAW } = require("../constants/queues.constant");
 
+const fundBeneficiary = RabbitMq['default'].declareQueue(FUND_BENEFICIARY, {
+  durable: true
+});
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
   durable: true
 });
-
 const payStackDepositQueue = RabbitMq['default'].declareQueue(PAYSTACK_DEPOSIT, {
   durable: true
 });
@@ -86,6 +88,29 @@ class QueueService {
         contentType: "application/json"
       })
     )
+  }
+
+  static async FundBeneficiary (beneficiaryWallet, campaignWallet, task_assignment, amount_disburse){
+    
+    const transaction =  await Transaction.create({
+           amount: amount_disburse,
+            reference: generateTransactionRef(),
+            status: 'processing',
+            transaction_origin: 'wallet',
+            transaction_type: 'transfer',
+            BeneficiaryId: beneficiaryWallet.UserId,
+            narration: 'for task completed by beneficiary',
+            OrganisationId: campaignWallet.OrganisationId,
+            is_approved: true
+         })
+
+    const payload = {beneficiaryWallet, campaignWallet, task_assignment, amount_disburse, transaction}
+    fundBeneficiary.send(
+      new Message(payload, {
+        contentType: "application/json"
+      })
+    )
+    return transaction;
   }
 
   static async fundBeneficiaryBankAccount (bankAccount, campaignWallet, userWallet, userId, amount){

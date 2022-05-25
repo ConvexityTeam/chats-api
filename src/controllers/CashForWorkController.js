@@ -701,14 +701,16 @@ class CashForWorkController {
       if (exist) {
       const task = await db.Task.findByPk(data.TaskId);
       if(task && task.assigned != task.assignment_count){
-        const TaskAssignment = await db.TaskAssignment.create({UserId: data.UserId, TaskId: data.TaskId})
+        const TaskAssignment = await db.TaskAssignment.create({UserId: data.UserId,status: 'in progress', TaskId: data.TaskId})
         if(TaskAssignment){
            await db.Task.update({
           assigned: task.assigned + 1
         },{where:{id: data.TaskId}})
       util.setSuccess(200, 'Success Picking Task', TaskAssignment);
+      return util.send(res);
         }else {
            util.setError(400, 'Something Went Wrong While Picking Task');
+           return util.send(res);
         }
        
       }else util.setSuccess(200, 'Cannot pick task');
@@ -779,7 +781,8 @@ static async evidence(req, res){
 
   static async uploadProgreeEvidenceByBeneficiary(req, res){
     const {TaskAssignmentId, comment, type} = req.body
-    const files = req.file
+    let uploadArray = []
+    const files = req.files
       const rules = {
         TaskAssignmentId: "required|numeric",
         comment: "required|string",
@@ -788,38 +791,44 @@ static async evidence(req, res){
 
     try {
       const validation = new Validator(req.body, rules);
-      if (validation.fails()) {
-        Response.setError(422, validation.errors);
-        return Response.send(res);
-      }
+      // if (validation.fails()) {
+      //   Response.setError(422, validation.errors);
+      //   return Response.send(res);
+      // }
       if (!files) {
           Response.setError(422, "Please upload file evidence");
           return Response.send(res);
         }
-       const isTaskExist = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
-       if(!isTaskExist){
-         Response.setError(422, "Task Task Assignment Not Found");
-        return Response.send(res);
-       }
-       
-        const  extension = req.file.mimetype.split('/').pop();
+        console.log(files)
+      //  const isTaskExist = await db.TaskAssignment.findOne({where: {id: TaskAssignmentId}});
+      //  if(!isTaskExist){
+      //    Response.setError(422, "Task Task Assignment Not Found");
+      //   return Response.send(res);
+      //  }
+      let i = 0
+     const uploded =  files.map(async (file)=> {
+        const  extension = file.mimetype.split('/').pop();
         const url =  await uploadFile(
-              files,
-              "u-"+environ+"-"+TaskAssignmentId+"-i." + extension,
+              file,
+              "u-"+environ+"-"+TaskAssignmentId+""+file.originalname+"-i." + extension,
               "convexity-progress-evidence"
             )
-            
-         await db.TaskAssignmentEvidence.create({
-                uploads: [url],
-                TaskAssignmentId,
-                comment,
-                type,
-                source: 'beneficiary'
-              });
-            await db.TaskAssignment.update({
-        uploaded_evidence: true
-      },{where:{UserId: isTaskExist.UserId}})
-            Response.setSuccess(200, "Success Uploading  Task Evidence");
+            i++
+        return url
+       })
+uploadArray.push(uploadArray)
+            console.log(uploadArray, "uploadArray")
+      //    await db.TaskAssignmentEvidence.create({
+      //           uploads: [url],
+      //           TaskAssignmentId,
+      //           comment,
+      //           type,
+      //           source: 'beneficiary'
+      //         });
+      //       await db.TaskAssignment.update({
+      //   uploaded_evidence: true
+      // },{where:{UserId: isTaskExist.UserId}})
+            Response.setSuccess(200, "Success Uploading  Task Evidence", uploded);
             return Response.send(res);
               
     }catch(error){

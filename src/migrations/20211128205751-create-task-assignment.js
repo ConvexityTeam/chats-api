@@ -53,7 +53,7 @@ module.exports = {
         defaultValue: null
       },
       status: {
-        type: Sequelize.ENUM('pending', 'approved', 'completed'), //approved -> recieved approval from NGO admin | completed -> paid
+        type: Sequelize.ENUM('pending','in progress', 'rejected', 'disbursed', 'approved', 'completed'), //approved -> recieved approval from NGO admin | completed -> paid
         default: 'pending'
       },
       createdAt: {

@@ -251,6 +251,14 @@ router.route('/:organisation_id/campaigns/:campaign_id/fund')
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.approveAndFund
   )
+  router.route('/:organisation_id/task/:campaign_id/fund_beneficiary')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.fundApprovedBeneficiary
+  )
 router.route('/:token_type/tokens/:page')
   .get(
     NgoAdminAuth,

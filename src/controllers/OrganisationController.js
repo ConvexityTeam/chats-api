@@ -524,7 +524,7 @@ let j = 0
     product.dataValues.campaign_status = campaign.status
     
       var filteredKeywords = user.filter((user) => user.id === product.Store.UserId);
-        product.dataValues.vendor = filteredKeywords[0]
+      product.Store.dataValues.ProductVendor = filteredKeywords[0]
     
 });
 
