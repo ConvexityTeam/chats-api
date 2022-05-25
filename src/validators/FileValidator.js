@@ -24,19 +24,23 @@ class FileValidator extends BaseValidator {
   }
   static checkTaskProgressEvidenceFile(){
     return [
-    multer.single('uploads'),
+    multer.array('uploads'),
       check('uploads')
       .custom((value, {req}) => new Promise((resolve, reject) => {
-        const ext = req.file.mimetype.split('/').pop();
-        console.log(req.file, 'file')
+        //console.log(req.files, 'file')
+        req.files.map((file)=> {
+          const ext = file.mimetype.split('/').pop();
+        
         const allowedExt = ['png', 'jpg', 'jpeg'];
-        if(req.file.size > maxFileUploadSize) {
+        if(file.size > maxFileUploadSize) {
           reject('Maximum upload size [10 MB] exceeded.');
         }
         if(!allowedExt.includes(ext)) {
           reject(`Allowed file type are ${allowedExt.join(',')}.`)
         }
         resolve(true);
+        })
+        
       })),
       this.validate
     ]

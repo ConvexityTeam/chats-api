@@ -5,7 +5,9 @@ const {
   OrganisationService,
   SmsService,
   QueueService,
-  UserService
+  UserService,
+  WalletService,
+  TaskService
 } = require("../services");
 
 const db = require("../models");
@@ -237,7 +239,6 @@ class CampaignController {
   // REFACTORED
   static async approveAndFund(req, res) {
     const {organisation_id, campaign_id} = req.params;
-    console.log(req.body.token_type, '...,')
     try {
 
       // const campaign = req.campaign;
@@ -278,7 +279,32 @@ class CampaignController {
       return Response.send(res);
     }
   }
-  
+
+  static async fundApprovedBeneficiary (req, res){
+    const {organisation_id, campaign_id} = req.params;
+    const {beneficiaryId, taskAssignmentId} = req.body
+
+    try{
+      const campaign = await CampaignService.getCampaignWallet(campaign_id, organisation_id);
+      const campaignWallet = campaign.Wallet
+      const beneficiaryWallet = await WalletService.findUserCampaignWallet(beneficiaryId, campaign_id);
+      
+      const task_assignment = await db.TaskAssignment.findByPk(taskAssignmentId)
+      const task = await db.Task.findOne({where:{id: task_assignment.TaskId}})
+    
+      const amount_disburse = task.amount / task.assignment_count
+      if(!task_assignment){
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Task Not Found`, task_assignment);
+      return Response.send(res);
+      }
+      const transaction = await QueueService.FundBeneficiary(beneficiaryWallet, campaignWallet, task_assignment, amount_disburse)
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `Beneficiary Funded.`, transaction);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
+      return Response.send(res);
+    }
+  }
   static async sendSMStoken(req, res){
      
     try{

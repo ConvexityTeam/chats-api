@@ -18,7 +18,7 @@ router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController
 
 router.post("/task/vendor-evidence", VendorAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceVendor);
 router.post("/task/agent-evidence", FieldAgentAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceFieldAgent);
-router.post("/task/beneficiary-evidence", BeneficiaryAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);
+router.post("/task/beneficiary-evidence",  FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);
 
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);

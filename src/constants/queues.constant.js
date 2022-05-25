@@ -5,6 +5,7 @@ module.exports = {
   TRANSFER_FROM: 'transferFrom',
   TRANSFER_TO: 'transferTo',
   FROM_NGO_TO_CAMPAIGN: 'fromNgoToCampaign',
+  FUND_BENEFICIARY: 'fundBeneficiary',
   PAYSTACK_DEPOSIT: 'paystackdeposit',
   VERIFY_NIN: 'VerifyNIN',
   VERIFY_FIAT_DEPOSIT: 'verifyFiatDeposit',
