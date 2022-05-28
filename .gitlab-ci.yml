@@ -9,6 +9,6 @@ before_script:
 deploy_staging:
   stage: deploy
   script:
-    - ssh $USER@$APP_URL -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/DevKeyPair && cd chats-api && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
+    - ssh $USER@$APP_URL -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add && cd chats-api && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
   only:
     - develop
