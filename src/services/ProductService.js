@@ -35,7 +35,13 @@ class ProductService {
     ));
   }
 
-
+static async findProduct(where){
+  return Product.findAll({
+    where: {
+      ...where
+    }
+  })
+}
 
 
   static findCampaignProducts(CampaignId) {
