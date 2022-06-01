@@ -22,7 +22,7 @@ RabbitMq['default']
       
         const content = msg.getContent();
         Promise.all([
-          //BlockchainService.createAccountWallet(),
+          BlockchainService.createAccountWallet(),
           BantuService.createPair()
         ]).then(([token, bantu]) => {
           console.log(token,'token')
