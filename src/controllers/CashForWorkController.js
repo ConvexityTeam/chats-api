@@ -682,7 +682,7 @@ class CashForWorkController {
 
 
   static async pickTaskFromCampaign (req, res){
-
+    
     const data = req.body;
     const rules = {
       UserId: "required|numeric",
@@ -697,8 +697,12 @@ class CashForWorkController {
         return util.send(res);
       }else{
       const exist = await db.User.findOne({ where: {RoleId: AclRoles.Beneficiary, id: data.UserId}}); 
-
-      if (exist) {
+      const assigned = await db.TaskAssignment.findOne({ where: {UserId: data.UserId, TaskId: data.TaskId}}); 
+      if(assigned){
+        util.setError(400, 'you have already pick a this task');
+        return util.send(res);
+      }
+      else if (exist) {
       const task = await db.Task.findByPk(data.TaskId);
       if(task && task.assigned != task.assignment_count){
         const TaskAssignment = await db.TaskAssignment.create({UserId: data.UserId,status: 'in progress', TaskId: data.TaskId})
@@ -730,7 +734,7 @@ class CashForWorkController {
 static async evidence(req, res){
 
   try{
-    const evi = await db.TaskAssignmentEvidence.findAll();
+    const evi = await db.VoucherToken.findAll();
 
     Response.setSuccess(200, "Task Evidence", evi);
     return Response.send(res);

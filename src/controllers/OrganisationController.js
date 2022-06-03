@@ -96,7 +96,14 @@ class OrganisationController {
     }
   }
 
+static async verifyImage(req, res) {
+  try{
 
+  }catch(error){
+    Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+    return Response.send(res);
+  }
+}
   static async completeProfile(req, res) {
     try {
       const organisation = req.organisation;
@@ -517,21 +524,18 @@ class OrganisationController {
       const products = await ProductService.findCampaignProducts(campaignId);
       const user = await UserService.getAllUsers()
       const campaign = await db.Campaign.findOne({where:{id: campaignId}})
-      
-let i = 0
-let j = 0
 
-  products.forEach((product, index) => {
-    product.dataValues.campaign_status = campaign.status
+  // products.forEach((product, index) => {
+  //   product.dataValues.campaign_status = campaign.status
     
-   product.ProductVendors.forEach((vendor)=>{
-     let filteredVendor =   user.filter((user) => user.id === vendor.VendorId);
-    vendor.dataValues.VendorName = filteredVendor[0].first_name +" "+filteredVendor[0].last_name
-    })
+  //  product.ProductVendors.forEach((vendor)=>{
+  //    let filteredVendor =   user.filter((user) => user.id === vendor.VendorId);
+  //   vendor.dataValues.VendorName = filteredVendor[0].first_name +" "+filteredVendor[0].last_name
+  //   })
   // console.log(product.ProductVendors)
       
     
-});
+//});
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign Products.`, products);
       return Response.send(res)
@@ -672,11 +676,22 @@ static async getProductVendors(req, res) {
 
   static async getCampaignVendors(req, res) {
     try {
+      Logger.info('fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(req.params.campaign_id);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries.', vendors);
+      const setObj = new Set();
+      const result = vendors.reduce((acc, item)=> {
+        if(!setObj.has(item.VendorId)){
+          setObj.add(item.VendorId, item)
+          acc.push(item) 
+        }
+        return acc;
+      },[])
+    Logger.info('campaign vendors', vendors)
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Vendors.', result);
       return Response.send(res);
     } catch (error) {
       console.log(error);
+      Logger.error('Error fetching campaign vendors')
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error occurred.");
       return Response.send(res);
     }

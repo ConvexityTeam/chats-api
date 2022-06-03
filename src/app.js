@@ -3,6 +3,7 @@ const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
+const {Logger} = require('./libs')
 
 
 const { Response } = require("./libs");
@@ -71,10 +72,12 @@ app.get("/", (req, res) => {
 });
 app.all("*", (req, res) => {
   try {
+    Logger.info('trying to get an unknown route')
     Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Requested resource not found.");
     return Response.send(res);
   } catch (error) {
     const message = process.env.NODE_ENV === 'production' ? 'Internal Server Error.' : error.toString();
+    Logger.error(message)
     Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, message);
     return Response.send(res);
   }
