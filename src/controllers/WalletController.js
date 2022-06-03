@@ -7,6 +7,7 @@ const {
   CampaignService
 } = require('../services');
 const {
+  Logger,
   Response
 } = require('../libs');
 const {
@@ -46,6 +47,7 @@ class WalletController {
   }
   static async getOrganisationWallet(req, res) {
     try {
+      const loger = Logger
       const OrganisationId = req.organisation.id;
       const uuid = req.params.wallet_id;
       if (uuid) {

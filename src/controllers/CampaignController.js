@@ -353,7 +353,8 @@ Response.setSuccess(HttpStatusCode.STATUS_OK, `SMS token sent to ${foundbenenefi
 
   static async campaignTokens (req, res){
     const {campaign_id, page, token_type} = req.params
-    const OrganisationId = req.user.id
+    const OrganisationId = req.userOrgs.toString()
+
    let limit = 10;
   let offset = 0;
   
