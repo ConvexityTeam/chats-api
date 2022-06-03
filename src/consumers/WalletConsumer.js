@@ -27,7 +27,6 @@ RabbitMq['default']
           BlockchainService.createAccountWallet(),
           BantuService.createPair()
         ]).then(([token, bantu]) => {
-          cosole.log(token,'token')
           Logger.info('Account wallet created', token)
           WalletService.updateOrCreate(content, {
             ...token,

@@ -1,18 +1,25 @@
 const { tokenConfig } = require("../config");
 const { Encryption } = require("../libs")
 const axios = require('axios');
+const { createLogger, format, transports} = require('winston');
 
 const Axios = axios.create();
+
+const logger = createLogger({
+  format: format.combine(format.timestamp(), format.json()),
+  transports: [new transports.Console({})],
+});
 
 class BlockchainService {
   static async createAccountWallet() {
     return new Promise(async (resolve, reject) => {
       try {
+        logger.info("Create Account Wallet Request");
         const { data } = await Axios.post(`${tokenConfig.baseURL}/user/register`);
-        cosole.log(data,'token')
+        logger.info("Create Account Wallet Response", data);
         resolve(data.AccountCreated);
       } catch (error) {
-        console.log(error)
+        logger.error("Create Account Wallet Error", error.response.data);
         reject(error);
       }
     });
