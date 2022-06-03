@@ -59,6 +59,13 @@ class TaskController {
         Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Task Not Found");
       return Response.send(res);
       }
+      //console.log(CashForWorkTasks)
+      CashForWorkTasks.AssignedWorkers.forEach((data)=> {
+        data.dataValues.Assigned_UpdatedAt = data.TaskAssignment.updatedAt
+      data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt
+      data.dataValues.Assigned_Status = data.TaskAssignment.status
+      })
+      
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork  Tasks Beneficiaries", CashForWorkTasks);
       return Response.send(res);
     } catch (error) {

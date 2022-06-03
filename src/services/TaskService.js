@@ -53,7 +53,7 @@ class TaskService {
 
   static async getCashForBeneficiaries(params) {
 
-    return Task.findAll({
+    return Task.findOne({
       where: {
         id: params.task_id
       },

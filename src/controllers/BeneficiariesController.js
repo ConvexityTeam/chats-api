@@ -373,6 +373,7 @@ class BeneficiariesController {
     try {
       const campaign = req.campaign;
       const beneficiaryId = req.beneficiary_id;
+      
       if (campaign.status !== 'active') {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is not active.');
         return Response.send(res);
