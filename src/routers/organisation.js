@@ -259,9 +259,12 @@ router.route('/:organisation_id/campaigns/:campaign_id/fund')
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.fundApprovedBeneficiary
   )
-router.route('/:token_type/tokens/:page')
+router.route('/:organisation_id/:campaign_id/:token_type/tokens/:page')
   .get(
     NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.campaignTokens
   )
 
@@ -321,11 +324,11 @@ router.route('/products/:vendor_id')
 
 router.route('/:organisation_id/campaigns/:campaign_id/products')
   .get(
-    NgoSubAdminAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
-    ParamValidator.CampaignId,
-    CampaignValidator.campaignBelongsToOrganisation,
+    // NgoSubAdminAuth,
+    // ParamValidator.OrganisationId,
+    // IsOrgMember,
+    // ParamValidator.CampaignId,
+    // CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.getCampaignProducts
   )
   .post(

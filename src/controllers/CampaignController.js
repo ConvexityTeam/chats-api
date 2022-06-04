@@ -352,15 +352,16 @@ Response.setSuccess(HttpStatusCode.STATUS_OK, `SMS token sent to ${foundbenenefi
   }
 
   static async campaignTokens (req, res){
-    const {campaign_id, page, token_type} = req.params
-    const OrganisationId = req.userOrgs.toString()
+    const {campaign_id, page,organisation_id, token_type} = req.params
+    const OrganisationId = organisation_id
 
    let limit = 10;
   let offset = 0;
   
     let where = {
       'tokenType': token_type,
-      organisationId: OrganisationId
+      organisationId: OrganisationId,
+      campaignId: campaign_id
     }
     try{
      const tokencount = await db.VoucherToken.findAndCountAll({where})
