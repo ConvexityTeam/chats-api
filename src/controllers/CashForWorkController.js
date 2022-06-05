@@ -696,7 +696,8 @@ class CashForWorkController {
         util.setError(400, validation.errors);
         return util.send(res);
       }else{
-      const exist = await db.User.findOne({ where: {RoleId: AclRoles.Beneficiary, id: data.UserId}}); 
+      const exist = await db.User.findOne({ where: {RoleId: AclRoles.Beneficiary, id: data.UserId}});
+      const count =  await db.TaskAssignment.findAll()
       const assigned = await db.TaskAssignment.findOne({ where: {UserId: data.UserId, TaskId: data.TaskId}}); 
       if(assigned){
         util.setError(400, 'you have already pick a this task');
@@ -705,7 +706,7 @@ class CashForWorkController {
       else if (exist) {
       const task = await db.Task.findByPk(data.TaskId);
       if(task && task.assigned != task.assignment_count){
-        const TaskAssignment = await db.TaskAssignment.create({UserId: data.UserId,status: 'in progress', TaskId: data.TaskId})
+        const TaskAssignment = await db.TaskAssignment.create({id: count.length + 1, UserId: data.UserId,status: 'in progress', TaskId: data.TaskId})
         if(TaskAssignment){
            await db.Task.update({
           assigned: task.assigned + 1

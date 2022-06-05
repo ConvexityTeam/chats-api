@@ -288,7 +288,13 @@ class CampaignController {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Task Assignment Not Found');
         return Response.send(res);
       }
-      await db.TaskAssignment.update({status: 'rejected'}, {where: {id: taskAssignmentId}})
+      if(!assignment.uploaded_evidence){
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Kindly upload evidence');
+        return Response.send(res);
+      }
+     const updated =  await db.TaskAssignment.update({status: 'rejected'}, {where: {id: taskAssignmentId}})
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Task rejected', updated);
+        return Response.send(res);
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);

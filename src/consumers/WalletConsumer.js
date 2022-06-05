@@ -32,24 +32,22 @@ RabbitMq['default']
             ...token,
             ...bantu
           });
-          
+          msg.ack();
         }).catch(error => {
-          Logger.error('Error creating account wallet')
-          console.log(error.message);
+          Logger.error('Error creating account wallet', error.message)
           createWalletQueue.delete()
           msg.nack();
         });
       })
       .then(_ => {
-        msg.ack();
-        console.log(`Running Consumer For Create Wallet.`)
+        Logger.info('Running Consumer For Create Wallet.')
       })
       .catch(error => {
-        console.log(`Error Starting Create Wallet Consumer:`, error);
+        Logger.error('Error Starting Create Wallet Consumer:', error)
       })
   })
   .catch(error => {
-    console.log(`RabbitMq Error:`, error);
+    Logger.error('ERabbitMq Error:', error)
   });
 
   
