@@ -411,6 +411,14 @@ static async verifyImage(req, res) {
     }
   }
 
+  static async createWallet(req, res){
+    try{
+      QueueService.createWallet(OrganisationId, 'organisation', campaign.id);
+    }catch(error){
+
+    }
+  }
+
   static async createCampaign(req, res) {
     try {
       const data = SanitizeObject(req.body);
