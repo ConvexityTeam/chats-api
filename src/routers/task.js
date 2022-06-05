@@ -19,8 +19,8 @@ router.post('/task_progress_evidence/:taskProgressId',
 	TaskController.uploadEvidence);
 router.route('/cash-for-work/task/:task_id')
 	.get(
-		NgoSubAdminAuth,
-		TaskValidator.taskId(),
+		// NgoSubAdminAuth,
+		// TaskValidator.taskId(),
 		TaskController.getTaskBeneficiaies
 	)
 	

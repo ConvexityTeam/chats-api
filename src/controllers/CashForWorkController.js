@@ -718,7 +718,7 @@ class CashForWorkController {
            return util.send(res);
         }
        
-      }else util.setSuccess(200, 'Cannot pick task');
+      }else util.setSuccess(400, `Only ${task.assignment_count} entries are allowed on this task`);
         
     } else {
         util.setSuccess(404, 'Beneficiary Not Found');
@@ -962,6 +962,7 @@ static async evidence(req, res){
         Response.setSuccess(200, "No Task Recieved", tasks);
         return Response.send(res);
       }
+      
       Response.setSuccess(200, "Task Recieved", tasks);
       return Response.send(res);
       

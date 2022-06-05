@@ -53,6 +53,7 @@ class TaskController {
 
   static async getTaskBeneficiaies(req, res) {
     try {
+      let completed_task =  0
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForBeneficiaries(params);
       if(!CashForWorkTasks){
@@ -60,12 +61,15 @@ class TaskController {
       return Response.send(res);
       }
       //console.log(CashForWorkTasks)
+      
       CashForWorkTasks.AssignedWorkers.forEach((data)=> {
+        data.TaskAssignment.status === 'completed' ? completed_task++ : completed_task
         data.dataValues.Assigned_UpdatedAt = data.TaskAssignment.updatedAt
       data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt
       data.dataValues.Assigned_Status = data.TaskAssignment.status
       })
-      
+      CashForWorkTasks.dataValues.campleted_task = completed_task
+      CashForWorkTasks.dataValues.total_task_allowed =  CashForWorkTasks.assignment_count
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork  Tasks Beneficiaries", CashForWorkTasks);
       return Response.send(res);
     } catch (error) {
