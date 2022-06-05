@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   TaskAssignment.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true
+    },
     TaskId: DataTypes.INTEGER,
     UserId: DataTypes.INTEGER,
     uploaded_evidence: DataTypes.BOOLEAN,

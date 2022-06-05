@@ -11,7 +11,8 @@ const {
   PAYSTACK_VENDOR_WITHDRAW
 } = require('../constants/queues.constant')
 const {
-  RabbitMq
+  RabbitMq,
+  Logger
 } = require('../libs');
 const {
   WalletService,
@@ -141,12 +142,12 @@ RabbitMq['default']
           campaign, 
           token_type
         } = msg.getContent();
-        
         if((Math.sign(OrgWallet.balance - campaign.budget) == -1 ) || (Math.sign(OrgWallet.balance - campaign.budget) == -0)){
-
-          console.log('Insufficient wallet balance. Please fund organisation wallet.')
+          Logger.error('Insufficient wallet balance. Please fund organisation wallet.')
         }else{
+          Logger.info('Transferring from organisation wallet to campaign wallet')
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
+   Logger.info('Transferred to campaign wallet', org);
    await Campaign.update({
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,

@@ -1,25 +1,21 @@
 const { tokenConfig } = require("../config");
-const { Encryption } = require("../libs")
+const { Encryption, Logger } = require("../libs")
 const axios = require('axios');
 const { createLogger, format, transports} = require('winston');
 
 const Axios = axios.create();
 
-const logger = createLogger({
-  format: format.combine(format.timestamp(), format.json()),
-  transports: [new transports.Console({})],
-});
 
 class BlockchainService {
   static async createAccountWallet() {
     return new Promise(async (resolve, reject) => {
       try {
-        logger.info("Create Account Wallet Request");
+        Logger.info("Create Account Wallet Request");
         const { data } = await Axios.post(`${tokenConfig.baseURL}/user/register`);
-        logger.info("Create Account Wallet Response", data);
+        Logger.info("Create Account Wallet Response", data);
         resolve(data.AccountCreated);
       } catch (error) {
-        logger.error("Create Account Wallet Error", error.response.data);
+        Logger.error("Create Account Wallet Error", error.response.data);
         reject(error);
       }
     });
@@ -28,6 +24,7 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
      
       try {
+        Logger.info('Minting token')
         const payload = {mintTo, amount};
         const checksum = Encryption.encryptTokenPayload(payload);
         const { data } = await Axios.post(`${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`, null, {
@@ -35,8 +32,10 @@ class BlockchainService {
             'X-CHECKSUM': checksum
           }
         });
+        Logger.info('Token minted', data)
         resolve(data);
       } catch (error) {
+        Logger.error('Error minting token', error)
         reject(error);
       }
     });
@@ -45,9 +44,12 @@ class BlockchainService {
   static async approveToSpend(ngoAddress, ngoPassword, benWallet, amount) {
     return new Promise(async (resolve, reject) => {
       try {
+        Logger.info('approving to spend')
         const res = await Axios.post(`${tokenConfig.baseURL}/txn/approve/${ngoAddress}/${ngoPassword}/${benWallet}/${amount}`);
+        Logger.info('Approved to spend', res)
         if(res.data)resolve(res.data);
       } catch (error) {
+        Logger.error('Error approving to spend', error.response.data)
         reject(error.response.data);
       }
     });
@@ -57,9 +59,12 @@ class BlockchainService {
   static async transferTo(senderaddr, senderpwsd, receiver,amount) {
     return new Promise(async (resolve, reject) => {
       try {
+        Logger.info('Transferring to')
         const res = await Axios.post(`${tokenConfig.baseURL}/txn/transfer/${senderaddr}/${senderpwsd}/${receiver}/${amount}`);
-        if(res.data)resolve(res.data);
+        Logger.info('Success transferring funds to', res.data)
+        resolve(res.data);
       } catch (error) {
+        Logger.error('Error transferring funds to', error.response.data)
         reject(error.response.data);
       }
     });
@@ -70,10 +75,12 @@ class BlockchainService {
 
     return new Promise(async (resolve, reject) => {
       try {
+        Logger.info('Transferring funds from..')
         const res = await Axios.post(`${tokenConfig.baseURL}/txn/transferfrom/${tokenowneraddr}/${to}/${spenderaddr}/${spenderpwsd}/${amount}`);
-        console.log(res,'transfer')
+        Logger.info('Success transferring funds from', res.data)
         if(res.data)resolve(res.data);
       } catch (error) {
+        Logger.info('Error transferring funds from', error.response.data)
         reject(error.response.data);
       }
     });
@@ -111,14 +118,16 @@ class BlockchainService {
     const checksum = Encryption.encryptTokenPayload(payload);
     return new Promise(async (resolve, reject)=> {
       try{
+        Logger.info('Redeeming token')
         const {data} = await Axios.post(`${tokenConfig.baseURL}/txn/redeem/${senderaddr}/${senderpswd}/${amount}`, null, {
           headers: {
             'X-CHECKSUM': checksum
           }
         });
-        console.log(data)
+        Logger.info('Success redeeming token', data)
         resolve(data)
       }catch(error){
+        Logger.error('Error redeeming token', error.response.data)
         reject(error.response.data);
       }
     })
