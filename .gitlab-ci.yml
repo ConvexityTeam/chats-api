@@ -12,3 +12,4 @@ deploy_staging:
     - ssh $USER@$APP_URL -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/id_rsa && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
   only:
     - develop
+    
