@@ -602,7 +602,7 @@ tokens.forEach((data) => {
       if(!campaignWallet){
        await QueueService.createWallet(OrganisationId, 'organisation', campaignId);
       }
-      campaign.Beneficiaries.forEach(async(data)=> {
+      campaign?.Beneficiaries?.forEach(async(data)=> {
         const userWallet = await WalletService.findUserCampaignWallet(data.id, campaignId)
         if(!userWallet){
         await QueueService.createWallet(data.id, 'user', campaignId);
