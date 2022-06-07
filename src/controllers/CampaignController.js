@@ -308,8 +308,9 @@ class CampaignController {
     try{
       const campaign = await CampaignService.getCampaignWallet(campaign_id, organisation_id);
       const campaignWallet = campaign.Wallet
+      const organisation = await OrganisationService.getOrganisationWallet(organisation_id);
+      const OrgWallet = organisation.Wallet
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(beneficiaryId, campaign_id);
-      
       const task_assignment = await db.TaskAssignment.findByPk(taskAssignmentId)
       const task = await db.Task.findOne({where:{id: task_assignment.TaskId}})
     
@@ -318,6 +319,12 @@ class CampaignController {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Task Assignment Not Found`, task_assignment);
       return Response.send(res);
       }
+
+      if((amount_disburse > campaign.budget)) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Insufficient wallet balance. Please fund organisation wallet.');
+        return Response.send(res);
+      }
+      
       const transaction = await QueueService.FundBeneficiary(beneficiaryWallet, campaignWallet, task_assignment, amount_disburse)
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Beneficiary Funded.`, transaction);
       return Response.send(res);

@@ -324,11 +324,11 @@ router.route('/products/:vendor_id')
 
 router.route('/:organisation_id/campaigns/:campaign_id/products')
   .get(
-    // NgoSubAdminAuth,
-    // ParamValidator.OrganisationId,
-    // IsOrgMember,
-    // ParamValidator.CampaignId,
-    // CampaignValidator.campaignBelongsToOrganisation,
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.getCampaignProducts
   )
   .post(

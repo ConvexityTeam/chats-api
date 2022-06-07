@@ -804,11 +804,16 @@ static async evidence(req, res){
           Response.setError(422, "Please upload file evidence");
           return Response.send(res);
         }
-       const isTaskExist = await db.TaskAssignment.findOne({where: {id: TaskAssignmentId}});
+       const isTaskExist = await db.TaskAssignment.findOne({where: {id: TaskAssignmentId, UserId: req.user.id}});
        if(!isTaskExist){
          Response.setError(422, "Task Assignment Not Found");
         return Response.send(res);
        }
+       if(isTaskExist.status ==='completed'){
+          Response.setError(409, "Evidence already uploaded");
+        return Response.send(res);
+       }
+       
       await Promise.all(
      files.map(async (file)=> {
         const  extension = file.mimetype.split('/').pop();
@@ -822,8 +827,13 @@ static async evidence(req, res){
        })
       )
 
-         
       if(uploadArray.length){
+        if(isTaskExist.status === 'rejected'){
+          await db.TaskAssignmentEvidence.update({
+            ...req.body,
+            uploads: uploadArray
+          },{where: {id: TaskAssignmentId}})
+       }
         await db.TaskAssignmentEvidence.create({
                 uploads: uploadArray,
                 TaskAssignmentId,
