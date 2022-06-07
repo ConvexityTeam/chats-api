@@ -602,13 +602,14 @@ tokens.forEach((data) => {
       if(!campaignWallet){
        await QueueService.createWallet(OrganisationId, 'organisation', campaignId);
       }
-      campaign?.Beneficiaries?.forEach(async(data)=> {
+      if(campaign.Beneficiaries){
+      campaign.Beneficiaries.forEach(async(data)=> {
         const userWallet = await WalletService.findUserCampaignWallet(data.id, campaignId)
         if(!userWallet){
         await QueueService.createWallet(data.id, 'user', campaignId);
         }
       })
-      
+    }
       campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length
       campaign.dataValues.beneficiary_share = campaign.dataValues.beneficiaries_count > 0 ? (campaign.budget / campaign.dataValues.beneficiaries_count).toFixed(2) : 0;
       campaign.dataValues.amount_spent = (campaign.amount_disbursed - campaign.BeneficiariesWallets.map(balance => balance).reduce((a, b) => a + b, 0)).toFixed(2)
