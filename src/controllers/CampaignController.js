@@ -598,8 +598,10 @@ tokens.forEach((data) => {
       const OrganisationId = req.params.organisation_id
       const campaign = await CampaignService.getCampaignWithBeneficiaries(campaignId);
       const campaignWallet = await WalletService.findOrganisationCampaignWallet(OrganisationId,campaignId)
+      console.log(campaignWallet)
       if(!campaignWallet){
-        QueueService.createWallet(OrganisationId, 'organisation', campaignId);
+        console.log('creting wallet')
+       await QueueService.createWallet(OrganisationId, 'organisation', campaignId);
       }
       campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length
       campaign.dataValues.beneficiary_share = campaign.dataValues.beneficiaries_count > 0 ? (campaign.budget / campaign.dataValues.beneficiaries_count).toFixed(2) : 0;
