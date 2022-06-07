@@ -157,6 +157,7 @@ class CampaignService {
 
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
+      order: [['updatedAt', 'ASC']],
       where: {
         id
       },

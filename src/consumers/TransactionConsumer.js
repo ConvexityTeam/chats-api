@@ -292,7 +292,7 @@ RabbitMq['default']
 
     processFundBeneficiary.activateConsumer(async msg => {
       const {beneficiaryWallet, campaignWallet, task_assignment, amount_disburse, transaction} = msg.getContent();
-        const  ben =  await  BlockchainService.approveToSpend(campaignWallet.address, campaignWallet.privateKey,beneficiaryWallet.address, amount_disburse )
+      const  ben =  await  BlockchainService.approveToSpend(campaignWallet.address, campaignWallet.privateKey,beneficiaryWallet.address, amount_disburse )
         await  Wallet.update({
             balance: Sequelize.literal(`balance + ${amount_disburse}`)
           },{where: {uuid: beneficiaryWallet.uuid} })
@@ -305,7 +305,7 @@ RabbitMq['default']
            status: 'success'
           },{where: {uuid: transaction.uuid}})
           await TaskAssignment.update({
-            status: 'completed'
+            status: 'disbursed'
           },{where: {id: task_assignment.id}})
           
           msg.ack()

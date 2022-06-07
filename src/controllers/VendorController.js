@@ -198,10 +198,10 @@ class VendorController {
   }
 
   static async getAllProducts(req, res) {
-    const products = await db.Products.findAll({
+    const products = await db.Product.findAll({
       include: {
         model: db.Market,
-        as: "Vendor"
+        as: "Store"
       },
     });
     util.setSuccess(200, "Products Retrieved", products);

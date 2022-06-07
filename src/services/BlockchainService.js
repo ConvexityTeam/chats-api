@@ -49,7 +49,7 @@ class BlockchainService {
         Logger.info('Approved to spend', res)
         if(res.data)resolve(res.data);
       } catch (error) {
-        Logger.error('Error approving to spend', error.response.data)
+        Logger.error('Error approving to spend', error)
         reject(error.response.data);
       }
     });
