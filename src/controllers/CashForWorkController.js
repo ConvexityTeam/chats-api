@@ -735,8 +735,7 @@ class CashForWorkController {
 static async evidence(req, res){
 
   try{
-    const evi = await db.TaskAssignment.findAll();
-    console.log(evi)
+    const evi = await db.VoucherToken.findAll();
     Response.setSuccess(200, "Task Evidence", evi);
     return Response.send(res);
   }catch(error){

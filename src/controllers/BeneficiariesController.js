@@ -487,7 +487,7 @@ class BeneficiariesController {
         // delete w.SentTransactions;
         return w;
       });
-
+      
       const beneficiary = _beneficiary.toObject();
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Profile.', {
