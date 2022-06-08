@@ -7,6 +7,10 @@ FundAccount
 const {
 generatePaystackRef
 } = require('../utils');
+const {
+  Logger
+} = require('../libs');
+
 const paystack = require('paystack-api')(paystackConfig.secretKey);
 
 class PaystackService {
@@ -64,11 +68,15 @@ class PaystackService {
    static async withdraw(source, amount, recipient, reason) {
     return new Promise(async (resolve, reject) => {
       try {
+        let value = amount *100
+        Logger.info(`tranferring to bank account`)
         const response = await paystack.transfer.create({
-        source, amount, recipient, reason
+        source, amount: value, recipient, reason
         })
+        Logger.info(`success tranferring to bank account: ${response.data}`)
         resolve(response.data)
       } catch (error) {
+        Logger.error(`Error tranferring to bank account: ${error}`)
         reject(new Error('Could not make a withdrawal'));
       }
     })
