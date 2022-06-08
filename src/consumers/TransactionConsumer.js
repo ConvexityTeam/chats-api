@@ -249,7 +249,7 @@ RabbitMq['default']
       const {bankAccount, campaignWallet, userWallet, userId, amount, transaction} = msg.getContent();
     //
     //if(redeem){
-
+      console.log(campaignWallet, userWallet)
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
         
          if(ref){
