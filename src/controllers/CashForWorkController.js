@@ -1044,33 +1044,25 @@ static async viewSubmittedEvidence(req, res){
             model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'
           }}
           });
+        
 
       if(!tasks){
         Response.setSuccess(200, "No Task Recieved", []);
         return Response.send(res);
       }
-      if(tasks.Assignments){
-        tasks.Assignments.forEach(async(task)=> {
-       const task_exist = await db.Task.findByPk(task.TaskId)
-       task.dataValues.task_name = task_exist.name
-        task.SubmittedEvidences.forEach(async(assignment)=> {
-          assignment.dataValues.beneficiaryId = tasks.id
-         assignment.dataValues.beneficiary_first_name = tasks.first_name
-        assignment.dataValues.beneficiary_last_name = tasks.last_name
-        //console.log(assignment)
-        
+        tasks.Assignments.forEach((data)=> {
+       const task_exist =  db.Task.findByPk(data.TaskId)
+       data.dataValues.task_name = task_exist.name
+        data.SubmittedEvidences.forEach((value)=> {
+          value.dataValues.beneficiaryId = tasks.id
+         value.dataValues.beneficiary_first_name = tasks.first_name
+        value.dataValues.beneficiary_last_name = tasks.last_name
         })
         
       })
-      ready = true
-      }
-      console.log(ready)
-      if(ready == true){
-        Response.setSuccess(200, "Task Recieved", tasks);
-      return Response.send(res);
-      }
       
-
+      Response.setSuccess(200, "Task Recieved", tasks);
+      return Response.send(res);
          }catch(error){
       console.log(error.message);
       util.setError(500, "Internal Server Error"+ error);
