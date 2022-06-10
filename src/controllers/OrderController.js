@@ -5,7 +5,8 @@ const moment = require('moment')
 const {
   HttpStatusCode,
   generateOrderRef,
-  generateQrcodeURL
+  generateQrcodeURL,
+  compareHash
 } = require("../utils");
 
 
@@ -34,10 +35,14 @@ class OrderController {
     const {reference} = req.params
     try{
       const data = await VendorService.getOrder({reference});
-      const isPin = await UserService.findSingleUser({pin, id})
-      if(!isPin){
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid beneficiary or pin.');
+      const user = await UserService.findSingleUser({id})
+      if(!user){
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid beneficiary');
       return Response.send(res);
+      }
+      if (!compareHash(pin, user.pin)) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid or wrong old PIN.');
+        return Response.send(res)
       }
       
       if(!data) {
@@ -49,7 +54,6 @@ class OrderController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Order ${data.order.status}`);
         return Response.send(res)
       }
-
 
       const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId, UserId: null})
       const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})

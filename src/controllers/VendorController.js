@@ -507,7 +507,7 @@ class VendorController {
       const isVerify = await db.VoucherToken.findOne({where: {token}})
       
       if(!isVerify) {
-        Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'token not valid');
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'token not valid');
       return Response.send(res);
       }
       const campaign = await CampaignService.getCampaignById(isVerify.campaignId)
