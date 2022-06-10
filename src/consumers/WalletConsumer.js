@@ -42,10 +42,8 @@ const [token, bantu] = await Promise.all([
          msg.nack()
         }
  
-         
+     
   })
-
-
 }catch(error){
   Logger.error(`Error creating account wallet: ${error.message}`)
          await createWalletQueue.delete()
