@@ -79,6 +79,7 @@ class OrderController {
       const transaction = await OrderService.processOrder(beneficiaryWallet,vendorWallet,campaignWallet, data.order, data.order.Vendor, data.total_cost);
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Order details', transaction);
+      return Response.send(res)
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
       return Response.send(res);
