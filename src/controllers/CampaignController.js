@@ -598,7 +598,7 @@ tokens.forEach((data) => {
       const OrganisationId = req.params.organisation_id
       const campaign = await CampaignService.getCampaignWithBeneficiaries(campaignId);
       const campaignWallet = await WalletService.findOrganisationCampaignWallet(OrganisationId,campaignId)
-      
+      let completed_task = []
       if(!campaignWallet){
        await QueueService.createWallet(OrganisationId, 'organisation', campaignId);
       }
@@ -610,7 +610,17 @@ tokens.forEach((data) => {
         }
       })
     }
-      campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length
+    if(campaign.Jobs){
+      campaign.Jobs.forEach(async(data)=> {
+     let assignment = await db.TaskAssignment.findAll({where: {TaskId: data.id, status: 'completed'}})
+      if(assignment){
+        campaign.dataValues.completed_task = assignment.length
+      }
+    })
+    }
+ 
+    campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length
+      campaign.dataValues.task_count = campaign.Jobs.length
       campaign.dataValues.beneficiary_share = campaign.dataValues.beneficiaries_count > 0 ? (campaign.budget / campaign.dataValues.beneficiaries_count).toFixed(2) : 0;
       campaign.dataValues.amount_spent = (campaign.amount_disbursed - campaign.BeneficiariesWallets.map(balance => balance).reduce((a, b) => a + b, 0)).toFixed(2)
       campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(campaignId);
