@@ -41,7 +41,7 @@ class OrderController {
       return Response.send(res);
       }
       if (!compareHash(pin, user.pin)) {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid or wrong old PIN.');
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Invalid or wrong PIN.');
         return Response.send(res)
       }
       
