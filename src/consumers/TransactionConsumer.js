@@ -201,7 +201,7 @@ RabbitMq['default']
             const qrCodeData = {
                 OrganisationId: campaign.OrganisationId,
                 Campaign: {id: campaign.id, title: campaign.title},
-                Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_Name ?User[i].first_name  +" "+ User[i].last_Name: null},
+                Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_Name ? User[i].first_name  +" "+ User[i].last_name: null},
                 amount: budget
             }
             if(token_type === 'papertoken'){
