@@ -413,6 +413,7 @@ class AuthController {
                 if (err) {
                   console.log("Error Ocurred hashing");
                 }
+                const encryptedPin =  createHash(fields.pin);
                 bcrypt.hash(fields.password, salt).then(async (hash) => {
                   const encryptedPassword = hash;
                   await db.User.create({
@@ -428,7 +429,7 @@ class AuthController {
                       address: fields.address,
                       referal_id: fields.referal_id,
                       dob: fields.dob,
-                      pin: fields.pin
+                      pin: encryptedPin
                     })
                     .then(async (user) => {
                       QueueService.createWallet(user.id, 'user');
