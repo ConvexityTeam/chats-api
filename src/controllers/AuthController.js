@@ -268,6 +268,7 @@ class AuthController {
             return Response.send(res);
           }
         }
+        const encryptedPin =  createHash(fields.pin);
         bcrypt.genSalt(10, (err, salt) => {
           if (err) {
             console.log("Error Ocurred hashing");
@@ -288,7 +289,7 @@ class AuthController {
                 referal_id: fields.referal_id,
                 nfc: fields.nfc,
                 dob: fields.dob,
-                pin: fields.pin
+                pin: encryptedPin
               })
               .then(async (user) => {
                 QueueService.createWallet(user.id, 'user');
