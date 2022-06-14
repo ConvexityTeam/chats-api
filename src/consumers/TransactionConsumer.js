@@ -198,14 +198,14 @@ RabbitMq['default']
             let istoken = false
             let  QrCode;
             const smsToken = GenearteSMSToken()
-            
-            if(token_type === 'papertoken'){
-             QrCode = await generateQrcodeURL({
+            const qrCodeData = {
                 OrganisationId: campaign.OrganisationId,
                 Campaign: {id: campaign.id, title: campaign.title},
                 Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_Name ?User[i].first_name  +" "+ User[i].last_Name: null},
                 amount: budget
-            });
+            }
+            if(token_type === 'papertoken'){
+             QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
             istoken = true
 
             }else if (token_type === 'smstoken') {
