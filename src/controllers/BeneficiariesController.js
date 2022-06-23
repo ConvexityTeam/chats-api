@@ -499,7 +499,6 @@ class BeneficiariesController {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
@@ -782,7 +781,10 @@ class BeneficiariesController {
         return Response.send(res);
       }
       
-
+      
+      transactions.rows.forEach(transaction => {
+        transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${transaction.SenderWallet ? transaction.SenderWallet.address : transaction.ReceiverWallet.address}`
+      })
     const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
 
      
