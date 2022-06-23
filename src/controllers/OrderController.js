@@ -99,10 +99,11 @@ class OrderController {
         return Response.send(res)
       }
 
-
-      const campaignWallet = await WalletService.findSingleWallet({CampaignId: data.order.CampaignId, UserId: null})
-      const vendorWallet = await WalletService.findSingleWallet({UserId: data.order.Vendor.id})
-      const beneficiaryWallet = await WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
+      const [campaignWallet, vendorWallet, beneficiaryWallet] = await Promise.all([
+         WalletService.findSingleWallet({CampaignId: data.order.CampaignId, UserId: null}),
+         WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
+         WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
+      ])
 
       if(!beneficiaryWallet) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Account not eligible to pay for order');
@@ -126,8 +127,7 @@ class OrderController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Order details', transaction);
       return Response.send(res);
     } catch (error) {
-      console.log(error)
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please retry.');
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please... retry.'+ error);
       return Response.send(res);
     }
   }
