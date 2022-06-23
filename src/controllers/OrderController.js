@@ -127,7 +127,7 @@ class OrderController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Order details', transaction);
       return Response.send(res);
     } catch (error) {
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please... retry.'+ error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please retry.');
       return Response.send(res);
     }
   }

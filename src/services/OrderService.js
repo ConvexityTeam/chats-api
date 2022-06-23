@@ -29,7 +29,7 @@ class OrderService {
       status: 'processing',
       transaction_origin: 'store',
       transaction_type: 'spent',
-      SenderWalletId: beneficiaryWallet.uuid,
+      SenderWalletId: campaignWallet.uuid,
       ReceiverWallet: vendorWallet.uuid,
       OrderId: order.id,
       VendorId: vendor.id,
@@ -38,7 +38,7 @@ class OrderService {
     });
 
     QueueService.processOrder(
-     beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount
+     beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount, transaction
     );
  
     // Queue for process

@@ -201,7 +201,7 @@ RabbitMq['default']
             const qrCodeData = {
                 OrganisationId: campaign.OrganisationId,
                 Campaign: {id: campaign.id, title: campaign.title},
-                Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_name ? User[i].first_name  +" "+ User[i].last_name: null},
+                Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_name ?User[i].first_name  +" "+ User[i].last_name: ''},
                 amount: budget
             }
             if(token_type === 'papertoken'){
@@ -316,10 +316,13 @@ RabbitMq['default']
     
     processVendorOrderQueue.activateConsumer(async msg => {
         const {
-      beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount} = msg.getContent();
+      beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount, transaction} = msg.getContent();
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
 
       Order.update({status: 'confirmed'},{where: { reference: order.reference} });
+      await Transaction.update({
+        status: 'success'
+      },{where: {uuid: transaction.uuid}})
           
     await  Wallet.update({
             balance: Sequelize.literal(`balance - ${amount}`)
