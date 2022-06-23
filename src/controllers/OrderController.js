@@ -267,8 +267,14 @@ class OrderController {
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved', products);
       return Response.send(res);
       }
-      
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', products);
+      let total_product_sold = products.length
+      let total_product_value = 0
+      products.forEach(product => {
+        product.Cart.forEach(cart => {
+          total_product_value = total_product_value + cart.total_amount
+        })
+      })
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', {total_product_sold,total_product_value,products});
       return Response.send(res);
 
 

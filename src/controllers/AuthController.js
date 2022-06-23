@@ -206,7 +206,7 @@ class AuthController {
         last_name: "required|alpha",
         email: "email",
         referal_id: "string",
-        phone: ['required','regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/'],
+        phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
         gender: "required|in:male,female",
         address: "string",
         location: "string",
@@ -349,7 +349,7 @@ class AuthController {
         last_name: "required|alpha",
         email: "email",
         referal_id: "string",
-        phone: ['required','regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/'],
+        phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
         gender: "required|alpha|in:male,female",
         address: "string",
         location: "string",
@@ -484,7 +484,6 @@ class AuthController {
                             QueueService.createWallet(user.id, 'user', fields.campaign);
                           });
                       }
-            
                       Response.setSuccess(
                         201,
                         "Account Onboarded Successfully",

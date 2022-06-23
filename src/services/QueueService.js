@@ -82,7 +82,6 @@ class QueueService {
   }
 
   static CampaignApproveAndFund (payload){
-    console.log(payload.token_type)
     approveCampaignAndFund.send(
       new Message(payload, {
         contentType: "application/json"
@@ -98,6 +97,8 @@ class QueueService {
             status: 'processing',
             transaction_origin: 'wallet',
             transaction_type: 'transfer',
+            ReceiverWalletId: beneficiaryWallet.address,
+            SenderWalletId: campaignWallet.address,
             BeneficiaryId: beneficiaryWallet.UserId,
             narration: 'for task completed by beneficiary',
             OrganisationId: campaignWallet.OrganisationId,

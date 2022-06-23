@@ -201,7 +201,7 @@ RabbitMq['default']
             const qrCodeData = {
                 OrganisationId: campaign.OrganisationId,
                 Campaign: {id: campaign.id, title: campaign.title},
-                Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_Name ? User[i].first_name  +" "+ User[i].last_name: null},
+                Beneficiary: {id: User[i].id, name: User[i].first_name || User[i].last_name ? User[i].first_name  +" "+ User[i].last_name: null},
                 amount: budget
             }
             if(token_type === 'papertoken'){
@@ -209,7 +209,7 @@ RabbitMq['default']
             istoken = true
 
             }else if (token_type === 'smstoken') {
-              SmsService.sendOtp(User[i].phone, `Hello ${User[i].first_name || User[i].last_Name ?User[i].first_name  +" "+ User[i].last_Name: ''} your convexity token is ${smsToken}, you are approved to spend ${budget}.`)
+              SmsService.sendOtp(User[i].phone, `Hello ${User[i].first_name || User[i].last_name ?User[i].first_name  +" "+ User[i].last_name: ''} your convexity token is ${smsToken}, you are approved to spend ${budget}.`)
             istoken = true
             }
             if(istoken){
