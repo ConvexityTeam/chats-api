@@ -482,11 +482,15 @@ class VendorController {
     const {period} = req.params;
     try {
       const transactions = await VendorService.vendorChart(req.user.id, period);
+      const vendor = await db.Wallet.findOne({where: {UserId: req.user.id}})
 
       if(transactions.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', transactions);
         return Response.send(res);
       }
+      transactions.rows.forEach(transaction => {
+        transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${vendor.address}`
+      })
     
     const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
 
