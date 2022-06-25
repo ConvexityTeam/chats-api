@@ -122,17 +122,13 @@ class UsersController {
     try {
       const data = req.body
       const rules = {
-        gender: "required|in:male,female",
+        state: "required|string",
+        country: "required|string",
         address: "string",
         location: "string",
-        dob: "required|date|before:today",
-      first_name: "required|string",
-      last_name: "required|string",
-      phone: "required|string",
-      country: "required|string",
-      currency: 'required|string',
-      nin: "required|digits_between:10,11",
-      marital_status: "string"
+      country: "required|digit",
+      year_of_inception: 'digits:4',
+      website_url: "required|url"
     };
 
     const validation = new Validator(data, rules);
