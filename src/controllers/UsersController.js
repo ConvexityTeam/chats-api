@@ -120,22 +120,19 @@ class UsersController {
 
   static async updateProfile(req, res) {
     try {
-         const data = SanitizeObject(req.body, ['first_name', 'last_name', 'phone', 'country','nin', 'currency', 'location', 'address', 'gender', 'marital_status', 'dob']);
-    //   const rules = {
-    //     state: "required|string",
-    //     country: "required|string",
-    //     address: "string",
-    //     location: "string",
-    //   country: "required|digit",
-    //   year_of_inception: 'digits:4',
-    //   website_url: "required|url"
-    // };
+      const data = req.body
+      const rules = {
+      address: "string",
+      phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+      country: "required|string",
+      currency: 'required|string',
+    };
 
-    // const validation = new Validator(data, rules);
-    // if (validation.fails()) {
-    //   Response.setError(422, validation.errors);
-    //   return Response.send(res);
-    // }
+    const validation = new Validator(data, rules);
+    if (validation.fails()) {
+      Response.setError(422, validation.errors);
+      return Response.send(res);
+    }
       await req.user.update(data);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Profile Updated', req.user.toObject());
       return Response.send(res);
