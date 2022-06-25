@@ -66,9 +66,18 @@ static async verifyAccount (req, res){
     const {userprofile_id} =req.params
     const data = req.body;
     const rules = {
-      nin_first_name: "required|string",
-      nin_other_name: "required|string",
+      first_name: "required|string",
+      last_name: "required|string",
       nin_image_url: "required|url",
+      gender: "required|in:male,female",
+        address: "string",
+        location: "string",
+        dob: "required|date|before:today",
+      phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+      country: "required|string",
+      currency: 'required|string',
+      nin: "required|digits_between:10,11",
+      marital_status: "string"
     };
 
     const validation = new Validator(data, rules);
@@ -86,18 +95,17 @@ static async verifyAccount (req, res){
       return Response.send(res)
     }
 
-    const  extension = req.file.mimetype.split('/').pop();
+    // const  extension = req.file.mimetype.split('/').pop();
 
-    const profile_pic =  await uploadFile(
-        req.file,
-        "u-" + environ + "-" + organisation.email + "-i." + extension,
-        "convexity-profile-images"
-      )
+    // const profile_pic =  await uploadFile(
+    //     req.file,
+    //     "u-" + environ + "-" + organisation.email + "-i." + extension,
+    //     "convexity-profile-images"
+    //   )
 
     await db.User.update({
       profile_pic: data.nin_image_url,
-      first_name: data.nin_first_name,
-      last_name: data.nin_other_name,
+      ...data,
       status: 'activated',
       is_nin_verified: true
     },{where: {id: organisation.id}})
