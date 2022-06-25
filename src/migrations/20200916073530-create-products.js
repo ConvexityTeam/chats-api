@@ -8,17 +8,17 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      MarketId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Markets',
-            // schema: 'schema'
-          },
-          key: 'id'
-        }
-      },
+      // MarketId: {
+      //   allowNull: false,
+      //   type: Sequelize.INTEGER,
+      //   references: {
+      //     model: {
+      //       tableName: 'Markets',
+      //       // schema: 'schema'
+      //     },
+      //     key: 'id'
+      //   }
+      // },
       name: {
         type: Sequelize.STRING
       },

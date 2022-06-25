@@ -137,8 +137,6 @@ class OrderController {
     let productsByMale = []
     let productsByFemale = []
 
-    let val;
-
     try{
 
       const product = await OrderService.productPurchased()
@@ -164,7 +162,6 @@ class OrderController {
 
             
             val = newCollection[j].Product
-              console.log(val.tag)
               if(productsByMale.length >= 0 && !productsByMale.some(coun => coun.tag === val.tag)) {
                 productsByMale.push({tag: val.tag, maleRepeat})
               }else if(productsByMale.length > 0 && productsByMale.some(coun => coun.tag === val.tag)){
@@ -178,7 +175,6 @@ class OrderController {
           for(let j = 0; j<newCollection.length; j++){
 
             val = newCollection[j].Product
-              console.log(val.tag)
               if(productsByFemale.length >= 0 && !productsByFemale.some(coun => coun.tag === val.tag)) {
                 productsByFemale.push({tag: val.tag, femaleRepeat})
               }else if(productsByFemale.length > 0 && productsByFemale.some(coun => coun.tag === val.tag)){

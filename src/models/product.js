@@ -11,9 +11,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Product.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Store' });
+      //Product.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Store' });
       Product.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' });
-      Product.hasMany(models.CampaignVendor, { foreignKey: 'CampaignId', as: 'ProductVendors' })
+      Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
       //Product.hasMany(models.OrderProduct, { foreignKey: 'ProductId', as: 'Product' });
     }
   };
@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
     tag: DataTypes.STRING,
     cost: DataTypes.FLOAT,
     product_ref: DataTypes.STRING,
-    MarketId: DataTypes.INTEGER,
+    //MarketId: DataTypes.INTEGER,
     CampaignId: DataTypes.INTEGER,
     
   }, {

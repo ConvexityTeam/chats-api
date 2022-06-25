@@ -48,7 +48,10 @@ static async findProduct(where){
     return Product.findAll({
       where: {CampaignId},
       order: [['updatedAt', 'ASC']],
-      include: [{model: CampaignVendor, as: 'ProductVendors'}]
+      include: [{model: User, 
+        attributes: {
+          include: userConst.publicAttr,
+        },  as: 'ProductVendors'}]
     });
 }
 
