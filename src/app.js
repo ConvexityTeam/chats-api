@@ -9,6 +9,7 @@ const {Logger} = require('./libs')
 const { Response } = require("./libs");
 const { HttpStatusCode } = require("./utils");
 //Routers link
+const adminRoute = require("./routers/admin");
 const usersRoute = require("./routers/users");
 const transactionRouter = require("./routers/transaction");
 const authRouter = require("./routers/auth");
@@ -40,6 +41,7 @@ app.use(express.urlencoded({extended: true}));
 // const adminRouter = require("./routers/admin");
 
 // Routing endpoint
+app.use("/v1/admin", adminRoute);
 app.use("/v1/market", marketRouter);
 app.use("/v1/users", usersRoute);
 app.use("/v1/transactions", transactionRouter);

@@ -1,6 +1,12 @@
 const db = require("../models");
-const util = require("../libs/Utils");
+const {util, Response} = require("../libs");
+const {
+  HttpStatusCode,
+} = require("../utils");
 const Validator = require("validatorjs");
+const uploadFile = require("./AmazonController");
+const { UserService, OrganisationService } = require("../services");
+const environ = process.env.NODE_ENV == "development" ? "d" : "p";
 
 class AdminController {
   static async updateUserStatus(req, res) {
@@ -54,6 +60,57 @@ class AdminController {
       }
     }
   }
+
+static async verifyAccount (req, res){
+  try{
+    const {userprofile_id} =req.params
+    const data = req.body;
+    const rules = {
+      nin_first_name: "required|string",
+      nin_other_name: "required|string",
+      nin_image_url: "required|url",
+    };
+
+    const validation = new Validator(data, rules);
+    if (validation.fails()) {
+      Response.setError(422, validation.errors);
+      return Response.send(res);
+    }
+    if(!req.file){
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Upload Selfie`)
+      return Response.send(res)
+    }
+    const organisation = await OrganisationService.findOneById(userprofile_id)
+    if(!organisation){
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Organisation Not Found`)
+      return Response.send(res)
+    }
+
+    const  extension = req.file.mimetype.split('/').pop();
+
+    const profile_pic =  await uploadFile(
+        req.file,
+        "u-" + environ + "-" + organisation.email + "-i." + extension,
+        "convexity-profile-images"
+      )
+
+    await db.User.update({
+      profile_pic: data.nin_image_url,
+      first_name: data.nin_first_name,
+      last_name: data.nin_other_name,
+      status: 'activated',
+      is_nin_verified: true
+    },{where: {id: organisation.id}})
+
+    Response.setSuccess(HttpStatusCode.STATUS_OK, `NIN Verified`, organisation)
+    return Response.send(res)
+
+  }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal Server Error Try Again: ${error}`)
+      return Response.send(res)
+  }
+} 
+  
 }
 
 module.exports = AdminController;

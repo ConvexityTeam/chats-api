@@ -31,8 +31,9 @@ const MailerService = require('./MailerService');
 
 class OrganisationService {
   static findOneById(id) {
-    return Organisation.findByPk(id);
+    return User.findByPk(id,{include: {model: Organisation, as: 'Organisations'}});
   }
+
 
   static async getAllOrganisations() {
     return Organisation.findAll();
