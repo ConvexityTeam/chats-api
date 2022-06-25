@@ -458,10 +458,25 @@ static async verifyImage(req, res) {
         campaign
       } = req;
       const products = await Promise.all(body.map(
-        _body => {
+        async _body => {
           const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
           data.product_ref = generateProductRef();
-          return ProductService.addProduct(data, _body.vendors, campaign.id);
+          const createdProduct = await db.Product.create({
+            ...data,
+            CampaignId: campaign.id
+          })
+          //console.log(createdProduct)
+          if(createdProduct){
+            _body.vendors.forEach(async (VendorId)=> {
+            await db.VendorProduct.create({
+              vendorId: VendorId,
+              productId: createdProduct.id
+            })
+          })
+          }
+          
+          return createdProduct
+          //return ProductService.addProduct(data, _body.vendors, campaign.id);
         }
       ));
 
@@ -525,25 +540,31 @@ static async verifyImage(req, res) {
       return Response.send(res);
     }
   }
-
+static async ProductVendors(req, res){
+  try{
+    const productvendors = await db.VendorProduct.findAll()
+    Response.setSuccess(HttpStatusCode.STATUS_OK, `Product's Vendors.`, productvendors);
+      return Response.send(res)
+  }catch(error){
+    Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.${error}`);
+    return Response.send(res);
+  }
+}
   static async getCampaignProducts(req, res) {
     try {
       const campaignId = req.params.campaign_id;
       const products = await ProductService.findCampaignProducts(campaignId);
-      const user = await UserService.getAllUsers()
       const campaign = await db.Campaign.findOne({where:{id: campaignId}})
 
-  // products.forEach((product, index) => {
-  //   product.dataValues.campaign_status = campaign.status
-    
-  //  product.ProductVendors.forEach((vendor)=>{
-  //    let filteredVendor =   user.filter((user) => user.id === vendor.VendorId);
-  //   vendor.dataValues.VendorName = filteredVendor[0].first_name +" "+filteredVendor[0].last_name
-  //   })
-  // console.log(product.ProductVendors)
+  products.forEach((product) => {
+    product.dataValues.campaign_status = campaign.status
+   product.ProductVendors.forEach((vendor)=>{
+    vendor.dataValues.VendorName = vendor.first_name +" "+vendor.last_name
+    })
+
       
     
-//});
+});
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign Products.`, products);
       return Response.send(res)
