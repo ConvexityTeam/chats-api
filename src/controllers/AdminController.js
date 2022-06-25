@@ -65,6 +65,8 @@ static async verifyAccount (req, res){
   try{
     const {userprofile_id} =req.params
     const data = req.body;
+    data.country = 'Nigeria'
+    data.currency = 'NGN'
     const rules = {
       first_name: "required|string",
       last_name: "required|string",
@@ -74,8 +76,6 @@ static async verifyAccount (req, res){
       location: "string",
       dob: "string",
       phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-      country: "required|string",
-      currency: 'required|string',
       nin: "required|digits_between:10,11",
       marital_status: "string"
     };
