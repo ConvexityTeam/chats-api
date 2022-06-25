@@ -461,7 +461,7 @@ static async verifyImage(req, res) {
       const product = await ProductService.findCampaignProducts(campaign.id)
       const isExist = product.filter((a) => body.find(b => a.tag === b.tag )) 
       if(isExist.length > 0){
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Product With Tag: ${isExist[0]?.tag} Already Exist`);
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Product With Tag: ${isExist[0].tag} Already Exist`);
       return Response.send(res);
       }
       const products = await Promise.all(body.map(
