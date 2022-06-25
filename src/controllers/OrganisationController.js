@@ -457,10 +457,18 @@ static async verifyImage(req, res) {
         body,
         campaign
       } = req;
+
+      const product = await ProductService.findCampaignProducts(campaign.id)
+      const isExist = product.filter((a) => body.find(b => a.tag === b.tag )) 
+      if(isExist.length > 0){
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Product With Tag: ${isExist[0]?.tag} Already Exist`);
+      return Response.send(res);
+      }
       const products = await Promise.all(body.map(
         async _body => {
           const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
           data.product_ref = generateProductRef();
+          
           const createdProduct = await db.Product.create({
             ...data,
             CampaignId: campaign.id
@@ -472,6 +480,7 @@ static async verifyImage(req, res) {
               vendorId: VendorId,
               productId: createdProduct.id
             })
+           await CampaignService.approveVendorForCampaign(campaign.id, VendorId)
           })
           }
           
