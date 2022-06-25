@@ -53,6 +53,7 @@ NgoSubAdminAuth,
     OrganisationController.record)
     router.post('/beneficiaries/sms-token',
     CampaignController.sendSMStoken)
+    
 
 router.get('/campaign/:campaign_id/balance/:organisation_id', 
 NgoSubAdminAuth,
