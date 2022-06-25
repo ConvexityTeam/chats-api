@@ -7,23 +7,17 @@ class ProductController {
     try {
       const campaignId = req.params.campaign_id;
       const productId = req.params.productId
-      const product = await ProductService.findCampaignProduct(campaignId, productId);
+      const products = await ProductService.findCampaignProduct(campaignId, productId);
 
 
-      const user = await UserService.getAllUsers()
       const campaign = await db.Campaign.findOne({where:{id: campaignId}})
-      product.dataValues.campaign_status = campaign.status
+      products.dataValues.campaign_status = campaign.status
 
- 
-    
-    product.ProductVendors.forEach((data) => {
-      var filteredKeywords = user.filter((user) => user.id === data.VendorId);
-        data.dataValues.vendor = filteredKeywords[0]
-});
+   products.ProductVendors.forEach((vendor)=>{
+    vendor.dataValues.VendorName = vendor.first_name +" "+vendor.last_name
+    }) 
 
-
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Product.', product);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Product.', products);
       return Response.send(res)
     } catch (error) {
       console.log(error);

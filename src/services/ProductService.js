@@ -65,7 +65,7 @@ static ProductVendors(CampaignId) {
 static findCampaignProduct(CampaignId, productId) {
     return Product.findOne({
       where: {CampaignId, id: productId},
-      include: [{model: CampaignVendor, as: 'ProductVendors',
+      include: [{model: User, as: 'ProductVendors',
     }]
     });
 }
