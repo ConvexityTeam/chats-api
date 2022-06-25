@@ -72,7 +72,7 @@ static async verifyAccount (req, res){
       gender: "required|in:male,female",
       address: "string",
       location: "string",
-      dob: "required|date|before:today",
+      dob: "string",
       phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
       country: "required|string",
       currency: 'required|string',
