@@ -143,11 +143,11 @@ class VendorService {
         return Product.findAll({
             where,
             include: [{
-                model: Market,
-                as: 'Store',
+                model: User,
+                as: 'ProductVendors',
                 attributes: [],
                 where: {
-                    UserId: vendorId
+                    id: vendorId
                 }
             }]
         })
