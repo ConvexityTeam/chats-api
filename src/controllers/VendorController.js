@@ -20,6 +20,7 @@ const {
   generateOrderRef,
   generateQrcodeURL
 } = require("../utils");
+const { data } = require("../libs/Response");
 
 class VendorController {
   constructor() {
@@ -393,7 +394,15 @@ class VendorController {
   static async vendorCampaigns(req, res) {
     try {
       const campaigns = await CampaignService.getVendorCampaigns(req.user.id);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor campaigns', campaigns);
+
+     var dataArr = campaigns.map(campaign=>{
+    return [campaign.CampaignId,campaign]
+        }); // creates array of array
+        var maparr = new Map(dataArr); // create key value pair from array of array
+
+        var result = [...maparr.values()];//converting back to array from mapobject
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor campaigns', result);
       return Response.send(res);
     }
     catch (error) {
