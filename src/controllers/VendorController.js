@@ -556,8 +556,7 @@ class VendorController {
         "convexity-profile-images"
       )
      const upload = await req.user.update({profile_pic})
-     console.log('fine')
-      Response.setError(HttpStatusCode.STATUS_CREATED, 'Profile Image Uploaded', upload);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Profile Image Uploaded', upload);
       return Response.send(res);
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
