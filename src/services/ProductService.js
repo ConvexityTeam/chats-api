@@ -77,11 +77,11 @@ static findCampaignProduct(CampaignId, productId) {
         ...extraClause
       },
       include: [{
-        model: Market,
-        as: 'Store',
+        model: User,
+        as: 'ProductVendors',
         attribute: [],
         where: {
-          UserId: vendorId
+          id: vendorId
         }
       }]
     })
