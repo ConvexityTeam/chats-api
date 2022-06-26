@@ -1,8 +1,8 @@
 const router = require('express').Router();
 
 const { VendorController, AuthController, OrganisationController } = require('../controllers');
-const { Auth, VendorAuth, BeneficiaryAuth,IsRequestWithValidPin } = require('../middleware');
-const { ParamValidator } = require('../validators');
+const { Auth, VendorAuth, BeneficiaryAuth,IsRequestWithValidPin, } = require('../middleware');
+const { ParamValidator,FileValidator } = require('../validators');
 const VendorValidator = require('../validators/VendorValidator');
 
 
@@ -22,6 +22,13 @@ router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
 router.post('/verify/sms-token/:smstoken',VendorAuth, VendorController.verifySMStoken)
 router.get('/product_vendors', OrganisationController.ProductVendors)
+
+router.post('/profile/upload',
+VendorAuth,
+VendorValidator.VendorExists,
+ FileValidator.checkProfilePic(),
+ VendorController.uploadprofilePic
+)
 
 router.route('/products')
   .get(
