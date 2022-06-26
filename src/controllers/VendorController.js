@@ -7,6 +7,8 @@ const {
 } = require("../services");
 const Validator = require("validatorjs");
 const sequelize = require("sequelize");
+const uploadFile = require("./AmazonController");
+const environ = process.env.NODE_ENV == "development" ? "d" : "p";
 const {
   Op
 } = require("sequelize");
@@ -399,9 +401,7 @@ class VendorController {
     return [campaign.CampaignId,campaign]
         }); // creates array of array
         var maparr = new Map(dataArr); // create key value pair from array of array
-
         var result = [...maparr.values()];//converting back to array from mapobject
-
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor campaigns', result);
       return Response.send(res);
     }
@@ -541,7 +541,29 @@ class VendorController {
       return Response.send(res);
     }
   }
-  
+  static async uploadprofilePic(req, res){
+    try{
+      const isVendor = await VendorService.getVendor(req.user.id)
+      if(!isVendor){
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Vendor Not Found');
+      return Response.send(res);
+      }
+      const  extension = req.file.mimetype.split('/').pop();
+
+    const profile_pic =  await uploadFile(
+        req.file,
+        "u-" + environ + "-" + isVendor.email + "-i." + extension,
+        "convexity-profile-images"
+      )
+     const upload = await req.user.update({profile_pic})
+     console.log('fine')
+      Response.setError(HttpStatusCode.STATUS_CREATED, 'Profile Image Uploaded', upload);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
+      return Response.send(res);
+    }
+  }
   
 }
 
