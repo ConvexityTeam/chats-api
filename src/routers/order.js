@@ -34,7 +34,7 @@ const {
 
 router.get('/product-purchased-gender', OrderController.productPurchasedByGender)
 router.get('/product-purchased-age', OrderController.productPurchasedByAgeGroup)
-router.get('/total_sold_value', OrderController.productPurchased)
+router.get('/total-sold-value', OrderController.productPurchased)
 
 // Refactord routes
 router.route('/:reference')
