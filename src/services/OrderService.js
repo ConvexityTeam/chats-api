@@ -20,6 +20,7 @@ const Op = Sequelize.Op;
 const QueueService = require("./QueueService");
 const { ProductService } = require(".");
 
+
 class OrderService {
   static async processOrder(beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount) {
     order.update({status: 'processing'});
@@ -38,7 +39,7 @@ class OrderService {
     });
 
     QueueService.processOrder(
-     beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount, transaction
+     beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount, transaction.uuid
     );
  
     // Queue for process
@@ -58,7 +59,8 @@ class OrderService {
                 {
                     model: OrderProduct,
                     as: 'Cart',
-                    include: ['Product']
+                    include: [{model: Product, as: 'Product', include:[{model: User, as: 'ProductBeneficiaries', attributes: userConst.publicAttr}]}],
+
                 }
             ],
         });
@@ -70,27 +72,15 @@ class OrderService {
 
 static async productPurchasedBy (query){
 
-
-  
   const product = await Order.findAll({
         where: {status: 'confirmed'},
         include: [{
+
                     model: User,
                     as: 'Vendor',
-                    where: query ? {
-                      [Op.or]: {
-                        first_name: {
-                          [Op.like]: `%${query}%`
-                        },
-                        last_name: {
-                          [Op.like]: `%${query}%`
-                        }
-                      }
-                    }  : { 
-                      
-                    },
                     attributes: userConst.publicAttr,
                     include: ['Store'],
+                  
                     
                 },
               
@@ -98,7 +88,7 @@ static async productPurchasedBy (query){
                     model: OrderProduct,
                     as: 'Cart',
                     
-                    include: [{model: Product, as: 'Product', where: query ? {tag: {[Op.like]: `%${query}%`}}: {}}],
+                    include: [{model: Product, as: 'Product', include:[{model: User, as: 'ProductBeneficiaries', attributes: userConst.publicAttr}]}],
                     
                 }
             ],
