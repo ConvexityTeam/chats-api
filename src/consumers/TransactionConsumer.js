@@ -320,9 +320,7 @@ RabbitMq['default']
          const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
 
       Order.update({status: 'confirmed'},{where: { reference: order.reference} });
-      await Transaction.update({
-        status: 'success'
-      },{where: {uuid: transaction.uuid}})
+      
           
     await  Wallet.update({
             balance: Sequelize.literal(`balance - ${amount}`)
@@ -336,8 +334,16 @@ RabbitMq['default']
           await  Wallet.update({
             balance: Sequelize.literal(`balance - ${amount}`)
           },{where: {uuid: campaignWallet.uuid} }) 
-          
-            await VoucherToken.updat({
+          order.Cart.forEach(async(prod)=> {
+        await ProductBeneficiary.create({
+        productId: prod.ProductId,
+        UserId: beneficiaryWallet.UserId
+      })
+      })
+      await Transaction.update({
+        status: 'success'
+      },{where: {uuid: transaction}})
+            await VoucherToken.update({
               amount: Sequelize.literal(`balance - ${amount}`)
             },{where:{campaignId: campaignWallet.CampaignId, beneficiaryId: beneficiaryWallet.UserId}})
        

@@ -1,6 +1,6 @@
 const router = require('express').Router();
 
-const { VendorController, AuthController, OrganisationController } = require('../controllers');
+const { VendorController, AuthController,OrderController, OrganisationController } = require('../controllers');
 const { Auth, VendorAuth, BeneficiaryAuth,IsRequestWithValidPin, } = require('../middleware');
 const { ParamValidator,FileValidator } = require('../validators');
 const VendorValidator = require('../validators/VendorValidator');
@@ -12,7 +12,7 @@ router.post('/add-account', VendorController.addAccount)
 router.get('/stores/all', VendorController.getAllStores)
 router.get('/store/:id', VendorController.getVendorStore)
 router.get('/accounts/all', VendorController.getAccounts)
-router.get('/products/all', VendorController.getAllProducts)
+router.get('/products/all', OrderController.productPurchased)
 router.post('/product', VendorController.addProduct)
 router.get('/products/single/:id', VendorController.singleProduct)
 router.get('/products/value', VendorController.getProductsValue)
