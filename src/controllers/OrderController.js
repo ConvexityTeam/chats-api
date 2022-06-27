@@ -318,6 +318,91 @@ class OrderController {
     })
        
     
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', products);
+      return Response.send(res);
+
+
+    }catch(error){
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error: Please retry.');
+      return Response.send(res);
+    }
+  }
+  static async soldAndValue(req, res) {
+    
+    try{
+      const query = req.query.name
+      let data = []
+      let uniqueList = [];
+      let dupList = [];
+      const products = await OrderService.productPurchasedBy(query)
+
+      if(products.length <= 0){
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved', products);
+      return Response.send(res);
+      }
+      let total_product_sold = products.length
+      let total_product_value = 0
+      products.forEach(product => {
+        product.Cart.forEach(cart => {
+          
+          total_product_value = total_product_value + cart.total_amount
+
+          data.push({productId: cart.ProductId, product_name: cart.Product.tag, 
+            vendorId: product.Vendor.id,
+            vendor_name: product.Vendor.first_name + 
+            " "+ product.Vendor.first_name,
+            sales_volume: cart.total_amount,
+            product_quantity: cart.quantity,
+            product_cost: cart.Product.cost,
+            total_revenue: cart.Product.cost * cart.quantity,
+            date_of_purchased: cart.createdAt
+
+          })
+        })
+      })
+      data.push({
+            "productId": 48,
+            "product_name": "Relaxers",
+            "vendorId": 4,
+            "vendor_name": "Kennedy Kennedy",
+            "product_quantity": 6,
+            "sales_volume": 100,
+            "product_cost": 10,
+            "total_revenue": 10,
+            "date_of_purchased": "2022-06-27T13:14:45.130Z"
+        },)
+
+        function getMonthDifference(startDate, endDate) {
+          return (
+            endDate.getMonth() -
+            startDate.getMonth() +
+            12 * (endDate.getFullYear() - startDate.getFullYear())
+          );
+        }
+      const set = new Set()
+      let found = []
+      let exist = []
+      const unique = data.filter((item)=> {
+        const alreadyHas = set.has(item.productId, item.vendorId)
+        set.add(item.productId, item.vendorId)
+        if(alreadyHas) exist.push(item)
+        return !alreadyHas
+      })
+    found.push(...unique)
+    found.forEach((value)=> {
+      exist.forEach((val)=>{
+        if(value.productId == val.productId && value.vendorId == val.vendorId){
+          value.sales_volume = (value.product_quantity + val.product_quantity) * 
+           getMonthDifference(new Date(value.date_of_purchased), new Date(val.date_of_purchased)) 
+          value.total_revenue = val.sales_volume + value.sales_volume
+          console.log(getMonthDifference(new Date(value.date_of_purchased), new Date(val.date_of_purchased)) )
+          delete value.date_of_purchased
+        }
+      })
+    })
+       
+    
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', {total_product_sold, total_product_value});
       return Response.send(res);
 
