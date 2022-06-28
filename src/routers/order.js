@@ -3,6 +3,8 @@ const router = require('express').Router();
 const {
   Auth,
   BeneficiaryAuth,
+  NgoSubAdminAuth,
+  IsOrgMember,
   IsRequestWithValidPin,
   VendorAuth
 } = require("../middleware");
@@ -32,9 +34,21 @@ const {
 } = require('../validators');
 
 
-router.get('/product-purchased-gender', OrderController.productPurchasedByGender)
-router.get('/product-purchased-age', OrderController.productPurchasedByAgeGroup)
-router.get('/total-sold-value', OrderController.soldAndValue)
+router.get('/product-purchased-gender/:organisation_id',
+NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+  IsOrgMember,
+OrderController.productPurchasedByGender)
+router.get('/product-purchased-age/:organisation_id',
+NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+ OrderController.productPurchasedByAgeGroup)
+router.get('/total-sold-value/:organisation_id', 
+NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+OrderController.soldAndValue)
 
 // Refactord routes
 router.route('/:reference')

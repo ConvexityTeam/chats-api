@@ -28,6 +28,16 @@ module.exports = {
           key: "id",
         },
       },
+      OrganisationId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: "Organisations",
+          },
+          key: "id",
+        },
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

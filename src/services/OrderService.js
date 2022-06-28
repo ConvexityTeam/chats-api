@@ -46,8 +46,7 @@ class OrderService {
     return transaction;
   }
 
-  static async productPurchased (){
-
+  static async productPurchased (OrganisationId){
   const gender = await Order.findAll({
         where: {status: 'confirmed'},
         include: [{
@@ -59,7 +58,11 @@ class OrderService {
                 {
                     model: OrderProduct,
                     as: 'Cart',
-                    include: [{model: Product, as: 'Product', include:[{model: User, as: 'ProductBeneficiaries', attributes: userConst.publicAttr}]}],
+                    include: [{model: Product, as: 'Product', 
+                    include:[{model: User, as: 'ProductBeneficiaries',
+                    attributes: userConst.publicAttr,
+                  through: { where: {OrganisationId} }
+                  }]}],
 
                 }
             ],
@@ -70,7 +73,7 @@ class OrderService {
        
 }
 
-static async productPurchasedBy (query){
+static async productPurchasedBy (OrganisationId){
 
   const product = await Order.findAll({
         where: {status: 'confirmed'},
@@ -87,9 +90,12 @@ static async productPurchasedBy (query){
                 {
                     model: OrderProduct,
                     as: 'Cart',
+                    include: [{model: Product, as: 'Product', 
+                    include:[{model: User, as: 'ProductBeneficiaries',
+                    attributes: userConst.publicAttr,
+                    through: { where: {OrganisationId} }
                     
-                    include: [{model: Product, as: 'Product', include:[{model: User, as: 'ProductBeneficiaries', attributes: userConst.publicAttr}]}],
-                    
+                  }]}],
                 }
             ],
         });

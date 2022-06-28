@@ -337,7 +337,8 @@ RabbitMq['default']
           order.Cart.forEach(async(prod)=> {
         await ProductBeneficiary.create({
         productId: prod.ProductId,
-        UserId: beneficiaryWallet.UserId
+        UserId: beneficiaryWallet.UserId,
+        OrganisationId: campaignWallet.OrganisationId
       })
       })
       await Transaction.update({
