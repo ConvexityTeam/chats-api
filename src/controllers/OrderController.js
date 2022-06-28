@@ -141,7 +141,9 @@ class OrderController {
 
     try{
       let gender = {male: [], female: []}
-      const products = await OrderService.productPurchased()
+       const {organisation_id} = req.params
+
+      const products = await OrderService.productPurchased(organisation_id)
 
       if(products.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Gender Recieved', {productsByMale, productsByFemale});
@@ -178,11 +180,8 @@ class OrderController {
    
     try{
 
-      let eighteenTo29 = 0
-      let thirtyTo41 = 0
-      let forty2To53 = 0
-      let fifty4To65 = 0
-      let sixty6Up = 0
+       const {organisation_id} = req.params
+      let group = []
       let age_group = {
         'eighteenTo29': {},
         'thirtyTo41': {},
@@ -191,7 +190,7 @@ class OrderController {
         'sixty6Up': {}
       }
       
-      const products = await OrderService.productPurchased()
+      const products = await OrderService.productPurchased(organisation_id)
       if(products.length > 0){
         products.forEach((product)=> {
         product.Cart.forEach((cart)=> {
@@ -215,18 +214,14 @@ class OrderController {
           }else if(parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 66){
             age_group.eighteenTo29[cart.Product.tag] = (age_group.eighteenTo29[cart.Product.tag] || 0) + 1;
           }
-            // if(beneficiary.gender === 'male'){
-            //   gender.male.push(cart.Product.tag)
-            // }
-            // if(beneficiary.gender === 'female'){
-            //   gender.female.push(cart.Product.tag)
-            // }
+           
           })
         })
+        
       })
-    
+    group.push(age_group)
 
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased By Age Group Retrieved.',age_group);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased By Age Group Retrieved.',group);
         return Response.send(res);
       }
       
@@ -246,11 +241,9 @@ class OrderController {
   static async productPurchased(req, res) {
     
     try{
-      const query = req.query.name
+      const {organisation_id} = req.params
       let data = []
-      let uniqueList = [];
-      let dupList = [];
-      const products = await OrderService.productPurchasedBy(query)
+      const products = await OrderService.productPurchasedBy(organisation_id)
 
       if(products.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved', products);
@@ -276,17 +269,7 @@ class OrderController {
           })
         })
       })
-      data.push({
-            "productId": 48,
-            "product_name": "Relaxers",
-            "vendorId": 4,
-            "vendor_name": "Kennedy Kennedy",
-            "product_quantity": 6,
-            "sales_volume": 100,
-            "product_cost": 10,
-            "total_revenue": 10,
-            "date_of_purchased": "2022-06-27T13:14:45.130Z"
-        },)
+      
 
         function getMonthDifference(startDate, endDate) {
           return (
@@ -318,7 +301,7 @@ class OrderController {
     })
        
     
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', products);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', data);
       return Response.send(res);
 
 
@@ -331,11 +314,9 @@ class OrderController {
   static async soldAndValue(req, res) {
     
     try{
-      const query = req.query.name
+      const {organisation_id} = req.params
       let data = []
-      let uniqueList = [];
-      let dupList = [];
-      const products = await OrderService.productPurchasedBy(query)
+      const products = await OrderService.productPurchasedBy(organisation_id)
 
       if(products.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved', products);
@@ -361,18 +342,6 @@ class OrderController {
           })
         })
       })
-      data.push({
-            "productId": 48,
-            "product_name": "Relaxers",
-            "vendorId": 4,
-            "vendor_name": "Kennedy Kennedy",
-            "product_quantity": 6,
-            "sales_volume": 100,
-            "product_cost": 10,
-            "total_revenue": 10,
-            "date_of_purchased": "2022-06-27T13:14:45.130Z"
-        },)
-
         function getMonthDifference(startDate, endDate) {
           return (
             endDate.getMonth() -
