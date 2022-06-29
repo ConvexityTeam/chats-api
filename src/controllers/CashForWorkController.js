@@ -857,56 +857,77 @@ static async evidence(req, res){
   }
 
   static async uploadProgreeEvidenceFieldAgent(req, res){
-
-    try {
-      const {TaskAssignmentId, comment, type} = req.body
-      const files = req.file
+const {TaskAssignmentId, comment, type} = req.body
+    let uploadArray = []
+    let {beneficiaryId} = req.params
+    const files = req.files
       const rules = {
         TaskAssignmentId: "required|numeric",
         comment: "required|string",
         type: "required|string"
       };
+
+    try {
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, validation.errors);
         return Response.send(res);
-      } else {
-        if (!files) {
-          Response.setError(422, "Task Assignment Evidence Required");
+      }
+      if (!files) {
+          Response.setError(422, "Please upload file evidence");
           return Response.send(res);
-        } else {
-          const task = await db.TaskAssignment.findOne({where: {TaskId: TaskAssignmentId}});
-          if (task) {
-            const extension = req.file.mimetype.split('/').pop();
-            await uploadFile(
-              files,
-              "pge-" + environ + "-" + TaskAssignmentId + "-i." + extension,
+        }
+       const isTaskExist = await db.TaskAssignment.findOne({where: {id: TaskAssignmentId, UserId: beneficiaryId}});
+       if(!isTaskExist){
+         Response.setError(422, "Task Assignment Not Found");
+        return Response.send(res);
+       }
+       if(isTaskExist.status ==='completed'){
+          Response.setError(409, "Evidence already uploaded");
+        return Response.send(res);
+       }
+       
+      await Promise.all(
+     files.map(async (file)=> {
+        const  extension = file.mimetype.split('/').pop();
+        const url =  await uploadFile(
+              file,
+              "u-"+environ+"-"+TaskAssignmentId+""+file.originalname+"-i." + extension,
               "convexity-progress-evidence"
-            ).then(async(url) => {
-            await  db.TaskAssignmentEvidence.create({
-                uploads: [url],
+            )
+        uploadArray.push(url)
+     
+       })
+      )
+
+      if(uploadArray.length){
+        if(isTaskExist.status === 'rejected'){
+          await db.TaskAssignmentEvidence.update({
+            ...req.body,
+            uploads: uploadArray
+          },{where: {id: TaskAssignmentId}})
+       }
+        await db.TaskAssignmentEvidence.create({
+                uploads: uploadArray,
                 TaskAssignmentId,
                 comment,
                 type,
-                source: 'field-agent'
+                source: 'field_agent'
               });
-            }).catch((err)=> {
-              console.log(err)
-             
-            });
-            Response.setSuccess(200, "Success Uploading  Task Evidence");
-            return Response.send(res);
-          } else {
-            Response.setError(422, "Task Not Found");
-            return Response.send(res);
-          }
-        }
-      }    }catch(error){
-      console.log(error.message);
-      util.setError(500, "Internal Server Error"+ error);
-      return util.send(res);
+            await db.TaskAssignment.update({
+        uploaded_evidence: true
+      },{where:{UserId: isTaskExist.UserId}})
+        await db.TaskAssignment.update({status: 'completed'}, {where: {id: TaskAssignmentId}})
+        Response.setSuccess(200, "Success Uploading  Task Evidence", uploadArray);
+        return Response.send(res);
+      }
+            
+              
+    }catch(error){
+      Response.setError(500, "Internal Server Error.test"+ error);
+      return Response.send(res);
     }
-  }
+    }
 
   static async uploadProgreeEvidenceVendor(req, res){
 
