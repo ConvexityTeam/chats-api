@@ -3,7 +3,8 @@ const {
   BeneficiaryAuth,
   VendorBeneficiaryAuth,
   NgoSubAdminAuth,
-  Auth
+  Auth,
+  FieldAgentBeneficiaryAuth
 } = require("../middleware");
 const {
   AuthController,
@@ -23,9 +24,9 @@ const router = require("express").Router();
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 router.get("/cash-for-work/tasks",Auth, CashForWorkController.viewCashForWorkRefractor);
-router.post("/cash-for-work/tasks", CashForWorkController.pickTaskFromCampaign);
+router.post("/cash-for-work/tasks",FieldAgentBeneficiaryAuth, CashForWorkController.pickTaskFromCampaign);
 router.get("/cash-for-work/task/:taskId", CashForWorkController.viewTaskById);
-router.get("/cash-for-work/:campaignId",BeneficiaryAuth, CashForWorkController.getAllCashForWorkTask);
+router.get("/cash-for-work/:campaignId",FieldAgentBeneficiaryAuth, CashForWorkController.getAllCashForWorkTask);
 router.post("/:campaignId/pay-for-product-service/:vendorId/:productId",BeneficiaryAuth, BeneficiaryController.BeneficiaryPayForProduct)
 
 
