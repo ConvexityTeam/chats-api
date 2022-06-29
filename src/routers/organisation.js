@@ -6,8 +6,10 @@ const {
   OrganisationController,
   CampaignController,
   ComplaintController,
-  BeneficiaryController
+  BeneficiaryController,
+  
 } = require('../controllers');
+const CashForWorkController = require("../controllers/CashForWorkController");
 
 const {
   Auth,
@@ -47,7 +49,7 @@ router.get("/financials/:id", OrganisationController.getFinancials);
 router.get("/beneficiaries-summary/:id", OrganisationController.getBeneficiariesFinancials);
 router.get("/metric/:id", OrganisationController.getMetric);
 
-
+router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign)
 router.get('/campaigns/transaction', 
 NgoSubAdminAuth,
     OrganisationController.record)
@@ -291,7 +293,7 @@ router.route('/:organisation_id/campaigns/:campaign_id/vendors')
 
 router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries')
   .get(
-    NgoSubAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.CampaignId,
