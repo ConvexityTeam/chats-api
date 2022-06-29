@@ -19,7 +19,7 @@ router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController
 
 router.post("/task/vendor-evidence", VendorAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceVendor);
 router.post("/task/agent-evidence/:beneficiaryId", FieldAgentAuth, FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceFieldAgent);
-router.post("/task/beneficiary-evidence",FieldAgentBeneficiaryAuth,  FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);
+router.post("/task/beneficiary-evidence",BeneficiaryAuth,  FileValidator.checkTaskProgressEvidenceFile(), CashForWorkController.uploadProgreeEvidenceByBeneficiary);
 router.post('/task/reject-submission/:taskAssignmentId',  CampaignController.rejectSubmission)
 router.get("/", CashForWorkController.getAllCashForWork);
 router.post("/newTask", CashForWorkController.newTask);
