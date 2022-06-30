@@ -1314,9 +1314,13 @@ static async getProductVendors(req, res) {
     try {
       const OrganisationId = req.organisation.id;
       const vendorId = req.params.vendor_id || req.body.vendor_id;
+      const vendorProducts = await VendorService.vendorStoreProducts(vendorId)
       const vendor = await VendorService.vendorPublicDetails(vendorId, {
         OrganisationId
       });
+      vendor.dataValues.Store = {
+        Products : vendorProducts
+      }
       vendor.dataValues.total_received = vendor.Wallets.map(wallet => wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
       vendor.dataValues.total_spent = vendor.Wallets.map(wallet => wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
       Response.setSuccess(200, 'Organisation vendor', vendor);

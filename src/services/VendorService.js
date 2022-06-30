@@ -253,6 +253,11 @@ class VendorService {
                 RoleId: AclRoles.Vendor
             },
             attributes: userConst.publicAttr,
+            
+                //     model: Market,
+                //     as: 'Store',
+                     //include: [{model: Product, as: 'ProductVendors'}]
+             
             include: [{
                     model: Organisation,
                     as: 'Organisations',
@@ -265,11 +270,7 @@ class VendorService {
                         })
                     }
                 },
-                // {
-                //     model: Market,
-                //     as: 'Store',
-                //     include: ['Products']
-                // },
+                
                 {
                     model: Wallet,
                     as: "Wallets",
