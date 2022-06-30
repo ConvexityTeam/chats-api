@@ -265,11 +265,11 @@ class VendorService {
                         })
                     }
                 },
-                {
-                    model: Market,
-                    as: 'Store',
-                    include: ['Products']
-                },
+                // {
+                //     model: Market,
+                //     as: 'Store',
+                //     include: ['Products']
+                // },
                 {
                     model: Wallet,
                     as: "Wallets",
