@@ -1174,9 +1174,9 @@ static async viewSubmittedEvidence(req, res){
     }
   }
   static async getAllCashForWorkTaskFieldAgent (req, res){
-    const {campaignId, beneficiaryId} = req.params
+    const {campaignId} = req.params
     try{
-      const tasks = await CampaignService.cash4work(beneficiaryId, campaignId)
+      const tasks = await CampaignService.cash4workfield(campaignId)
       if(!tasks){
         Response.setError(404, `No task retrieved`, tasks);
         return Response.send(res);

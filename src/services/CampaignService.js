@@ -384,6 +384,16 @@ class CampaignService {
     });
   }
 
+  static cash4workfield(id) {
+    return Campaign.findOne({
+        where: {
+        type: 'cash-for-work',
+        id
+      },
+      include: {model: Task, as: 'Jobs'}
+    });
+  }
+
 
   static async getCampaignWallet(id, OrganisationId) {
     return Campaign.findOne({
