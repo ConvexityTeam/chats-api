@@ -25,8 +25,7 @@ class ZohoService {
     static async generateOAuthToken(){
     return new Promise(async (resolve, reject) => {
       try {
-       const {data} = await Axios.post(`https://accounts.zoho.com/oauth/v2/token&grant_type=authorization_code&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&redirect_uri=https://chats.vercel.app`)
-        console.log(data,'ticket')
+       const {data} = await Axios.post(`${zohoCrmConfig.base}?scope=${zohoCrmConfig.scope}&client_id=${zohoCrmConfig.clientID}&access_type=online&response_type=code&redirect_uri=${zohoCrmConfig.redirect_uri}`)
        resolve(data)
       }catch(error) {
         console.log(error,'error')

@@ -1385,10 +1385,10 @@ class UsersController {
       //   Response.setError(422, validation.errors);
       //   return Response.send(res);
       // } else {
-  
-      await ZohoService.zohiInitializer()
+      
+      await ZohoService.generateOAuthToken()
     }catch(error){
-      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,"Internal server error"+error);
       return Response.send(res);
     }
   }

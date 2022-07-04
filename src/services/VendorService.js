@@ -142,7 +142,6 @@ class VendorService {
 
         return Product.findAll({
             where,
-            order: [['updatedAt', 'DESC']],
             include: [{
                 model: User,
                 as: 'ProductVendors',
