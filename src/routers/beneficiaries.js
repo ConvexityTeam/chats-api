@@ -26,6 +26,7 @@ const CashForWorkController = require("../controllers/CashForWorkController");
 router.get("/cash-for-work/tasks",Auth, CashForWorkController.viewCashForWorkRefractor);
 router.post("/cash-for-work/tasks",FieldAgentBeneficiaryAuth, CashForWorkController.pickTaskFromCampaign);
 router.get("/cash-for-work/task/:taskId", CashForWorkController.viewTaskById);
+router.get("/:beneficiaryId/cash-for-work/:campaignId",FieldAgentBeneficiaryAuth, CashForWorkController.getAllCashForWorkTaskFieldAgent);
 router.get("/cash-for-work/:campaignId",FieldAgentBeneficiaryAuth, CashForWorkController.getAllCashForWorkTask);
 router.post("/:campaignId/pay-for-product-service/:vendorId/:productId",BeneficiaryAuth, BeneficiaryController.BeneficiaryPayForProduct)
 

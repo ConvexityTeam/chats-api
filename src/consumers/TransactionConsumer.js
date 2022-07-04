@@ -27,7 +27,6 @@ const {
   Sequelize,
   Transaction,
   Wallet,
-  BankAccount,
   VoucherToken,
   Campaign,
   TaskAssignment,
@@ -75,10 +74,30 @@ const processVendorPaystackWithdrawal = RabbitMq['default'].declareQueue(PAYSTAC
   prefetch: 1
 });
 
-const payForProduct = RabbitMq['default'].declareQueue(PAY_FOR_PRODUCT, {
-  durable: true,
-  prefetch: 1
-});
+
+const update_campaign = async(id, args)=> {
+  await Campaign.update({
+  ...args,
+  },{where: {id}});                    
+}
+
+const update_transaction = async(args, uuid)=> {
+await Transaction.update({
+...args
+},{where: {uuid}})
+}
+const deductWalletAmount = async(amount, uuid)=> {
+    await Wallet.update({
+    balance: Sequelize.literal(`balance - ${amount}`)
+    },{where: {uuid}})       
+}
+
+const addWalletAmount = async(amount, uuid)=> {
+    await Wallet.update({
+    balance: Sequelize.literal(`balance + ${amount}`)
+    },{where: {uuid}})       
+}
+
 
 RabbitMq['default']
   .completeConfiguration()
@@ -148,25 +167,16 @@ RabbitMq['default']
           Logger.info('Transferring from organisation wallet to campaign wallet')
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
    Logger.info('Transferred to campaign wallet', org);
-   await Campaign.update({
-            status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
-            is_funded: true,
-            amount_disbursed: campaign.budget
-          },{where: {id: campaign.id}});
-       const wal =   await Wallet.update({
-            balance: Sequelize.literal(`balance - ${campaign.budget}`)
-          }, {
-            where: {
-            uuid: OrgWallet.uuid
-            }
-          });
-            await Wallet.update({
-            balance: Sequelize.literal(`balance + ${campaign.budget}`)
-          }, {
-            where: {
-            uuid: campaign.Wallet.uuid
-            }
-          });
+
+   await update_campaign(campaign.id, 
+    {status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+    is_funded: true,
+    amount_disbursed: campaign.budget
+  })
+
+  await deductWalletAmount(campaign.budget, OrgWallet.uuid)
+  await addWalletAmount(campaign.budget, campaign.Wallet.uuid)
+            
          await Transaction.create({
             amount: campaign.budget,
             reference: generateTransactionRef(),
@@ -185,13 +195,9 @@ RabbitMq['default']
           for(let i = 0; i<mergeWallet.length; i++){
             const uuid =   mergeWallet[i].uuid
            const address = mergeWallet[i].address
-          const  ben =  await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
-          await  Wallet.update({
-            balance: Sequelize.literal(`balance + ${budget}`)
-          },{where: {uuid}})
-          }
-
-          
+          await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
+          await addWalletAmount(budget, uuid)  
+          }        
           
     const User = beneficiaries.map((user)=> user.User)
           for(let i = 0; i<User.length; i++){
@@ -233,7 +239,7 @@ RabbitMq['default']
       processPaystack.activateConsumer(async(msg) => {
 
         const {address, amount} = msg.getContent();
-     const paystack_deposit = await  BlockchainService.mintToken(address, amount)      
+       await  BlockchainService.mintToken(address, amount)    
         await Wallet.update({
             balance: Sequelize.literal(`balance + ${amount}`)
           }, {
@@ -246,69 +252,36 @@ RabbitMq['default']
 
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {
 
-      const {bankAccount, campaignWallet, userWallet, userId, amount, transaction} = msg.getContent();
-    //
-    //if(redeem){
-      console.log(campaignWallet, userWallet)
-         const ref =  await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
-        
-         if(ref){
-        const redeem = await  BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
-        if(redeem){
-        const pay =  await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending") 
-        await Wallet.update({
-           balance: Sequelize.literal(`balance - ${amount}`)
-         },{where: {uuid: campaignWallet.uuid}})
-         await Wallet.update({
-           balance: Sequelize.literal(`balance - ${amount}`)
-         },{where: {uuid: userWallet.uuid}})
-         await Transaction.update({
-           status: 'success'
-          },{where: {uuid: transaction.uuid}})
-        }
-         }
-      
-      //}
-    
-       
+      const {bankAccount, campaignWallet, userWallet, amount, transaction} = msg.getContent();
+         await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
+        await  BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
+        await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending") 
+        await deductWalletAmount(amount, campaignWallet.uuid)
+        await deductWalletAmount(amount, userWallet.uuid)
+        await update_transaction({status: 'success'}, transaction.uuid)
         }).catch(()=> {
           console.log('RABBITMQ ERROR')
-          
         })
 
         processVendorPaystackWithdrawal.activateConsumer(async msg => {
-          const {bankAccount, userWallet, userId, amount, transaction} = msg.getContent();
-        const redeem =   await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
-        const withdraw = await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")
-        await Wallet.update({
-           balance: Sequelize.literal(`balance - ${amount}`)
-         },{where: {uuid: userWallet.uuid}})
-         await Transaction.update({
-           status: 'success'
-          },{where: {uuid: transaction.uuid}})
+          const {bankAccount, userWallet, amount, transaction} = msg.getContent();
+        await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
+        await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")
+        await deductWalletAmount(amount, userWallet.uuid)
+        await update_transaction({status: 'success'}, transaction.uuid)
         }).catch(error => {
           console.log('RABBITMQ ERROR', error)
         })
 
     processFundBeneficiary.activateConsumer(async msg => {
       const {beneficiaryWallet, campaignWallet, task_assignment, amount_disburse, transaction} = msg.getContent();
-      const  ben =  await  BlockchainService.approveToSpend(campaignWallet.address, campaignWallet.privateKey,beneficiaryWallet.address, amount_disburse )
-        await  Wallet.update({
-            balance: Sequelize.literal(`balance + ${amount_disburse}`)
-          },{where: {uuid: beneficiaryWallet.uuid} })
-
+      await  BlockchainService.approveToSpend(campaignWallet.address, campaignWallet.privateKey,beneficiaryWallet.address, amount_disburse )
+      await addWalletAmount(amount_disburse, beneficiaryWallet.uuid)  
+      await deductWalletAmount(amount_disburse, campaignWallet.uuid)
+      await update_transaction({status: 'success'}, transaction.uuid)
+      await TaskAssignment.update({status: 'disbursed'},{where: {id: task_assignment.id}})
           
-          await  Wallet.update({
-            balance: Sequelize.literal(`balance - ${amount_disburse}`)
-          },{where: {uuid: campaignWallet.uuid} })
-          await Transaction.update({
-           status: 'success'
-          },{where: {uuid: transaction.uuid}})
-          await TaskAssignment.update({
-            status: 'disbursed'
-          },{where: {id: task_assignment.id}})
-          
-          msg.ack()
+     msg.ack()
          }).catch((error)=>{
           console.log(error, 'error transfer')
          })
@@ -316,34 +289,22 @@ RabbitMq['default']
     
     processVendorOrderQueue.activateConsumer(async msg => {
         const {
-      beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount, transaction} = msg.getContent();
-         const ref =  await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
+      beneficiaryWallet,vendorWallet,campaignWallet, order, amount, transaction} = msg.getContent();
+      await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
 
       Order.update({status: 'confirmed'},{where: { reference: order.reference} });
       
-          
-    await  Wallet.update({
-            balance: Sequelize.literal(`balance - ${amount}`)
-          },{where: {uuid: beneficiaryWallet.uuid} })
-
-          await  Wallet.update({
-            balance: Sequelize.literal(`balance + ${amount}`)
-          },{where: {uuid: vendorWallet.uuid} })
-
-
-          await  Wallet.update({
-            balance: Sequelize.literal(`balance - ${amount}`)
-          },{where: {uuid: campaignWallet.uuid} }) 
-          order.Cart.forEach(async(prod)=> {
+    await deductWalletAmount(amount, beneficiaryWallet.uuid)
+    await deductWalletAmount(amount, campaignWallet.uuid)
+    await addWalletAmount(amount, vendorWallet.uuid)
+    await update_transaction({status: 'success'}, transaction)
+        order.Cart.forEach(async(prod)=> {
         await ProductBeneficiary.create({
         productId: prod.ProductId,
         UserId: beneficiaryWallet.UserId,
         OrganisationId: campaignWallet.OrganisationId
       })
       })
-      await Transaction.update({
-        status: 'success'
-      },{where: {uuid: transaction}})
             await VoucherToken.update({
               amount: Sequelize.literal(`balance - ${amount}`)
             },{where:{campaignId: campaignWallet.CampaignId, beneficiaryId: beneficiaryWallet.UserId}})

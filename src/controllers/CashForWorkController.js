@@ -1173,6 +1173,21 @@ static async viewSubmittedEvidence(req, res){
       return util.send(res);
     }
   }
+  static async getAllCashForWorkTaskFieldAgent (req, res){
+    const {campaignId, beneficiaryId} = req.params
+    try{
+      const tasks = await CampaignService.cash4work(beneficiaryId, campaignId)
+      if(!tasks){
+        Response.setError(404, `No task retrieved`, tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(200, `Cash for work task retrieved`, tasks);
+        return Response.send(res);
+    }catch(error){
+       util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
   
 }
 
