@@ -1181,6 +1181,9 @@ static async viewSubmittedEvidence(req, res){
         Response.setError(404, `No task retrieved`, tasks);
         return Response.send(res);
       }
+      tasks.Jobs.forEach((data)=> {
+        data.dataValues.OrganisationId = tasks.OrganisationId
+      })
       Response.setSuccess(200, `Cash for work task retrieved`, tasks);
         return Response.send(res);
     }catch(error){
