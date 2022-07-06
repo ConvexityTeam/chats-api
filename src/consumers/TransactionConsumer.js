@@ -76,26 +76,30 @@ const processVendorPaystackWithdrawal = RabbitMq['default'].declareQueue(PAYSTAC
 
 
 const update_campaign = async(id, args)=> {
-  await Campaign.update({
-  ...args,
-  },{where: {id}});                    
+ const campaign = await Campaign.findOne({where: {id}})
+  if(!campaign) return null
+  campaign.update(args)
+  return campaign;                  
 }
 
 const update_transaction = async(args, uuid)=> {
-await Transaction.update({
-...args
-},{where: {uuid}})
+  const transaction = await Transaction.findOne({where:{uuid}})
+  if(!transaction) return null
+  transaction.update(args)
+  return transaction;
 }
 const deductWalletAmount = async(amount, uuid)=> {
-    await Wallet.update({
-    balance: Sequelize.literal(`balance - ${amount}`)
-    },{where: {uuid}})       
+  const wallet = await Wallet.findOne({where:{uuid}})
+  if(!wallet) return null
+  wallet.update({balance: Sequelize.literal(`balance - ${amount}`)}) 
+  return wallet;    
 }
 
 const addWalletAmount = async(amount, uuid)=> {
-    await Wallet.update({
-    balance: Sequelize.literal(`balance + ${amount}`)
-    },{where: {uuid}})       
+const wallet = await Wallet.findOne({where:{uuid}})
+  if(!wallet) return null
+  wallet.update({balance: Sequelize.literal(`balance + ${amount}`)}) 
+  return wallet;      
 }
 
 
