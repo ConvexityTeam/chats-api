@@ -122,10 +122,8 @@ class UsersController {
     try {
       const data = req.body
       const rules = {
-      address: "string",
       phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-      country: "required|string",
-      currency: 'required|string',
+      
     };
 
     const validation = new Validator(data, rules);
