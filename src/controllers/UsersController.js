@@ -1384,7 +1384,7 @@ class UsersController {
       //   return Response.send(res);
       // } else {
       
-      await ZohoService.generateOAuthToken()
+      await ZohoService.initialize()
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,"Internal server error"+error);
       return Response.send(res);
