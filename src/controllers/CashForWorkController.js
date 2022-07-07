@@ -679,7 +679,28 @@ class CashForWorkController {
     }
   }
 
+static async viewCashForWorkRefractorFieldApp (req, res){
+        const {beneficiaryId} = req.params
+    try{
 
+      const beneficiary = await db.TaskAssignment.findAll({where: { UserId: beneficiaryId },
+      include:[{
+        model: db.TaskAssignmentEvidence,
+        as: 'SubmittedEvidences'
+      }]}); 
+
+      if (beneficiary) {
+        util.setSuccess(200, 'Task Assignment Retrieved', beneficiary);
+    } else {
+        util.setSuccess(200, 'Task Assignment Not Recieved', beneficiary);
+    }
+    return util.send(res);
+    }catch(error){
+      console.log(error.message);
+      util.setError(500, "Internal Server Error"+ error);
+      return util.send(res);
+    }
+  }
 
   static async pickTaskFromCampaign (req, res){
     
