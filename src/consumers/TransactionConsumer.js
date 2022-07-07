@@ -172,14 +172,7 @@ RabbitMq['default']
    const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
    Logger.info('Transferred to campaign wallet', org);
 
-   await update_campaign(campaign.id, 
-    {status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
-    is_funded: true,
-    amount_disbursed: campaign.budget
-  })
-
-  await deductWalletAmount(campaign.budget, OrgWallet.uuid)
-  await addWalletAmount(campaign.budget, campaign.Wallet.uuid)
+   
             
          await Transaction.create({
             amount: campaign.budget,
@@ -192,6 +185,13 @@ RabbitMq['default']
             OrganisationId: campaign.OrganisationId,
             narration: 'Approve Campaign Funding'
           });
+          await update_campaign(campaign.id, 
+    {status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+    is_funded: true,
+    amount_disbursed: campaign.budget
+  })
+          await deductWalletAmount(campaign.budget, OrgWallet.uuid)
+          await addWalletAmount(campaign.budget, campaign.Wallet.uuid)
           const wallet = beneficiaries.map((user)=> user.User.Wallets)
           const mergeWallet = [].concat.apply([], wallet);
           
