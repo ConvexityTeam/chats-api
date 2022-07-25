@@ -32,6 +32,7 @@ var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const codeGenerator = require("./QrCodeController");
 const ZohoService = require("../services/ZohoService");
 const sanitizeObject = require("../utils/sanitizeObject");
+const AwsUploadService = require("../services/AwsUploadService");
 
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
@@ -1384,7 +1385,8 @@ class UsersController {
       //   return Response.send(res);
       // } else {
       
-      await ZohoService.initialize()
+    const crypto =   await AwsUploadService.encrypt('jibril')
+    console.log(crypto)
     }catch(error){
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,"Internal server error"+error);
       return Response.send(res);
