@@ -775,7 +775,6 @@ class BeneficiariesController {
     const {period} = req.params;
     try {
       const transactions = await BeneficiaryService.beneficiaryChart(req.user.id, period);
-
       if(transactions.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', transactions);
         return Response.send(res);
@@ -783,7 +782,11 @@ class BeneficiariesController {
       
       
       transactions.rows.forEach(transaction => {
-        transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${transaction.SenderWallet ? transaction.SenderWallet.address : transaction.ReceiverWallet.address}`
+        if(typeof transaction.ReceiverWallet === 'object'){
+         transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${transaction.ReceiverWallet?.address}`
+        }
+        if(typeof transaction.SenderWallet === 'object')
+        transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${transaction.SenderWallet?.address}`
       })
     const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
 
@@ -792,7 +795,7 @@ class BeneficiariesController {
       return Response.send(res);
       
     } catch (error) {
-      console.log(error);
+      console.log(error)
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
       return Response.send(res);
     }

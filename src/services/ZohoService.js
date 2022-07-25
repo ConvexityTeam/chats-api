@@ -1,137 +1,81 @@
-const InitializeBuilder = require("@zohocrm/nodejs-sdk-2.0/routes/initialize_builder").InitializeBuilder;
-const OAuthBuilder = require("@zohocrm/nodejs-sdk-2.0/models/authenticator/oauth_builder").OAuthBuilder;
-const UserSignature = require("@zohocrm/nodejs-sdk-2.0/routes/user_signature").UserSignature;
-const Levels = require("@zohocrm/nodejs-sdk-2.0/routes/logger/logger").Levels;
-const LogBuilder = require("@zohocrm/nodejs-sdk-2.0/routes/logger/log_builder").LogBuilder;
-const USDataCenter = require("@zohocrm/nodejs-sdk-2.0/routes/dc/us_data_center").USDataCenter;
-const DBBuilder = require("@zohocrm/nodejs-sdk-2.0/models/authenticator/store/db_builder").DBBuilder;
-const FileStore = require("@zohocrm/nodejs-sdk-2.0/models/authenticator/store/file_store").FileStore;
-const SDKConfigBuilder = require("@zohocrm/nodejs-sdk-2.0/routes/sdk_config_builder").SDKConfigBuilder;
-const ProxyBuilder = require("@zohocrm/nodejs-sdk-2.0/routes/proxy_builder").ProxyBuilder;
+const { zohoCrmConfig } = require("../config");
+const ZohoClient = require('@zohocrm/nodejs-sdk-2.0')
+const axios = require('axios');
+const {
+  Logger
+} = require('../libs');
+const Axios = axios.create();
 
 class ZohoService {
 
-    static async initialize() {
-
-        /*
-         * Create an instance of Logger Class that takes two parameters
-         * level -> Level of the log messages to be logged. Can be configured by typing Levels "." and choose any level from the list displayed.
-         * filePath -> Absolute file path, where messages need to be logged.
-         */
-        let logger = new LogBuilder()
-            .level(Levels.INFO)
-            .filePath("/Users/user_name/Documents/node_sdk_log.log")
-            .build();
-
-        /*
-         * Create an UserSignature instance that takes user Email as parameter
-         */
-        let user = new UserSignature("setinsoft@gmail.com");
-
-        /*
-         * Configure the environment
-         * which is of the pattern Domain.Environment
-         * Available Domains: USDataCenter, EUDataCenter, INDataCenter, CNDataCenter, AUDataCenter
-         * Available Environments: PRODUCTION(), DEVELOPER(), SANDBOX()
-         */
-        let environment = USDataCenter.DEVELOPER();
-
-        /*
-        * Create a Token instance that requires the following
-        * clientId -> OAuth client id.
-        * clientSecret -> OAuth client secret.
-        * refreshToken -> REFRESH token.
-        * grantToken -> GRANT token.
-        * id -> User unique id.
-        * redirectURL -> OAuth redirect URL.
-        */
-        // if ID (obtained from persistence) is available
-        let token = new OAuthBuilder()
-        .clientId("clientId")
-        .clientSecret("clientSecret")
-        .refreshToken("refreshToken")
-        .redirectURL("redirectURL")
-        .build();
-
-        /*
-        * hostName -> DataBase host name. Default value "localhost"
-        * databaseName -> DataBase name. Default  value "zohooauth"
-        * userName -> DataBase user name. Default value "root"
-        * password -> DataBase password. Default value ""
-        * portNumber -> DataBase port number. Default value "3306"
-        * tableName -> Table Name. Default value "oauthtoken"
-        */
-        // let tokenstore = new DBBuilder()
-        // .host("hostName")
-        // .databaseName("databaseName")
-        // .userName("userName")
-        // .portNumber("portNumber")
-        // .tableName("tableName")
-        // .password("password")
-        // .build();
-
-        /*
-         * Create an instance of FileStore that takes absolute file path as parameter
-         */
-         let store = new FileStore("/Users/userName/Desktop/nodejs_sdk_tokens.txt");
-
-        /*
-        * autoRefreshFields
-        * if true - all the modules' fields will be auto-refreshed in the background, every hour.
-        * if false - the fields will not be auto-refreshed in the background. The user can manually delete the file(s) or refresh the fields using methods from ModuleFieldsHandler(utils/util/module_fields_handler.js)
-        * 
-        * pickListValidation
-        * A boolean field that validates user input for a pick list field and allows or disallows the addition of a new value to the list.
-        * if true - the SDK validates the input. If the value does not exist in the pick list, the SDK throws an error.
-        * if false - the SDK does not validate the input and makes the API request with the user’s input to the pick list
-        */
-        let sdkConfig = new SDKConfigBuilder().pickListValidation(false).autoRefreshFields(true).build();
-
-        /*
-         * The path containing the absolute directory path to store user specific JSON files containing module fields information. 
-         */
-        //let resourcePath = "/Users/user_name/Documents/nodejs-app";
-
-        /*
-        * RequestProxy class takes the following parameters
-        * host -> Host
-        * port -> Port Number
-        * user -> User Name. Default null.
-        * password -> Password. Default null
-        */
-        // let requestProxy = new ProxyBuilder()
-        // .host("proxyHost")
-        // .port("proxyPort")
-        // .user("proxyUser")
-        // .password("password")
-        // .build();
-
-        /*
-         * Call the static initialize method of Initializer class that takes the following arguments
-         * user -> UserSignature instance
-         * environment -> Environment instance
-         * token -> Token instance
-         * store -> TokenStore instance
-         * SDKConfig -> SDKConfig instance
-         * resourcePath -> resourcePath
-         * logger -> Logger instance
-         */
-        try {
-            (await new InitializeBuilder())
-                .user(user)
-                .environment(environment)
-                .token(token)
-                .store(store)
-                .SDKConfig(sdkConfig)
-                //.resourcePath(resourcePath)
-                .logger(logger)
-                .initialize();
-        } catch (error) {
-            console.log(error);
-        }
-
-         console.log(await store.getTokens());
+  static async zohiInitializer(){
+    let config = {
+      client_id: '',
+      client_secret: ''
     }
+    return new Promise(async (resolve, reject) => {
+      try {
+       const ZohoInit =  new ZohoClient.Initializer()
+        console.log(ZohoInit,'ZohoInit')
+       resolve(ZohoInit)
+      }catch(error) {
+        console.log(error,'error zoho')
+        reject(error);
+      }
+    });
+  }
+
+    static async generateAccessToken(){
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Genereting Zoho Access Token');
+       const {data} = await Axios.post(`${zohoCrmConfig.base}?scope=${zohoCrmConfig.scope}&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&code=${zohoCrmConfig.code}&redirect_uri=${zohoCrmConfig.redirect_uri}`)
+       Logger.info(`Genereted Zoho Access Token: ${data}`);
+       resolve(data)
+      }catch(error) {
+        Logger.error(`Error Genereting Zoho Access Token: ${error}`);
+        reject(error.response);
+      }
+    });
+  }
+
+  static async generateRefreshToken(){
+    return new Promise(async (resolve, reject) => {
+      try {
+        const refresh = await ZohoService.generateOAuthToken()
+        const refresh_token = refresh.refresh_token
+        Logger.info('Genereting Zoho Refresh Token');
+       const {data} = await Axios.post(`${zohoCrmConfig.base}?refresh_token=${refresh_token}&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=refresh_token`)
+       Logger.info('Genereed Zoho Refresh Token');
+       resolve(data)
+      }catch(error) {
+        Logger.error(`Error Genereting Zoho Refresh Token: ${error}`);
+        reject(error.response);
+      }
+    });
+  }
+  static async createTicket(subject, description, phone, email){
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        const refresh = await ZohoService.generateRefreshToken()
+        const access_token = refresh.access_token
+        Logger.info('Creating Zoho Ticket');
+       const {data} = await Axios.post(`${zohoCrmConfig.tickets}`,{subject, description, phone, email},{
+         
+       headers: {
+            'Authorization': `Zoho-oauthtoken ${access_token}`
+          }
+       })
+       Logger.info('Created Zoho Ticket');
+        resolve(data)
+      }catch(error) {
+        Logger.error(`Error Creatingng Zoho Ticket: ${error}`);
+        reject(error);
+      }
+    });
+  }
+
 }
 
 module.exports = ZohoService
