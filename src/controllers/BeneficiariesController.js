@@ -782,11 +782,21 @@ class BeneficiariesController {
       
       
       transactions.rows.forEach(transaction => {
-        if(typeof transaction.ReceiverWallet === 'object'){
-         transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${transaction.ReceiverWallet?.address}`
+        if(transaction.dataValues.ReceiverWallet === null) delete transaction.dataValues.ReceiverWallet
+        if(transaction.dataValues.SenderWallet === null) delete transaction.dataValues.SenderWallet
+        //console.log(transaction)
+      })
+      transactions.rows.forEach(transaction => {
+        if(typeof transaction.dataValues.ReceiverWallet !== 'undefined'){
+          transaction.dataValues.BlockchainXp_Link = 
+         `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=
+         ${transaction.ReceiverWallet.address}`
         }
-        if(typeof transaction.SenderWallet === 'object')
-        transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${transaction.SenderWallet?.address}`
+        if(typeof transaction.dataValues.SenderWallet !== 'undefined') {
+          transaction.dataValues.BlockchainXp_Link = 
+         `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=
+         ${transaction.SenderWallet.address}`
+        }
       })
     const periods = transactions.rows.map((period) => moment(period.createdAt).format('ddd'))
 
