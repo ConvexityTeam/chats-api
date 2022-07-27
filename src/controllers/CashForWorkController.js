@@ -1,5 +1,4 @@
 const CampaignService = require("../services/CampaignService");
-const  AwsUploadService = require("../services/AwsUploadService");
 const util = require("../libs/Utils");
 const db = require("../models");
 const Validator = require("validatorjs");
@@ -891,7 +890,7 @@ const {TaskAssignmentId, comment, type} = req.body
     try {
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
-        Response.setError(422, validation.errors);
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
       if (!files) {
@@ -1208,7 +1207,7 @@ static async viewSubmittedEvidence(req, res){
       Response.setSuccess(200, `Cash for work task retrieved`, tasks);
         return Response.send(res);
     }catch(error){
-       util.setError(500, "Internal Server Error"+ error);
+       util.setError(500, "Internal Server Error");
       return util.send(res);
     }
   }
