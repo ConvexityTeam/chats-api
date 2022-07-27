@@ -700,17 +700,6 @@ class BeneficiariesController {
    if(cleanArray[i] === 'Jos') Jos++
   }
 
-  
-  
-  // for (const element of cleanArray) {
-  //     if (counts[element]) {
-  //       counts[element] += 1;
-  //     } else {
-  //       counts[element] = 1;
-  //     }
-  //   }
-
-      
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  {Abuja, Lagos, Kaduna, Jos});
         return Response.send(res);
       }
