@@ -1,5 +1,4 @@
 const db = require("../models");
-var bcrypt = require("bcryptjs");
 const moment = require('moment')
 const util = require("../libs/Utils");
 const {

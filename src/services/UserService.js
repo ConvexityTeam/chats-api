@@ -4,13 +4,14 @@ const {
     BankAccount,
     OrganisationMembers
 } = require('../models');
-const {
-    Op,
-    Sequelize
-} = require('sequelize');
+const axios = require('axios');
+const Axios = axios.create();
 const {
     AclRoles
 } = require('../utils');
+const {
+  Logger
+} = require('../libs');
 const {
     userConst
 } = require('../constants');
@@ -166,6 +167,7 @@ class UserService {
     }
 
     static findUserAccounts(UserId) {
+
         return BankAccount.findAll({
             where: {
                 UserId
@@ -178,6 +180,23 @@ class UserService {
         })
     }
 
+    static async nin_verification(number){
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Verifying NIN');
+       const {data} = await Axios.post('https://api.myidentitypay.com/api/v1/biometrics/merchant/data/verification/nin_wo_face',number, {
+        headers: {
+        'x-api-key': ` ${process.env.IDENTITY_API_KEY}`
+        }
+       })
+      data.status ? Logger.info('NIN verified'): Logger.info(`${data.message}`);
+       resolve(data)
+      }catch(error) {
+        Logger.error(`Error Verifying NIN: ${error}`);
+        reject(error)
+      }
+    });
+  }
     
 }
 

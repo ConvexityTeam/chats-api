@@ -390,6 +390,27 @@ class BeneficiariesController {
 
   }
 
+  static async joinCampaignField(req, res) {
+    try {
+      const campaign = req.campaign;
+      const beneficiaryId = req.params.beneficiary_id;
+      
+      if (campaign.status !== 'active') {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign is not active.');
+        return Response.send(res);
+      }
+
+      const beneficiary = await CampaignService.addBeneficiary(campaign.id, beneficiaryId, BeneficiarySource.beneficiary);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Beneficiary Added.', beneficiary);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
+      return Response.send(res);
+    }
+
+  }
+
   // Refactored
 
   static async leaveCampaign(req, res) {

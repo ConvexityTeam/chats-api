@@ -1,7 +1,7 @@
 const {
   GodModeAuth,
   BeneficiaryAuth,
-  VendorBeneficiaryAuth,
+  FieldAgentAuth,
   NgoSubAdminAuth,
   Auth,
   FieldAgentBeneficiaryAuth
@@ -92,10 +92,19 @@ router.route('/campaigns')
 
 router.post(
   '/campaigns/:campaign_id/join',
-  BeneficiaryAuth,
+  FieldAgentBeneficiaryAuth,
   BeneficiaryValidator.NotCampaignBeneficiary,
   BeneficiaryController.joinCampaign
 );
+
+router.post(
+  '/:beneficiary_id/campaigns/:campaign_id/join',
+  FieldAgentAuth,
+  BeneficiaryValidator.NotCampaignBeneficiary,
+  BeneficiaryController.joinCampaignField
+);
+
+
 
 router.put(
   '/campaigns/:campaign_id/leave',
