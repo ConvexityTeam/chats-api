@@ -123,14 +123,33 @@ class UsersController {
     try {
       const data = req.body
       const rules = {
-      phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-      
+      first_name: "required|alpha",
+      last_name: "required|alpha",
+      phone: ['regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+      nin: 'digits:11|numeric',
     };
 
     const validation = new Validator(data, rules);
     if (validation.fails()) {
       Response.setError(422, validation.errors);
       return Response.send(res);
+    }
+
+    if(data.nin){
+      const isExist = await UserService.findSingleUser({nin: data.nin})
+      if(isExist){
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `user with this nin: ${data.nin} exist`);
+        return Response.send(res);
+      }
+      const nin = await UserService.nin_verification({number: data.nin})
+    if(!nin.status){
+      Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Not a Valid NIN');
+      return Response.send(res);
+    }
+    data.is_nin_verified = true
+    await req.user.update(data);
+    Response.setSuccess(HttpStatusCode.STATUS_OK, 'Profile Updated', req.user.toObject());
+    return Response.send(res);
     }
       await req.user.update(data);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Profile Updated', req.user.toObject());
