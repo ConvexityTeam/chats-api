@@ -699,27 +699,14 @@ class BeneficiariesController {
   if(cleanArray[i] === 'Kaduna') Kaduna++
    if(cleanArray[i] === 'Jos') Jos++
   }
-
-  
-  
-  // for (const element of cleanArray) {
-  //     if (counts[element]) {
-  //       counts[element] += 1;
-  //     } else {
-  //       counts[element] = 1;
-  //     }
-  //   }
-
-      
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  {Abuja, Lagos, Kaduna, Jos});
-        return Response.send(res);
-      }
+  Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  {Abuja, Lagos, Kaduna, Jos});
+  return Response.send(res);
+  }
       
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Location Retrieved.', {Abuja, Lagos, Kaduna, Jos});
       return Response.send(res);
 
-
-    } catch (error) {
+    } catch(error){
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+error);
       return Response.send(res);

@@ -17,6 +17,7 @@ const {
   AclRoles
 } = require('../utils');
 const { async } = require("regenerator-runtime");
+const { BlockchainService } = require("../services");
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
 });
@@ -755,8 +756,13 @@ static async viewCashForWorkRefractorFieldApp (req, res){
 static async evidence(req, res){
 
   try{
-    const evi = await db.VoucherToken.findAll();
-    Response.setSuccess(200, "Task Evidence", evi);
+    //const evi = await db.VoucherToken.findAll();
+    const mneumonic = await BlockchainService.getMnemonic('helloooo')
+    if(mneumonic){
+      Response.setSuccess(200, "Task Evidence", mneumonic);
+    return Response.send(res);
+    }
+    Response.setSuccess(200, "nothing", mneumonic);
     return Response.send(res);
   }catch(error){
      console.log(error.message);

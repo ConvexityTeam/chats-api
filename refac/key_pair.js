@@ -2,14 +2,7 @@ const SecretsManager = require("aws-sdk/clients/secretsmanager");
 const { createNewBSCAccount } = require("./index");
 const { config } = require("dotenv");
 config();
-const { redisClient } = require("../config/redis.config");
-const { PrismaClient } = require("@prisma/client")
-const prisma = new PrismaClient()
 
-
-// let pair = {};
-let pairSend = undefined
-let redisKey = "";
 
 
 // Use this code snippet in your app.
