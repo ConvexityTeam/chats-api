@@ -127,7 +127,7 @@ router.route('/:organisation_id/logo')
 
 router.route('/:organisation_id/beneficiaries')
   .get(
-    NgoSubAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     OrganisationController.getOrganisationBeneficiaries
