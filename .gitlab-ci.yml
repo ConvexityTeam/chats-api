@@ -9,7 +9,7 @@ before_script:
 deploy_staging:
   stage: deploy
   script:
-    - ssh $USER@$APP_URL -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/id_rsa && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d -force--recreate && exit"
+    - ssh $USER@$APP_URL -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/id_rsa && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose --force-recreate -f docker-compose.prod.yml up --build -d && exit"
   only:
     - develop
     
