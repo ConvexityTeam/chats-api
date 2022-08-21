@@ -3,17 +3,18 @@ const router = require("express").Router();
 const {
 
 	FileValidator,
+	TaskValidator
 	
 } = require('../validators');
 
-const {Auth, VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, VendorBeneficiaryAuth, NgoSubAdminAuth, FieldAgentBeneficiaryAuth} = require("../middleware");
+const {VendorAuth,  FieldAgentAuth,  BeneficiaryAuth, NgoSubAdminAuth, FieldAgentBeneficiaryAuth} = require("../middleware");
 const CashForWorkController = require("../controllers/CashForWorkController");
 const CampaignController = require('../controllers/CampaignController')
 
 // router.use(Auth);
 router.get("/evidence",  CashForWorkController.evidence);
 
-router.get("/:task_id/evidence/:user_id",NgoSubAdminAuth,    CashForWorkController.viewSubmittedEvidence);
+router.get("/:task_id/evidence/:user_id",NgoSubAdminAuth,   CashForWorkController.viewSubmittedEvidence);
 router.post("/task/task-approved-vendor", VendorAuth,  CashForWorkController.approveSubmissionVendor);
 router.post("/task/task-approved-agent",  FieldAgentAuth,  CashForWorkController.approveSubmissionAgent);
 

@@ -27,7 +27,7 @@ class FileValidator extends BaseValidator {
     multer.any('uploads'),
       check('uploads')
       .custom((value, {req}) => new Promise((resolve, reject) => {
-        //console.log(req.files, 'file')
+        console.log(req.files, 'file')
         req.files.map((file)=> {
           const ext = file.mimetype.split('/').pop();
         

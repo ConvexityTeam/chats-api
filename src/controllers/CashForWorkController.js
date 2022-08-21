@@ -757,9 +757,11 @@ static async evidence(req, res){
 
   try{
     //const evi = await db.VoucherToken.findAll();
-    const mneumonic = await BlockchainService.getMnemonic('helloooo')
+    const mneumonic = await BlockchainService.setUserKeypair('campaign-1')
+    
+
     if(mneumonic){
-      Response.setSuccess(200, "Task Evidence", mneumonic);
+      Response.setSuccess(200, "Task Evidence", mneumonic.privateKey);
     return Response.send(res);
     }
     Response.setSuccess(200, "nothing", mneumonic);
@@ -1081,34 +1083,45 @@ const {TaskAssignmentId, comment, type} = req.body
 static async viewSubmittedEvidence(req, res){
     const {user_id, task_id} = req.params
     try {
-     let ready = false
-        const tasks = await db.User.findOne({
-           attributes: userConst.publicAttr,
-          where: {id: user_id},
-          include: { model: db.TaskAssignment, as: "Assignments",
-          where: {TaskId: task_id},
-           include: {
-            model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'
-          }}
-          });
-        
+      const rules = {
+        user_id: "required|numeric",
+        task_id: "required|numeric"
+      };
 
-      if(!tasks){
-        Response.setSuccess(200, "No Task Recieved", []);
+     const validation = new Validator(req.params, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
         return Response.send(res);
       }
-        tasks.Assignments.forEach((data)=> {
-       const task_exist =  db.Task.findByPk(data.TaskId)
-       data.dataValues.task_name = task_exist.name
-        data.SubmittedEvidences.forEach((value)=> {
-          value.dataValues.beneficiaryId = tasks.id
-         value.dataValues.beneficiary_first_name = tasks.first_name
-        value.dataValues.beneficiary_last_name = tasks.last_name
-        })
-        
-      })
+     const user = await db.User.findByPk(user_id,{attributes: userConst.publicAttr})
+     const assignment = await db.TaskAssignment.findOne({where: {UserId: user_id, TaskId: task_id}})
+     const task_exist = await db.Task.findByPk(task_id)
+     const submittedEvidence = await db.TaskAssignmentEvidence.findOne({where: {TaskAssignmentId: assignment.id}})
+      if(!assignment){
+        Response.setSuccess(404, "No Task Found", []);
+        return Response.send(res);
+      }
       
-      Response.setSuccess(200, "Task Recieved", tasks);
+      assignment.dataValues.task_name = task_exist.name
+      submittedEvidence.dataValues.beneficiaryId = user.id
+      submittedEvidence.dataValues.beneficiary_first_name = user.first_name
+      submittedEvidence.dataValues.beneficiary_last_name = user.last_name
+      assignment.dataValues.SubmittedEvidences = [submittedEvidence]
+      user.dataValues.Assignments = [assignment]
+      
+      //   user.Assignments.forEach((data)=> {
+      //  
+      //  data.dataValues.task_name = task_exist.name
+      //  data.SubmittedEvidences = [submittedEvidence]
+      //   data.SubmittedEvidences.forEach((value)=> {
+      //     value.dataValues.beneficiaryId = tasks.id
+      //    value.dataValues.beneficiary_first_name = tasks.first_name
+      //   value.dataValues.beneficiary_last_name = tasks.last_name
+      //   })
+        
+      // })
+      
+      Response.setSuccess(200, "Task Recieved", user);
       return Response.send(res);
          }catch(error){
       console.log(error.message);
