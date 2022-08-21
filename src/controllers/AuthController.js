@@ -149,7 +149,7 @@ class AuthController {
           phone: ['required','regex:/^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$/'],
           country: 'string|required',
           state: 'string|required',
-          // device_imei: 'string|required'
+          device_imei: 'string|required'
         };
         
       const validation = new Validator(req.body, rules);
@@ -162,15 +162,15 @@ class AuthController {
         
         } 
           const userByEmail = await db.User.findOne({where: {email}})
-          //const userDevice = await db.User.findOne({where: {device_imei}})
+          const userDevice = await db.User.findOne({where: {device_imei}})
           if(userByEmail){
             Response.setError(400, "User With This Email Exist");
             return Response.send(res);
         }
-        // if(userDevice){
-        //     Response.setError(400, "User With Device Exist");
-        //     return Response.send(res);
-        // }
+        if(userDevice){
+            Response.setError(400, "device already registered");
+            return Response.send(res);
+        }
         else{
       const password =  createHash(req.body.password);
 
@@ -563,7 +563,7 @@ class AuthController {
                   })
                   .then(async (_user) => {
                     user = _user;
-                    QueueService.createWallet(user.id, 'user');
+                    //QueueService.createWallet(user.id, 'user');
                     await db.Organisation.create({
                       name: data.organisation_name,
                       email: data.email,
