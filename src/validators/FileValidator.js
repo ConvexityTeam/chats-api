@@ -32,7 +32,7 @@ class FileValidator extends BaseValidator {
       .custom((value, {req}) => new Promise((resolve, reject) => {
         
         req.files.map((file)=> {
-          Logger.info(`Uploading files ${file}`)
+          Logger.info(`Uploading files ${JSON.stringify(file)}`)
           const ext = file.mimetype.split('/').pop();
         
         const allowedExt = ['png', 'jpg', 'jpeg'];
