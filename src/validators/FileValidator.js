@@ -30,17 +30,18 @@ class FileValidator extends BaseValidator {
     multer.any('uploads'),
       check('uploads')
       .custom((value, {req}) => new Promise((resolve, reject) => {
-        Logger.info(`Uploading files ${req.files}`)
+        
         req.files.map((file)=> {
+          Logger.info(`Uploading files ${file}`)
           const ext = file.mimetype.split('/').pop();
         
         const allowedExt = ['png', 'jpg', 'jpeg'];
         if(file.size > maxFileUploadSize) {
-          Logger.error('Maximum upload size [10 MB] exceeded.')
+          Logger.info('Maximum upload size [10 MB] exceeded.')
           reject('Maximum upload size [10 MB] exceeded.');
         }
         if(!allowedExt.includes(ext)) {
-          Logger.info('Allowed file type are ${allowedExt.join(',')}.')
+          Logger.info(`Allowed file type are ${allowedExt.join(',')}.`)
           reject(`Allowed file type are ${allowedExt.join(',')}.`)
         }
         resolve(true);
