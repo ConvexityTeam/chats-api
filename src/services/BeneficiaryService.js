@@ -286,6 +286,7 @@ class BeneficiariesService {
   }
 
   static async getBeneficiaries(OrganisationId) {
+    console.log(OrganisationId, 'OrganisationId')
     return User.findAll({
      where: {
        RoleId: AclRoles.Beneficiary,
@@ -295,6 +296,7 @@ class BeneficiariesService {
       include: [{
         model: Campaign,
         as: 'Campaigns',
+        where: {OrganisationId},
         through: {
           where: {
             approved: true
