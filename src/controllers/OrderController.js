@@ -140,10 +140,14 @@ class OrderController {
 
 
     try{
+      const maleCount = {};
+      const femaleCount = {};
       let gender = {male: [], female: []}
        const {organisation_id} = req.params
 
       const products = await OrderService.productPurchased(organisation_id)
+
+      
 
       if(products.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Gender Recieved', {productsByMale, productsByFemale});
@@ -154,18 +158,33 @@ class OrderController {
       products.forEach((product)=> {
         product.Cart.forEach((cart)=> {
           cart.Product.ProductBeneficiaries.forEach((beneficiary)=> {
-            if(beneficiary.gender === 'male' && !gender.male.includes(cart.Product.tag)){
-              gender.male.push(cart.Product.tag)
+            if(beneficiary.gender === 'male'){
+              maleCount[cart.Product.tag] = (maleCount[cart.Product.tag] || 0) + 1;
+              
             }
-            if(beneficiary.gender === 'female' && !gender.female.includes(cart.Product.tag)){
-              gender.female.push(cart.Product.tag)
+            if(beneficiary.gender === 'female'){
+              femaleCount[cart.Product.tag] = (femaleCount[cart.Product.tag] || 0) + 1;
             }
           })
         })
       })
-     
+    
+      gender.female.push(femaleCount)
+     gender.male.push(maleCount)
+    gender.male = gender.male.reduce((acc, obj) => {
+  Object.keys(obj).forEach((key) => {
+    acc.push({[key]: obj[key]})
+  });
+  return acc;
+}, [])
+gender.female = gender.female.reduce((acc, obj) => {
+  Object.keys(obj).forEach((key) => {
+    acc.push({[key]: obj[key]})
+  });
+  return acc;
+}, [])
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased By Gender Recieved', gender);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased By Gender Received', gender);
       return Response.send(res);
     
 
@@ -181,51 +200,52 @@ class OrderController {
     try{
 
        const {organisation_id} = req.params
-      let group = []
-      let age_group = {
-        'eighteenTo29': {},
-        'thirtyTo41': {},
-        'forty2To53': {},
-        'fifty4To65': {},
-        'sixty6Up': {}
-      }
-      
+       let ageRange = ['18-29', '30-41', '42-53', '54-65', '66~']
+      let data = []
+
       const products = await OrderService.productPurchased(organisation_id)
       if(products.length > 0){
         products.forEach((product)=> {
+         
         product.Cart.forEach((cart)=> {
+          
           cart.Product.ProductBeneficiaries.forEach((beneficiary)=> {
-            if(parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 18 &&  
-          parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) <= 29 ){
-            //if(age_group.eighteenTo29.includes(age_group.eighteenTo29.some((product)=> product)))
-            age_group.eighteenTo29[cart.Product.tag] = (age_group.eighteenTo29[cart.Product.tag] || 0) + 1;
-          }
-          else if(parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 30 &&  
-          parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) <= 41 ){
-            age_group.eighteenTo29[cart.Product.tag] = (age_group.eighteenTo29[cart.Product.tag] || 0) + 1;
-          }
-          else if(parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 42 &&  
+            if(data.length <= 0 || !data.find((val) => val.label === cart.Product['tag'])){
+             data.push({label : cart.Product['tag'], data: [0, 0, 0, 0, 0]})
+            }
+           for(let val of data){
+            
+             if((cart.Product['tag'] === val.label) && parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 18 &&  
+                parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) <= 29){
+               val.data[0]++
+            }
+            if((cart.Product['tag'] === val.label) && parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 30 &&  
+          parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) <= 41){
+               val.data[1]++
+            }
+            if((cart.Product['tag'] === val.label) && parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 42 &&  
           parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) <= 53 ){
-            age_group.eighteenTo29[cart.Product.tag] = (age_group.eighteenTo29[cart.Product.tag] || 0) + 1;
-          }
-         else if(parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 54 &&  
+               val.data[2]++
+            }
+            if((cart.Product['tag'] === val.label) && parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 54 &&  
           parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) <= 65 ){
-            age_group.eighteenTo29[cart.Product.tag] = (age_group.eighteenTo29[cart.Product.tag] || 0) + 1;
-          }else if(parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 66){
-            age_group.eighteenTo29[cart.Product.tag] = (age_group.eighteenTo29[cart.Product.tag] || 0) + 1;
-          }
+               val.data[3]++
+            }
+            if((cart.Product['tag'] === val.label) && parseInt(moment().format('YYYY') -  moment(beneficiary.dob).format('YYYY')) >= 66){
+               val.data[4]++
+            }
+           }
+        
            
           })
         })
         
       })
-    group.push(age_group)
-
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased By Age Group Retrieved.',group);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased By Age Group Retrieved.',{ageRange, data});
         return Response.send(res);
       }
       
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Age Group Retrieved.', age_group);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased By Age Group Retrieved.', {ageRange, data});
       return Response.send(res);
 
     
@@ -243,20 +263,17 @@ class OrderController {
     try{
       const {organisation_id} = req.params
       let data = []
-      const products = await OrderService.productPurchasedBy(organisation_id)
+      const products = await OrderService.productPurchased(organisation_id)
 
       if(products.length <= 0){
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved', products);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Received', products);
       return Response.send(res);
       }
-      let total_product_sold = products.length
-      let total_product_value = 0
+
       products.forEach(product => {
         product.Cart.forEach(cart => {
-          
-          total_product_value = total_product_value + cart.total_amount
-
-          data.push({productId: cart.ProductId, product_name: cart.Product.tag, 
+          if(data.length <= 0 || !data.find((val) => val.vendorId == product.Vendor.id && val.productId == cart.ProductId)){
+            data.push({productId: cart.ProductId, product_name: cart.Product.tag, 
             vendorId: product.Vendor.id,
             vendor_name: product.Vendor.first_name + 
             " "+ product.Vendor.first_name,
@@ -264,9 +281,21 @@ class OrderController {
             product_quantity: cart.quantity,
             product_cost: cart.Product.cost,
             total_revenue: cart.Product.cost * cart.quantity,
-            date_of_purchased: cart.createdAt
+            date_of_purchased: cart.updatedAt
 
           })
+          }
+           for(let val of data){
+            if((val.vendorId == product.Vendor.id && val.productId == cart.ProductId)){
+                    val.sales_volume += (val.product_quantity + cart.quantity) * 
+           getMonthDifference(new Date(val.date_of_purchased), new Date(cart.updatedAt)) 
+              val.total_revenue +=  cart.Product.cost * cart.quantity
+              val.product_quantity += cart.quantity
+
+            }
+           }
+
+          
         })
       })
       
@@ -278,30 +307,9 @@ class OrderController {
             12 * (endDate.getFullYear() - startDate.getFullYear())
           );
         }
-      const set = new Set()
-      let found = []
-      let exist = []
-      const unique = data.filter((item)=> {
-        const alreadyHas = set.has(item.productId, item.vendorId)
-        set.add(item.productId, item.vendorId)
-        if(alreadyHas) exist.push(item)
-        return !alreadyHas
-      })
-    found.push(...unique)
-    found.forEach((value)=> {
-      exist.forEach((val)=>{
-        if(value.productId == val.productId && value.vendorId == val.vendorId){
-          value.sales_volume = (value.product_quantity + val.product_quantity) * 
-           getMonthDifference(new Date(value.date_of_purchased), new Date(val.date_of_purchased)) 
-          value.total_revenue = val.sales_volume + value.sales_volume
-          console.log(getMonthDifference(new Date(value.date_of_purchased), new Date(val.date_of_purchased)) )
-          delete value.date_of_purchased
-        }
-      })
-    })
        
     
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', data);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Received', data);
       return Response.send(res);
 
 
@@ -315,11 +323,10 @@ class OrderController {
     
     try{
       const {organisation_id} = req.params
-      let data = []
       const products = await OrderService.productPurchasedBy(organisation_id)
 
       if(products.length <= 0){
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Recieved', products);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Received', products);
       return Response.send(res);
       }
       let total_product_sold = products.length
@@ -327,52 +334,12 @@ class OrderController {
       products.forEach(product => {
         product.Cart.forEach(cart => {
           
-          total_product_value = total_product_value + cart.total_amount
-
-          data.push({productId: cart.ProductId, product_name: cart.Product.tag, 
-            vendorId: product.Vendor.id,
-            vendor_name: product.Vendor.first_name + 
-            " "+ product.Vendor.first_name,
-            sales_volume: cart.total_amount,
-            product_quantity: cart.quantity,
-            product_cost: cart.Product.cost,
-            total_revenue: cart.Product.cost * cart.quantity,
-            date_of_purchased: cart.createdAt
-
-          })
+          total_product_value +=cart.total_amount
         })
       })
-        function getMonthDifference(startDate, endDate) {
-          return (
-            endDate.getMonth() -
-            startDate.getMonth() +
-            12 * (endDate.getFullYear() - startDate.getFullYear())
-          );
-        }
-      const set = new Set()
-      let found = []
-      let exist = []
-      const unique = data.filter((item)=> {
-        const alreadyHas = set.has(item.productId, item.vendorId)
-        set.add(item.productId, item.vendorId)
-        if(alreadyHas) exist.push(item)
-        return !alreadyHas
-      })
-    found.push(...unique)
-    found.forEach((value)=> {
-      exist.forEach((val)=>{
-        if(value.productId == val.productId && value.vendorId == val.vendorId){
-          value.sales_volume = (value.product_quantity + val.product_quantity) * 
-           getMonthDifference(new Date(value.date_of_purchased), new Date(val.date_of_purchased)) 
-          value.total_revenue = val.sales_volume + value.sales_volume
-          console.log(getMonthDifference(new Date(value.date_of_purchased), new Date(val.date_of_purchased)) )
-          delete value.date_of_purchased
-        }
-      })
-    })
        
     
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Recieved', {total_product_sold, total_product_value});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Received', {total_product_sold, total_product_value});
       return Response.send(res);
 
 
