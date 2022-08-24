@@ -99,11 +99,20 @@ class OrganisationService {
       }
     });
   }
+  
 
   static async isMember(organisation, user) {
     return database.OrganisationMembers.findOne({
       where: {
         OrganisationId: organisation,
+        UserId: user
+      }
+    });
+  }
+
+  static async isMemberUser(user) {
+    return OrganisationMembers.findOne({
+      where: {
         UserId: user
       }
     });

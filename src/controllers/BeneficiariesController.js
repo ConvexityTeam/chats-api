@@ -2,7 +2,8 @@ const {
   BeneficiaryService,
   WalletService,
   CampaignService,
-  QueueService
+  QueueService,
+  OrganisationService
 } = require("../services");
 const util = require("../libs/Utils");
 const db = require("../models");
@@ -548,8 +549,8 @@ class BeneficiariesController {
 
       let male = 0
       let female = 0
-
-      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
+      const org = OrganisationService.isMemberUser(req.user.id)
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
 
       if (beneficiaries.length > 0) {
         for (let i = 0; i < beneficiaries.length; i++) {
@@ -590,8 +591,10 @@ class BeneficiariesController {
       let fifty4To65 = 0
       let sixty6Up = 0
 
-
-      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
+      
+      const org = OrganisationService.isMemberUser(req.user.id)
+      
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
 
       if (beneficiaries.length > 0) {
         for (let i = 0; i < beneficiaries.length; i++) {
@@ -643,8 +646,8 @@ class BeneficiariesController {
       let married = 0
       let single = 0
       let divorce = 0
-
-      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
+      const org = OrganisationService.isMemberUser(req.user.id)
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
 
       if (beneficiaries.length > 0) {
         for (let i = 0; i < beneficiaries.length; i++) {
@@ -680,25 +683,42 @@ class BeneficiariesController {
 
     try {
       let Lagos = 0, Abuja = 0, Kaduna = 0, Jos = 0
-      const beneficiaries = await BeneficiaryService.getBeneficiaries(req.user.id);
+      let newData = []
+      const org = OrganisationService.isMemberUser(req.user.id)
+      const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
       
       if(beneficiaries.length > 0){
-        const beneficiary = beneficiaries.map(bene =>  bene.location )
+
+        beneficiaries.forEach((beneficiary) => {
+          if(beneficiary.location.includes('state')){
+            let parsedJson =  JSON.parse(beneficiary.location)
+            if(parsedJson.state === 'Abuja') Abuja++
+            if(parsedJson.state === 'Lagos') Lagos++
+            if(parsedJson.state === 'Kaduna') Kaduna++
+            if(parsedJson.state === 'Jos') Jos++
+          }
+          
+          
+          // beneficiary.forEach((location)=> {
+          //   console.log(location)
+          // })
+        })
+  //       const beneficiary = beneficiaries.map(bene =>  bene.location )
        
-      const location = beneficiary.map(loc => JSON.parse(loc))
-     const filterState = location.map(state => state.length !== 0 && state.state)
-      const cleanArray = filterState.filter(function (el) {
-    return  el != null;
-  });
+  //     const location = beneficiary.map(loc =>  JSON.parse(loc))
+  //    const filterState = location.map(state => state.length !== 0 && state.state)
+  //     const cleanArray = filterState.filter(function (el) {
+  //   return  el != null;
+  // });
 
   
-
-  for(let i=0; i<cleanArray.length; i++){
-    if(cleanArray[i] === 'Abuja') Abuja++
-  if(cleanArray[i] === 'Lagos') Lagos++
-  if(cleanArray[i] === 'Kaduna') Kaduna++
-   if(cleanArray[i] === 'Jos') Jos++
-  }
+console.log(newData)
+  // for(let i=0; i<cleanArray.length; i++){
+  //   if(cleanArray[i] === 'Abuja') Abuja++
+  // if(cleanArray[i] === 'Lagos') Lagos++
+  // if(cleanArray[i] === 'Kaduna') Kaduna++
+  //  if(cleanArray[i] === 'Jos') Jos++
+  // }
   Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  {Abuja, Lagos, Kaduna, Jos});
   return Response.send(res);
   }
@@ -728,7 +748,8 @@ class BeneficiariesController {
       let eightHundredKTo900K = 0
       let nineHundredKToOneMill = 0
       let oneMillionAbove = 0
-      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount(req.user.id);
+      const org = OrganisationService.isMemberUser(req.user.id)
+      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount(org.OrganisationId);
       if (beneficiaries.length <= 0) {
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', {zeroTo100k, hundredKTo200K,twoHundredKTo300K, threeHundredKTo400K, 
         fourHundredKTo500K, fiveHundredKTo600K, sixHundredKTo700K, sevenHundredKTo800K, eightHundredKTo900K,nineHundredKToOneMill});
