@@ -11,7 +11,7 @@ const {
 var amqp_1 = require("./../libs/RabbitMQ/Connection");
 const { Message } = require("@droidsolutions-oss/amqp-ts");
 const {
-  Response
+  Response, Logger
 } = require("../libs");
 const {
   AclRoles
@@ -840,6 +840,10 @@ static async evidence(req, res){
           Response.setError(409, "Evidence already uploaded");
         return Response.send(res);
        }
+       if(files.length > 5){
+        Response.setError(200, "Only Five(5) Files Allowed");
+        return Response.send(res);
+       }
        
       await Promise.all(
      files.map(async (file)=> {
@@ -896,6 +900,7 @@ const {TaskAssignmentId, comment, type} = req.body
       };
 
     try {
+      Logger.info(`Request Body Object ${req.body}`)
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
