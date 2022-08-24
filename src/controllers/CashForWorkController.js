@@ -900,7 +900,7 @@ const {TaskAssignmentId, comment, type} = req.body
       };
 
     try {
-      Logger.info(`Request Body Object ${req.body}`)
+      Logger.info(`Request Body Object ${JSON.stringify(req.body)}`)
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
