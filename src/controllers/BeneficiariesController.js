@@ -549,7 +549,7 @@ class BeneficiariesController {
 
       let male = 0
       let female = 0
-      const org = OrganisationService.isMemberUser(req.user.id)
+      const org = await OrganisationService.isMemberUser(req.user.id)
       const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
 
       if (beneficiaries.length > 0) {
@@ -592,7 +592,7 @@ class BeneficiariesController {
       let sixty6Up = 0
 
       
-      const org = OrganisationService.isMemberUser(req.user.id)
+      const org = await OrganisationService.isMemberUser(req.user.id)
       
       const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
 
@@ -646,7 +646,7 @@ class BeneficiariesController {
       let married = 0
       let single = 0
       let divorce = 0
-      const org = OrganisationService.isMemberUser(req.user.id)
+      const org = await OrganisationService.isMemberUser(req.user.id)
       const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
 
       if (beneficiaries.length > 0) {
@@ -684,7 +684,8 @@ class BeneficiariesController {
     try {
       let Lagos = 0, Abuja = 0, Kaduna = 0, Jos = 0
       let newData = []
-      const org = OrganisationService.isMemberUser(req.user.id)
+      const org = await OrganisationService.isMemberUser(req.user.id)
+      
       const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
       
       if(beneficiaries.length > 0){
