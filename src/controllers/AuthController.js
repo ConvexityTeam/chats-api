@@ -563,7 +563,7 @@ class AuthController {
                   })
                   .then(async (_user) => {
                     user = _user;
-                    //QueueService.createWallet(user.id, 'user');
+                    QueueService.createWallet(user.id, 'user');
                     await db.Organisation.create({
                       name: data.organisation_name,
                       email: data.email,

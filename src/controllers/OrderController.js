@@ -235,8 +235,7 @@ gender.female = gender.female.reduce((acc, obj) => {
                val.data[4]++
             }
            }
-        
-           
+
           })
         })
         
@@ -307,11 +306,8 @@ gender.female = gender.female.reduce((acc, obj) => {
             12 * (endDate.getFullYear() - startDate.getFullYear())
           );
         }
-       
-    
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Received', data);
       return Response.send(res);
-
 
     }catch(error){
       console.log(error)

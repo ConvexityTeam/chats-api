@@ -29,7 +29,7 @@ router.post("/cash-for-work/tasks",FieldAgentBeneficiaryAuth, CashForWorkControl
 router.get("/cash-for-work/task/:taskId", CashForWorkController.viewTaskById);
 router.get("/field-app/cash-for-work/:campaignId",FieldAgentBeneficiaryAuth, CashForWorkController.getAllCashForWorkTaskFieldAgent);
 router.get("/cash-for-work/:campaignId",FieldAgentBeneficiaryAuth, CashForWorkController.getAllCashForWorkTask);
-router.post("/:campaignId/pay-for-product-service/:vendorId/:productId",BeneficiaryAuth, BeneficiaryController.BeneficiaryPayForProduct)
+router.post("/:campaignId/pay-for-product-service/:vendorId/:productId",BeneficiaryAuth, BeneficiaryController.BeneficiaryPayForProduct);
 
 
 router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGender);

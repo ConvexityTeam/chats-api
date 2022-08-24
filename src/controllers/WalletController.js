@@ -75,8 +75,11 @@ class WalletController {
           [Op.not]: null
         }
       });
-
+      
       const wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
+      if(!wallet){
+        QueueService.createWallet(OrganisationId, 'organisation');
+      }
 
       const MainWallet = wallet.toObject();
       total_deposit = total_deposit || 0;
