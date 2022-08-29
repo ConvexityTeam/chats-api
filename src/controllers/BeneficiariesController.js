@@ -602,17 +602,17 @@ class BeneficiariesController {
           if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) >= 18 &&
             parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) <= 29) {
             eighteenTo29++
-          } else if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) >= 30 &&
+          } if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) >= 30 &&
             parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) <= 41) {
             thirtyTo41++
-          } else if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) >= 42 &&
+          } if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) >= 42 &&
             parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) <= 53) {
             forty2To53++
           }
           if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) >= 54 &&
             parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) <= 65) {
             fifty4To65++
-          } else {
+          } if(parseInt(moment().format('YYYY') - moment(beneficiaries[i].dob).format('YYYY')) >= 66) {
             sixty6Up++
           }
         }
@@ -630,15 +630,12 @@ class BeneficiariesController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Beneficiary By Age Group Retrieved.', {eighteenTo29, thirtyTo41, forty2To53, fifty4To65, sixty6Up});
       return Response.send(res);
 
-
-
     } catch (error) {
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
   }
-
   static async beneficiariesByMaritalStatus(req, res) {
 
     try {
@@ -683,7 +680,6 @@ class BeneficiariesController {
 
     try {
       let Lagos = 0, Abuja = 0, Kaduna = 0, Jos = 0
-      let newData = []
       const org = await OrganisationService.isMemberUser(req.user.id)
       
       const beneficiaries = await BeneficiaryService.getBeneficiaries(org.OrganisationId);
@@ -698,28 +694,8 @@ class BeneficiariesController {
             if(parsedJson.state === 'Kaduna') Kaduna++
             if(parsedJson.state === 'Jos') Jos++
           }
-          
-          
-          // beneficiary.forEach((location)=> {
-          //   console.log(location)
-          // })
         })
-  //       const beneficiary = beneficiaries.map(bene =>  bene.location )
-       
-  //     const location = beneficiary.map(loc =>  JSON.parse(loc))
-  //    const filterState = location.map(state => state.length !== 0 && state.state)
-  //     const cleanArray = filterState.filter(function (el) {
-  //   return  el != null;
-  // });
 
-  
-console.log(newData)
-  // for(let i=0; i<cleanArray.length; i++){
-  //   if(cleanArray[i] === 'Abuja') Abuja++
-  // if(cleanArray[i] === 'Lagos') Lagos++
-  // if(cleanArray[i] === 'Kaduna') Kaduna++
-  //  if(cleanArray[i] === 'Jos') Jos++
-  // }
   Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary By Location Retrieved...',  {Abuja, Lagos, Kaduna, Jos});
   return Response.send(res);
   }
