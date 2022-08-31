@@ -50,6 +50,8 @@ router.get("/beneficiaries-summary/:id", OrganisationController.getBeneficiaries
 router.get("/metric/:id", OrganisationController.getMetric);
 
 router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign)
+
+router.get('/matrics', NgoSubAdminAuth, OrganisationController.matrix)
 router.get('/campaigns/transaction', 
 NgoSubAdminAuth,
     OrganisationController.record)

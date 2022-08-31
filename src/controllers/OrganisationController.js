@@ -37,6 +37,7 @@ const {
 } = require("../services");
 const AwsUploadService = require("../services/AwsUploadService");
 
+
 const createWalletQueue = amqp["default"].declareQueue("createWallet", {
   durable: true,
 });
@@ -180,21 +181,44 @@ static async verifyImage(req, res) {
   static async getAllOrgCampaigns(req, res) {
     try {
       let completed_task = 0
+      const assignmentTask = []
       const OrganisationId = req.params.organisation_id;
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getCampaigns({
         ...query,
         OrganisationId,
       });
-      campaigns.forEach((data)=> {
+
+      
+
+        for(let data of campaigns){
+        for(let task of data.Jobs){
+        const assignment = await db.TaskAssignment.findOne({where:{TaskId: task.id, status: 'completed'}})
+        assignmentTask.push(assignment)
+        }
+      
         data.dataValues.beneficiaries_count = data.Beneficiaries.length,
         data.dataValues.task_count = data.Jobs.length
         data.dataValues.completed_task = completed_task
-        data.Jobs.forEach((task)=> {
-        task.isCompleted ? completed_task++ : task
-        })
+        
+      }
+      function isExist (id){
+        let find = assignmentTask.find((a)=> a &&  a.TaskId === id)
+        if(find) {
+          return true
+        }
+        return false
+      }
+      campaigns.forEach((data) => {
+        data.Jobs.forEach((task)=> { 
+          if(isExist(task.id)){
+            data.dataValues.completed_task++
+          }
 
+          
+        })
       })
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
@@ -1356,13 +1380,40 @@ static async getProductVendors(req, res) {
 
   }
 
+  static async matrix(req, res){
+    try{
+      const matrics = {}
+      const disbursedDates = []
+      const spendDate = []
+      const isOrgMember = await OrganisationService.isMemberUser(req.user.id)
+
+      const isOrganisationCamp = await CampaignService.getAllCampaigns({OrganisationId: isOrgMember.OrganisationId, is_funded: true})
+      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(isOrgMember.OrganisationId)
+      isOrganisationCamp.forEach((matric) => {
+        disbursedDates.push(matric.updatedAt)
+      })
+      isOrganisationCampWallet.forEach((spend) => {
+        spendDate.push(spend.updatedAt)
+      })
+      matrics.maxDisbursedDate = new Date(Math.max(...disbursedDates))
+      matrics.minDisbursedDate = new Date(Math.min(...disbursedDates))
+      matrics.maxSpendDate = new Date(Math.max(...spendDate))
+      matrics.minSpendDate = new Date(Math.min(...spendDate))
+      Response.setSuccess(200, `matrics received`, matrics);
+      return Response.send(res);
+
+    }catch(error){
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
 
   static async record (req, res){
-    const organisationId = req.user.id;
     
     try{
-      const isOrganisationCamp = await CampaignService.getAllCampaigns({OrganisationId: organisationId, is_funded: true})
-      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(organisationId)
+      const isOrgMember = await OrganisationService.isMemberUser(req.user.id)
+      const isOrganisationCamp = await CampaignService.getAllCampaigns({OrganisationId: isOrgMember.OrganisationId, is_funded: true})
+      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(isOrgMember.OrganisationId)
    function getDifference() {
   return isOrganisationCampWallet.filter(wallet => {
     return isOrganisationCamp.some(campaign => {
