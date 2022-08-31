@@ -30,6 +30,7 @@ const {
 } = require("../utils");
 
 const amqp_1 = require("../libs/RabbitMQ/Connection");
+const { async } = require("regenerator-runtime");
 const approveToSpendQueue = amqp_1["default"].declareQueue("approveToSpend", {
   durable: true,
 });
@@ -594,11 +595,11 @@ tokens.forEach((data) => {
 
   static async getCampaign(req, res) {
     try {
+      let assignmentTask = []
       const campaignId = req.params.campaign_id;
       const OrganisationId = req.params.organisation_id
       const campaign = await CampaignService.getCampaignWithBeneficiaries(campaignId);
       const campaignWallet = await WalletService.findOrganisationCampaignWallet(OrganisationId,campaignId)
-      let completed_task = []
       if(!campaignWallet){
        await QueueService.createWallet(OrganisationId, 'organisation', campaignId);
       }
@@ -610,13 +611,27 @@ tokens.forEach((data) => {
         }
       })
     }
-    if(campaign.Jobs){
-      campaign.Jobs.forEach(async(data)=> {
-     let assignment = await db.TaskAssignment.findAll({where: {TaskId: data.id, status: 'completed'}})
-      if(assignment){
-        campaign.dataValues.completed_task = assignment.length
+    campaign.dataValues.completed_task = 0
+    for(let task of campaign.Jobs){
+        const assignment = await db.TaskAssignment.findOne({where:{TaskId: task.id, status: 'completed'}})
+        assignmentTask.push(assignment)
+        }
+
+    function isExist (id){
+        let find = assignmentTask.find((a)=> a &&  a.TaskId === id)
+        if(find) {
+          return true
+        }
+        return false
       }
-    })
+    if(campaign.Jobs){
+      campaign.Jobs.forEach(async(task)=> { 
+        if(isExist(task.id)){
+            campaign.dataValues.completed_task++
+          }
+
+          
+        })
     }
  
     campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length

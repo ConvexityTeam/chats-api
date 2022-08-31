@@ -286,7 +286,6 @@ class BeneficiariesService {
   }
 
   static async getBeneficiaries(OrganisationId) {
-    console.log(OrganisationId, 'OrganisationId')
     return User.findAll({
      where: {
        RoleId: AclRoles.Beneficiary,
@@ -310,28 +309,29 @@ class BeneficiariesService {
 
 
   static async getBeneficiariesTotalAmount(OrganisationId) {
+   
     return User.findAll({
       where: {
         RoleId: AclRoles.Beneficiary,
         OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
       },
-      attributes: userConst.publicAttr,
       include: [{
-        model: Campaign,
-        as: 'Campaigns',
-        through: {
+          model: Campaign,
+          as: 'Campaigns',
+          where: {OrganisationId},
+          through: {
           where: {
             approved: true
-          }
+          },
+          attributes: []
         },
-        attributes: [],
-        require: true
-      },{
-        model: Wallet,
-        as: 'Wallet'
-      }]
-      
-      
+          include: ['Organisation']
+        },
+        {
+          model: Wallet,
+          as: "Wallets",
+        }
+      ]
     });
   }
 

@@ -724,51 +724,52 @@ class BeneficiariesController {
       let sevenHundredKTo800K = 0
       let eightHundredKTo900K = 0
       let nineHundredKToOneMill = 0
-      let oneMillionAbove = 0
-      const org = OrganisationService.isMemberUser(req.user.id)
+      let total_wallet_balance = 0
+      const org = await OrganisationService.isMemberUser(req.user.id)
       const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount(org.OrganisationId);
-      if (beneficiaries.length <= 0) {
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Transaction Found.', {zeroTo100k, hundredKTo200K,twoHundredKTo300K, threeHundredKTo400K, 
-        fourHundredKTo500K, fiveHundredKTo600K, sixHundredKTo700K, sevenHundredKTo800K, eightHundredKTo900K,nineHundredKToOneMill});
-        return Response.send(res);
-      }
-      else{
-        beneficiary = Array.isArray(beneficiaries) ? beneficiaries.map((user)=> user.Wallet) : []
-       
-       balance = Array.isArray(beneficiary) ? beneficiary.map((wallet) => wallet) : []
-       var newArray = balance.filter(value => Object.keys(value).length !== 0);
-       var myNewArray = [].concat.apply([], newArray);
-      const bal = myNewArray.map(({balance}) => balance)
-
-       for (let i = 0; i < bal.length; i++) {
-       if (parseInt(bal) >= 0 && parseInt(bal) <= 100000) {
+      
+      const walletBalance = []
+       beneficiaries.forEach((beneficiary) => {
+        
+         beneficiary.Wallets.forEach((wallet) => {
+           total_wallet_balance += wallet.balance;
+          return total_wallet_balance
+        })
+        walletBalance.push(total_wallet_balance)
+        total_wallet_balance = 0
+       })
+       walletBalance.forEach((balance) => {
+        if (parseInt(balance) >= 0 && parseInt(balance) <= 100000) {
             zeroTo100k++
-          } else if (parseInt(bal) >= 100001 && parseInt(bal) <= 200000) {
+          }
+          if (parseInt(balance) >= 100001 && parseInt(balance) <= 200000) {
             hundredKTo200K++
-          } else if (parseInt(bal) >= 200001 && parseInt(bal) <= 300000) {
+          }
+           if (parseInt(balance) >= 200001 && parseInt(balance) <= 300000) {
             twoHundredKTo300K++
           }
-          if (parseInt(bal) >= 300001 && parseInt(bal) <= 400000) {
+          if (parseInt(balance) >= 300001 && parseInt(balance) <= 400000) {
             threeHundredKTo400K++
-          }if (parseInt(bal) >= 400001 && parseInt(bal) <= 500000) {
+          }if (parseInt(balance) >= 400001 && parseInt(balance) <= 500000) {
             fourHundredKTo500K++
-          }if (parseInt(bal) >= 500001 && parseInt(bal) <= 600000) {
+          }if (parseInt(balance) >= 500001 && parseInt(balance) <= 600000) {
             fiveHundredKTo600K++
-          }if (parseInt(bal) >= 600001 && parseInt(bal) <= 700000) {
+          }if (parseInt(balance) >= 600001 && parseInt(balance) <= 700000) {
             sixHundredKTo700K++
-          }if (parseInt(bal) >= 700001 && parseInt(bal) <= 800000) {
+          }if (parseInt(balance) >= 700001 && parseInt(balance) <= 800000) {
             sevenHundredKTo800K++
-          }if (parseInt(bal) >= 800001 && parseInt(bal) <= 900000) {
+          }if (parseInt(balance) >= 800001 && parseInt(balance) <= 900000) {
             eightHundredKTo900K++
-          }if (parseInt(bal) >= 900001 && parseInt(bal) <= 1000000) {
+          }if (parseInt(balance) >= 900001 && parseInt(balance) <= 1000000) {
             nineHundredKToOneMill++
           }
-        }
+       })
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Total Balance Retrieved.',
       {zeroTo100k, hundredKTo200K,twoHundredKTo300K, threeHundredKTo400K, 
         fourHundredKTo500K, fiveHundredKTo600K, sixHundredKTo700K, sevenHundredKTo800K, eightHundredKTo900K,nineHundredKToOneMill});
       return Response.send(res);
-      }
+    
     } catch (error) {
       console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
