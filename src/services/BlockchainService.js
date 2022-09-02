@@ -32,7 +32,8 @@ class BlockchainService {
         Logger.info(`Adding User Response: ${JSON.stringify(data)}`);
         resolve(data.AddedUser);
       } catch (error) {
-        Logger.error(`Adding User Error: ${error.response.data}`);
+        console.log(error)
+        Logger.error(`Adding User Error: ${JSON.stringify(error.response)}`);
         reject(error);
       }
     });
