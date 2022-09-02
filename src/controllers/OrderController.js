@@ -11,7 +11,8 @@ const {
 
 const {ProductBeneficiary} = require('../models')
 
-const { VendorService, WalletService,UserService, OrderService } = require('../services');
+const { VendorService, WalletService,UserService, OrderService, CampaignService, OrganisationService } = require('../services');
+const db = require("../models");
 class OrderController {
   static  async getOrderByReference(req, res){
     try {
@@ -144,9 +145,13 @@ class OrderController {
       const femaleCount = {};
       let gender = {male: [], female: []}
        const {organisation_id} = req.params
-
+      const filtered_data = []
+      const campaigns = await CampaignService.getAllCampaigns({
+        type:'campaign',
+        OrganisationId: organisation_id,
+      })
       const products = await OrderService.productPurchased(organisation_id)
-
+      
       
 
       if(products.length <= 0){
@@ -154,8 +159,15 @@ class OrderController {
       return Response.send(res);
       }
 
-      
-      products.forEach((product)=> {
+      campaigns.forEach((campaign) => {
+        //CampaignId
+        products.forEach((product)=> {
+          if(campaign.id === product.CampaignId){
+            filtered_data.push(product)
+          }
+        })
+      })
+      filtered_data.forEach((product)=> {
         product.Cart.forEach((cart)=> {
           cart.Product.ProductBeneficiaries.forEach((beneficiary)=> {
             if(beneficiary.gender === 'male'){
@@ -202,10 +214,23 @@ gender.female = gender.female.reduce((acc, obj) => {
        const {organisation_id} = req.params
        let ageRange = ['18-29', '30-41', '42-53', '54-65', '66~']
       let data = []
-
+      const filtered_data = []
+      const campaigns = await CampaignService.getAllCampaigns({
+        type:'campaign',
+        OrganisationId: organisation_id,
+      })
       const products = await OrderService.productPurchased(organisation_id)
       if(products.length > 0){
+
+        campaigns.forEach((campaign) => {
+        //CampaignId
         products.forEach((product)=> {
+          if(campaign.id === product.CampaignId){
+            filtered_data.push(product)
+          }
+        })
+      })
+        filtered_data.forEach((product)=> {
          
         product.Cart.forEach((cart)=> {
           
@@ -261,15 +286,27 @@ gender.female = gender.female.reduce((acc, obj) => {
     
     try{
       const {organisation_id} = req.params
+      let filtered_data = []
       let data = []
+      const campaigns = await CampaignService.getAllCampaigns({
+        type:'campaign',
+        OrganisationId: organisation_id,
+      })
       const products = await OrderService.productPurchased(organisation_id)
 
       if(products.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Received', products);
       return Response.send(res);
       }
-
-      products.forEach(product => {
+      campaigns.forEach((campaign) => {
+        //CampaignId
+        products.forEach((product)=> {
+          if(campaign.id === product.CampaignId){
+            filtered_data.push(product)
+          }
+        })
+      })
+      filtered_data.forEach(product => {
         product.Cart.forEach(cart => {
           if(data.length <= 0 || !data.find((val) => val.vendorId == product.Vendor.id && val.productId == cart.ProductId)){
             data.push({productId: cart.ProductId, product_name: cart.Product.tag, 
@@ -319,21 +356,34 @@ gender.female = gender.female.reduce((acc, obj) => {
     
     try{
       const {organisation_id} = req.params
+      const data = []
+      const campaigns = await CampaignService.getAllCampaigns({
+        type:'campaign',
+        OrganisationId: organisation_id,
+      })
       const products = await OrderService.productPurchasedBy(organisation_id)
 
       if(products.length <= 0){
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'No Product Purchased Received', products);
       return Response.send(res);
       }
-      let total_product_sold = products.length
+      campaigns.forEach((campaign) => {
+        //CampaignId
+        products.forEach((product)=> {
+          if(campaign.id === product.CampaignId){
+            data.push(product)
+          }
+        })
+      })
+
       let total_product_value = 0
-      products.forEach(product => {
+      data.forEach(product => {
         product.Cart.forEach(cart => {
           
           total_product_value +=cart.total_amount
         })
       })
-       
+      let total_product_sold = data.length
     
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Product Purchased Received', {total_product_sold, total_product_value});
       return Response.send(res);

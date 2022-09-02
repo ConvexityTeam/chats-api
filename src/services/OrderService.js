@@ -93,7 +93,7 @@ static async productPurchasedBy (OrganisationId){
                     include: [{model: Product, as: 'Product', 
                     include:[{model: User, as: 'ProductBeneficiaries',
                     attributes: userConst.publicAttr,
-                    through: { where: {OrganisationId} }
+                    
                     
                   }]}],
                 }
