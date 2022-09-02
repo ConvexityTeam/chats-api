@@ -22,7 +22,7 @@ class WebhookService {
         QueueService.verifyFiatDeposit(record);
         const isOrganisation =  await Wallet.findOne({where: {OrganisationId: record.OrganisationId}})
        if(isOrganisation){
-          QueueService.createPayStack(isOrganisation.address, record.amount)
+          QueueService.createPayStack(record.OrganisationId, record.amount)
        }
         return record;
       }

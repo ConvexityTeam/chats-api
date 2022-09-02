@@ -17,7 +17,7 @@ const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
   
 });
 
-async function creatWallet(){
+async function createWallet(){
   
 try {
   
@@ -25,14 +25,16 @@ try {
   Logger.info('creating account wallet')
   await createWalletQueue.activateConsumer(async(msg)=> {
     const content = msg.getContent();
-const [token, bantu] = await Promise.all([
-          BlockchainService.createAccountWallet(),
-          BantuService.createPair()
-        ])
+    
+const token = await BlockchainService.addUser(
+            `${content.wallet_type == 'user' ? 'user_'+content.ownerId :
+            !content.CampaignId && content.wallet_type == 'organisation' ? 'organisation_'+content.ownerId :
+            'campaign_'+content.CampaignId
+          }`
+        )
         if(token){
           await WalletService.updateOrCreate(content, {
-            ...token,
-            ...bantu
+            ...token
           });
           Logger.info('Account wallet created')
           msg.ack();
@@ -51,32 +53,6 @@ const [token, bantu] = await Promise.all([
 }
 }
  
-creatWallet()
-
-    // createWalletQueue.activateConsumer(async msg => {
-    //     const content = msg.getContent();
-    //     Logger.info('creating account wallet')
-    //     Promise.all([
-    //       BlockchainService.createAccountWallet(),
-    //       BantuService.createPair()
-    //     ]).then(([token, bantu]) => {
-    //       Logger.info('Account wallet created', token)
-    //       WalletService.updateOrCreate(content, {
-    //         ...token,
-    //         ...bantu
-    //       });
-    //       msg.ack();
-    //     }).catch(error => {
-    //       Logger.error('Error creating account wallet', error.message)
-    //       createWalletQueue.delete()
-    //       msg.nack();
-    //     });
-    //   })
-    //   .then(_ => {
-    //     Logger.info('Running Consumer For Create Wallet.')
-    //   })
-    //   .catch(error => {
-    //     Logger.error('Error Starting Create Wallet Consumer:', error)
-    //   })
+createWallet()
 
   

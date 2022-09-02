@@ -169,10 +169,12 @@ RabbitMq['default']
           Logger.error('Insufficient wallet balance. Please fund organisation wallet.')
         }else{
           Logger.info('Transferring from organisation wallet to campaign wallet')
-   const org = await   BlockchainService.transferTo(OrgWallet.address, OrgWallet.privateKey, campaignWallet.address, campaign.budget);  
-   Logger.info('Transferred to campaign wallet', org);
-
-   
+          const [organisation, campaign ] = await Promise.all(
+        await BlockchainService.setUserKeypair(`campaign_${campaignWallet.CampaignId}`),
+        await BlockchainService.setUserKeypair(`organisation_${OrgWallet.OrganisationId}`)
+      )
+   const org = await   BlockchainService.transferTo(organisation.address, organisation.privateKey, campaign.address, campaign.budget);  
+   Logger.info(`Transferred to campaign wallet: ${org}`);
             
          await Transaction.create({
             amount: campaign.budget,
@@ -198,8 +200,12 @@ RabbitMq['default']
           const budget = Math.round(Number(campaign.budget) / beneficiaries.length)
           for(let i = 0; i<mergeWallet.length; i++){
             const uuid =   mergeWallet[i].uuid
-           const address = mergeWallet[i].address
-          await  BlockchainService.approveToSpend(campaign.Wallet.address, campaign.Wallet.privateKey,address, Number(budget) )
+           const userId = mergeWallet[i].UserId
+           const [beneficiary, campaign ] = await Promise.all(
+        await BlockchainService.setUserKeypair(`user_${userId}`),
+        await BlockchainService.setUserKeypair(`campaign_${campaign.Wallet.CampaignId}`)
+      )
+          await  BlockchainService.approveToSpend(campaign.address, campaign.privateKey,beneficiary.address, Number(budget) )
           await addWalletAmount(budget, uuid)  
           }        
           
@@ -242,8 +248,9 @@ RabbitMq['default']
             })
       processPaystack.activateConsumer(async(msg) => {
 
-        const {address, amount} = msg.getContent();
-       await  BlockchainService.mintToken(address, amount)    
+        const {id, amount} = msg.getContent();
+        const organisation = await BlockchainService.setUserKeypair(`organisation_${id}`)
+       await  BlockchainService.mintToken(organisation.address, amount)    
         await Wallet.update({
             balance: Sequelize.literal(`balance + ${amount}`)
           }, {
@@ -257,8 +264,12 @@ RabbitMq['default']
     processBeneficiaryPaystackWithdrawal.activateConsumer(async(msg)=> {
 
       const {bankAccount, campaignWallet, userWallet, amount, transaction} = msg.getContent();
-         await   BlockchainService.transferFrom(campaignWallet.address, userWallet.address,userWallet.address, userWallet.privateKey,  amount)
-        await  BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
+        const [beneficiary, campaign ] = await Promise.all(
+        await BlockchainService.setUserKeypair(`user_${userWallet.UserId}`),
+        await BlockchainService.setUserKeypair(`campaign_${campaignWallet.CampaignId}`)
+      )
+         await   BlockchainService.transferFrom(campaign.address, beneficiary.address,beneficiary.address, beneficiary.privateKey,  amount)
+        await  BlockchainService.redeem(beneficiary.address, beneficiary.privateKey, amount)
         await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending") 
         await deductWalletAmount(amount, campaignWallet.uuid)
         await deductWalletAmount(amount, userWallet.uuid)
@@ -269,7 +280,8 @@ RabbitMq['default']
 
         processVendorPaystackWithdrawal.activateConsumer(async msg => {
           const {bankAccount, userWallet, amount, transaction} = msg.getContent();
-        await BlockchainService.redeem(userWallet.address, userWallet.privateKey, amount)
+        const vendor = await BlockchainService.setUserKeypair(`user_${userWallet.UserId}`)
+        await BlockchainService.redeem(vendor.address, vendor.privateKey, amount)
         await PaystackService.withdraw("balance", amount, bankAccount.recipient_code, "spending")
         await deductWalletAmount(amount, userWallet.uuid)
         await update_transaction({status: 'success'}, transaction.uuid)
@@ -279,7 +291,13 @@ RabbitMq['default']
 
     processFundBeneficiary.activateConsumer(async msg => {
       const {beneficiaryWallet, campaignWallet, task_assignment, amount_disburse, transaction} = msg.getContent();
-      await  BlockchainService.approveToSpend(campaignWallet.address, campaignWallet.privateKey,beneficiaryWallet.address, amount_disburse )
+      const [beneficiary, campaign ] = await Promise.all(
+        await BlockchainService.setUserKeypair(`user_${beneficiaryWallet.UserId}`),
+        await BlockchainService.setUserKeypair(`campaign_${campaignWallet.CampaignId}`)
+      )
+      const allowance = await BlockchainService.allowance(campaign.address, beneficiary.address)
+      if(allowance.Allowed > 0) await  BlockchainService.approveToSpend(campaign.address, campaign.privateKey,beneficiary.address, amount_disburse + allowance.Allowed );
+      else await  BlockchainService.approveToSpend(campaign.address, campaign.privateKey,beneficiary.address, amount_disburse )
       await addWalletAmount(amount_disburse, beneficiaryWallet.uuid)  
       await deductWalletAmount(amount_disburse, campaignWallet.uuid)
       await update_transaction({status: 'success'}, transaction.uuid)
@@ -294,7 +312,13 @@ RabbitMq['default']
     processVendorOrderQueue.activateConsumer(async msg => {
         const {
       beneficiaryWallet,vendorWallet,campaignWallet, order, amount, transaction} = msg.getContent();
-      await   BlockchainService.transferFrom(campaignWallet.address, vendorWallet.address,beneficiaryWallet.address, beneficiaryWallet.privateKey,  amount)
+      const [beneficiary, vendor, campaign ] = await Promise.all(
+        await BlockchainService.setUserKeypair(`user_${beneficiaryWallet.UserId}`),
+        await BlockchainService.setUserKeypair(`user_${vendorWallet.UserId}`),
+        await BlockchainService.setUserKeypair(`campaign_${campaignWallet.CampaignId}`)
+      )
+      
+      await   BlockchainService.transferFrom(campaign.address, vendor.address,beneficiary.address, beneficiary.privateKey,  amount)
 
       Order.update({status: 'confirmed'},{where: { reference: order.reference} });
       

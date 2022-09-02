@@ -54,8 +54,8 @@ class QueueService {
     )
   }
 
-  static createPayStack(address, amount) {
-    const payload = {address, amount}
+  static createPayStack(id, amount) {
+    const payload = {id, amount}
     payStackDepositQueue.send(
       new Message(payload, {
         contentType: "application/json"
