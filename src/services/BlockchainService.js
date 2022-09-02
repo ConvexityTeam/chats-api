@@ -33,7 +33,7 @@ class BlockchainService {
         resolve(data.AddedUser);
       } catch (error) {
         console.log(error)
-        Logger.error(`Adding User Error: ${JSON.stringify(error.response)}`);
+        Logger.error(`Adding User Error: ${JSON.stringify(error)}`);
         reject(error);
       }
     });
@@ -172,17 +172,24 @@ class BlockchainService {
 static async setUserKeypair(id) {
   let pair = {};
     // TODO: Rebuild user public and private key after retrieving mnemonic key and return account keypair
-    var mnemonic = await AwsUploadService.getMnemonic();
-    //console.log(mnemonic,'mnooop')
-    mnemonic = JSON.parse(mnemonic);   
-    
-
-    pair = await this.createNewBSCAccount({
+    try{
+      var mnemonic = await AwsUploadService.getMnemonic();
+          //console.log(mnemonic,'mnooop')
+      mnemonic = JSON.parse(mnemonic);
+      pair = await this.createNewBSCAccount({
       mnemonicString: mnemonic.toString(),
       userSalt: id,
     });
-   
     return pair
+    }catch(error){
+      Logger.error(`Error Creating Wallet Address: ${error} `)
+    }
+       
+    
+
+    
+   
+    
 };
 }
 
