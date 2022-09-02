@@ -2,11 +2,9 @@ const router = require('express').Router();
 
 const {
   WalletController,
-  ProductController,
   OrganisationController,
   CampaignController,
   ComplaintController,
-  BeneficiaryController,
   
 } = require('../controllers');
 const CashForWorkController = require("../controllers/CashForWorkController");
