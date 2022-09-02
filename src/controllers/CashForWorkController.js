@@ -17,7 +17,7 @@ const {
   AclRoles
 } = require('../utils');
 const { async } = require("regenerator-runtime");
-const { BlockchainService } = require("../services");
+const { BlockchainService, ZohoService } = require("../services");
 var transferToQueue = amqp_1["default"].declareQueue("transferTo", {
   durable: true,
 });
@@ -756,18 +756,16 @@ static async viewCashForWorkRefractorFieldApp (req, res){
 static async evidence(req, res){
 
   try{
-    //const evi = await db.VoucherToken.findAll();
-    const mneumonic = await BlockchainService.setUserKeypair('campaign-1')
-    
-
+    const mneumonic = await db.Wallet.findOne({where: {CampaignId: 9, OrganisationId: 1}});
+    //const mneumonic = await ZohoService.initialize()
     if(mneumonic){
-      Response.setSuccess(200, "Task Evidence", mneumonic.privateKey);
+      Response.setSuccess(200, "Task Evidence", mneumonic);
     return Response.send(res);
     }
     Response.setSuccess(200, "nothing", mneumonic);
     return Response.send(res);
   }catch(error){
-     console.log(error.message);
+     console.log(error);
       util.setError(500, "Internal Server Error"+ error);
       return util.send(res);
   }
@@ -1112,24 +1110,12 @@ static async viewSubmittedEvidence(req, res){
         return Response.send(res);
       }
       
-      assignment.dataValues.task_name = task_exist.name
+      submittedEvidence.dataValues.task_name = task_exist.name
       submittedEvidence.dataValues.beneficiaryId = user.id
       submittedEvidence.dataValues.beneficiary_first_name = user.first_name
       submittedEvidence.dataValues.beneficiary_last_name = user.last_name
       assignment.dataValues.SubmittedEvidences = [submittedEvidence]
       user.dataValues.Assignments = [assignment]
-      
-      //   user.Assignments.forEach((data)=> {
-      //  
-      //  data.dataValues.task_name = task_exist.name
-      //  data.SubmittedEvidences = [submittedEvidence]
-      //   data.SubmittedEvidences.forEach((value)=> {
-      //     value.dataValues.beneficiaryId = tasks.id
-      //    value.dataValues.beneficiary_first_name = tasks.first_name
-      //   value.dataValues.beneficiary_last_name = tasks.last_name
-      //   })
-        
-      // })
       
       Response.setSuccess(200, "Task Recieved", user);
       return Response.send(res);

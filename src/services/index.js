@@ -21,10 +21,14 @@ const UtilService = require('./UtilService');
 const SmsService = require('./SmsService');
 const MailerService = require('./MailerService');
 const TransactionService = require('./TransactionService');
+const AwsService = require('./AwsUploadService')
+const ZohoService = require('./ZohoService')
 
 module.exports = {
   SmsService,
   MailerService,
+  ZohoService,
+  AwsService,
   MarketService,
   UserService,
   NgoService,

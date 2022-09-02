@@ -2,16 +2,13 @@ const axios = require('axios');
 const ethers = require("ethers");
 const crypto = require("crypto")
 const sha256 = require('simple-sha256')
-const { tokenConfig,awsConfig } = require("../config");
-const { Encryption, Logger } = require("../libs")
-const SecretsManager = require("aws-sdk/clients/secretsmanager");
+const { tokenConfig } = require("../config");
+const { Encryption, Logger } = require("../libs");
+const AwsUploadService = require('./AwsUploadService');
+
 
 const Axios = axios.create();
-const client = new SecretsManager({
-    region: awsConfig.region,
-    secretAccessKey: awsConfig.secretAccessKey,
-    accessKeyId: awsConfig.accessKeyId, 
-  });
+
 
 class BlockchainService {
   static async createAccountWallet() {
@@ -27,15 +24,15 @@ class BlockchainService {
       }
     });
   }
-  static async addUser(address) {
+  static async addUser(arg) {
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info("Adding User Request");
-        const { data } = await Axios.post(`${tokenConfig.baseURL}/user/adduser/${address}`);
-        Logger.info("Adding User Response");
-        resolve(data.AccountCreated);
+        let keyPair = await this.setUserKeypair(arg)
+        const { data } = await Axios.post(`${tokenConfig.baseURL}/user/adduser/${keyPair.address}`);
+        Logger.info(`Adding User Response: ${JSON.stringify(data)}`);
+        resolve(data.AddedUser);
       } catch (error) {
-        Logger.error("Adding User Error", error.response.data);
+        Logger.error(`Adding User Error: ${error.response.data}`);
         reject(error);
       }
     });
@@ -170,69 +167,21 @@ class BlockchainService {
     return generatedKeyPair;
   };
 
-  static async getMnemonic (hello) {
-
-  // const { SecretsManager } = AWS;
-   var secretName = awsConfig.secreteName,
-    secret,
-    decodedBinarySecret;
-  // Create a Secrets Manager client
   
-
-  // In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-  // See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-  // We rethrow the exception by default.
-  client.getSecretValue({ SecretId: secretName }, function (err, data) {
-  if (err) {
-    console.log(err);
-    if (err.code === "DecryptionFailureException")
-      // Secrets Manager can't decrypt the protected secret text using the provided KMS key.
-      // Deal with the exception here, and/or rethrow at your discretion.
-      throw err;
-    else if (err.code === "InternalServiceErrorException")
-      // An error occurred on the server side.
-      // Deal with the exception here, and/or rethrow at your discretion.
-      throw err;
-    else if (err.code === "InvalidParameterException")
-      // You provided an invalid value for a parameter.
-      // Deal with the exception here, and/or rethrow at your discretion.
-      throw err;
-    else if (err.code === "InvalidRequestException")
-      // You provided a parameter value that is not valid for the current state of the resource.
-      // Deal with the exception here, and/or rethrow at your discretion.
-      throw err;
-    else if (err.code === "ResourceNotFoundException")
-      // We can't find the resource that you asked for.
-      // Deal with the exception here, and/or rethrow at your discretion.
-      throw err;
-  } else {
-    // Decrypts secret using the associated KMS CMK.
-    // Depending on whether the secret is a string or binary, one of these fields will be populated.
-    if ("SecretString" in data) {
-      secret = data.SecretString;
-      console.log(secret);
-    } else {
-      let buff = new Buffer.from(JSON.stringify(data.SecretBinary), "base64");
-      decodedBinarySecret = buff.toString("ascii");
-      console.log(secret);
-    }
-  }
-});
-};
-
-static async setUserKeypair(email) {
+static async setUserKeypair(id) {
   let pair = {};
-
     // TODO: Rebuild user public and private key after retrieving mnemonic key and return account keypair
-    var mnemonic = await getMnemonic();
+    var mnemonic = await AwsUploadService.getMnemonic();
+    //console.log(mnemonic,'mnooop')
     mnemonic = JSON.parse(mnemonic);   
+    
 
-    pair = await createNewBSCAccount({
+    pair = await this.createNewBSCAccount({
       mnemonicString: mnemonic.toString(),
-      userSalt: email,
+      userSalt: id,
     });
-
-    return pair;
+   
+    return pair
 };
 }
 
