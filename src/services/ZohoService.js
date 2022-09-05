@@ -4,6 +4,7 @@ const axios = require('axios');
 const {
   Logger
 } = require('../libs');
+
 const Axios = axios.create();
 
 class ZohoService {
@@ -24,32 +25,44 @@ class ZohoService {
       }
     });
   }
-
-    static async generateAccessToken(){
+  static async zohoInit(){
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Genereting Zoho Access Token');
-       const {data} = await Axios.post(`${zohoCrmConfig.base}?scope=${zohoCrmConfig.scope}&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&code=${zohoCrmConfig.code}&redirect_uri=${zohoCrmConfig.redirect_uri}`)
-       Logger.info(`Genereted Zoho Access Token: ${data}`);
+        Logger.info('Generating Zoho Access Token');
+       const {data} = await Axios.post(`${zohoCrmConfig.base}/auth?scope=${zohoCrmConfig.scope}&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&response_type=code&redirect_uri=${zohoCrmConfig.redirect_uri}&prompt=consent`)
+       Logger.info(`Generated Zoho Code`);
        resolve(data)
       }catch(error) {
-        Logger.error(`Error Genereting Zoho Access Token: ${error}`);
+        Logger.error(`Error Generating Zoho Code: ${error}`);
         reject(error.response);
       }
     });
   }
 
-  static async generateRefreshToken(){
+    static async generateAccessToken(){
     return new Promise(async (resolve, reject) => {
       try {
-        const refresh = await ZohoService.generateOAuthToken()
-        const refresh_token = refresh.refresh_token
-        Logger.info('Genereting Zoho Refresh Token');
-       const {data} = await Axios.post(`${zohoCrmConfig.base}?refresh_token=${refresh_token}&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=refresh_token`)
-       Logger.info('Genereed Zoho Refresh Token');
+        Logger.info('Generating Zoho Access Token');
+       const {data} = await Axios.post(`${zohoCrmConfig.base}/token?client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&redirect_uri=${zohoCrmConfig.redirect_uri}&code=1000.b86f79013f525b5df00163a70a933662.2c719b6e77738cfc032ae5d34b9f0c93`)
+       Logger.info(`Generated Zoho Code`);
        resolve(data)
       }catch(error) {
-        Logger.error(`Error Genereting Zoho Refresh Token: ${error}`);
+        Logger.error(`Error Generating Zoho Code: ${error}`);
+        reject(error.response);
+      }
+    });
+  }
+
+
+  static async generateRefreshToken(code){
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Generating Zoho Refresh Token');
+       const {data} = await Axios.post(`${zohoCrmConfig.base}/token/revoke?token=1000.f9672648350b699645c6357470fc56ba.f4359a4e779b0e2e13b681359967bb11`)
+       Logger.info('Generated Zoho Refresh Token');
+       resolve(data)
+      }catch(error) {
+        Logger.error(`Error Generating Zoho Refresh Token: ${error}`);
         reject(error.response);
       }
     });

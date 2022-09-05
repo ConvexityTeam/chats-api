@@ -22,6 +22,61 @@ const {
 const moment = require('moment')
 
 class BeneficiariesService {
+  static capitalizeFirstLetter(str) {
+      let string = str.toLowerCase();
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+  static nonOrgBeneficiaries (queryClause = {}, OrganisationId){
+  
+    let where = {...queryClause}
+    if(!where.nin) where.nin = ""
+    if(!where.email) where.email = ""
+    if(!where.phone) where.phone = ""
+    if(!where.first_name) {
+      where.first_name = ""
+    }else where.first_name = this.capitalizeFirstLetter(where.first_name)
+    if(!where.last_name) {
+      where.last_name = ""
+    }else where.last_name = this.capitalizeFirstLetter(where.last_name)
+    
+    return User.findAll({
+      where: {
+        RoleId: AclRoles.Beneficiary,
+        [Op.or]: [
+          {
+          nin: {
+            [Op.like]: `%${where.nin}%`
+          },
+          phone: {
+            [Op.like]: `%${where.phone}%`
+          },
+          email: {
+            [Op.like]: `%${where.email}%`
+          },
+          first_name: {
+            [Op.like]: `%${where.first_name}%`
+          },
+          last_name: {
+            [Op.like]: `%${where.last_name}%`
+          },
+        },
+      ],
+        [Op.ne]: Sequelize.where(Sequelize.col('Campaigns.OrganisationId', OrganisationId))
+      },
+      attributes: userConst.publicAttr,
+      include: [{
+        model: Campaign,
+        as: 'Campaigns',
+        through: {
+          where: {
+            approved: true
+          }
+        },
+        attributes: [],
+        require: true
+      }]
+    })
+  }
   static async getAllUsers() {
     return User.findAll({
       where: {
