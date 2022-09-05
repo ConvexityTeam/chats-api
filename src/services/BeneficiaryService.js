@@ -29,16 +29,18 @@ class BeneficiariesService {
   static nonOrgBeneficiaries (queryClause = {}, OrganisationId){
   
     let where = {...queryClause}
+    
     if(!where.nin) where.nin = ""
     if(!where.email) where.email = ""
     if(!where.phone) where.phone = ""
+    let index = where.phone[0]
+    if(index == 0) where.phone = where.phone.substring(1, where.phone.length)
     if(!where.first_name) {
       where.first_name = ""
     }else where.first_name = this.capitalizeFirstLetter(where.first_name)
     if(!where.last_name) {
       where.last_name = ""
     }else where.last_name = this.capitalizeFirstLetter(where.last_name)
-    
     return User.findAll({
       where: {
         RoleId: AclRoles.Beneficiary,
