@@ -33,7 +33,8 @@ const {
   BeneficiaryService,
   VendorService,
   ProductService,
-  WalletService
+  WalletService,
+  ZohoService
 } = require("../services");
 const AwsUploadService = require("../services/AwsUploadService");
 
@@ -1435,7 +1436,39 @@ const balance = getDifference().map(val => val.balance).reduce((accumulator, cur
       return Response.send(res);
     }
   }
+
+
+  static async zohoInit(req, res){
+    try{
+      const init = await ZohoService.zohoInit()
+      Response.setSuccess(200, 'initialization success', init)
+      Response.send(res)
+    }catch(error){
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
+  static async non_ngo_beneficiaries (req, res){
+    try{
+      const query = SanitizeObject(req.query);
+
+      const org = await OrganisationService.isMemberUser(req.user.id)
+      const nonOrgBeneficiaries = await BeneficiaryService.nonOrgBeneficiaries({
+        ...query,
+        OrganisationId: org.OrganisationId
+      })
+      console.log(nonOrgBeneficiaries.length)
+      Response.setSuccess(200, 'this beneficiary not under your organisation', nonOrgBeneficiaries)
+      return Response.send(res);
+    }catch(error){
+      Response.setError(500, `Internal server error. Contact support. ${error}`);
+      return Response.send(res);
+    }
+  }
 }
+
+
 
 function extractDomain(url) {
   var domain;

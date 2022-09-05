@@ -50,6 +50,9 @@ router.get("/metric/:id", OrganisationController.getMetric);
 router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign)
 
 router.get('/matrics', NgoSubAdminAuth, OrganisationController.matrix)
+
+router.get('/non-org-beneficiary', FieldAgentAuth, OrganisationController.non_ngo_beneficiaries)
+router.get('/zoho-init', OrganisationController.zohoInit)
 router.get('/campaigns/transaction', 
 NgoSubAdminAuth,
     OrganisationController.record)
