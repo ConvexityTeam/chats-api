@@ -60,6 +60,17 @@ class OrganisationService {
     });
   }
 
+  static async addDonor(data, user, inviteeId) {
+    console.log(inviteeId, 'iddd')
+    return Organisation.create(data).then((organisation) => {
+      organisation.createMember({
+        UserId: user.id,
+        OrganisationId: inviteeId,
+        role: 'donor'
+      })
+    });
+  }
+
 
   static async updateOrganisationProfile(id, data = {}) {
     return Organisation.update(data, {
@@ -109,7 +120,11 @@ class OrganisationService {
       }
     });
   }
-
+static async getAllDonorMember(UserId) {
+    return OrganisationMembers.findAll({
+      where: {UserId}
+    });
+  }
   static async isMemberUser(user) {
     return OrganisationMembers.findOne({
       where: {

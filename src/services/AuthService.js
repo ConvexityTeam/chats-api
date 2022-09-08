@@ -1,11 +1,16 @@
 
 const { Op } = require('sequelize');
 const { generate2faSecret, verify2faToken } = require('../utils');
-const { User, PasswordResetToken } = require('../models');
-const { createHash } = require('../utils');
+const { User, PasswordResetToken, Invites } = require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { createHash, GenerateOtp } = require('../utils');
 const bcrypt = require('bcryptjs');
 const moment = require('moment');
 const jwt = require("jsonwebtoken");
+const OtpService = require('./OtpService');
+const MailerService = require('./MailerService');
+const UserService = require('./UserService');
+const SmsService = require('./SmsService');
 
 class AuthService {
   static async login(data, _password, roleId = null) {
@@ -178,10 +183,15 @@ class AuthService {
 
 
   static async createResetPassword(UserId, request_ip, expiresAfter = 20) {
-    const token = createHash('123456');
+    const otp =  GenerateOtp()
+    const token = createHash(otp);
     const expires_at = moment().add(expiresAfter, 'm').toDate();
-
-    return PasswordResetToken.create({UserId, token, expires_at, request_ip});
+    const user = await UserService.findUser(UserId)
+    const name = user.first_name || "" +" " + user.last_name || ""
+     const reset = PasswordResetToken.create({UserId, token, expires_at, request_ip});
+     await MailerService.sendOTP(otp,reset.ref,  user.email, name ? name : "");
+     await SmsService.sendOtp(user.phone, `Hi ${name ? name : ""}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`)
+    return reset
   }
 
   static async updatedPassord(user, rawPassword) {
@@ -196,6 +206,16 @@ class AuthService {
         [Op.gte]: new Date()
       }
     }});
+  }
+  static async inviteDonor(email, inviterId){
+    const token = jwt.sign({
+            email
+          }, process.env.SECRET_KEY, {
+            expiresIn: "48hr",
+          });
+        const uuid =   await Invites.create({id: uuidv4(), email, inviterId, token})
+
+    return uuid
   }
 }
 

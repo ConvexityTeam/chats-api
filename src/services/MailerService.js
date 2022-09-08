@@ -121,6 +121,62 @@ const body = `
       })
     });
 }
+
+sendOTP(otp, ref, to, name){
+
+const body = `
+    <div>
+      <p>Hello ${name},</p>
+      <p>Your Convexity reset password OTP is: ${otp} and ref is: ${ref}</p>
+      <p>CHATS - Convexity</p>
+    </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'Reset password',
+      html: body
+    };
+    
+   return new Promise((resolve, reject) => {
+    this.transporter.sendMail(options, (err, data) => {
+        if(!err) {
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      })
+    });
+}
+sendInvite(to,token, ngo){
+const body = `
+    <div>
+      <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
+      <p>We’ve given you access to our portal so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
+      <p>If you want to create an account, please click on the following link: https://chats.vercel.app?token=${token}</p>
+      <p>Enjoy!</p>
+      <p>Best,</p>
+      <p>The ${ngo} team</p>
+      </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'Donor Invitation',
+      html: body
+    };
+    
+   return new Promise((resolve, reject) => {
+    this.transporter.sendMail(options, (err, data) => {
+        if(!err) {
+          console.log('sent')
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      })
+    });
+}
 }
 
 module.exports = new MailerService();
