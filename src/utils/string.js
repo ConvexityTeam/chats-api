@@ -4,6 +4,14 @@ exports.generateRandom = (length = 6) => {
   return randomstring.generate({ length });
 }
 
+exports.GenerateOtp = () => {
+  const random = randomstring.generate({
+    length: 5,
+    charset: 'numeric'
+  });
+  return  random;
+}
+
 exports.GenearteVendorId = () => {
   const random = randomstring.generate({
     length: 5,
