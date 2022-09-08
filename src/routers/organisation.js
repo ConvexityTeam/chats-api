@@ -10,7 +10,7 @@ const {
 const CashForWorkController = require("../controllers/CashForWorkController");
 
 const {
-  Auth,
+  DonorAuth,
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
@@ -154,7 +154,13 @@ router.route('/:organisation_id/beneficiaries/:beneficiary_id')
     OrganisationController.getOrganisationBeneficiaryDetails
   )
 
-router.route('/:organisation_id/vendors')
+router.get('/')
+router.route('/:organisation_id/vendors',
+FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    OrganisationController.getDonorVendors
+)
   .get(
     FieldAgentAuth,
     ParamValidator.OrganisationId,
@@ -221,6 +227,14 @@ router.route('/:organisation_id/campaigns/all')
     ParamValidator.OrganisationId,
     IsOrgMember,
     OrganisationController.getAllOrgCampaigns
+  );
+
+  router.route('/:organisation_id/donor/campaigns/all')
+  .get(
+    DonorAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    OrganisationController.getAllDonorCampaigns
   );
 
   router.route('/:organisation_id/cash4works')
@@ -292,6 +306,43 @@ router.route('/:organisation_id/campaigns/:campaign_id/vendors')
     CampaignValidator.campaignBelongsToOrganisation,
     VendorValidator.approveCampaignVendor,
     OrganisationController.approveCampaignVendor
+  )
+
+  router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_location",
+  FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesLocation
+  )
+
+  router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_balance",
+  FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesBalance
+  )
+  router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_transaction",
+  FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    OrganisationController.getVendorTransactionPerBene
+  )
+  router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_age",
+  FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesAge
+  )
+  router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_mstatus",
+  FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesMStatus
   )
 
 router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries')

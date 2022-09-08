@@ -7,8 +7,10 @@ const awsConfig = require('./aws');
 const termiiConfig = require('./termii');
 const mailerConfig = require('./mailer');
 const zohoCrmConfig = require('./zohocrm');
+const switchWallet = require('./switchwallet')
 
 module.exports = {
+  switchWallet,
   databaseConfig,
   paystackConfig,
   rabbitmqConfig,

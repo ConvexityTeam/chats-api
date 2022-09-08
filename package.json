@@ -71,6 +71,7 @@
     "speakeasy": "^2.0.0",
     "stellar-sdk": "^10.0.1",
     "superagent": "^6.1.0",
+    "uuid": "^9.0.0",
     "validator": "^13.7.0",
     "validatorjs": "^3.22.1",
     "winston": "^3.7.2"

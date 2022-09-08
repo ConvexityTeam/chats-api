@@ -187,10 +187,10 @@ class AuthService {
     const token = createHash(otp);
     const expires_at = moment().add(expiresAfter, 'm').toDate();
     const user = await UserService.findUser(UserId)
-    const name = user.first_name || "" +" " + user.last_name || ""
-     const reset = PasswordResetToken.create({UserId, token, expires_at, request_ip});
-     await MailerService.sendOTP(otp,reset.ref,  user.email, name ? name : "");
-     await SmsService.sendOtp(user.phone, `Hi ${name ? name : ""}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`)
+    const name = user.first_name ? user.first_name : "" 
+     const reset = await PasswordResetToken.create({UserId, token, expires_at, request_ip});
+     await MailerService.sendOTP(otp,reset.ref,  user.email, name);
+     await SmsService.sendOtp(user.phone, `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`)
     return reset
   }
 

@@ -6,8 +6,6 @@ const {
   OrgRoles,
   createHash,
   HttpStatusCode,
-  SanitizeObject,
-  getFileExtension,
   generateOrganisationId
 } = require('../utils')
 const {
@@ -20,7 +18,8 @@ const {
   Response
 } = require("../libs");
 const {
-  Beneficiary
+  Beneficiary,
+  Invites
 } = require("../models");
 const Validator = require("validatorjs");
 const formidable = require("formidable");
@@ -31,7 +30,9 @@ const AuthService = require('../services/AuthService');
 const amqp_1 = require("./../libs/RabbitMQ/Connection");
 const {
   UserService,
-  QueueService
+  QueueService,
+  MailerService,
+  OrganisationService
 } = require("../services");
 const ninVerificationQueue = amqp_1["default"].declareQueue("nin_verification", {
   durable: true,
@@ -135,12 +136,7 @@ class AuthController {
   static async beneficiaryRegisterSelf(req, res) {
    
     try {
-      // const data = SanitizeObject(req.body, ['email', 'phone', 'password']);
-      // data.password = createHash(data.password);
-
       const RoleId = AclRoles.Beneficiary;
-
-      
         const {phone, email, country, state, coordinates, device_imei} = req.body
         const files = req.file
         const rules = {
@@ -633,6 +629,13 @@ class AuthController {
           },
         },
       });
+      
+
+      if(user.RoleId === AclRoles.Donor){
+        const donorMainOrg = await OrganisationService.checkExistEmail(req.body.email)
+        user.dataValues.mainOrganisation = donorMainOrg
+
+      }
 
       const data = await AuthService.login(user, req.body.password)
       Response.setSuccess(200, 'Login Successful.', data);
@@ -792,7 +795,127 @@ static async state2fa(req, res) {
       return Response.send(res);
     }
   }
+
+  static async sendInvite(req,res){
+    const {inviteeEmail, organisationId} = req.body
+    try{
+      const rules = {
+          inviteeEmail: 'email|required',
+          organisationId: 'integer|required',
+        };
+        
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422,  Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const {name} = await OrganisationService.checkExist(organisationId)
+      const {id} = await AuthService.inviteDonor(inviteeEmail, organisationId);
+      console.log(id)
+      const mail = await MailerService.sendInvite(inviteeEmail,  id, name)
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Invite sent to donor.', mail);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal Server Error. Please try again.'+error);
+      return Response.send(res);
+    }
+  }
+
+  static async createDonorAccount(req, res){
+    const data = req.body
+    try{
+      const rules = {
+      organisation_name: "required|string",
+      password: "required",
+      website_url: "required|url",
+      token: "required|string"
+    };
+    const validation = new Validator(data, rules, {
+      url: "Only valid url with https or http allowed",
+    });
+    if (validation.fails()) {
+      Response.setError(400, validation.errors);
+      return Response.send(res);
+    }
+
+      const url_string = data.website_url;
+      const domain = extractDomain(url_string);
+      const isInvited = await db.Invites.findOne({where: {id: data.token}})
+      const email = isInvited.email;
+      const re = "(\\W|^)[\\w.\\-]{0,25}@" + domain + "(\\W|$)";
+      if (!email.match(new RegExp(re))) {
+        Response.setError(400, "Email must end in @" + domain);
+        return Response.send(res);
+      }
+        const userExist = await UserService.findSingleUser({email: isInvited.email});
+        
+        const isOrgMem = await OrganisationService.isMember(isInvited.inviterId, )
+        
+        if(userExist){
+        Response.setError(400, "Email Already Exists, Recover Your Account");
+          return Response.send(res);
+        }
+        const organisationExist = await db.Organisation.findOne({
+            where: {
+              [Op.or]: [{
+                  name: data.organisation_name,
+                },
+                {
+                  website_url: data.website_url
+                },
+              ],
+            }, 
+          });
+        if(organisationExist){
+            Response.setError(
+              400,
+              "An Organisation with such name or website url already exist"
+            );
+            return Response.send(res);
+          }
+          
+      
+    if(!isInvited){
+      Response.setError(401, 'Unauthorised. Token Invalid');
+      return Response.send(res);
+      }
+      const isTokenExpired =  jwt.verify(isInvited.token, process.env.SECRET_KEY)
+      if(!isTokenExpired){
+      Response.setError(401, 'Unauthorised. Token Expired');
+      return Response.send(res);
+      }
+      const password =  await createHash(req.body.password);
+     const user = await UserService.addUser({
+        RoleId: AclRoles.Donor,
+        email: isInvited.email,
+        password
+      })
+
+    const createdOrganisation  =  await db.Organisation.create({
+        name: data.organisation_name,
+        email: isInvited.email,
+        website_url: data.website_url,
+        registration_id: generateOrganisationId()
+      })
+
+      const member =  await db.OrganisationMembers.create({
+        UserId: user.id,
+        role: 'donor',
+        OrganisationId: isInvited.inviterId})
+       //QueueService.createWallet(createdOrganisation.id, 'organisation');
+      
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Donor and User registered successfully', createdOrganisation);
+      return Response.send(res);
+      
+    }catch(error){
+      Response.setSuccess(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal Server Error, Contact Support');
+      return Response.send(res);
+    }
+  }
+  
 }
+
+
 
 function extractDomain(url) {
   var domain;
