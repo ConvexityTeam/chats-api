@@ -7,6 +7,8 @@ const {
   generateOrganisationId,
   generateProductRef
 } = require('../utils');
+
+const moment = require('moment')
 const UserService = require("../services/UserService");
 const {
   Response,
@@ -34,7 +36,8 @@ const {
   VendorService,
   ProductService,
   WalletService,
-  ZohoService
+  ZohoService,
+  TransactionService
 } = require("../services");
 const AwsUploadService = require("../services/AwsUploadService");
 
@@ -178,7 +181,64 @@ static async verifyImage(req, res) {
       return Response.send(res);
     }
   }
+  static async getAllDonorCampaigns(req, res){
+    try{
+      let completed_task = 0
+      const assignmentTask = []
+      const OrganisationId = req.params.organisation_id;
+      const {id} = await OrganisationService.checkExistEmail(req.user.email)
+      const query = SanitizeObject(req.query);
+      const transaction = await TransactionService.findOrgnaisationTransactions(id)
+      
+      const campaigns = await CampaignService.getCampaigns({
+        ...query,
+        OrganisationId,
+        is_public: false
+      });
+      const organisationW = await OrganisationService.getOrganisationWallet(id);
+      for(let campaign of campaigns){
+        for(let task of campaign.Jobs){
+        const assignment = await db.TaskAssignment.findOne({where:{TaskId: task.id, status: 'completed'}})
+        assignmentTask.push(assignment)
+        }
+      
+        campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length,
+        campaign.dataValues.task_count = campaign.Jobs.length
+        campaign.dataValues.completed_task = completed_task
+        
+        campaign.dataValues.iDonate = false
+        const campaignW = await CampaignService.getCampaignWallet(campaign.id, id);
+        // if(campaignW.Wallet &&  organisationW.Wallet){
+        //   for(let tran of transaction){
+        //     if(tran.ReceiverWalletId === campaignW.Wallet.uuid && tran.SenderWalletId === organisationW.Wallet.uuid){
+        //       campaign.dataValues.iDonate = true
+        //     }
+        // }
+        // } 
+      }
+      function isExist (id){
+        let find = assignmentTask.find((a)=> a &&  a.TaskId === id)
+        if(find) {
+          return true
+        }
+        return false
+      }
+      campaigns.forEach((data) => {
+        data.Jobs.forEach((task)=> { 
+          if(isExist(task.id)){
+            data.dataValues.completed_task++
+          }
 
+          
+        })
+      })
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.'+ error);
+      return Response.send(res);
+    }
+  }
   static async getAllOrgCampaigns(req, res) {
     try {
       let completed_task = 0
@@ -622,6 +682,57 @@ static async getProductVendors(req, res) {
   }
   
 
+  static async getCampaignBeneficiariesBalance(req, res) {
+    try {
+      let zeroTo9099 = 0, 
+        tenTo14999 = 0,
+       twentyTo24999 = 0,
+       twenty5To29999 = 0,
+       fourtyTo44999 = 0,
+       fourty5up = 0
+      const CampaignId = req.params.campaign_id;
+      const wallet = await BeneficiaryService.getApprovedBeneficiaries(CampaignId);
+
+      for (let user of wallet){
+      if (parseInt(user.User.Wallets[0].balance) >= 0 && parseInt(user.User.Wallets[0].balance) <= 9099) {
+            zeroTo9099++
+          }
+          if (parseInt(user.User.Wallets[0].balance) >= 10000 && parseInt(user.User.Wallets[0].balance) <= 14999) {
+            tenTo14999++
+          }
+           if (parseInt(user.User.Wallets[0].balance) >= 15000 && parseInt(user.User.Wallets[0].balance) <= 19999) {
+            fifteenTo19999++
+          }
+          if (parseInt(user.User.Wallets[0].balance) >= 20000 && parseInt(user.User.Wallets[0].balance) <= 24999) {
+            twentyTo24999++
+          }if (parseInt(user.User.Wallets[0].balance) >= 25000 && parseInt(user.User.Wallets[0].balance) <= 29999) {
+            twenty5To29999++
+          }if (parseInt(user.User.Wallets[0].balance) >= 30000 && parseInt(user.User.Wallets[0].balance) <= 34999) {
+            thirtyTo3499++
+          }if (parseInt(user.User.Wallets[0].balance) >= 35000 && parseInt(user.User.Wallets[0].balance) <= 39999) {
+            thirty5To3999++
+          }if (parseInt(user.User.Wallets[0].balance) >= 40000 && parseInt(user.User.Wallets[0].balance) <= 44999) {
+            fourtyTo44999++
+          }if (parseInt(user.User.Wallets[0].balance) >= 45000) {
+            fourty5up++
+          }
+        }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
+        zeroTo9099 ,
+        tenTo14999 ,
+       twentyTo24999 ,
+       twenty5To29999 ,
+       fourtyTo44999 ,
+       fourty5up 
+      });
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
   static async getCampaignBeneficiaries(req, res) {
     try {
       const CampaignId = req.params.campaign_id;
@@ -634,6 +745,119 @@ static async getProductVendors(req, res) {
       return Response.send(res);
     }
   }
+  static async getVendorTransactionPerBene(req, res) {
+    try {
+      const CampaignId = req.params.campaign_id;
+      //const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
+      const transactions = await BeneficiaryService.findVendorTransactionsPerBene(CampaignId);
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', transactions);
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async getCampaignBeneficiariesLocation(req, res) {
+    try {
+      let Lagos = 0, Abuja = 0, Kaduna = 0, Jos = 0
+      const CampaignId = req.params.campaign_id;
+      const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
+      for(let beneficiary of beneficiaries){
+      if(beneficiary.User.location.includes('state')){
+            let parsedJson =  JSON.parse(beneficiary.User.location)
+            if(parsedJson.state === 'Abuja') Abuja++
+            if(parsedJson.state === 'Lagos') Lagos++
+            if(parsedJson.state === 'Kaduna') Kaduna++
+            if(parsedJson.state === 'Jos') Jos++
+          }
+        }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {Abuja, Lagos, Kaduna, Jos});
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async getCampaignBeneficiariesMStatus(req, res) {
+    try {
+      let married = 0
+      let single = 0
+      let divorce = 0
+      const CampaignId = req.params.campaign_id;
+      const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
+      if (beneficiaries.length > 0) {
+        for (let i = 0; i < beneficiaries.length; i++) {
+          if (beneficiaries[i].User.marital_status == 'single') {
+            single++
+          } else if (beneficiaries[i].User.marital_status == 'married') {
+            married++
+          } else if (beneficiaries[i].User.marital_status == 'divorce') {
+            divorce++
+          }
+        }
+      }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
+          single,
+          married,
+          divorce
+        });
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+  static async getCampaignBeneficiariesAge(req, res) {
+    try {
+      let eighteenTo29 = 0
+      let thirtyTo41 = 0
+      let forty2To53 = 0
+      let fifty4To65 = 0
+      let sixty6Up = 0
+      const CampaignId = req.params.campaign_id;
+      const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
+
+      for (let i = 0; i < beneficiaries.length; i++) {
+          if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) >= 18 &&
+            parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) <= 29) {
+            eighteenTo29++
+          } if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) >= 30 &&
+            parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) <= 41) {
+            thirtyTo41++
+          } if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) >= 42 &&
+            parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) <= 53) {
+            forty2To53++
+          }
+          if (parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) >= 54 &&
+            parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) <= 65) {
+            fifty4To65++
+          } if(parseInt(moment().format('YYYY') - moment(beneficiaries[i].User.dob).format('YYYY')) >= 66) {
+            sixty6Up++
+          }
+        }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
+          eighteenTo29,
+          thirtyTo41,
+          forty2To53,
+          fifty4To65,
+          sixty6Up
+        });
+      return Response.send(res)
+    } catch (error) {
+      console.log(error);
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
+      return Response.send(res);
+    }
+  }
+
+
 
   static async updaeCampaignBeneficiary(req, res) {
     try {
@@ -1335,6 +1559,29 @@ static async getProductVendors(req, res) {
     }
   }
 
+  static async getDonorVendors(req, res) {
+    try {
+      const {
+        organisation
+      } = req;
+      const vendors = (await VendorService.organisationVendors(organisation)).map(res => {
+        const toObject = res.toObject();
+        toObject.Wallet.map(wallet => {
+          delete wallet.privateKey;
+          delete wallet.bantuPrivateKey;
+          return wallet;
+        });
+        return toObject;
+      });
+      Response.setSuccess(200, 'Organisation vendors', vendors);
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(500, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
+
   static async getVendorDetails(req, res) {
     try {
       const OrganisationId = req.organisation.id;
@@ -1458,7 +1705,6 @@ const balance = getDifference().map(val => val.balance).reduce((accumulator, cur
         ...query,
         OrganisationId: org.OrganisationId
       })
-      console.log(nonOrgBeneficiaries.length)
       Response.setSuccess(200, 'this beneficiary not under your organisation', nonOrgBeneficiaries)
       return Response.send(res);
     }catch(error){

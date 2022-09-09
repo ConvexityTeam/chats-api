@@ -34,7 +34,9 @@ router.post("/:campaignId/pay-for-product-service/:vendorId/:productId",Benefici
 
 router.get('/gender', NgoSubAdminAuth, BeneficiaryController.beneficiariesByGender);
 router.get('/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAgeGroup);
+router.get('/campaign/age_group',NgoSubAdminAuth, BeneficiaryController.beneficiariesByAgeGroup);
 router.get('/location',NgoSubAdminAuth, BeneficiaryController.beneficiariesByLocation);
+
 router.get('/marital_status', NgoSubAdminAuth,BeneficiaryController.beneficiariesByMaritalStatus);
 router.get('/chart/:period',BeneficiaryAuth, BeneficiaryController.beneficiaryChart);
 
@@ -104,7 +106,12 @@ router.post(
   BeneficiaryController.joinCampaignField
 );
 
-
+router.post(
+  '/:beneficiary_id/campaigns/:campaign_id/join',
+  FieldAgentAuth,
+  BeneficiaryValidator.NotCampaignBeneficiary,
+  BeneficiaryController.joinCampaignField
+);
 
 router.put(
   '/campaigns/:campaign_id/leave',

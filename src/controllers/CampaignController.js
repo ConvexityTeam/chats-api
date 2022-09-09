@@ -241,11 +241,6 @@ class CampaignController {
   static async approveAndFund(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
-
-      // const campaign = req.campaign;
-      // const organisation = req.organisation;
-      // const campaignWallet = await campaign.getWallet();
-      // const OrgWallet = await organisation.getWallet();
     
       const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(campaign_id);
       const campaign = await CampaignService.getCampaignWallet(campaign_id, organisation_id);

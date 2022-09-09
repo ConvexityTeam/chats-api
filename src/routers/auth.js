@@ -10,7 +10,8 @@ const { AuthValidator, UserValidator, FileValidator } = require("../validators")
 
 
 
-
+router.post("/invite", AuthController.sendInvite)
+router.post("/donor-register", AuthController.createDonorAccount)
 router.post("/register", AuthController.createBeneficiary);
 router.post("/self-registration", FileValidator.checkProfilePic(), AuthController.beneficiaryRegisterSelf);
 router.post("/ngo-register", AuthController.createNgoAccount);

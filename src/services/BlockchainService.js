@@ -2,7 +2,7 @@ const axios = require('axios');
 const ethers = require("ethers");
 const crypto = require("crypto")
 const sha256 = require('simple-sha256')
-const { tokenConfig } = require("../config");
+const { tokenConfig, switchWallet } = require("../config");
 const { Encryption, Logger } = require("../libs");
 const AwsUploadService = require('./AwsUploadService');
 
@@ -11,6 +11,35 @@ const Axios = axios.create();
 
 
 class BlockchainService {
+  static async signInSwitchWallet(){
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info("Signing in to switch wallet");
+        const { data } = await Axios.post(`${switchWallet.baseURL}/authlock/login`,{
+          emailAddress: switchWallet.email,
+          password: switchWallet.password
+        });
+        Logger.info("Signed in to switch wallet");
+        resolve(data);
+      } catch (error) {
+        Logger.error("Create Account Wallet Error", error.response.data);
+        reject(error);
+      }
+    });
+  }
+  static async switchGenerateAddress(){
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info("Generating wallet address");
+        const { data } = await Axios.post(`${switchWallet.baseURL}/walletaddress/generate`);
+        Logger.info("Generated wallet address");
+        resolve(data);
+      } catch (error) {
+        Logger.error("Error while Generating wallet address", error.response.data);
+        reject(error);
+      }
+    });
+  }
   static async createAccountWallet() {
     return new Promise(async (resolve, reject) => {
       try {

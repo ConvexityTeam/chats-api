@@ -757,7 +757,8 @@ static async evidence(req, res){
 
   try{
     //const mneumonic = await db.Wallet.findOne({where: {CampaignId: 9, OrganisationId: 1}});
-    const mneumonic = await ZohoService.generateRefreshToken()
+    //const mneumonic = await ZohoService.generateRefreshToken()
+    const mneumonic = await BlockchainService.signInSwitchWallet()
     if(mneumonic){
       Response.setSuccess(200, "Task Evidence", mneumonic);
     return Response.send(res);

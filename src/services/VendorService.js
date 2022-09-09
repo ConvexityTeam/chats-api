@@ -341,6 +341,8 @@ class VendorService {
         });
     }
 
+    
+
     static async organisationVendors({
         id: OrganisationId
     }) {

@@ -65,6 +65,7 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     status: DataTypes.ENUM('pending', 'ongoing', 'active', 'paused', 'completed'),
     is_funded: DataTypes.BOOLEAN,
+    is_public: DataTypes.BOOLEAN,
     funded_with: DataTypes.STRING,
     budget: DataTypes.FLOAT,
     amount_disbursed: DataTypes.FLOAT,

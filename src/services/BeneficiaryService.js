@@ -460,6 +460,35 @@ class BeneficiariesService {
     })
   }
 
+  static async findVendorTransactionsPerBene(CampaignId) {
+    return Transaction.findAll({
+      include: [{
+          model: Wallet,
+          as: 'SenderWallet',
+          attributes: {
+            exclude: walletConst.walletExcludes
+          },
+          where: {
+            CampaignId
+          },
+          include: ['Campaign']
+        },
+        {
+          model: Wallet,
+          as: 'ReceiverWallet',
+          attributes: {
+            exclude: walletConst.walletExcludes
+          }
+        },
+        {
+          model: User,
+          as: 'Beneficiary',
+          attributes: userConst.publicAttr,
+        }
+      ]
+    })
+  }
+
   static async getApprovedBeneficiaries(CampaignId) {
     return Beneficiary.findAll({
       where: {
@@ -468,6 +497,9 @@ class BeneficiariesService {
       },
       include: [{
         model: User,
+        attributes: {
+            exclude: walletConst.walletExcludes
+          },
         as: 'User',
         include: [{
           model: Wallet,
