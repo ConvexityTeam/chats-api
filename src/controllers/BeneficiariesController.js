@@ -384,7 +384,7 @@ class BeneficiariesController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Beneficiary Added.', beneficiary);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -405,7 +405,7 @@ class BeneficiariesController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Beneficiary Added.', beneficiary);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -426,7 +426,7 @@ class BeneficiariesController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary removed successfully');
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -482,7 +482,7 @@ class BeneficiariesController {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -537,7 +537,7 @@ class BeneficiariesController {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
@@ -575,7 +575,7 @@ class BeneficiariesController {
 
 
     } catch(error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
@@ -631,7 +631,7 @@ class BeneficiariesController {
       return Response.send(res);
 
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
@@ -670,7 +670,7 @@ class BeneficiariesController {
       return Response.send(res);
 
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
@@ -704,7 +704,7 @@ class BeneficiariesController {
       return Response.send(res);
 
     } catch(error){
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.'+error);
       return Response.send(res);
     }
@@ -771,7 +771,7 @@ class BeneficiariesController {
       return Response.send(res);
     
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }

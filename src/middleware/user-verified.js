@@ -19,7 +19,7 @@ const IsUserVerified = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.log(error);
+    
     Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error. Please retry.');
     return Response.send(res);
   }

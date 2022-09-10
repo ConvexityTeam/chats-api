@@ -11,6 +11,7 @@ module.exports = {
   VERIFY_FIAT_DEPOSIT: 'verifyFiatDeposit',
   PROCESS_VENDOR_ORDER: 'processVendorOrder',
   PAYSTACK_VENDOR_WITHDRAW: 'paystackVendorWithdraw',
+  PAYSTACK_CAMPAIGN_DEPOSIT: 'paystackcampaigndeposit',
   PAYSTACK_BENEFICIARY_WITHDRAW: 'paystackBeneficiaryWithdraw',
   PAY_FOR_PRODUCT: 'payForProduct'
 }

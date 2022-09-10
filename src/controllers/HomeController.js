@@ -24,7 +24,7 @@ class AuthController {
                 throw new Error(500, "Internal Server Error " + error);
             });
         } catch (error) {
-            console.log(error);
+            
             util.setError(500, error);
             return util.send(res);
         }
@@ -33,7 +33,7 @@ class AuthController {
         try {
 
         } catch (error) {
-            console.log(error);
+            
             util.setError(500, error);
             return util.send(res);
         }

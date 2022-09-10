@@ -12,7 +12,7 @@ const CashForWorkController = require("../controllers/CashForWorkController");
 const CampaignController = require('../controllers/CampaignController')
 
 // router.use(Auth);
-router.get("/evidence",  CashForWorkController.evidence);
+router.post("/evidence",  CashForWorkController.evidence);
 
 router.get("/:task_id/evidence/:user_id",NgoSubAdminAuth,   CashForWorkController.viewSubmittedEvidence);
 router.post("/task/task-approved-vendor", VendorAuth,  CashForWorkController.approveSubmissionVendor);

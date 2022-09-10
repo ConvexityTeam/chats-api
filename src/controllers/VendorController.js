@@ -52,7 +52,7 @@ class VendorController {
       }
       return util.send(res);
     } catch (error) {
-      console.log(error);
+      
       util.setError(500, 'Request Failed. Please retry.');
       return util.send(res);
     }
@@ -385,7 +385,7 @@ class VendorController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor products', products);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -405,7 +405,7 @@ class VendorController {
       return Response.send(res);
     }
     catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Server error. Please retry`);
       return Response.send(res);
     }
@@ -418,7 +418,7 @@ class VendorController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor Campaign products', products);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -447,7 +447,7 @@ class VendorController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Create Order', order);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -466,7 +466,7 @@ class VendorController {
       Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Vendor order not found.`);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -480,7 +480,7 @@ class VendorController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor Orders', orders);
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -506,7 +506,7 @@ class VendorController {
       return Response.send(res);
       
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.', error);
       return Response.send(res);
     }

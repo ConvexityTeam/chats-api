@@ -148,7 +148,7 @@ class VendorsAuthController {
                 return util.send(res);
             });
         } catch (error) {
-            console.log(error);
+            
             util.setError(500, error);
             return util.send(res);
         }
