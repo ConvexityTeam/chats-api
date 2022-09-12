@@ -252,7 +252,7 @@ router.route('/:organisation_id/campaigns/all')
 
 router.route('/:organisation_id/campaigns/:campaign_id')
   .get(
-    NgoAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
