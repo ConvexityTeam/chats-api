@@ -50,7 +50,7 @@ class RoleServices {
             });
             return theRole;
         } catch (error) {
-            console.log(error);
+            
             throw error;
         }
     }

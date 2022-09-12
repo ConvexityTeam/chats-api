@@ -95,7 +95,7 @@ class OrganisationController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation logo updated.', updated);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -123,7 +123,7 @@ static async verifyImage(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation profile updated.', updated);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -135,7 +135,7 @@ static async verifyImage(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation profile.', profile);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -176,12 +176,59 @@ static async verifyImage(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaignsArray);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
   }
-  static async getAllDonorCampaigns(req, res){
+  static async getAllPublicDonorCampaigns(req, res){
+    try{
+      let completed_task = 0
+      const assignmentTask = []
+      const query = SanitizeObject(req.query);
+      const organisation = await CampaignService.getPublicCampaigns({
+        ...query,
+        is_public: true
+      });
+      for(let org of organisation){
+      for(let campaign of org.Campaigns){
+        for(let task of campaign.Jobs){
+        const assignment = await db.TaskAssignment.findOne({where:{TaskId: task.id, status: 'completed'}})
+        assignmentTask.push(assignment)
+        }
+      
+        campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length,
+        campaign.dataValues.task_count = campaign.Jobs.length
+        campaign.dataValues.completed_task = completed_task
+      }
+      }
+      function isExist (id){
+        let find = assignmentTask.find((a)=> a &&  a.TaskId === id)
+        if(find) {
+          return true
+        }
+        return false
+      }
+        organisation.forEach((org)=> {
+          org.Campaigns.forEach((data) => {
+        data.Jobs.forEach((task)=> { 
+          if(isExist(task.id)){
+            data.dataValues.completed_task++
+          }
+
+          
+        })
+      })
+        })
+      
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', organisation);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.'+ error);
+      return Response.send(res);
+    }
+  }
+  static async getAllPrivateDonorCampaigns(req, res){
     try{
       let completed_task = 0
       const assignmentTask = []
@@ -283,7 +330,7 @@ static async verifyImage(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -314,7 +361,7 @@ static async verifyImage(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Cash-For-Work.', {task_completed, task_uncompleted, total_tasks, cashforworks});
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -326,7 +373,7 @@ static async verifyImage(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries transactions.', transactions);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }
@@ -338,7 +385,7 @@ static async verifyImage(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendors transactions.', transactions);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please try again.');
       return Response.send(res);
     }
@@ -530,7 +577,7 @@ static async verifyImage(req, res) {
           throw err;
         })
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Campaign creation failed. Please retry.");
       return Response.send(res);
     }
@@ -663,7 +710,7 @@ static async ProductVendors(req, res){
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign Products.`, products);
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -675,7 +722,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', vendor);
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -727,7 +774,7 @@ static async getProductVendors(req, res) {
       });
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -740,7 +787,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', beneficiaries);
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -754,7 +801,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', transactions);
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -777,7 +824,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {Abuja, Lagos, Kaduna, Jos});
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -808,7 +855,7 @@ static async getProductVendors(req, res) {
         });
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -851,7 +898,7 @@ static async getProductVendors(req, res) {
         });
       return Response.send(res)
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry.");
       return Response.send(res);
     }
@@ -881,7 +928,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Approval Updated!', approval);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
       return Response.send(res);
     }
@@ -894,7 +941,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Organisation beneficiaries', beneficiaries);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
@@ -902,28 +949,12 @@ static async getProductVendors(req, res) {
 
   static async getOrganisationBeneficiaryDetails(req, res) {
     try {
-      // let total_wallet_spent = 0;
-      // let total_wallet_balance = 0;
-      // let total_wallet_received = 0;
-
       const id = req.params.beneficiary_id;
       const beneficiary = await BeneficiaryService.organisationBeneficiaryDetails(id, req.organisation.id);
-      // const Wallets = _beneficiary.Wallets.map(wallet => {
-      //   total_wallet_balance += wallet.balance;
-      //   total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-      //   total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-      //   const w = wallet.toObject();
-      //   delete w.ReceivedTransactions;
-      //   delete w.SentTransactions;
-      //   return w;
-      // });
-
-      // const beneficiary = _beneficiary.toJSON();
-
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Details.', beneficiary);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Unexpected error occured.');
       return Response.send(res);
     }
@@ -943,7 +974,7 @@ static async getProductVendors(req, res) {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
       return Response.send(res);
     }
@@ -955,7 +986,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Vendor approved.', approved);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Please retry.");
       return Response.send(res);
     }
@@ -977,7 +1008,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Vendors.', result);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Logger.error('Error fetching campaign vendors')
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error occurred.");
       return Response.send(res);
@@ -1530,7 +1561,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -1553,7 +1584,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -1576,7 +1607,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -1598,7 +1629,7 @@ static async getProductVendors(req, res) {
       Response.setSuccess(200, 'Organisation vendor', vendor);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -1621,7 +1652,7 @@ static async getProductVendors(req, res) {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }
@@ -1678,7 +1709,7 @@ const balance = getDifference().map(val => val.balance).reduce((accumulator, cur
 
 
     }catch(error){
-      console.log(error);
+      
       Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }

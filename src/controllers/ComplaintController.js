@@ -1,8 +1,21 @@
 const { Response } = require("../libs");
-const { ComplaintService } = require("../services");
+const { ComplaintService, CampaignService } = require("../services");
 const { SanitizeObject, HttpStatusCode } = require("../utils");
 
 class ComplaintController {
+  static async getPubCampaignConplaints(req, res) {
+    try {
+      const filter = SanitizeObject(req.query, ['status']);
+      const campaign = await CampaignService.getPubCampaignById(req.params.campaign_id)
+      const {count: complaints_count, rows: Complaints } = await ComplaintService.getCampaignComplaints(req.params.campaign_id, filter);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Complaints.', {...campaign, complaints_count, Complaints});
+      return Response.send(res);
+    } catch (error) {
+      console.log(error)
+      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      return Response.send(res);
+    }
+  }
   static async getCampaignConplaints(req, res) {
     try {
       const filter = SanitizeObject(req.query, ['status']);

@@ -193,7 +193,7 @@ class BeneficiaryValidator extends BaseValidator {
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'User is not a campaign beneficiary.');
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Internal server error. Please try again or contact the administrator.');
       return Response.send(res);
     }
@@ -227,7 +227,7 @@ class BeneficiaryValidator extends BaseValidator {
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'User is already a beneficiary.');
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Server Error: Please try again.');
       return Response.send(res);
     }
@@ -252,7 +252,7 @@ class BeneficiaryValidator extends BaseValidator {
       req.beneficiary = beneficiary;
       next();
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }

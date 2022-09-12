@@ -51,6 +51,15 @@ class OrganisationService {
     });
   }
 
+  static async getAllOrganisationWallet() {
+    return Organisation.findAll({
+      include: {
+        model: Wallet,
+        as: 'Wallet'
+      }
+    });
+  }
+
   static async addOrganisation(data, user) {
     return Organisation.create(data).then((organisation) => {
       organisation.createMember({

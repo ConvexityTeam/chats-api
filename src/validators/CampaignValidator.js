@@ -145,7 +145,7 @@ class CampaignValidator extends BaseValidator {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Campaign does not belong to Organisation.');
         return Response.send(res);
       }
-
+      console.log(campaign)
       req.campaign = campaign;
       next();
     } catch (error) {

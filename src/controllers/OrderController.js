@@ -275,7 +275,7 @@ gender.female = gender.female.reduce((acc, obj) => {
     
 
     }catch(error){
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal server error. Please try again later.');
       return Response.send(res);
     }
