@@ -5,20 +5,9 @@ const sha256 = require('simple-sha256')
 const { tokenConfig, switchWallet } = require("../config");
 const { Encryption, Logger } = require("../libs");
 const AwsUploadService = require('./AwsUploadService');
-const {createClient} = require('redis')
+const {SwitchToken} = require('../models')
 
 
-const client = createClient();
-
-async function connectRedis(){
-  try{
-    await client.connect();
-    client.on('error', (err) => console.log('Redis Client Error', err));
-  }catch(error){
-    Logger.error("Redis Error");
-  }
-}
-connectRedis()
 const Axios = axios.create();
 
 
@@ -34,7 +23,6 @@ class BlockchainService {
           emailAddress: switchWallet.email,
           password: switchWallet.password
         });
-        await client.set('switch_token', data.data.accessToken);
         Logger.info("Signed in to switch wallet");
         resolve(data);
       } catch (error) {
@@ -46,15 +34,20 @@ class BlockchainService {
   static async switchGenerateAddress(body){
     return new Promise(async (resolve, reject) => {
       try {
-        const switch_token = await client.get('switch_token')
-        if(switch_token !== null && switch_token < new Date()){
-         const token = await this.signInSwitchWallet()
-          await client.set('switch_token', token.data.accessToken);
-        }
+        let val;
+        const old_token = await SwitchToken.findByPk(1)
+        if(old_token.token !== null && old_token.token < new Date()){
+        val = await this.signInSwitchWallet()
+        old_token.update({token:val.data.accessToken})
+        }else {
+          val = await this.signInSwitchWallet()
+          await SwitchToken.create({token: val.data.accessToken})
+        } 
+
         Logger.info("Generating wallet address");
         const { data } = await Axios.post(`${switchWallet.baseURL}/v1/walletaddress/generate`,body, {
           headers: {
-          Authorization : `Bearer ${switch_token}`
+          Authorization : `Bearer ${old_token.token}`
           }
         });
         Logger.info("Generated wallet address");
