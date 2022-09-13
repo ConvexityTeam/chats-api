@@ -35,7 +35,6 @@ class BlockchainService {
           emailAddress: switchWallet.email,
           password: switchWallet.password
         });
-        await client.set('switch_token', data.data.accessToken);
         Logger.info("Signed in to switch wallet");
         resolve(data);
       } catch (error) {
