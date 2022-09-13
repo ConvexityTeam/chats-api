@@ -14,8 +14,6 @@ deploy_staging:
     - chmod 600 $SSH_PRIVATE_KEY
     - ssh-add $SSH_PRIVATE_KEY
     - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
-  rules:
-    - if: '$CI_COMMIT_BRANCH != "master"'
   only:
     - develop
 
