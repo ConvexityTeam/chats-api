@@ -23,7 +23,7 @@ deploy_production:
     - eval $(ssh-agent -s)
     - chmod 600 $SSH_PRIVATE_KEY_PRODUCTION
     - ssh-add $SSH_PRIVATE_KEY_PRODUCTION
-    - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
+    - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build -d && exit"
   only:
     - production
     
