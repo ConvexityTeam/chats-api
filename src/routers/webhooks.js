@@ -5,19 +5,11 @@ const {
 const {
   PaystackWebhookGuard
 } = require('../middleware');
-const { ParamValidator } = require('../validators');
 
 router.post(
   '/paystack/deposit',
   PaystackWebhookGuard,
   WebhookController.verifyPaystackDeposit
-)
-
-router.post(
-  '/paystack/:campaign_id/deposit',
-  ParamValidator.CampaignId,
-  PaystackWebhookGuard,
-  WebhookController.verifyPaystackCampaignDeposit
 )
 
 module.exports = router;

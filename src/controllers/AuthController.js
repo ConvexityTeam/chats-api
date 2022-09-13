@@ -186,7 +186,7 @@ class AuthController {
         }
       }
     } catch (error) {
-      
+      console.log(error);
       Response.setError(500, 'On-boarding failed. Please try again later.')
     }
   }

@@ -7,8 +7,7 @@ const {
   QueueService,
   UserService,
   WalletService,
-  TaskService,
-  BlockchainService
+  TaskService
 } = require("../services");
 
 const db = require("../models");
@@ -54,7 +53,7 @@ class CampaignController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Complaint Submitted.', complaint);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
       return Response.send(res);
     }
@@ -76,7 +75,7 @@ class CampaignController {
       });
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
       return Response.send(res);
     }
@@ -89,7 +88,7 @@ class CampaignController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
       return Response.send(res);
     }
@@ -105,7 +104,7 @@ class CampaignController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, "Campaign retrieved", allCampaign);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal error occured. Please try again.');
       return Response.send(res);
     }
@@ -239,33 +238,6 @@ class CampaignController {
    */
 
   // REFACTORED
-  static async cryptoPayment(req,res){
-    const {campaign_id} = req.params
-    const {currency} = SanitizeObject(req.body)
-    try{
-    let body = {
-    clientEmailAddress:`campaign_${campaign_id}@campaign_${campaign_id}.com"`,
-    currency: currency,
-    networkChain: 'POLYGON',
-    publicKey: process.env.SWITCH_WALLET_PUBLIC_KEY
-      }
-      
-      const findCampaign = await CampaignService.getCampaignById(campaign_id)
-      if(!findCampaign){
-      Response.setSuccess(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, `Campaign with this ID: ${campaign_id} is not found`);
-      return Response.send(res);
-      }
-      
-      const wallet =  await BlockchainService.switchGenerateAddress(body)
-      const qr = await generateQrcodeURL(JSON.stringify({'campaign title': findCampaign.title, address: wallet.address}))
-      wallet.qrCode = qr
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, `Wallet info received`, wallet);
-      return Response.send(res);
-    }catch(error){
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Internal Server Error. Contact Support!..');
-      return Response.send(res);
-    }
-  }
   static async approveAndFund(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
@@ -294,9 +266,11 @@ class CampaignController {
         return Response.send(res);
       } 
       QueueService.CampaignApproveAndFund({campaign, campaignWallet, OrgWallet, beneficiaries, token_type: req.body.token_type});
+     //const funding = await CampaignService.handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries);
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`, beneficiaries);
       return Response.send(res);
     } catch (error) {
+      console.log(error)
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }

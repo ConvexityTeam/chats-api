@@ -10,7 +10,6 @@ const {
   Beneficiary,
   VoucherToken,
   Transaction,
-  Organisation,
   Task,
   CampaignVendor
 } = require("../models");
@@ -43,9 +42,6 @@ class CampaignService {
   
   static getCampaignById(id) {
     return Campaign.findByPk(id);
-  }
-  static getPubCampaignById(id) {
-    return Campaign.findOne({where:{id, is_public: true}});
   }
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
@@ -216,22 +212,6 @@ class CampaignService {
         include: ['Organisation']
       }]
     })
-  }
-static getPublicCampaigns(queryClause = {}) {
-    const where = queryClause;
-    return Organisation.findAll({
-      
-      include:[{
-        model: Campaign,
-        as: 'Campaigns',
-        order: [['updatedAt', 'ASC']],
-      where: {
-        ...where
-      },
-     include: [{model: Task, as: 'Jobs'}, {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr,}],
-
-      }]
-    });
   }
 
   static getCampaigns(queryClause = {}) {
@@ -413,21 +393,7 @@ static getPublicCampaigns(queryClause = {}) {
       include: {model: Task, as: 'Jobs'}
     });
   }
-static async getPrivateCampaignWallet(id) {
-    return Campaign.findOne({
-      where: {
-        id: Number(id),
-        OrganisationId: {
-          [Op.ne]: null
-        }
-      },
-      include: {
-        model: Wallet,
-        as: 'Wallet'
-      },
-      // include: ["Beneficiaries"],
-    });
-  }
+
 
   static async getCampaignWallet(id, OrganisationId) {
     return Campaign.findOne({

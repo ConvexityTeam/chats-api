@@ -22,6 +22,7 @@ var client = new AWS.SecretsManager({
 
 client.getSecretValue({ SecretId: secretName }, function (err, data) {
   if (err) {
+    console.log(err);
     if (err.code === "DecryptionFailureException")
       // Secrets Manager can't decrypt the protected secret text using the provided KMS key.
       // Deal with the exception here, and/or rethrow at your discretion.
@@ -47,9 +48,11 @@ client.getSecretValue({ SecretId: secretName }, function (err, data) {
     // Depending on whether the secret is a string or binary, one of these fields will be populated.
     if ("SecretString" in data) {
       secret = data.SecretString;
+      console.log(secret);
     } else {
       let buff = new Buffer(data.SecretBinary, "base64");
       decodedBinarySecret = buff.toString("ascii");
+      console.log(secret);
     }
   }
 });

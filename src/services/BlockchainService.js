@@ -5,36 +5,20 @@ const sha256 = require('simple-sha256')
 const { tokenConfig, switchWallet } = require("../config");
 const { Encryption, Logger } = require("../libs");
 const AwsUploadService = require('./AwsUploadService');
-const {createClient} = require('redis')
 
 
-const client = createClient();
-
-async function connectRedis(){
-  try{
-    await client.connect();
-    client.on('error', (err) => console.log('Redis Client Error', err));
-  }catch(error){
-    Logger.error("Redis Error");
-  }
-}
-connectRedis()
 const Axios = axios.create();
-
-
 
 
 class BlockchainService {
   static async signInSwitchWallet(){
     return new Promise(async (resolve, reject) => {
       try {
-        
         Logger.info("Signing in to switch wallet");
-        const { data } = await Axios.post(`${switchWallet.baseURL}/v1/authlock/login`,{
+        const { data } = await Axios.post(`${switchWallet.baseURL}/authlock/login`,{
           emailAddress: switchWallet.email,
           password: switchWallet.password
         });
-        await client.set('switch_token', data.data.accessToken);
         Logger.info("Signed in to switch wallet");
         resolve(data);
       } catch (error) {
@@ -43,47 +27,15 @@ class BlockchainService {
       }
     });
   }
-  static async switchGenerateAddress(body){
+  static async switchGenerateAddress(){
     return new Promise(async (resolve, reject) => {
       try {
-        const switch_token = await client.get('switch_token')
-        if(switch_token !== null && switch_token < new Date()){
-         const token = await this.signInSwitchWallet()
-          await client.set('switch_token', token.data.accessToken);
-        }
         Logger.info("Generating wallet address");
-        const { data } = await Axios.post(`${switchWallet.baseURL}/v1/walletaddress/generate`,body, {
-          headers: {
-          Authorization : `Bearer ${switch_token}`
-          }
-        });
+        const { data } = await Axios.post(`${switchWallet.baseURL}/walletaddress/generate`);
         Logger.info("Generated wallet address");
         resolve(data);
       } catch (error) {
-        Logger.error("Error while Generating wallet address", error.response);
-        reject(error);
-      }
-    });
-  }
-  static async switchWithdrawal(body){
-    return new Promise(async (resolve, reject) => {
-      try {
-        const switch_token = await client.get('switch_token')
-        
-        if(switch_token !== null && switch_token < new Date()){
-         const token = await this.signInSwitchWallet()
-          await client.set('switch_token', token.data.accessToken);
-        }
-        Logger.info("Withdrawing from my account");
-        const { data } = await Axios.post(`${switchWallet.baseURL}/merchantClientWithdrawal`,body, {
-          headers: {
-          Authorization : `Bearer ${switch_token}`
-          }
-        });
-        Logger.info("Withdrawal success");
-        resolve(data);
-      } catch (error) {
-        Logger.error("Error Withdrawing from my account", error.response);
+        Logger.error("Error while Generating wallet address", error.response.data);
         reject(error);
       }
     });
