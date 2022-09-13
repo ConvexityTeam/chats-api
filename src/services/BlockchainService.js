@@ -1,3 +1,4 @@
+const {createClient} = require('redis')
 const axios = require('axios');
 const ethers = require("ethers");
 const crypto = require("crypto")
@@ -5,7 +6,7 @@ const sha256 = require('simple-sha256')
 const { tokenConfig, switchWallet } = require("../config");
 const { Encryption, Logger } = require("../libs");
 const AwsUploadService = require('./AwsUploadService');
-const {createClient} = require('redis')
+
 
 
 const client = createClient();
@@ -47,8 +48,10 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         const switch_token = await client.get('switch_token')
-        if(switch_token !== null && switch_token < new Date()){
+        const expires = await client.get('expires')
+        if( (expires < new Date()) || expires === null){
          const token = await this.signInSwitchWallet()
+         await client.set('expires', token.data.expires)
           await client.set('switch_token', token.data.accessToken);
         }
         Logger.info("Generating wallet address");
