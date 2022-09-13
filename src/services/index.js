@@ -14,15 +14,15 @@ const BantuService = require('./BantuService');
 const QueueService = require('./QueueService');
 const WebhookService = require('./WebhookService');
 const TaskService = require('./TaskService');
-const MarketService = require('./MarketService')
+const MarketService = require('./MarketService');
 const OrderService = require('./OrderService');
 const DepositService = require('./DepositService');
 const UtilService = require('./UtilService');
 const SmsService = require('./SmsService');
 const MailerService = require('./MailerService');
 const TransactionService = require('./TransactionService');
-const AwsService = require('./AwsUploadService')
-const ZohoService = require('./ZohoService')
+const AwsService = require('./AwsUploadService');
+const ZohoService = require('./ZohoService');
 
 module.exports = {
   SmsService,
@@ -49,5 +49,5 @@ module.exports = {
   OrderService,
   DepositService,
   UtilService,
-  TransactionService
-}
+  TransactionService,
+};

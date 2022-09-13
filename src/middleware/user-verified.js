@@ -1,14 +1,13 @@
-const {
-  Response
-} = require("../libs");
-const {
-  HttpStatusCode
-} = require("../utils");
+const {Response} = require('../libs');
+const {HttpStatusCode} = require('../utils');
 const IsUserVerified = async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
-      Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Unathorised request. Authenticated user missing.');
+      Response.setError(
+        HttpStatusCode.STATUS_FORBIDDEN,
+        'Unathorised request. Authenticated user missing.',
+      );
       return Response.send(res);
     }
 
@@ -19,12 +18,14 @@ const IsUserVerified = async (req, res, next) => {
 
     next();
   } catch (error) {
-    
-    Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server error. Please retry.');
+    Response.setError(
+      HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+      'Server error. Please retry.',
+    );
     return Response.send(res);
   }
-}
+};
 
 module.exports = {
-  IsUserVerified
+  IsUserVerified,
 };

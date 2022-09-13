@@ -6,8 +6,8 @@ const {
   NgoSubAdminAuth,
   IsOrgMember,
   IsRequestWithValidPin,
-  VendorAuth
-} = require("../middleware");
+  VendorAuth,
+} = require('../middleware');
 
 const {
   WalletController,
@@ -16,7 +16,7 @@ const {
   CampaignController,
   ComplaintController,
   BeneficiaryController,
-  OrderController
+  OrderController,
 } = require('../controllers');
 
 const {
@@ -30,43 +30,48 @@ const {
   WalletValidator,
   FileValidator,
   ParamValidator,
-  OrderValidator
+  OrderValidator,
 } = require('../validators');
 
-
-router.get('/product-purchased-gender/:organisation_id',
-NgoSubAdminAuth,
-    ParamValidator.OrganisationId,
+router.get(
+  '/product-purchased-gender/:organisation_id',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
   IsOrgMember,
-OrderController.productPurchasedByGender)
-router.get('/product-purchased-age/:organisation_id',
-NgoSubAdminAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
- OrderController.productPurchasedByAgeGroup)
-router.get('/total-sold-value/:organisation_id', 
-NgoSubAdminAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
-OrderController.soldAndValue)
+  OrderController.productPurchasedByGender,
+);
+router.get(
+  '/product-purchased-age/:organisation_id',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  OrderController.productPurchasedByAgeGroup,
+);
+router.get(
+  '/total-sold-value/:organisation_id',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  OrderController.soldAndValue,
+);
 
 // Refactord routes
-router.route('/:reference')
-  .get(
-    Auth,
-    ParamValidator.Reference,
-    OrderController.getOrderByReference
-  )
+router
+  .route('/:reference')
+  .get(Auth, ParamValidator.Reference, OrderController.getOrderByReference);
 
-  router.route('/:reference/pay/:userwallet_id/:campaignwallet_id')
-    .post(
-      BeneficiaryAuth,
-      OrderValidator.CompleteOrder,
-      IsRequestWithValidPin,
-      OrderController.completeOrder
-    )
-router.post('/token/confirm-payment/:reference',
-VendorAuth,
- OrderController.comfirmsmsTOKEN)
+router
+  .route('/:reference/pay/:userwallet_id/:campaignwallet_id')
+  .post(
+    BeneficiaryAuth,
+    OrderValidator.CompleteOrder,
+    IsRequestWithValidPin,
+    OrderController.completeOrder,
+  );
+router.post(
+  '/token/confirm-payment/:reference',
+  VendorAuth,
+  OrderController.comfirmsmsTOKEN,
+);
 
 module.exports = router;

@@ -1,10 +1,5 @@
-const {
-  generateTransactionRef
-} = require("../utils");
-const {
-  userConst,
-  walletConst
-} = require('../constants');
+const {generateTransactionRef} = require('../utils');
+const {userConst, walletConst} = require('../constants');
 const {
   Transaction,
   Wallet,
@@ -12,17 +7,23 @@ const {
   User,
   OrderProduct,
   Order,
-  Product
+  Product,
 } = require('../models');
 
 const Op = Sequelize.Op;
 
-const QueueService = require("./QueueService");
-const { ProductService } = require(".");
-
+const QueueService = require('./QueueService');
+const {ProductService} = require('.');
 
 class OrderService {
-  static async processOrder(beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount) {
+  static async processOrder(
+    beneficiaryWallet,
+    vendorWallet,
+    campaignWallet,
+    order,
+    vendor,
+    amount,
+  ) {
     order.update({status: 'processing'});
     const transaction = await Transaction.create({
       amount,
@@ -35,76 +36,89 @@ class OrderService {
       OrderId: order.id,
       VendorId: vendor.id,
       BeneficiaryId: beneficiaryWallet.UserId,
-      narration: 'Vendor Order'
+      narration: 'Vendor Order',
     });
 
     QueueService.processOrder(
-     beneficiaryWallet,vendorWallet,campaignWallet, order, vendor, amount, transaction.uuid
+      beneficiaryWallet,
+      vendorWallet,
+      campaignWallet,
+      order,
+      vendor,
+      amount,
+      transaction.uuid,
     );
- 
+
     // Queue for process
     return transaction;
   }
 
-  static async productPurchased (OrganisationId){
-  const gender = await Order.findAll({
-        where: {status: 'confirmed'},
-        include: [{
-                    model: User,
-                    as: 'Vendor',
-                    attributes: userConst.publicAttr,
-                    include: ['Store']
-                },
+  static async productPurchased(OrganisationId) {
+    const gender = await Order.findAll({
+      where: {status: 'confirmed'},
+      include: [
+        {
+          model: User,
+          as: 'Vendor',
+          attributes: userConst.publicAttr,
+          include: ['Store'],
+        },
+        {
+          model: OrderProduct,
+          as: 'Cart',
+          include: [
+            {
+              model: Product,
+              as: 'Product',
+              include: [
                 {
-                    model: OrderProduct,
-                    as: 'Cart',
-                    include: [{model: Product, as: 'Product', 
-                    include:[{model: User, as: 'ProductBeneficiaries',
-                    attributes: userConst.publicAttr,
-                  through: { where: {OrganisationId} }
-                  }]}],
-
-                }
-            ],
-        });
-
-      
-        return gender
-       
-}
-
-static async productPurchasedBy (OrganisationId){
-
-  const product = await Order.findAll({
-        where: {status: 'confirmed'},
-        include: [{
-
-                    model: User,
-                    as: 'Vendor',
-                    attributes: userConst.publicAttr,
-                    include: ['Store'],
-                  
-                    
+                  model: User,
+                  as: 'ProductBeneficiaries',
+                  attributes: userConst.publicAttr,
+                  through: {where: {OrganisationId}},
                 },
-              
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    return gender;
+  }
+
+  static async productPurchasedBy(OrganisationId) {
+    const product = await Order.findAll({
+      where: {status: 'confirmed'},
+      include: [
+        {
+          model: User,
+          as: 'Vendor',
+          attributes: userConst.publicAttr,
+          include: ['Store'],
+        },
+
+        {
+          model: OrderProduct,
+          as: 'Cart',
+          include: [
+            {
+              model: Product,
+              as: 'Product',
+              include: [
                 {
-                    model: OrderProduct,
-                    as: 'Cart',
-                    include: [{model: Product, as: 'Product', 
-                    include:[{model: User, as: 'ProductBeneficiaries',
-                    attributes: userConst.publicAttr,
-                    
-                    
-                  }]}],
-                }
-            ],
-        });
+                  model: User,
+                  as: 'ProductBeneficiaries',
+                  attributes: userConst.publicAttr,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
 
-
-        
-        return product
-       
-}
-
+    return product;
+  }
 }
 module.exports = OrderService;

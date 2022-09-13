@@ -1,4 +1,4 @@
-const { ResponseStatus } = require("../utils");
+const {ResponseStatus} = require('../utils');
 
 class Response {
   constructor() {
@@ -37,7 +37,7 @@ class Response {
         code: this.statusCode,
         status: this.type,
         message: this.message,
-        ...(this.errors && {errors: this.errors})
+        ...(this.errors && {errors: this.errors}),
       };
     }
 
