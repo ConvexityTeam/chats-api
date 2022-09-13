@@ -9,6 +9,8 @@ stages:
 
 deploy_staging:
   stage: staging
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "master"'
   script:
     - eval $(ssh-agent -s)
     - chmod 600 $SSH_PRIVATE_KEY
@@ -19,6 +21,8 @@ deploy_staging:
 
 deploy_production:
   stage: production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "production"'
   script:
     - eval $(ssh-agent -s)
     - chmod 600 $SSH_PRIVATE_KEY_PRODUCTION
