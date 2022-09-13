@@ -14,10 +14,11 @@ deploy_staging:
     - chmod 600 $SSH_PRIVATE_KEY
     - ssh-add $SSH_PRIVATE_KEY
     - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
-  rules:
-    - if: $CI_COMMIT_BRANCH != "production"
   only:
     - develop
+  tags:
+    - staging
+
 
 deploy_production:
   stage: production
@@ -26,8 +27,8 @@ deploy_production:
     - chmod 600 $SSH_PRIVATE_KEY_PRODUCTION
     - ssh-add $SSH_PRIVATE_KEY_PRODUCTION
     - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "production"
   only:
+    - production
+  tags:
     - production
     
