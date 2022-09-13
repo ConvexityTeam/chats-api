@@ -7,7 +7,6 @@ const {
   CampaignController,
   ComplaintController,
   BeneficiaryController,
-  
 } = require('../controllers');
 
 const {
@@ -15,8 +14,8 @@ const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
-  IsOrgMember
-} = require("../middleware");
+  IsOrgMember,
+} = require('../middleware');
 const multer = require('../middleware/multer');
 const {
   CommonValidator,
@@ -28,16 +27,15 @@ const {
   BeneficiaryValidator,
   WalletValidator,
   FileValidator,
-  ParamValidator
+  ParamValidator,
 } = require('../validators');
 
+router.get(
+  '/:productId/product/:campaign_id',
+  NgoSubAdminAuth,
+  ParamValidator.CampaignId,
+  ParamValidator.ProductId,
+  ProductController.getCampaignProduct,
+);
 
-router.get('/:productId/product/:campaign_id',
- NgoSubAdminAuth,
- ParamValidator.CampaignId,
- ParamValidator.ProductId,
-  ProductController.getCampaignProduct
- )
-
-
- module.exports = router;
+module.exports = router;

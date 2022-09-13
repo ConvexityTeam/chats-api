@@ -1,203 +1,197 @@
-const {
-    User,
-    Campaign,
-    BankAccount,
-    OrganisationMembers
-} = require('../models');
+const {User, Campaign, BankAccount, OrganisationMembers} = require('../models');
 const axios = require('axios');
 const Axios = axios.create();
-const {
-    AclRoles
-} = require('../utils');
-const {
-  Logger
-} = require('../libs');
-const {
-    userConst
-} = require('../constants');
+const {AclRoles} = require('../utils');
+const {Logger} = require('../libs');
+const {userConst} = require('../constants');
 
 class UserService {
-    static async getAllUsers() {
-        try {
-            return await User.findAll({
-                attributes: userConst.publicAttr
-            });
-        } catch (error) {
-            throw error;
-        }
+  static async getAllUsers() {
+    try {
+      return await User.findAll({
+        attributes: userConst.publicAttr,
+      });
+    } catch (error) {
+      throw error;
     }
+  }
 
-    static async addUser(newUser) {
-        return User.create(newUser);
-    }
+  static async addUser(newUser) {
+    return User.create(newUser);
+  }
 
-    static async updateUser(id, updateUser) {
-        try {
-            const UserToUpdate = await User.findOne({
-                where: {
-                    id: id
-                }
-            });
+  static async updateUser(id, updateUser) {
+    try {
+      const UserToUpdate = await User.findOne({
+        where: {
+          id: id,
+        },
+      });
 
-            if (UserToUpdate) {
-                await User.update(updateUser, {
-                    where: {
-                        id: id
-                    }
-                });
-
-                return updateUser;
-            }
-            return null;
-        } catch (error) {
-            throw error;
-        }
-    }
-    static async getAUser(id) {
-        try {
-            const theUser = await User.findOne({
-                where: {
-                    id: id
-                }
-            });
-
-            return theUser;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    static async deleteUser(id) {
-        try {
-            const UserToDelete = await User.findOne({
-                where: {
-                    id: id
-                }
-            });
-
-            if (UserToDelete) {
-                const deletedUser = await User.destroy({
-                    where: {
-                        id: id
-                    }
-                });
-                return deletedUser;
-            }
-            return null;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-
-    // Refactored ==============
-
-    static findUser(id, extraClause = null) {
-        return User.findOne({
-            where: {
-                id,
-                ...extraClause
-            },
-            include: [
-                'Store',
-                {
-                    model: OrganisationMembers,
-                    as: 'AssociatedOrganisations',
-                    include: ['Organisation']
-                }
-
-            ]
+      if (UserToUpdate) {
+        await User.update(updateUser, {
+          where: {
+            id: id,
+          },
         });
-    }
 
-    static findByEmail(email, extraClause = null) {
-        return User.findOne({
-            where: {
-                email,
-                ...extraClause
-            }
-        })
+        return updateUser;
+      }
+      return null;
+    } catch (error) {
+      throw error;
     }
+  }
+  static async getAUser(id) {
+    try {
+      const theUser = await User.findOne({
+        where: {
+          id: id,
+        },
+      });
 
-    static findByPhone(phone, extraClause = null) {
-        return User.findOne({
-            where: {
-                phone,
-                ...extraClause
-            }
-        })
+      return theUser;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    static findSingleUser(where) {
-        return User.findOne({
-            where
+  static async deleteUser(id) {
+    try {
+      const UserToDelete = await User.findOne({
+        where: {
+          id: id,
+        },
+      });
+
+      if (UserToDelete) {
+        const deletedUser = await User.destroy({
+          where: {
+            id: id,
+          },
         });
+        return deletedUser;
+      }
+      return null;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    static findBeneficiary(id, OrganisationId = null) {
-        return User.findOne({
-            where: {
-                id,
-                RoleId: AclRoles.Beneficiary
+  // Refactored ==============
 
-                // ...(OrganisationId && {
-                //     OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
-                // }
-                // )
-            },
-            attributes: userConst.publicAttr
-        });
-    }
+  static findUser(id, extraClause = null) {
+    return User.findOne({
+      where: {
+        id,
+        ...extraClause,
+      },
+      include: [
+        'Store',
+        {
+          model: OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: ['Organisation'],
+        },
+      ],
+    });
+  }
 
-    static update(id, data) {
-        return User.update(data, {
-            where: {
-                id
-            }
-        });
-    }
+  static findByEmail(email, extraClause = null) {
+    return User.findOne({
+      where: {
+        email,
+        ...extraClause,
+      },
+    });
+  }
 
-    static addUserAccount(UserId, data) {
-        return BankAccount.create({
-            ...data,
-            UserId
-        }, {
-            include: ['AccountHolder']
-        });
-    }
+  static findByPhone(phone, extraClause = null) {
+    return User.findOne({
+      where: {
+        phone,
+        ...extraClause,
+      },
+    });
+  }
 
-    static findUserAccounts(UserId) {
+  static findSingleUser(where) {
+    return User.findOne({
+      where,
+    });
+  }
 
-        return BankAccount.findAll({
-            where: {
-                UserId
-            },
-            include: {
-                model: User,
-                as: "AccountHolder",
-                attributes: ['first_name', 'last_name', 'phone', 'dob']
-            }
-        })
-    }
+  static findBeneficiary(id, OrganisationId = null) {
+    return User.findOne({
+      where: {
+        id,
+        RoleId: AclRoles.Beneficiary,
 
-    static async nin_verification(number){
+        // ...(OrganisationId && {
+        //     OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
+        // }
+        // )
+      },
+      attributes: userConst.publicAttr,
+    });
+  }
+
+  static update(id, data) {
+    return User.update(data, {
+      where: {
+        id,
+      },
+    });
+  }
+
+  static addUserAccount(UserId, data) {
+    return BankAccount.create(
+      {
+        ...data,
+        UserId,
+      },
+      {
+        include: ['AccountHolder'],
+      },
+    );
+  }
+
+  static findUserAccounts(UserId) {
+    return BankAccount.findAll({
+      where: {
+        UserId,
+      },
+      include: {
+        model: User,
+        as: 'AccountHolder',
+        attributes: ['first_name', 'last_name', 'phone', 'dob'],
+      },
+    });
+  }
+
+  static async nin_verification(number) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Verifying NIN');
-       const {data} = await Axios.post('https://api.myidentitypay.com/api/v1/biometrics/merchant/data/verification/nin_wo_face',number, {
-        headers: {
-        'x-api-key': ` ${process.env.IDENTITY_API_KEY}`
-        }
-       })
-      data.status ? Logger.info('NIN verified'): Logger.info(`${data.message}`);
-       resolve(data)
-      }catch(error) {
+        const {data} = await Axios.post(
+          'https://api.myidentitypay.com/api/v1/biometrics/merchant/data/verification/nin_wo_face',
+          number,
+          {
+            headers: {
+              'x-api-key': ` ${process.env.IDENTITY_API_KEY}`,
+            },
+          },
+        );
+        data.status
+          ? Logger.info('NIN verified')
+          : Logger.info(`${data.message}`);
+        resolve(data);
+      } catch (error) {
         Logger.error(`Error Verifying NIN: ${error}`);
-        reject(error)
+        reject(error);
       }
     });
   }
-    
 }
 
 module.exports = UserService;

@@ -1,15 +1,7 @@
-const {
-  paystackConfig
-} = require('../config');
-const {
-FundAccount
-} = require('../models');
-const {
-generatePaystackRef
-} = require('../utils');
-const {
-  Logger
-} = require('../libs');
+const {paystackConfig} = require('../config');
+const {FundAccount} = require('../models');
+const {generatePaystackRef} = require('../utils');
+const {Logger} = require('../libs');
 
 const paystack = require('paystack-api')(paystackConfig.secretKey);
 
@@ -21,11 +13,14 @@ class PaystackService {
     const ref = generatePaystackRef();
 
     if (process.env.NODE_ENV == 'development') {
-      dev_data = (await paystack.transaction.initialize({
-        reference: ref,
-        amount,
-        email: organisation.email
-      })).data || null;
+      dev_data =
+        (
+          await paystack.transaction.initialize({
+            reference: ref,
+            amount,
+            email: organisation.email,
+          })
+        ).data || null;
     }
 
     FundAccount.create({
@@ -33,7 +28,7 @@ class PaystackService {
       service: 'paystack',
       OrganisationId: organisation.id,
       amount: _amount,
-      transactionReference: ref
+      transactionReference: ref,
     });
 
     return {
@@ -45,41 +40,43 @@ class PaystackService {
       amount,
 
       metadata: {
-        organisation_id: organisation.id
+        organisation_id: organisation.id,
       },
       ...(dev_data && {
-        dev_data
-      })
-    }
+        dev_data,
+      }),
+    };
   }
 
   static async verifyDeposit(reference) {
     return new Promise(async (resolve, reject) => {
       try {
         const data = await paystack.transaction.verify(reference);
-        resolve(data)
+        resolve(data);
       } catch (error) {
         reject(error);
       }
-    })
+    });
   }
 
-
-   static async withdraw(source, amount, recipient, reason) {
+  static async withdraw(source, amount, recipient, reason) {
     return new Promise(async (resolve, reject) => {
       try {
-        let value = amount *100
-        Logger.info(`tranferring to bank account`)
+        let value = amount * 100;
+        Logger.info(`tranferring to bank account`);
         const response = await paystack.transfer.create({
-        source, amount: value, recipient, reason
-        })
-        Logger.info(`success tranferring to bank account: ${response.data}`)
-        resolve(response.data)
+          source,
+          amount: value,
+          recipient,
+          reason,
+        });
+        Logger.info(`success tranferring to bank account: ${response.data}`);
+        resolve(response.data);
       } catch (error) {
-        Logger.error(`Error tranferring to bank account: ${error}`)
+        Logger.error(`Error tranferring to bank account: ${error}`);
         reject(new Error('Could not make a withdrawal'));
       }
-    })
+    });
   }
 
   static async resolveAccount(account_number, bank_code) {
@@ -87,14 +84,14 @@ class PaystackService {
       try {
         const resoponse = await paystack.verification.resolveAccount({
           account_number,
-          bank_code
+          bank_code,
         });
         if (!resoponse.status) throw new Error('Request failed.');
-        resolve(resoponse.data)
+        resolve(resoponse.data);
       } catch (error) {
         reject(new Error('Could not resolve account. Check details.'));
       }
-    })
+    });
   }
 
   static async listBanks(query = {}) {
@@ -105,13 +102,13 @@ class PaystackService {
           name: bank.name,
           country: bank.country,
           currency: bank.currency,
-          code: bank.code
-        }))
-        resolve(banks)
+          code: bank.code,
+        }));
+        resolve(banks);
       } catch (error) {
-        reject(error)
+        reject(error);
       }
-    })
+    });
   }
 
   static async createRecipientReference(name, account_number, bank_code) {
@@ -121,12 +118,12 @@ class PaystackService {
           type: 'nuban',
           name,
           account_number,
-          bank_code
+          bank_code,
         });
         if (!response.status) throw new Error('Request failed.');
         resolve(response.data);
       } catch (error) {
-        reject(new Error('Recipient creation failed.'))
+        reject(new Error('Recipient creation failed.'));
       }
     });
   }

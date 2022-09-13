@@ -1,45 +1,48 @@
-const router = require("express").Router();
+const router = require('express').Router();
 
-const { Auth } = require("../middleware"); //Auhorization middleware
-const { AuthController, BeneficiaryController } = require("../controllers");
+const {Auth} = require('../middleware'); //Auhorization middleware
+const {AuthController, BeneficiaryController} = require('../controllers');
 
-const multer = require("../middleware/multer-config"); //for uploading of profile picture and fingerprint
-const e2e = require("../middleware/e2e"); //End2End Encryption middleware
-const { AuthValidator, UserValidator, FileValidator } = require("../validators");
+const multer = require('../middleware/multer-config'); //for uploading of profile picture and fingerprint
+const e2e = require('../middleware/e2e'); //End2End Encryption middleware
+const {AuthValidator, UserValidator, FileValidator} = require('../validators');
 // router.use(e2e);
 
-
-
-router.post("/invite", AuthController.sendInvite)
-router.post("/donor-register", AuthController.createDonorAccount)
-router.post("/register", AuthController.createBeneficiary);
-router.post("/self-registration", FileValidator.checkProfilePic(), AuthController.beneficiaryRegisterSelf);
-router.post("/ngo-register", AuthController.createNgoAccount);
-router.post("/register/special-case", AuthController.sCaseCreateBeneficiary);
-router.post("/nin-verification", AuthController.verifyNin);
-router.post("/update-profile", Auth, AuthController.updateProfile);
-router.get("/user-detail/:id", Auth, AuthController.userDetails);
+router.post('/invite', AuthController.sendInvite);
+router.post('/donor-register', AuthController.createDonorAccount);
+router.post('/register', AuthController.createBeneficiary);
+router.post(
+  '/self-registration',
+  FileValidator.checkProfilePic(),
+  AuthController.beneficiaryRegisterSelf,
+);
+router.post('/ngo-register', AuthController.createNgoAccount);
+router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
+router.post('/nin-verification', AuthController.verifyNin);
+router.post('/update-profile', Auth, AuthController.updateProfile);
+router.get('/user-detail/:id', Auth, AuthController.userDetails);
 
 // Refactored
-router.post("/login", AuthController.signIn);
+router.post('/login', AuthController.signIn);
 router.get('/2fa/init', Auth, AuthController.setTwoFactorSecret);
 router.post('/2fa/enable', Auth, AuthController.enableTwoFactorAuth);
 router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
 router.post('/2fa/toggle', Auth, AuthController.toggleTwoFactorAuth);
 router.post('/2fa/state2fa', Auth, AuthController.state2fa);
 
-router.route('/password/reset')
+router
+  .route('/password/reset')
   .post(
     AuthValidator.requestPasswordResetRules(),
     AuthValidator.validate,
     AuthValidator.canResetPassword,
-    AuthController.requestPasswordReset
+    AuthController.requestPasswordReset,
   )
   .put(
     AuthValidator.resetPasswordRules(),
     AuthValidator.validate,
     AuthValidator.checkResetPasswordToken,
-    AuthController.resetPassword
-  )
+    AuthController.resetPassword,
+  );
 
 module.exports = router;

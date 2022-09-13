@@ -6,14 +6,14 @@ const connect = require('./web3js');
  * @param {string}  _From: Requester Blockchain account
  * @returns {array[]} address of the SuperUser
  */
-exports.getOwner = async (_From) => {
+exports.getOwner = async _From => {
   try {
-    let result = await connect.contract.methods.isOwner().call({ from: _From });
+    let result = await connect.contract.methods.isOwner().call({from: _From});
     return result;
   } catch (error) {
     err = {
       name: 'Web3-isOwner',
-      error: error
+      error: error,
     };
     throw err;
   }
