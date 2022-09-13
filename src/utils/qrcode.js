@@ -6,7 +6,7 @@ exports.generateQrcodeURL = async (data) => {
     const url =  await qrcode.toDataURL(data.toString());
     return url;
   } catch (error) {
-    
+    console.log(error);
     return null;
   }
 }

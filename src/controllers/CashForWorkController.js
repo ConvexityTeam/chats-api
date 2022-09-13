@@ -758,7 +758,7 @@ static async evidence(req, res){
   try{
     //const mneumonic = await db.Wallet.findOne({where: {CampaignId: 9, OrganisationId: 1}});
     //const mneumonic = await ZohoService.generateRefreshToken()
-    const mneumonic = await BlockchainService.switchWithdrawal(req.body)
+    const mneumonic = await BlockchainService.signInSwitchWallet()
     if(mneumonic){
       Response.setSuccess(200, "Task Evidence", mneumonic);
     return Response.send(res);
@@ -766,7 +766,7 @@ static async evidence(req, res){
     Response.setSuccess(200, "nothing", mneumonic);
     return Response.send(res);
   }catch(error){
-     
+     console.log(error);
       util.setError(500, "Internal Server Error"+ error);
       return util.send(res);
   }

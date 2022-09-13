@@ -20,7 +20,7 @@ class ProductController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Product.', products);
       return Response.send(res)
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, "Server Error. Unexpected error. Please retry."+ error);
       return Response.send(res);
     }

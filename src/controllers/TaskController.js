@@ -45,7 +45,7 @@ class TaskController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork Campaign Tasks retreived", CashForWorkTasks);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }
@@ -73,7 +73,7 @@ class TaskController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, "CashForWork  Tasks Beneficiaries", CashForWorkTasks);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, error.message);
       return Response.send(res);
     }

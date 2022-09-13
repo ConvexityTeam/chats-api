@@ -141,7 +141,7 @@ class WalletController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Deposit data generated.', response);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please retry.');
       return Response.send(res);
     }
@@ -155,7 +155,7 @@ class WalletController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Deposit history.', records);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Request failed.');
       return Response.send(res);
     }
@@ -170,7 +170,7 @@ class WalletController {
       !!record && Response.setSuccess(HttpStatusCode.STATUS_OK, 'Deposit record found.', record);
       return Response.send(res);
     } catch (error) {
-      
+      console.log(error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error: Request failed.');
       return Response.send(res);
     }
