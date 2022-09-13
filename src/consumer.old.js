@@ -94,8 +94,6 @@ ampConn["default"]
             msg.ack();
           })
           .catch((err) => {
-            console.log("Here2");
-            console.log(err);
             msg.nack();
           });
       })
@@ -306,7 +304,7 @@ ampConn["default"]
               });
           })
           .catch((error) => {
-            console.log(error);
+            
             msg.nack();
           });
       })

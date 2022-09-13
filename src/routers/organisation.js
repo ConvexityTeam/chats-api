@@ -229,12 +229,17 @@ router.route('/:organisation_id/campaigns/all')
     OrganisationController.getAllOrgCampaigns
   );
 
-  router.route('/:organisation_id/donor/campaigns/all')
+  router.route('/:organisation_id/private_donor/campaigns/all')
   .get(
     DonorAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getAllDonorCampaigns
+    OrganisationController.getAllPrivateDonorCampaigns
+  );
+
+  router.route('/:organisation_id/public_donor/campaigns/all')
+  .get(
+    OrganisationController.getAllPublicDonorCampaigns
   );
 
   router.route('/:organisation_id/cash4works')
@@ -247,7 +252,7 @@ router.route('/:organisation_id/campaigns/all')
 
 router.route('/:organisation_id/campaigns/:campaign_id')
   .get(
-    NgoAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
@@ -271,6 +276,14 @@ router.route('/:organisation_id/campaigns/:campaign_id/fund')
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.approveAndFund
   )
+  router.route('/:organisation_id/campaigns/:campaign_id/crypto_pay')
+  .post(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.cryptoPayment
+  )
   router.route('/:organisation_id/task/:campaign_id/fund_beneficiary')
   .post(
     NgoAdminAuth,
@@ -288,7 +301,11 @@ router.route('/:organisation_id/:campaign_id/:token_type/tokens/:page')
     CampaignController.campaignTokens
   )
 
-  
+  router.route('/pub_campaigns/:campaign_id/vendors')
+  .get(
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignVendors
+  )
 router.route('/:organisation_id/campaigns/:campaign_id/vendors')
   .get(
     NgoSubAdminAuth,
@@ -298,6 +315,7 @@ router.route('/:organisation_id/campaigns/:campaign_id/vendors')
     CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.getCampaignVendors
   )
+
   .post(
     NgoAdminAuth,
     ParamValidator.OrganisationId,
@@ -308,12 +326,22 @@ router.route('/:organisation_id/campaigns/:campaign_id/vendors')
     OrganisationController.approveCampaignVendor
   )
 
+  router.get("/pub_campaigns/:campaign_id/beneficiary_location",
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesLocation
+  )
+
   router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_location",
   FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.CampaignId,
     OrganisationController.getCampaignBeneficiariesLocation
+  )
+
+   router.get("/pub_campaigns/:campaign_id/beneficiary_balance",
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesBalance
   )
 
   router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_balance",
@@ -330,12 +358,20 @@ router.route('/:organisation_id/campaigns/:campaign_id/vendors')
     ParamValidator.CampaignId,
     OrganisationController.getVendorTransactionPerBene
   )
+  router.get("/pub_campaigns/:campaign_id/beneficiary_age",
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesAge
+  )
   router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_age",
   FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.CampaignId,
     OrganisationController.getCampaignBeneficiariesAge
+  )
+  router.get("/pub_campaigns/:campaign_id/beneficiary_mstatus",
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiariesMStatus
   )
   router.get("/:organisation_id/campaigns/:campaign_id/beneficiary_mstatus",
   FieldAgentAuth,
@@ -344,7 +380,11 @@ router.route('/:organisation_id/campaigns/:campaign_id/vendors')
     ParamValidator.CampaignId,
     OrganisationController.getCampaignBeneficiariesMStatus
   )
-
+router.route('/pub_campaigns/:campaign_id/beneficiaries')
+  .get(
+    ParamValidator.CampaignId,
+    OrganisationController.getCampaignBeneficiaries
+  )
 router.route('/:organisation_id/campaigns/:campaign_id/beneficiaries')
   .get(
     FieldAgentAuth,
@@ -415,6 +455,12 @@ router.route('/:organisation_id/campaigns/:campaign_id/products')
    OrganisationController.UpdateCampaignProduct
    )
 
+   router.route('/pub_campaigns/:campaign_id/complaints')
+  .get(
+    ParamValidator.CampaignId,
+    ComplaintController.getPubCampaignConplaints
+  )
+
 router.route('/:organisation_id/campaigns/:campaign_id/complaints')
   .get(
     NgoSubAdminAuth,
@@ -425,6 +471,12 @@ router.route('/:organisation_id/campaigns/:campaign_id/complaints')
     ComplaintController.getCampaignConplaints
   )
 
+  router.route('/pub_campaigns/:campaign_id/complaints/:complaint_id')
+  .get(
+    ParamValidator.CampaignId,
+    ComplaintValidator.complaintBelongsToCampaign,
+    ComplaintController.getCampaignConplaint
+  );
 router.route('/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id')
   .get(
     NgoSubAdminAuth,
@@ -434,7 +486,12 @@ router.route('/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id'
     CampaignValidator.campaignBelongsToOrganisation,
     ComplaintController.getCampaignConplaint
   );
-
+router.patch(
+  '/pub_campaigns/:campaign_id/complaints/:complaint_id/resolve',
+  ParamValidator.CampaignId,
+  ComplaintValidator.complaintBelongsToCampaign,
+  ComplaintController.resolveCampaignConplaint
+)
 router.patch(
   '/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id/resolve',
   NgoSubAdminAuth,

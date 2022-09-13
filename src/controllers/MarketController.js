@@ -26,7 +26,7 @@ static async getAllProductPurchasedByGender(req, res){
 
 
     }catch(error){
-        console.log(error);
+        
         Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support....` + error);
         return Response.send(res)
     }

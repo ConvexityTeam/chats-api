@@ -70,7 +70,7 @@ class UsersController {
       Response.setSuccess(201, "User Added!", createdUser);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(500, error.message);
       return Response.send(res);
     }
@@ -101,7 +101,7 @@ class UsersController {
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Bank Account Added', account);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
       return Response.send(res);
     }
@@ -113,7 +113,7 @@ class UsersController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Bank Accounts', accounts);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
       return Response.send(res);
     }
@@ -155,7 +155,7 @@ class UsersController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Profile Updated', req.user.toObject());
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
       return Response.send(res);
     }
@@ -167,7 +167,7 @@ class UsersController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'User profile', profile);
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Server Error. Please retry.');
       return Response.send(res);
     }
