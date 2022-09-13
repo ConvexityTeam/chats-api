@@ -12,8 +12,12 @@ const AwsUploadService = require('./AwsUploadService');
 const client = createClient();
 
 async function connectRedis(){
-  await client.connect();
-  client.on('error', (err) => Logger.error("Redis Error"));
+  try{
+    await client.connect();
+    client.on('error', (err) => console.log('Redis Client Error'));
+  }catch(error){
+    Logger.error("Redis "+error);
+  }
 }
 connectRedis()
 const Axios = axios.create();
