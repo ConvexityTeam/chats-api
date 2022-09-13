@@ -9,25 +9,25 @@ stages:
 
 deploy_staging:
   stage: staging
-  rules:
-    - if: '$CI_COMMIT_BRANCH != "master"'
   script:
     - eval $(ssh-agent -s)
     - chmod 600 $SSH_PRIVATE_KEY
     - ssh-add $SSH_PRIVATE_KEY
     - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "master"'
   only:
     - develop
 
 deploy_production:
   stage: production
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "production"'
   script:
     - eval $(ssh-agent -s)
     - chmod 600 $SSH_PRIVATE_KEY_PRODUCTION
     - ssh-add $SSH_PRIVATE_KEY_PRODUCTION
     - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "production"'
   only:
     - production
     
