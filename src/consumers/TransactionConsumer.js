@@ -219,18 +219,19 @@ RabbitMq['default']
           );
           const share = parseInt(campaign.budget / beneficiaries.length)
           const realBudget = campaign.budget
+          const parsedAmount =  parseInt(campaign.budget / beneficiaries.length) * beneficiaries.length 
           Logger.info(`Campaign Address: ${campaign.address}, Organisation Address: ${organisation.address}`)
-          
+          Logger.info(`Parsed amount: ${beneficiaries.length > 0 ? parsedAmount : realBudget}`);
           const org = await BlockchainService.transferTo(
             organisation.address,
             organisation.privateKey,
             campaign.address,
-            campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length,
+            beneficiaries.length > 0 ? parsedAmount : realBudget,
           );
           Logger.info(`Transferred to campaign wallet: ${org}`);
 
           await Transaction.create({
-            amount: campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length,
+            amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
             reference: generateTransactionRef(),
             status: 'success',
             transaction_origin: 'wallet',
@@ -243,10 +244,10 @@ RabbitMq['default']
           await update_campaign(campaign.id, {
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
-            amount_disbursed: campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length,
+            amount_disbursed: beneficiaries.length > 0 ? parsedAmount : realBudget,
           });
-          await deductWalletAmount(campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length, OrgWallet.uuid);
-          await addWalletAmount(campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length, campaign.Wallet.uuid);
+          await deductWalletAmount(beneficiaries.length > 0 ? parsedAmount : realBudget, OrgWallet.uuid);
+          await addWalletAmount(beneficiaries.length > 0 ? parsedAmount : realBudget, campaign.Wallet.uuid);
           const wallet = beneficiaries.map(user => user.User.Wallets);
           const mergeWallet = [].concat.apply([], wallet);
 
