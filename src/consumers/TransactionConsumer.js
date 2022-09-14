@@ -265,7 +265,7 @@ RabbitMq['default']
               beneficiary.address,
               share,
             );
-            await addWalletAmount(roundUpBudget, uuid);
+            await addWalletAmount(share, uuid);
           }
 
           const User = beneficiaries.map(user => user.User);
