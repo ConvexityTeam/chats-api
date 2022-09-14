@@ -217,19 +217,20 @@ RabbitMq['default']
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrgWallet.OrganisationId}`,
           );
-          const roundUpBudget = campaign.budget
+          const share = parseInt(campaign.budget / beneficiaries.length)
+          const realBudget = campaign.budget
           Logger.info(`Campaign Address: ${campaign.address}, Organisation Address: ${organisation.address}`)
-          Logger.info(roundUpBudget * beneficiaries.length)
+          
           const org = await BlockchainService.transferTo(
             organisation.address,
             organisation.privateKey,
             campaign.address,
-            beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget,
+            campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length,
           );
           Logger.info(`Transferred to campaign wallet: ${org}`);
 
           await Transaction.create({
-            amount: beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget,
+            amount: campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length,
             reference: generateTransactionRef(),
             status: 'success',
             transaction_origin: 'wallet',
@@ -242,10 +243,10 @@ RabbitMq['default']
           await update_campaign(campaign.id, {
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
-            amount_disbursed: beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget,
+            amount_disbursed: campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length,
           });
-          await deductWalletAmount(beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget, OrgWallet.uuid);
-          await addWalletAmount(beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget, campaign.Wallet.uuid);
+          await deductWalletAmount(campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length, OrgWallet.uuid);
+          await addWalletAmount(campaign.type === 'cash-for-work' ? realBudget : share * beneficiaries.length, campaign.Wallet.uuid);
           const wallet = beneficiaries.map(user => user.User.Wallets);
           const mergeWallet = [].concat.apply([], wallet);
 
@@ -262,9 +263,9 @@ RabbitMq['default']
               campaign.address,
               campaign.privateKey,
               beneficiary.address,
-              parseInt( roundUpBudget / beneficiaries.length),
+              share,
             );
-            await addWalletAmount(parseInt( roundUpBudget / beneficiaries.length), uuid);
+            await addWalletAmount(share, uuid);
           }
 
           const User = beneficiaries.map(user => user.User);
@@ -282,7 +283,7 @@ RabbitMq['default']
                     ? User[i].first_name + ' ' + User[i].last_name
                     : '',
               },
-              amount: parseInt( roundUpBudget / beneficiaries.length),
+              amount: share,
             };
             if (token_type === 'papertoken') {
               QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
@@ -294,7 +295,7 @@ RabbitMq['default']
                   User[i].first_name || User[i].last_name
                     ? User[i].first_name + ' ' + User[i].last_name
                     : ''
-                } your convexity token is ${smsToken}, you are approved to spend ${parseInt( roundUpBudget / beneficiaries.length)}.`,
+                } your convexity token is ${smsToken}, you are approved to spend ${share}.`,
               );
               istoken = true;
             }
@@ -305,7 +306,7 @@ RabbitMq['default']
                 campaignId: campaign.id,
                 tokenType: token_type,
                 token: token_type === 'papertoken' ? QrCode : smsToken,
-                amount: parseInt( roundUpBudget / beneficiaries.length),
+                amount: share,
               });
               istoken = false;
             }
