@@ -220,6 +220,7 @@ RabbitMq['default']
           const roundUpBudget = parseInt(
             campaign.budget / beneficiaries.length,
           );
+          Logger.info(`Campaign Address: ${campaign.address}, Organisation Address: ${organisation.address}`)
           const org = await BlockchainService.transferTo(
             organisation.address,
             organisation.privateKey,
