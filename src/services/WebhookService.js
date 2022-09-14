@@ -3,6 +3,7 @@ const QueueService = require('./QueueService');
 const {Logger} = require('../libs');
 class WebhookService {
   static async verifyPaystackDeposit(data) {
+    Logger.info(`Checking data from webhook service: ${JSON.stringify(data)}`)
     if (data.event == 'charge.success') {
       const transactionReference = data.data.reference;
       const record = await FundAccount.findOne({

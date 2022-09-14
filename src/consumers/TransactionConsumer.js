@@ -137,6 +137,13 @@ RabbitMq['default']
           amount,
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
+          Logger.info(`Checking data from Transaction consumer: ${
+            transactionReference,
+          OrganisationId,
+          approved,
+          status,
+          amount
+          }`)
           WalletService.findMainOrganisationWallet(OrganisationId)
             .then(async wallet => {
               if (wallet) {
