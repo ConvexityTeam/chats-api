@@ -217,22 +217,19 @@ RabbitMq['default']
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrgWallet.OrganisationId}`,
           );
-          const roundUpBudget = parseInt(
-            campaign.budget / beneficiaries.length,
-          );
+          const roundUpBudget = campaign.budget
           Logger.info(`Campaign Address: ${campaign.address}, Organisation Address: ${organisation.address}`)
           Logger.info(roundUpBudget * beneficiaries.length)
           const org = await BlockchainService.transferTo(
             organisation.address,
             organisation.privateKey,
             campaign.address,
-            roundUpBudget * beneficiaries.length,
+            beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget,
           );
-          Logger.info(roundUpBudget * beneficiaries.length)
           Logger.info(`Transferred to campaign wallet: ${org}`);
 
           await Transaction.create({
-            amount: roundUpBudget * beneficiaries.length,
+            amount: beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget,
             reference: generateTransactionRef(),
             status: 'success',
             transaction_origin: 'wallet',
@@ -245,10 +242,10 @@ RabbitMq['default']
           await update_campaign(campaign.id, {
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
-            amount_disbursed: roundUpBudget * beneficiaries.length,
+            amount_disbursed: beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget,
           });
-          await deductWalletAmount(roundUpBudget * beneficiaries.length, OrgWallet.uuid);
-          await addWalletAmount(roundUpBudget * beneficiaries.length, campaign.Wallet.uuid);
+          await deductWalletAmount(beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget, OrgWallet.uuid);
+          await addWalletAmount(beneficiaries.length ? parseInt( roundUpBudget / beneficiaries.length) * beneficiaries.length: roundUpBudget, campaign.Wallet.uuid);
           const wallet = beneficiaries.map(user => user.User.Wallets);
           const mergeWallet = [].concat.apply([], wallet);
 
@@ -265,9 +262,9 @@ RabbitMq['default']
               campaign.address,
               campaign.privateKey,
               beneficiary.address,
-              roundUpBudget,
+              parseInt( roundUpBudget / beneficiaries.length),
             );
-            await addWalletAmount(roundUpBudget, uuid);
+            await addWalletAmount(parseInt( roundUpBudget / beneficiaries.length), uuid);
           }
 
           const User = beneficiaries.map(user => user.User);
@@ -285,7 +282,7 @@ RabbitMq['default']
                     ? User[i].first_name + ' ' + User[i].last_name
                     : '',
               },
-              amount: roundUpBudget,
+              amount: parseInt( roundUpBudget / beneficiaries.length),
             };
             if (token_type === 'papertoken') {
               QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
@@ -297,7 +294,7 @@ RabbitMq['default']
                   User[i].first_name || User[i].last_name
                     ? User[i].first_name + ' ' + User[i].last_name
                     : ''
-                } your convexity token is ${smsToken}, you are approved to spend ${roundUpBudget}.`,
+                } your convexity token is ${smsToken}, you are approved to spend ${parseInt( roundUpBudget / beneficiaries.length)}.`,
               );
               istoken = true;
             }
@@ -308,7 +305,7 @@ RabbitMq['default']
                 campaignId: campaign.id,
                 tokenType: token_type,
                 token: token_type === 'papertoken' ? QrCode : smsToken,
-                amount: roundUpBudget,
+                amount: parseInt( roundUpBudget / beneficiaries.length),
               });
               istoken = false;
             }
