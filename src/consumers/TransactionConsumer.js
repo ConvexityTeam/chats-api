@@ -255,12 +255,9 @@ RabbitMq['default']
             const beneficiary = await BlockchainService.setUserKeypair(
               `user_${userId}`,
             );
-            const campaign = await BlockchainService.setUserKeypair(
-              `campaign_${campaign.Wallet.CampaignId}`,
-            );
             await BlockchainService.approveToSpend(
-              campaign.address,
-              campaign.privateKey,
+              campaignAddress.address,
+              campaignAddress.privateKey,
               beneficiary.address,
               share,
             );
