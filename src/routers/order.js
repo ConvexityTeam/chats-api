@@ -10,25 +10,10 @@ const {
 } = require('../middleware');
 
 const {
-  WalletController,
-  ProductController,
-  OrganisationController,
-  CampaignController,
-  ComplaintController,
-  BeneficiaryController,
   OrderController,
 } = require('../controllers');
 
 const {
-  CommonValidator,
-  VendorValidator,
-  CampaignValidator,
-  OrganisationValidator,
-  ProductValidator,
-  ComplaintValidator,
-  BeneficiaryValidator,
-  WalletValidator,
-  FileValidator,
   ParamValidator,
   OrderValidator,
 } = require('../validators');
