@@ -9,7 +9,7 @@ const PaystackWebhookGuard = (req, res, next) => {
     .createHmac('sha512', paystackConfig.secretKey)
     .update(JSON.stringify(body))
     .digest('hex');
-    Logger.info(`paystack webhook middleware: ${body}`)
+    Logger.info(`paystack webhook middleware: ${JSON.stringify(body)}`)
   if (hash == signature) {
     next();
     return;
