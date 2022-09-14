@@ -316,6 +316,7 @@ RabbitMq['default']
         const organisation = await BlockchainService.setUserKeypair(
           `organisation_${id}`,
         );
+        Logger.info(`Getting KeyPair from AWS`)
         await BlockchainService.mintToken(organisation.address, amount);
         await Wallet.update(
           {
@@ -327,6 +328,7 @@ RabbitMq['default']
             },
           },
         );
+        Logger.info(`Organisation Wallet Balance updated with: ${amount}`)
       })
       .catch(() => {});
 

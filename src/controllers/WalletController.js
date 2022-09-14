@@ -9,6 +9,7 @@ const {
 const {Logger, Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const {Op} = require('sequelize');
+const { logger } = require('../libs/Logger');
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
@@ -172,12 +173,13 @@ class WalletController {
           'Oganisation wallet not found.',
         );
       }
+      logger.info(`Initiating PayStack Transaction`)
       const response = await PaystackService.buildDepositData(
         organisation,
         data.amount,
         data.currency,
       );
-
+        logger.info(`Initiated PayStack Transaction`)
       //QueueService.createPayStack(wallet.address, data.amount)
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -186,6 +188,7 @@ class WalletController {
       );
       return Response.send(res);
     } catch (error) {
+      logger.error(`Error Initiating PayStack Transaction: ${error}`)
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Request failed. Please retry.',
