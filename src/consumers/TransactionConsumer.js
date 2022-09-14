@@ -227,6 +227,7 @@ RabbitMq['default']
             campaign.address,
             roundUpBudget * beneficiaries.length,
           );
+          Logger.info(roundUpBudget * beneficiaries.length)
           Logger.info(`Transferred to campaign wallet: ${org}`);
 
           await Transaction.create({
