@@ -221,6 +221,7 @@ RabbitMq['default']
             campaign.budget / beneficiaries.length,
           );
           Logger.info(`Campaign Address: ${campaign.address}, Organisation Address: ${organisation.address}`)
+          Logger.info(roundUpBudget * beneficiaries.length)
           const org = await BlockchainService.transferTo(
             organisation.address,
             organisation.privateKey,
