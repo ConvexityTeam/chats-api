@@ -250,7 +250,7 @@ class OrderController {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased By Gender Recieved',
-          {productsByMale, productsByFemale},
+          gender,
         );
         return Response.send(res);
       }
