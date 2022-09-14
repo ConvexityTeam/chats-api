@@ -1,6 +1,6 @@
 const {FundAccount, Wallet} = require('../models');
 const QueueService = require('./QueueService');
-
+const {Logger} = require('../libs');
 class WebhookService {
   static async verifyPaystackDeposit(data) {
     if (data.event == 'charge.success') {
@@ -22,6 +22,8 @@ class WebhookService {
         });
         if (isOrganisation) {
           QueueService.createPayStack(record.OrganisationId, record.amount);
+          Logger.info(`Sending record to the queue for db wallet update`)
+
         }
         return record;
       }
