@@ -211,23 +211,19 @@ RabbitMq['default']
           Logger.info(
             'Transferring from organisation wallet to campaign wallet',
           );
-          const campaign = await BlockchainService.setUserKeypair(
+          const campaignAddress = await BlockchainService.setUserKeypair(
             `campaign_${campaignWallet.CampaignId}`,
           );
-          const organisation = await BlockchainService.setUserKeypair(
+          const organisationAddress = await BlockchainService.setUserKeypair(
             `organisation_${OrgWallet.OrganisationId}`,
           );
           const share = parseInt(campaign.budget / beneficiaries.length)
           const realBudget = campaign.budget
           const parsedAmount =  parseInt(campaign.budget / beneficiaries.length) * beneficiaries.length 
-          Logger.info(`Campaign Address: ${campaign.address}, Organisation Address: ${organisation.address}`)
-          Logger.info(`Campaign Budget: ${realBudget}`);
-          Logger.info(`Beneficiaries: ${beneficiaries.length}`);
-          //Logger.info(`Parsed amount: ${beneficiaries.length > 0 ? parsedAmount : realBudget}`);
           const org = await BlockchainService.transferTo(
-            organisation.address,
-            organisation.privateKey,
-            campaign.address,
+            organisationAddress.address,
+            organisationAddress.privateKey,
+            campaignAddress.address,
             beneficiaries.length > 0 ? parsedAmount : realBudget,
           );
           Logger.info(`Transferred to campaign wallet: ${org}`);
