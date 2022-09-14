@@ -217,12 +217,12 @@ RabbitMq['default']
             organisation.address,
             organisation.privateKey,
             campaign.address,
-            roundUpBudget,
+            roundUpBudget * beneficiaries.length,
           );
           Logger.info(`Transferred to campaign wallet: ${org}`);
 
           await Transaction.create({
-            amount: roundUpBudget,
+            amount: roundUpBudget * beneficiaries.length,
             reference: generateTransactionRef(),
             status: 'success',
             transaction_origin: 'wallet',
@@ -235,10 +235,10 @@ RabbitMq['default']
           await update_campaign(campaign.id, {
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
-            amount_disbursed: roundUpBudget,
+            amount_disbursed: roundUpBudget * beneficiaries.length,
           });
-          await deductWalletAmount(roundUpBudget, OrgWallet.uuid);
-          await addWalletAmount(roundUpBudget, campaign.Wallet.uuid);
+          await deductWalletAmount(roundUpBudget * beneficiaries.length, OrgWallet.uuid);
+          await addWalletAmount(roundUpBudget * beneficiaries.length, campaign.Wallet.uuid);
           const wallet = beneficiaries.map(user => user.User.Wallets);
           const mergeWallet = [].concat.apply([], wallet);
 
