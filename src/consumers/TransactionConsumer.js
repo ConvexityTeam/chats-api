@@ -221,7 +221,9 @@ RabbitMq['default']
           const realBudget = campaign.budget
           const parsedAmount =  parseInt(campaign.budget / beneficiaries.length) * beneficiaries.length 
           Logger.info(`Campaign Address: ${campaign.address}, Organisation Address: ${organisation.address}`)
-          Logger.info(`Parsed amount: ${beneficiaries.length > 0 ? parsedAmount : realBudget}`);
+          Logger.info(`Campaign Budget: ${realBudget}`);
+          Logger.info(`Beneficiaries: ${beneficiaries.length}`);
+          //Logger.info(`Parsed amount: ${beneficiaries.length > 0 ? parsedAmount : realBudget}`);
           const org = await BlockchainService.transferTo(
             organisation.address,
             organisation.privateKey,
