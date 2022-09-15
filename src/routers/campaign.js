@@ -6,7 +6,7 @@ router.route('/').get(Auth, CampaignController.getAllCampaigns);
 
 router.get('/:id', Auth, CampaignController.getACampaign);
 router.put('/:id', Auth, CampaignController.updatedCampaign);
-router.post('/:id', Auth, CampaignController.deleteCampaign);
+router.post('/:id',  CampaignController.deleteCampaign);
 // router.post("/fund-beneficiaries-wallets", Auth, CampaignController.fundWallets);
 router.post(
   '/onboard-beneficiaries/:campaignId',

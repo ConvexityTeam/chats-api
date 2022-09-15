@@ -8,28 +8,26 @@ const {Encryption, Logger} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
 
 const client = createClient({
-  socket:{
+  socket: {
     port: 5000,
-    tls: true
-  }
+    tls: true,
+  },
 });
-
-
 
 const Axios = axios.create();
 
 class BlockchainService {
-  static async  connectRedis() {
-  try {
-    await client.connect();
-    client.on('error', err => console.log('Redis Client Error'));
-  } catch (error) {
-    Logger.error('Redis ' + error);
+  static async connectRedis() {
+    try {
+      await client.connect();
+      client.on('error', err => console.log('Redis Client Error'));
+    } catch (error) {
+      Logger.error('Redis ' + error);
+    }
   }
-}
-  
+
   static async signInSwitchWallet() {
-    this.connectRedis()
+    this.connectRedis();
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Signing in to switch wallet');
