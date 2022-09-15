@@ -16,11 +16,12 @@ async function createWallet() {
 
       const token = await BlockchainService.addUser(
         `${
-          content.wallet_type == 'user'
+          !content.CampaignId && content.wallet_type == 'user'
             ? 'user_' + content.ownerId
+            : content.CampaignId && content.wallet_type == 'user' ? `user_${content.ownerId}campaign_${content.CampaignId}` 
             : !content.CampaignId && content.wallet_type == 'organisation'
             ? 'organisation_' + content.ownerId
-            : 'campaign_' + content.CampaignId
+            : content.CampaignId && content.wallet_type == 'organisation' && 'campaign_' + content.CampaignId
         }`,
       );
       if (token) {
