@@ -199,10 +199,11 @@ class BlockchainService {
         const res = await Axios.post(
           `${tokenConfig.baseURL}/txn/transferfrom/${tokenowneraddr}/${to}/${spenderaddr}/${spenderpwsd}/${amount}`,
         );
+        
         Logger.info('Success transferring funds from', res.data);
         if (res.data) resolve(res.data);
       } catch (error) {
-        Logger.info('Error transferring funds from', error.response.data);
+        Logger.info(`Error transferring funds from: ${JSON.stringify(error.response.data)}`);
         reject(error.response.data);
       }
     });

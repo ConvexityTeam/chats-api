@@ -10,11 +10,11 @@ const IsUserVerified = async (req, res, next) => {
       );
       return Response.send(res);
     }
-
-    // if(!user.is_bvn_verified && !user.is_nin_verified) {
-    //   Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Unathorised request. Indentity verification pending.');
-    //   return Response.send(res);
-    // }
+//!user.is_bvn_verified && 
+    if(!user.is_nin_verified) {
+      Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Unathorised request. Indentity verification pending.');
+      return Response.send(res);
+    }
 
     next();
   } catch (error) {

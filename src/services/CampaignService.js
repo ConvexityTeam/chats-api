@@ -17,6 +17,29 @@ const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
 
 class CampaignService {
+  static getACampaignWithBeneficiaries(CampaignId, type){
+    return Campaign.findAll({
+      where: {
+        type,
+        id: {
+          [Op.ne]: CampaignId
+        }
+      },
+      include: ['Beneficiaries']
+    });
+  }
+
+  static getACampaignWithReplica(id, type){
+    return Campaign.findAll({
+      where: {
+        type,
+        id 
+      },
+      include: ['Beneficiaries']
+    });
+  }
+
+  
   static searchCampaignTitle(title, extraClause = null) {
     const where = {
       ...extraClause,
@@ -45,6 +68,15 @@ class CampaignService {
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
     return Beneficiary.findOne({
+      where: {
+        CampaignId,
+        UserId,
+      },
+    });
+  }
+
+  static findAllBeneficiaryOnboard(CampaignId, UserId) {
+    return Beneficiary.findAll({
       where: {
         CampaignId,
         UserId,
@@ -123,6 +155,24 @@ class CampaignService {
       VendorId,
       approved: true,
     });
+  }
+
+  static async removeVendorForCampaign(CampaignId, VendorId) {
+    const record = await CampaignVendor.findOne({
+      where: {
+        CampaignId,
+        VendorId,
+      },
+    });
+    if (record) {
+      await record.destroy({
+        CampaignId,
+        VendorId,
+      });
+      return record;
+    }
+
+    return null
   }
 
   static campaignVendors(CampaignId) {

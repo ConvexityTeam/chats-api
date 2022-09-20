@@ -1288,9 +1288,31 @@ class OrganisationController {
     }
   }
 
+  static async removeCampaignVendor(req, res) {
+    try {
+      const removed = await CampaignService.removeVendorForCampaign(
+        req.campaign.id,
+        req.body.vendor_id,
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Vendor removed.',
+        removed,
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Please retry.',
+      );
+      return Response.send(res);
+    }
+  }
+
+
   static async getCampaignVendors(req, res) {
     try {
-      Logger.info('fetching campaign vendors...');
+      Logger.info('Fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(
         req.params.campaign_id,
       );
@@ -1302,7 +1324,7 @@ class OrganisationController {
         }
         return acc;
       }, []);
-      Logger.info('campaign vendors', vendors);
+      Logger.info('Fetched campaign vendors');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Vendors.',

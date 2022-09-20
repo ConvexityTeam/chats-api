@@ -51,6 +51,7 @@ router.post(
 );
 router.post(
   '/task/reject-submission/:taskAssignmentId',
+  FieldAgentAuth,
   CampaignController.rejectSubmission,
 );
 router.get('/', CashForWorkController.getAllCashForWork);

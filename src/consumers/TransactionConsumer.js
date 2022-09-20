@@ -28,6 +28,7 @@ const {
   VoucherToken,
   Campaign,
   TaskAssignment,
+  ProductBeneficiary,
   Order,
 } = require('../models');
 const {
@@ -100,27 +101,30 @@ const processCampaignPaystack = RabbitMq['default'].declareQueue(
 const update_campaign = async (id, args) => {
   const campaign = await Campaign.findOne({where: {id}});
   if (!campaign) return null;
-  campaign.update(args);
+  await campaign.update(args);
   return campaign;
 };
 
 const update_transaction = async (args, uuid) => {
   const transaction = await Transaction.findOne({where: {uuid}});
   if (!transaction) return null;
-  transaction.update(args);
+  await transaction.update(args);
+  Logger.info(`transaction completed or success`)
   return transaction;
 };
 const deductWalletAmount = async (amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
-  wallet.update({balance: Sequelize.literal(`balance - ${amount}`)});
+  await wallet.update({balance: Sequelize.literal(`balance - ${amount}`)});
+  Logger.info(`Wallet amount deducted with ${amount}`)
   return wallet;
 };
 
 const addWalletAmount = async (amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
-  wallet.update({balance: Sequelize.literal(`balance + ${amount}`)});
+  await wallet.update({balance: Sequelize.literal(`balance + ${amount}`)});
+  Logger.info(`Wallet amount added with ${amount}`)
   return wallet;
 };
 
@@ -227,7 +231,20 @@ RabbitMq['default']
             beneficiaries.length > 0 ? parsedAmount : realBudget,
           );
           Logger.info(`Transferred to campaign wallet: ${org}`);
-
+          if(!org){
+            await Transaction.create({
+            amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
+            reference: generateTransactionRef(),
+            status: 'declined',
+            transaction_origin: 'wallet',
+            transaction_type: 'transfer',
+            SenderWalletId: OrgWallet.uuid,
+            ReceiverWalletId: campaignWallet.uuid,
+            OrganisationId: campaign.OrganisationId,
+            narration: 'Approve Campaign Funding',
+          });
+          return
+          }
           await Transaction.create({
             amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
             reference: generateTransactionRef(),
@@ -262,7 +279,7 @@ RabbitMq['default']
             const beneficiary = await BlockchainService.setUserKeypair(
               `user_${userId}campaign_${campaign.id}`,
             );
-            await BlockchainService.approveToSpend(
+         const approveToSpend =  await BlockchainService.approveToSpend(
               campaignAddress.address,
               campaignAddress.privateKey,
               beneficiary.address,
@@ -390,35 +407,39 @@ RabbitMq['default']
           amount,
           transaction,
         } = msg.getContent();
-        const campaign = BlockchainService.setUserKeypair(
-          `campaign_${campaignWallet.CampaignId}`,
-        );
+        const campaignAddress = await BlockchainService.setUserKeypair(
+            `campaign_${campaignWallet.CampaignId}`,
+          );
 
         const beneficiary = await BlockchainService.setUserKeypair(
           `user_${userWallet.UserId}campaign_${campaignWallet.CampaignId}`,
         );
-        await BlockchainService.transferFrom(
-          campaign.address,
+        
+        const transfer = await BlockchainService.transferFrom(
+          campaignAddress.address,
           beneficiary.address,
           beneficiary.address,
           beneficiary.privateKey,
           amount,
         );
-        await BlockchainService.redeem(
+        const redeem = await BlockchainService.redeem(
           beneficiary.address,
           beneficiary.privateKey,
           amount,
         );
-        await PaystackService.withdraw(
+        const payStack = await PaystackService.withdraw(
           'balance',
           amount,
           bankAccount.recipient_code,
           'spending',
         );
-
-        await deductWalletAmount(amount, campaignWallet.uuid);
+        if(transfer && redeem && payStack){
+          await deductWalletAmount(amount, campaignWallet.uuid);
         await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
+        return 
+        }
+        await update_transaction({status: 'declined'}, transaction.uuid);
       })
       .catch(() => {
         console.log('RABBITMQ ERROR');
@@ -430,19 +451,23 @@ RabbitMq['default']
         const vendor = await BlockchainService.setUserKeypair(
           `user_${userWallet.UserId}`,
         );
-        await BlockchainService.redeem(
+       const redeem =  await BlockchainService.redeem(
           vendor.address,
           vendor.privateKey,
           amount,
         );
-        await PaystackService.withdraw(
+        const payStack = await PaystackService.withdraw(
           'balance',
           amount,
           bankAccount.recipient_code,
           'spending',
         );
+        if(redeem && payStack){
         await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
+        return
+        }
+        await update_transaction({status: 'declined'}, transaction.uuid);
       })
       .catch(error => {
         Logger.error(`RABBITMQ ERROR: ${error}`);
@@ -517,13 +542,17 @@ RabbitMq['default']
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`,
         );
-        await BlockchainService.transferFrom(
+        const transfer = await BlockchainService.transferFrom(
           campaign.address,
           vendor.address,
           beneficiary.address,
           beneficiary.privateKey,
           amount,
         );
+        if(!transfer){
+        await update_transaction({status: 'declined'}, transaction);
+        return 
+        }
         await Order.update(
           {status: 'confirmed'},
           {where: {reference: order.reference}},
@@ -532,7 +561,6 @@ RabbitMq['default']
         await deductWalletAmount(amount, campaignWallet.uuid);
         await addWalletAmount(amount, vendorWallet.uuid);
         await update_transaction({status: 'success'}, transaction);
-
         order.Cart.forEach(async prod => {
           await ProductBeneficiary.create({
             productId: prod.ProductId,
