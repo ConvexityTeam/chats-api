@@ -748,6 +748,12 @@ class OrganisationController {
         );
         return Response.send(res);
       } else {
+       const isVendorDeleted = await db.VendorProduct.destroy({
+          where:{
+            productId: ProductId
+          }
+        })
+        if(isVendorDeleted)
         await db.Product.destroy({
           where: {
             id: ProductId,
@@ -755,7 +761,7 @@ class OrganisationController {
         });
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
-          'Product Delted in stores',
+          'Product Deleted in stores',
         );
         Response.send(res);
       }
@@ -763,7 +769,7 @@ class OrganisationController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
