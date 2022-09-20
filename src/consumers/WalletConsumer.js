@@ -24,7 +24,7 @@ async function createWallet() {
             : content.CampaignId && content.wallet_type == 'organisation' && 'campaign_' + content.CampaignId
         }`,
       );
-      if (token) {
+      if (token || !token) {
         await WalletService.updateOrCreate(content, {
           ...token,
         });
