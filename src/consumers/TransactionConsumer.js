@@ -105,6 +105,13 @@ const update_campaign = async (id, args) => {
   return campaign;
 };
 
+const update_order = async (reference, args) => {
+  const order = await Order.findOne({where: {reference}});
+  if (!order) return null;
+  await order.update(args);
+  return order;
+};
+
 const update_transaction = async (args, uuid) => {
   const transaction = await Transaction.findOne({where: {uuid}});
   if (!transaction) return null;
@@ -235,7 +242,7 @@ RabbitMq['default']
             await Transaction.create({
             amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
             reference: generateTransactionRef(),
-            status: 'declined',
+            status: 'failed',
             transaction_origin: 'wallet',
             transaction_type: 'transfer',
             SenderWalletId: OrgWallet.uuid,
@@ -279,7 +286,7 @@ RabbitMq['default']
             const beneficiary = await BlockchainService.setUserKeypair(
               `user_${userId}campaign_${campaign.id}`,
             );
-         const approveToSpend =  await BlockchainService.approveToSpend(
+          await BlockchainService.approveToSpend(
               campaignAddress.address,
               campaignAddress.privateKey,
               beneficiary.address,
@@ -439,7 +446,7 @@ RabbitMq['default']
         await update_transaction({status: 'success'}, transaction.uuid);
         return 
         }
-        await update_transaction({status: 'declined'}, transaction.uuid);
+        await update_transaction({status: 'failed'}, transaction.uuid);
       })
       .catch(() => {
         console.log('RABBITMQ ERROR');
@@ -467,7 +474,7 @@ RabbitMq['default']
         await update_transaction({status: 'success'}, transaction.uuid);
         return
         }
-        await update_transaction({status: 'declined'}, transaction.uuid);
+        await update_transaction({status: 'failed'}, transaction.uuid);
       })
       .catch(error => {
         Logger.error(`RABBITMQ ERROR: ${error}`);
@@ -489,26 +496,35 @@ RabbitMq['default']
         const beneficiary = await BlockchainService.setUserKeypair(
           `user_${beneficiaryWallet.UserId}campaign_${campaignWallet.CampaignId}`,
         );
-
+          let success = false
         const allowance = await BlockchainService.allowance(
           campaign.address,
           beneficiary.address,
         );
-        if (allowance.Allowed > 0)
-          await BlockchainService.approveToSpend(
+        if (allowance.Allowed > 0){
+         const top_up = await BlockchainService.approveToSpend(
             campaign.address,
             campaign.privateKey,
             beneficiary.address,
             amount_disburse + allowance.Allowed,
           );
-        else
-          await BlockchainService.approveToSpend(
+          if(top_up) success = true
+          else success = false
+        }
+        else {
+        const top_down =  await BlockchainService.approveToSpend(
             campaign.address,
             campaign.privateKey,
             beneficiary.address,
             amount_disburse,
           );
-
+          if(top_down) success = true
+          else success = false
+          }
+          if(!success){
+            await update_transaction({status: 'failed'}, transaction.uuid);
+            return
+          }
         await addWalletAmount(amount_disburse, beneficiaryWallet.uuid);
         await deductWalletAmount(amount_disburse, campaignWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
@@ -550,13 +566,11 @@ RabbitMq['default']
           amount,
         );
         if(!transfer){
-        await update_transaction({status: 'declined'}, transaction);
-        return 
+        await update_transaction({status: 'failed'}, transaction);
+        await update_order(order.reference, {status: 'failed'})
+        return
         }
-        await Order.update(
-          {status: 'confirmed'},
-          {where: {reference: order.reference}},
-        );
+        await update_order(order.reference, {status: 'confirmed'})
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
         await addWalletAmount(amount, vendorWallet.uuid);

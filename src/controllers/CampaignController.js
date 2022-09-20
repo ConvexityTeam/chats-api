@@ -873,6 +873,7 @@ class CampaignController {
   static async importBeneficiary(req, res) {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
+      const delay = 3000
       const approvedBeneficiary = [];
       const replicaBeneficiary = [];
       const noDuplicate = [];
@@ -895,17 +896,24 @@ class CampaignController {
         });
       });
 
-      replicaBeneficiary.forEach(userId => {
-        if (!approvedBeneficiary.includes(userId)) {
-          noDuplicate.push(userId);
+      replicaBeneficiary.forEach( (UserId, i) => {
 
-          QueueService.createWallet(userId, 'user', campaign_id);
+        if (!approvedBeneficiary.includes(UserId)) {
+          noDuplicate.push(UserId);
+          setTimeout(async()=> {
+            await db.Beneficiary.create({
+        CampaignId: campaign_id,
+        UserId,
+        source: 'Web app'
+          })
+          QueueService.createWallet(UserId, 'user', campaign_id);
+          }, delay * i)
         }
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaigns with onboard ${
-          noDuplicate.length > 1 ? 'beneficiaries' : 'beneficiary'
+        `Campaigns with onboarded with  ${noDuplicate.length}${ 
+          noDuplicate.length > 1 ? ' beneficiaries' : 'beneficiary'
         }`,
         noDuplicate,
       );
