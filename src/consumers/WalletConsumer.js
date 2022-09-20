@@ -13,7 +13,6 @@ async function createWallet() {
     Logger.info('creating account wallet');
     await createWalletQueue.activateConsumer(async msg => {
       const content = msg.getContent();
-
       const token = await BlockchainService.addUser(
         `${
           !content.CampaignId && content.wallet_type == 'user'
@@ -24,7 +23,7 @@ async function createWallet() {
             : content.CampaignId && content.wallet_type == 'organisation' && 'campaign_' + content.CampaignId
         }`,
       );
-      if (token || !token) {
+      if (token) {
         await WalletService.updateOrCreate(content, {
           ...token,
         });
