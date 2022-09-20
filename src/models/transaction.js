@@ -59,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
     transaction_origin: DataTypes.ENUM('store', 'wallet'),
     transaction_hash: DataTypes.STRING,
     amount: DataTypes.FLOAT,
-    status: DataTypes.ENUM('success', 'processing', 'declined'),
+    status: DataTypes.ENUM('success', 'processing', 'declined', 'failed'),
     is_approved: DataTypes.BOOLEAN,
     narration: DataTypes.STRING,
     log: DataTypes.TEXT
