@@ -832,32 +832,37 @@ class CampaignController {
     }
   }
 
-   static async campaignsWithOnboardedBeneficiary(req, res){
-      const {campaign_id} = req.params
-    try{
-      const approved = []
-      const campaign = await CampaignService.getACampaignWithBeneficiaries(campaign_id, 'campaign')
-      campaign.forEach((app)=> {
-        app.Beneficiaries.forEach((beneficiary)=> {
-          delete beneficiary.pin
-            delete beneficiary.password
+  static async campaignsWithOnboardedBeneficiary(req, res) {
+    const {campaign_id} = req.params;
+    try {
+      const approved = [];
+      const campaign = await CampaignService.getACampaignWithBeneficiaries(
+        campaign_id,
+        'campaign',
+      );
+      campaign.forEach(app => {
+        app.Beneficiaries.forEach(beneficiary => {
+          delete beneficiary.pin;
+          delete beneficiary.password;
           approved.push({
-            "id": app.id,
-            "OrganisationId": app.OrganisationId,
-            "title": app.title,
-            "type": app.type,
-            "spending": app.spending,
-            "description": app.description,
-          })
-        }) 
-      })
+            id: app.id,
+            OrganisationId: app.OrganisationId,
+            title: app.title,
+            type: app.type,
+            spending: app.spending,
+            description: app.description,
+          });
+        });
+      });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaigns with onboarded ${approved.length > 1 ? 'beneficiaries' : 'beneficiary'}`,
+        `Campaigns with onboarded ${
+          approved.length > 1 ? 'beneficiaries' : 'beneficiary'
+        }`,
         approved,
       );
       return Response.send(res);
-    }catch(error){
+    } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         `Internal server error. Contact support.` + error,
@@ -865,40 +870,47 @@ class CampaignController {
       return Response.send(res);
     }
   }
-  static async importBeneficiary(req, res){
-      const {campaign_id, replicaCampaignId} = req.params
-    try{
-      const approvedBeneficiary = []
-      const replicaBeneficiary = []
-      const noDuplicate = []
-      const ongoingCampaign = await CampaignService.getACampaignWithReplica(campaign_id, 'campaign')
-      const replicaCampaign = await CampaignService.getACampaignWithReplica(replicaCampaignId, 'campaign')
-      ongoingCampaign.forEach((app)=> {
-        app.Beneficiaries.forEach((beneficiary)=> {
-          approvedBeneficiary.push(beneficiary.Beneficiary.UserId)
-        }) 
-      })
-      replicaCampaign.forEach((app)=> {
-        app.Beneficiaries.forEach((beneficiary)=> {
-          replicaBeneficiary.push(beneficiary.Beneficiary.UserId)
-        }) 
-      })
-      
-      replicaBeneficiary.forEach((userId)=> {
-          if(!approvedBeneficiary.includes(userId)){
-            noDuplicate.push(userId)
-            
-            QueueService.createWallet(userId, 'user', campaign_id);
+  static async importBeneficiary(req, res) {
+    const {campaign_id, replicaCampaignId} = req.params;
+    try {
+      const approvedBeneficiary = [];
+      const replicaBeneficiary = [];
+      const noDuplicate = [];
+      const ongoingCampaign = await CampaignService.getACampaignWithReplica(
+        campaign_id,
+        'campaign',
+      );
+      const replicaCampaign = await CampaignService.getACampaignWithReplica(
+        replicaCampaignId,
+        'campaign',
+      );
+      ongoingCampaign.forEach(app => {
+        app.Beneficiaries.forEach(beneficiary => {
+          approvedBeneficiary.push(beneficiary.Beneficiary.UserId);
+        });
+      });
+      replicaCampaign.forEach(app => {
+        app.Beneficiaries.forEach(beneficiary => {
+          replicaBeneficiary.push(beneficiary.Beneficiary.UserId);
+        });
+      });
 
-          }
-      })
+      replicaBeneficiary.forEach(userId => {
+        if (!approvedBeneficiary.includes(userId)) {
+          noDuplicate.push(userId);
+
+          QueueService.createWallet(userId, 'user', campaign_id);
+        }
+      });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaigns with onboard ${noDuplicate.length > 1 ? 'beneficiaries' : 'beneficiary'}`,
+        `Campaigns with onboard ${
+          noDuplicate.length > 1 ? 'beneficiaries' : 'beneficiary'
+        }`,
         noDuplicate,
       );
       return Response.send(res);
-    }catch(error){
+    } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         `Internal server error. Contact support.` + error,
@@ -906,7 +918,6 @@ class CampaignController {
       return Response.send(res);
     }
   }
-
 }
 
 async function loopCampaigns(campaignId, beneficiaries) {

@@ -542,13 +542,17 @@ RabbitMq['default']
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`,
         );
-        await BlockchainService.transferFrom(
+        const transfer = await BlockchainService.transferFrom(
           campaign.address,
           vendor.address,
           beneficiary.address,
           beneficiary.privateKey,
           amount,
         );
+        if(!transfer){
+        await update_transaction({status: 'declined'}, transaction);
+        return 
+        }
         await Order.update(
           {status: 'confirmed'},
           {where: {reference: order.reference}},
