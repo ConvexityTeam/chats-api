@@ -52,6 +52,24 @@ router.put('/campaign', OrganisationController.updateCampaign);
 router.post('/update-profile', OrganisationController.updateProfile);
 router.post('/transfer/token', OrganisationController.transferToken);
 router.get('/financials/:id', OrganisationController.getFinancials);
+
+router
+.get(
+  '/:organisation_id/onboarded/:campaign_id',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  ParamValidator.CampaignIdOptional,
+  CampaignController.campaignsWithOnboardedBeneficiary
+)
+router.post(
+  '/:organisation_id/onboarded/:campaign_id/:replicaCampaignId',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  ParamValidator.CampaignIdOptional,
+  CampaignController.importBeneficiary
+)
 router.get(
   '/beneficiaries-summary/:id',
   OrganisationController.getBeneficiariesFinancials,
@@ -125,8 +143,7 @@ router
   );
 
 // Refactord routes
-router
-  .route('/:organisation_id/profile')
+router.route('/:organisation_id/profile')
   .get(
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
@@ -361,8 +378,16 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     VendorValidator.approveCampaignVendor,
     OrganisationController.approveCampaignVendor,
+  )
+  .delete(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    VendorValidator.approveCampaignVendor,
+    OrganisationController.removeCampaignVendor,
   );
-
 router.get(
   '/pub_campaigns/:campaign_id/beneficiary_location',
   ParamValidator.CampaignId,

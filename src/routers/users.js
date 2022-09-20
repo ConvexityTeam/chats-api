@@ -56,7 +56,7 @@ router
     VendorBeneficiaryAuth,
     IsUserVerified,
     UserValidator.addAccountValidation,
-    UsersController.addBankAccount,
+    UsersController.addBankAccount
   );
 
 router
