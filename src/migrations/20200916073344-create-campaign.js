@@ -43,7 +43,7 @@ module.exports = {
         defaultValue: 0.0,
       },
       location: {
-        type: Sequelize.TEXT,
+        type: Sequelize.ARRAY(Sequelize.DECIMAL),
       },
       start_date: {
         type: Sequelize.DATE,
