@@ -116,7 +116,6 @@ const update_transaction = async (args, uuid) => {
   const transaction = await Transaction.findOne({where: {uuid}});
   if (!transaction) return null;
   await transaction.update(args);
-  Logger.info(`transaction completed or success`)
   return transaction;
 };
 const deductWalletAmount = async (amount, uuid) => {
@@ -164,6 +163,7 @@ RabbitMq['default']
                   organisation.address,
                   amount,
                 );
+                if(mint){
                 await DepositService.updateFiatDeposit(transactionReference, {
                   status: 'successful',
                 });
@@ -184,6 +184,8 @@ RabbitMq['default']
                   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
                 });
                 msg.ack();
+              }
+                
               } else {
                 QueueService.createWallet(OrganisationId, 'organisation');
                 Promise.reject('Organisation wallet does not exist');
@@ -352,7 +354,8 @@ RabbitMq['default']
           `organisation_${id}`,
         );
         Logger.info(`Getting KeyPair from AWS`);
-        await BlockchainService.mintToken(organisation.address, amount);
+       const mint = await BlockchainService.mintToken(organisation.address, amount);
+       if(mint){
         await Wallet.update(
           {
             balance: Sequelize.literal(`balance + ${amount}`),
@@ -364,6 +367,9 @@ RabbitMq['default']
           },
         );
         Logger.info(`Organisation Wallet Balance updated with: ${amount}`);
+       }
+  
+        
       })
       .catch(() => {});
 
@@ -440,7 +446,7 @@ RabbitMq['default']
           bankAccount.recipient_code,
           'spending',
         );
-        if(transfer && redeem && payStack){
+        if(transfer && redeem  && payStack){
           await deductWalletAmount(amount, campaignWallet.uuid);
         await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
@@ -568,13 +574,15 @@ RabbitMq['default']
         if(!transfer){
         await update_transaction({status: 'failed'}, transaction);
         await update_order(order.reference, {status: 'failed'})
-        return
+        Logger.error('Transferring from beneficiary to vendor failed')
+        return null
         }
         await update_order(order.reference, {status: 'confirmed'})
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
         await addWalletAmount(amount, vendorWallet.uuid);
         await update_transaction({status: 'success'}, transaction);
+        Logger.info('Success transferring from beneficiary to vendor')
         order.Cart.forEach(async prod => {
           await ProductBeneficiary.create({
             productId: prod.ProductId,

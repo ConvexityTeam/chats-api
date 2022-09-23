@@ -521,6 +521,7 @@ class VendorService {
   }
   static async vendorChart(VendorId, period) {
     return Transaction.findAndCountAll({
+      order: [['updatedAt', 'ASC']],
       where: {
         VendorId,
         createdAt: {
