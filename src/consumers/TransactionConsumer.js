@@ -164,10 +164,11 @@ RabbitMq['default']
                 //   amount,
                 // );
                 // if(mint){
-                await DepositService.updateFiatDeposit(transactionReference, {
+              const exist =  await DepositService.updateFiatDeposit(transactionReference, {
                   status: 'successful',
                 });
-                await Transaction.create({
+                if(exist !== null){
+                  await Transaction.create({
                   log: transactionReference,
                   narration: 'Fiat Deposit Transaction',
                   ReceiverWalletId: wallet.uuid,
@@ -179,10 +180,24 @@ RabbitMq['default']
                   reference,
                   amount,
                 });
-                await wallet.update({
-                  balance: Sequelize.literal(`balance + ${amount}`),
-                  fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
+                return 
+                }
+                await Transaction.create({
+                  log: transactionReference,
+                  narration: 'Fiat Deposit Transaction',
+                  ReceiverWalletId: wallet.uuid,
+                  transaction_origin: 'wallet',
+                  transaction_type: 'deposit',
+                  status: 'failed',
+                  is_approved: false,
+                  OrganisationId,
+                  reference,
+                  amount,
                 });
+                // await wallet.update({
+                //   balance: Sequelize.literal(`balance + ${amount}`),
+                //   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
+                // });
                 msg.ack();
               } else {
                 QueueService.createWallet(OrganisationId, 'organisation');
