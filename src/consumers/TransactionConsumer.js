@@ -180,6 +180,7 @@ RabbitMq['default']
                   reference,
                   amount,
                 });
+                return 
                 }
                 await Transaction.create({
                   log: transactionReference,
