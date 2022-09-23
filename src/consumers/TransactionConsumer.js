@@ -179,10 +179,10 @@ RabbitMq['default']
                   reference,
                   amount,
                 });
-                await wallet.update({
-                  balance: Sequelize.literal(`balance + ${amount}`),
-                  fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
-                });
+                // await wallet.update({
+                //   balance: Sequelize.literal(`balance + ${amount}`),
+                //   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
+                // });
                 msg.ack();
               } else {
                 QueueService.createWallet(OrganisationId, 'organisation');
