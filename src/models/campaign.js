@@ -2,6 +2,7 @@
 const {
   Model
 } = require("sequelize");
+const { userConst } = require("../constants");
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**

@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     CampaignId: DataTypes.INTEGER,
     approved: DataTypes.BOOLEAN,
     rejected: DataTypes.BOOLEAN,
-    source: DataTypes.ENUM('beneficiary app', 'field app')
+    source: DataTypes.ENUM('beneficiary app', 'field app', 'web app')
   }, {
     sequelize,
     modelName: 'Beneficiary',

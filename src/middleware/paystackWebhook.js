@@ -1,14 +1,20 @@
 const crypto = require('crypto');
-const { paystackConfig } = require('../config');
+const {paystackConfig} = require('../config');
+const { Logger } = require('../libs');
 const PaystackWebhookGuard = (req, res, next) => {
   const body = req.body;
+  
   const signature = req.headers['x-paystack-signature'];
-  const hash = crypto.createHmac('sha512', paystackConfig.secretKey).update(JSON.stringify(body)).digest('hex');
-  if(hash == signature) {
+  const hash = crypto
+    .createHmac('sha512', paystackConfig.secretKey)
+    .update(JSON.stringify(body))
+    .digest('hex');
+    Logger.info(`paystack webhook middleware: ${JSON.stringify(body)}`)
+  if (hash == signature) {
     next();
     return;
   }
-  res.sendStatus(400)
-}
+  res.sendStatus(400);
+};
 
-exports.PaystackWebhookGuard  = PaystackWebhookGuard;
+exports.PaystackWebhookGuard = PaystackWebhookGuard;

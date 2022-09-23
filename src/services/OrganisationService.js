@@ -1,14 +1,10 @@
 const {
   User,
-  Order,
-  Product,
   Market,
   Wallet,
   Organisation,
   Transaction,
-  OrderProduct,
   OrganisationMembers,
-  StoreTransaction
 } = require('../models');
 const {
   OrgRoles,
@@ -44,6 +40,15 @@ class OrganisationService {
       where: {
         id: Number(id)
       },
+      include: {
+        model: Wallet,
+        as: 'Wallet'
+      }
+    });
+  }
+
+  static async getAllOrganisationWallet() {
+    return Organisation.findAll({
       include: {
         model: Wallet,
         as: 'Wallet'

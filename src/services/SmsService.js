@@ -1,15 +1,11 @@
-const {
-  default: axios
-} = require("axios");
-const {
-  termiiConfig
-} = require("../config");
+const {default: axios} = require('axios');
+const {termiiConfig} = require('../config');
 
 class SmsService {
   httpService;
   constructor() {
     this.httpService = axios.create({
-      baseURL: termiiConfig.baseUrl
+      baseURL: termiiConfig.baseUrl,
     });
   }
 
@@ -26,32 +22,29 @@ class SmsService {
   }
 
   async send(to, sms, channel = 'dnd') {
-    const data = this._loadData({ to, sms, channel });
+    const data = this._loadData({to, sms, channel});
     return new Promise(async (resolve, reject) => {
       try {
         const response = await this.httpService.post('/sms/send', data);
-        console.log('sms sent')
+        console.log('sms sent');
         resolve(response.data);
       } catch (error) {
-        console.log('sms error')
-        reject(error)
+        console.log('sms error');
+        reject(error);
       }
     });
   }
 
   _loadData(extra = {}) {
-    const {
-      from,
-      api_key
-    } = this._loadConfig();
+    const {from, api_key} = this._loadConfig();
 
     return {
       type: 'plain',
       channel: 'dnd',
       from,
       api_key,
-      ...extra
-    }
+      ...extra,
+    };
   }
 
   _loadConfig() {

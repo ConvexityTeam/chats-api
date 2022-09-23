@@ -4,30 +4,25 @@ const {
   TaskUsers,
   User,
   TaskProgress,
-  TaskProgressEvidence
+  TaskProgressEvidence,
 } = require('../models');
-const {
-  publicAttr
-} = require('../constants/user.constants');
+const {publicAttr} = require('../constants/user.constants');
 
 class TaskService {
-
   static async createCashForWorkTask(tasks, campaignId) {
-
     // check if campaign exists
 
     const campaign = await Campaign.findOne({
       where: {
         id: campaignId,
-        type: "cash-for-work"
-      }
+        type: 'cash-for-work',
+      },
     });
 
-    if (!campaign)
-      throw new Error("Invalid campaign id");
+    if (!campaign) throw new Error('Invalid campaign id');
 
-    if (campaign.status == "completed")
-      throw new Error("Campaign is already completed");
+    if (campaign.status == 'completed')
+      throw new Error('Campaign is already completed');
 
     const _tasks = tasks.map(task => {
       task.CampaignId = campaignId;
@@ -38,37 +33,38 @@ class TaskService {
   }
 
   static async getCashForWorkTasks(params) {
-
     return Task.findAll({
       where: {
-        CampaignId: params.campaign_id
+        CampaignId: params.campaign_id,
       },
-      include: [{
-        model: User,
-        as: 'AssignedWorkers',
-        attributes: publicAttr
-      }]
+      include: [
+        {
+          model: User,
+          as: 'AssignedWorkers',
+          attributes: publicAttr,
+        },
+      ],
     });
   }
 
   static async getCashForBeneficiaries(params) {
-
     return Task.findOne({
       where: {
-        id: params.task_id
+        id: params.task_id,
       },
-      include: [{
-        model: User,
-        as: 'AssignedWorkers',
-        attributes: publicAttr
-      }]
+      include: [
+        {
+          model: User,
+          as: 'AssignedWorkers',
+          attributes: publicAttr,
+        },
+      ],
     });
   }
 
   static async updateTask(id, updateTaskObj) {
     const task = await Task.findByPk(id);
-    if (!task)
-      throw new Error("Invalid task id");
+    if (!task) throw new Error('Invalid task id');
 
     return task.update(updateTaskObj);
   }
@@ -77,14 +73,13 @@ class TaskService {
     const taskProgress = await TaskProgress.findByPk(taskProgressId);
 
     if (!taskProgress) {
-      throw new Error("No progress task found");
+      throw new Error('No progress task found');
     } else
       return await TaskProgressEvidence.create({
         TaskProgressId: taskProgressId,
-        imageUrl
+        imageUrl,
       });
   }
-
 }
 
 module.exports = TaskService;

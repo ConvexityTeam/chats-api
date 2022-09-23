@@ -11,7 +11,7 @@ module.exports = {
     // await queryInterface.dropType
     await queryInterface.addColumn('Beneficiaries', 'source', {
       allowNull: true,
-      type: Sequelize.ENUM('beneficiary app', 'field app'),
+      type: Sequelize.ENUM('beneficiary app', 'field app', 'web app'),
       after: 'approved'
     });
 

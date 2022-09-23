@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
     reference: DataTypes.STRING,
     VendorId: DataTypes.INTEGER,
     CampaignId: DataTypes.INTEGER,
-    status: DataTypes.ENUM('pending', 'processing', 'confirmed', 'delivered'),
+    status: DataTypes.ENUM('pending', 'processing', 'confirmed', 'delivered', 'failed'),
   }, {
     sequelize,
     modelName: 'Order',

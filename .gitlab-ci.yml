@@ -19,7 +19,6 @@ deploy_staging:
   tags:
     - staging
 
-
 deploy_production:
   stage: production
   script:

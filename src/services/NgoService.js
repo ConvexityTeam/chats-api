@@ -1,24 +1,13 @@
-const {
-  OrgAdminRolesToAcl
-} = require("../utils").Types;
-const {Op} = require('sequelize')
+const {OrgAdminRolesToAcl} = require('../utils').Types;
+const {Op} = require('sequelize');
 
-const {
-  userConst
-} = require('../constants')
+const {userConst} = require('../constants');
 
-const {
-  User,
-  Campaign,
-  Product,
-  OrganisationMembers
-} = require('../models');
+const {User, Campaign, Product, OrganisationMembers} = require('../models');
 
-const QueueService = require('./QueueService')
-const MailerService = require('./MailerService')
-const bcrypt = require("bcryptjs");
-
-
+const QueueService = require('./QueueService');
+const MailerService = require('./MailerService');
+const bcrypt = require('bcryptjs');
 
 class NgoService {
   static createAdminAccount(organisation, data, role, newPassword) {
@@ -27,16 +16,20 @@ class NgoService {
       data.RoleId = OrgAdminRolesToAcl[role];
 
       User.create({
-          ...data,
-          password
-        })
-        .then(async (user) => {
+        ...data,
+        password,
+      })
+        .then(async user => {
           await OrganisationMembers.create({
             UserId: user.id,
             OrganisationId: organisation.id,
-            role
+            role,
           });
-          MailerService.verify(user.email, user.first_name +" "+ user.last_name, newPassword)
+          MailerService.verify(
+            user.email,
+            user.first_name + ' ' + user.last_name,
+            newPassword,
+          );
           QueueService.createWallet(user.id, 'user');
           // send password to user
           resolve(user.toObject());
@@ -49,27 +42,33 @@ class NgoService {
 
   static getMembers(OrganisationId) {
     return OrganisationMembers.findAll({
-      where: { OrganisationId, role: {
-        [Op.ne]: 'vendor'
-      }},
-      include: [{
-        model: User,
-        as: 'User',
-        attributes: userConst.publicAttr
-      }]
-    })
+      where: {
+        OrganisationId,
+        role: {
+          [Op.ne]: 'vendor',
+        },
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConst.publicAttr,
+        },
+      ],
+    });
   }
 
-
-  static viewProductVendorOnCampaign(){
+  static viewProductVendorOnCampaign() {
     return Campaign.findAll({
-      include:[{
-        model: Product,
-        as: 'CampaignProducts'
-      }, {model: User,
-      as: 'CampaignVendors'}]
-    })
+      include: [
+        {
+          model: Product,
+          as: 'CampaignProducts',
+        },
+        {model: User, as: 'CampaignVendors'},
+      ],
+    });
   }
-};
+}
 
-module.exports = NgoService
+module.exports = NgoService;
