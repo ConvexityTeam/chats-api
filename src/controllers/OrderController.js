@@ -156,13 +156,13 @@ class OrderController {
         return Response.send(res);
       }
 
-      // if (data.order.status !== 'pending') {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     `Order ${data.order.status}`,
-      //   );
-      //   return Response.send(res);
-      // }
+      if (data.order.status !== 'pending') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Order ${data.order.status}`,
+        );
+        return Response.send(res);
+      }
 
       const [
         campaignWallet,
