@@ -1,6 +1,5 @@
-version: "3.9"
-
 services:
+  version: "3.3"
   rabbitmq:
     image: "rabbitmq:3.8.14-alpine"
     container_name: rabbitmq
