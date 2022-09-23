@@ -136,9 +136,9 @@ class OrderController {
         data.total_cost,
       );
 
-      Utils.setSuccess(
+      Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        transaction.status,
+        'Order details',
         transaction,
       );
       return Response.send(res);
@@ -234,7 +234,6 @@ class OrderController {
         data.order.Vendor,
         data.total_cost,
       );
-        Logger.info('transaction status: '+transaction.status)
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Order details',

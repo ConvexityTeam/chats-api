@@ -9,7 +9,7 @@ class Response {
     this.statusCode = null;
   }
 
-  setSuccess(statusCode, message, data = null) {
+  setSuccess(statusCode, message,  data = null) {
     this.statusCode = statusCode;
     this.message = message;
     this.data = data;
