@@ -102,36 +102,31 @@ class BlockchainService {
     });
   }
   static async createAccountWallet() {
-    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Create Account Wallet Request');
         const {data} = await Axios.post(`${tokenConfig.baseURL}/user/register`);
         Logger.info('Create Account Wallet Response', data);
-        resolve(data.AccountCreated);
+        return true
       } catch (error) {
         Logger.error('Create Account Wallet Error', error.response.data);
-        reject(error);
+        return false
       }
-    });
   }
   static async addUser(arg) {
-    return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);
         const {data} = await Axios.post(
           `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`,
         );
         Logger.info(`Adding User Response: ${JSON.stringify(data)}`);
-        resolve(data.AddedUser);
+        return true
       } catch (error) {
         console.log(error);
-        Logger.error(`Adding User Error: ${error.response}`);
-        reject(error);
+        Logger.error(`Adding User Error: ${JSON.stringify(error.response.data)}`);
+        return false
       }
-    });
   }
   static async mintToken(mintTo, amount) {
-    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
         const payload = {mintTo, amount};
@@ -146,44 +141,39 @@ class BlockchainService {
           },
         );
         Logger.info('Token minted', data);
-        resolve(data);
+        return true
       } catch (error) {
-        Logger.error('Error minting token', error);
-        reject(error);
+        Logger.error('Error minting token', JSON.stringify(error.response.data));
+        return false
       }
-    });
   }
 
   static async approveToSpend(ngoAddress, ngoPassword, benWallet, amount) {
-    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
         const res = await Axios.post(
           `${tokenConfig.baseURL}/txn/approve/${ngoAddress}/${ngoPassword}/${benWallet}/${amount}`,
         );
         Logger.info('Approved to spend', res);
-        if (res.data) resolve(res.data);
+        return true
       } catch (error) {
         Logger.error('Error approving to spend', error);
-        reject(error.response.data);
+        return false
       }
-    });
   }
 
   static async transferTo(senderaddr, senderpwsd, receiver, amount) {
-    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring to');
         const res = await Axios.post(
           `${tokenConfig.baseURL}/txn/transfer/${senderaddr}/${senderpwsd}/${receiver}/${amount}`,
         );
         Logger.info('Success transferring funds to', res.data);
-        resolve(res.data);
+        return true
       } catch (error) {
         Logger.error('Error transferring funds to', error.response.data);
-        reject(error.response.data);
+        return false
       }
-    });
   }
 
   static async transferFrom(
@@ -193,7 +183,6 @@ class BlockchainService {
     spenderpwsd,
     amount,
   ) {
-    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring funds from..');
         const res = await Axios.post(
@@ -201,25 +190,22 @@ class BlockchainService {
         );
         
         Logger.info('Success transferring funds from', res.data);
-        if (res.data) resolve(res.data);
+        return true
       } catch (error) {
         Logger.info(`Error transferring funds from: ${JSON.stringify(error.response.data)}`);
-        reject(error.response.data);
+        return false
       }
-    });
   }
 
   static async allowance(tokenOwner, spenderAddr) {
-    return new Promise(async (resolve, reject) => {
       try {
         const {data} = await Axios.get(
           `${tokenConfig.baseURL}/account/allowance/${tokenOwner}/${spenderAddr}`,
         );
-        resolve(data);
+        return data
       } catch (error) {
-        reject(error);
+        return false
       }
-    });
   }
 
   static async balance(address) {
@@ -239,7 +225,6 @@ class BlockchainService {
     const mintTo = senderaddr;
     const payload = {mintTo, amount};
     const checksum = Encryption.encryptTokenPayload(payload);
-    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Redeeming token');
         const {data} = await Axios.post(
@@ -251,13 +236,12 @@ class BlockchainService {
             },
           },
         );
-        Logger.info('Success redeeming token', data);
-        resolve(data);
+        Logger.info('Success redeeming token');
+        return true
       } catch (error) {
-        Logger.error('Error redeeming token', error.response.data);
-        reject(error.response.data);
+        Logger.error(`Error redeeming token`, JSON.stringify(error.response.data));
+        return false
       }
-    });
   }
 
   static async createNewBSCAccount({mnemonicString, userSalt}) {

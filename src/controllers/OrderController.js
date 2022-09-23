@@ -16,6 +16,7 @@ const {
   OrganisationService,
 } = require('../services');
 const db = require('../models');
+const Utils = require('../libs/Utils');
 class OrderController {
   static async getOrderByReference(req, res) {
     try {
@@ -155,13 +156,13 @@ class OrderController {
         return Response.send(res);
       }
 
-      if (data.order.status !== 'pending') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Order ${data.order.status}`,
-        );
-        return Response.send(res);
-      }
+      // if (data.order.status !== 'pending') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Order ${data.order.status}`,
+      //   );
+      //   return Response.send(res);
+      // }
 
       const [
         campaignWallet,
@@ -218,10 +219,8 @@ class OrderController {
         data.total_cost,
       );
 
-      Response.setSuccess(
-        HttpStatusCode.STATUS_OK,
-        'Order details',
-        transaction,
+      Utils.setSuccess(201,
+        transaction.status,
       );
       return Response.send(res);
     } catch (error) {

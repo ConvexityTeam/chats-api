@@ -825,7 +825,6 @@ class AuthController {
       }
       const {name} = await OrganisationService.checkExist(organisationId);
       const {id} = await AuthService.inviteDonor(inviteeEmail, organisationId);
-      console.log(id);
       const mail = await MailerService.sendInvite(inviteeEmail, id, name);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -910,7 +909,7 @@ class AuthController {
         Response.setError(401, 'Unauthorised. Token Expired');
         return Response.send(res);
       }
-      const password = await createHash(req.body.password);
+      const password =  createHash(req.body.password);
       const user = await UserService.addUser({
         RoleId: AclRoles.Donor,
         email: isInvited.email,
