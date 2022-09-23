@@ -184,6 +184,19 @@ RabbitMq['default']
                   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
                 });
                 msg.ack();
+              }else{
+                await Transaction.create({
+                  log: transactionReference,
+                  narration: 'Fiat Deposit Transaction',
+                  ReceiverWalletId: wallet.uuid,
+                  transaction_origin: 'wallet',
+                  transaction_type: 'deposit',
+                  status: 'failed',
+                  is_approved: false,
+                  OrganisationId,
+                  reference,
+                  amount,
+                });
               }
                 
               } else {
