@@ -156,14 +156,14 @@ RabbitMq['default']
             .then(async wallet => {
               if (wallet) {
                 const reference = generateTransactionRef();
-                const organisation = await BlockchainService.setUserKeypair(
-                  `organisation_${OrganisationId}`,
-                );
-                const mint = await BlockchainService.mintToken(
-                  organisation.address,
-                  amount,
-                );
-                if(mint){
+                // const organisation = await BlockchainService.setUserKeypair(
+                //   `organisation_${OrganisationId}`,
+                // );
+                // const mint = await BlockchainService.mintToken(
+                //   organisation.address,
+                //   amount,
+                // );
+                // if(mint){
                 await DepositService.updateFiatDeposit(transactionReference, {
                   status: 'successful',
                 });
@@ -184,21 +184,6 @@ RabbitMq['default']
                   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
                 });
                 msg.ack();
-              }else{
-                await Transaction.create({
-                  log: transactionReference,
-                  narration: 'Fiat Deposit Transaction',
-                  ReceiverWalletId: wallet.uuid,
-                  transaction_origin: 'wallet',
-                  transaction_type: 'deposit',
-                  status: 'failed',
-                  is_approved: false,
-                  OrganisationId,
-                  reference,
-                  amount,
-                });
-              }
-                
               } else {
                 QueueService.createWallet(OrganisationId, 'organisation');
                 Promise.reject('Organisation wallet does not exist');

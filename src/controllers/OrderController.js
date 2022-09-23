@@ -209,6 +209,13 @@ class OrderController {
         );
         return Response.send(res);
       }
+      if (beneficiaryWallet.balance < data.total_cost) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Insufficient wallet balance.',
+        );
+        return Response.send(res);
+      }
 
       const transaction = await OrderService.processOrder(
         beneficiaryWallet,
