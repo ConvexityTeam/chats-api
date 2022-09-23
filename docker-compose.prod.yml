@@ -73,7 +73,7 @@ services:
 networks:
   gateway:
     driver: bridge
-    name: gateway
+    # name: gateway
   rabbitmq:
     internal: true
   # postgres:
