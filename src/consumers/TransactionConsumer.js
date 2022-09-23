@@ -164,10 +164,11 @@ RabbitMq['default']
                 //   amount,
                 // );
                 // if(mint){
-                await DepositService.updateFiatDeposit(transactionReference, {
+              const exist =  await DepositService.updateFiatDeposit(transactionReference, {
                   status: 'successful',
                 });
-                await Transaction.create({
+                if(exist !== null){
+                  await Transaction.create({
                   log: transactionReference,
                   narration: 'Fiat Deposit Transaction',
                   ReceiverWalletId: wallet.uuid,
@@ -175,6 +176,19 @@ RabbitMq['default']
                   transaction_type: 'deposit',
                   status: 'success',
                   is_approved: true,
+                  OrganisationId,
+                  reference,
+                  amount,
+                });
+                }
+                await Transaction.create({
+                  log: transactionReference,
+                  narration: 'Fiat Deposit Transaction',
+                  ReceiverWalletId: wallet.uuid,
+                  transaction_origin: 'wallet',
+                  transaction_type: 'deposit',
+                  status: 'failed',
+                  is_approved: false,
                   OrganisationId,
                   reference,
                   amount,
