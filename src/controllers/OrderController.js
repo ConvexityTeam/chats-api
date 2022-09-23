@@ -218,7 +218,6 @@ class OrderController {
         data.order.Vendor,
         data.total_cost,
       );
-
       Utils.setSuccess(201,
         transaction.status,
       );
