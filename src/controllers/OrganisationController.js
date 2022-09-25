@@ -218,25 +218,29 @@ class OrganisationController {
       let completed_task = 0;
       const assignmentTask = [];
       const query = SanitizeObject(req.query);
-      const organisation = await CampaignService.getPublicCampaigns({
+      const campaigns = await CampaignService.getPublicCampaigns({
         ...query,
         is_public: true,
       });
-      for (let org of organisation) {
-        for (let campaign of org.Campaigns) {
-          for (let task of campaign.Jobs) {
-            const assignment = await db.TaskAssignment.findOne({
-              where: {TaskId: task.id, status: 'completed'},
-            });
-            assignmentTask.push(assignment);
-          }
 
-          (campaign.dataValues.beneficiaries_count =
-            campaign.Beneficiaries.length),
-            (campaign.dataValues.task_count = campaign.Jobs.length);
-          campaign.dataValues.completed_task = completed_task;
+      for (let campaign of campaigns) {
+        const organisation = await OrganisationService.checkExist(
+          campaign.OrganisationId,
+        );
+        campaign.dataValues.Organisation = organisation;
+        for (let task of campaign.Jobs) {
+          const assignment = await db.TaskAssignment.findOne({
+            where: {TaskId: task.id, status: 'completed'},
+          });
+          assignmentTask.push(assignment);
         }
+
+        (campaign.dataValues.beneficiaries_count =
+          campaign.Beneficiaries.length),
+          (campaign.dataValues.task_count = campaign.Jobs.length);
+        campaign.dataValues.completed_task = completed_task;
       }
+
       function isExist(id) {
         let find = assignmentTask.find(a => a && a.TaskId === id);
         if (find) {
@@ -244,22 +248,20 @@ class OrganisationController {
         }
         return false;
       }
-      organisation.forEach(org => {
-        org.Campaigns.forEach(data => {
-          data.Jobs.forEach(task => {
-            if (isExist(task.id)) {
-              data.dataValues.completed_task++;
-            }
-          });
+
+      campaigns.forEach(data => {
+        data.Jobs.forEach(task => {
+          if (isExist(task.id)) {
+            data.dataValues.completed_task++;
+          }
         });
       });
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', organisation);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error,
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }

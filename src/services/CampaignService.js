@@ -268,15 +268,12 @@ class CampaignService {
   }
   static getPublicCampaigns(queryClause = {}) {
     const where = queryClause;
-    return Organisation.findAll({
-      include: [
-        {
-          model: Campaign,
-          as: 'Campaigns',
-          order: [['updatedAt', 'ASC']],
-          where: {
+    return Campaign.findAll({
+      order: [['updatedAt', 'ASC']],
+      where: {
             ...where,
           },
+      
           include: [
             {model: Task, as: 'Jobs'},
             {
@@ -285,8 +282,6 @@ class CampaignService {
               attributes: userConst.publicAttr,
             },
           ],
-        },
-      ],
     });
   }
  static getPrivateCampaigns(query, id) {
@@ -299,7 +294,8 @@ class CampaignService {
       include: {
         model: Campaign,
         where: {
-          ...query
+          ...query,
+          is_public: false,
         },
         as: 'associatedCampaigns',
         
