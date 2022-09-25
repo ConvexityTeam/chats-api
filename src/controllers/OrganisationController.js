@@ -276,9 +276,7 @@ class OrganisationController {
       const [campaigns, organisationW, transaction] = await Promise.all([
         CampaignService.getPrivateCampaigns(query, organisation.id),
         OrganisationService.getOrganisationWallet(organisation.id),
-        TransactionService.findOrgnaisationTransactions(
-        organisation.id,
-      )
+        TransactionService.findOrgnaisationTransactions(organisation.id),
       ]);
       for (let campaign of campaigns.associatedCampaigns) {
         for (let task of campaign.Jobs) {
