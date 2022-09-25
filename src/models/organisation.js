@@ -45,10 +45,14 @@ module.exports = (sequelize, DataTypes) => {
           wallet_type: "organisation",
         },
       });
-      // Organisation.hasMany(model.AssociatedCampaign,{
-      //   as: 'associatedCampaigns',
-      //   foreignKey: 'campaignId'
-      // })
+
+      Organisation.belongsToMany(models.Campaign,{
+        through: {
+          model: models.AssociatedCampaign,
+        },
+        as: 'associatedCampaigns',
+        foreignKey: 'DonorId'
+      })
 
       Organisation.hasOne(models.Wallet, {
         as: "Wallet",

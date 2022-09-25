@@ -8,7 +8,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      donorOrganisationId: {
+      DonorId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
@@ -16,7 +16,7 @@ module.exports = {
           key: 'id'
         }
       },
-      campaignId: {
+      CampaignId: {
         type: Sequelize.INTEGER,
         references: {
           model: 'Campaigns',

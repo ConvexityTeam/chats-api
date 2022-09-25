@@ -7,6 +7,7 @@ const {
   Beneficiary,
   VoucherToken,
   Transaction,
+  AssociatedCampaign,
   Organisation,
   Task,
   CampaignVendor,
@@ -288,7 +289,60 @@ class CampaignService {
       ],
     });
   }
+ static getPrivateCampaigns(query, id) {
 
+    return Organisation.findOne({
+      where: {
+        id
+      },
+      order: [['updatedAt', 'ASC']],
+      include: {
+        model: Campaign,
+        where: {
+          ...query
+        },
+        as: 'associatedCampaigns',
+        
+        include: [
+        {model: Task, as: 'Jobs'},
+        {model: User, as: 'Beneficiaries'},
+      ],
+      }
+      // where: {
+      //   ...where,
+      // },
+      // include: {
+      //   model: Campaign,
+      //   as: 'associatedCampaigns',
+      //   include: [
+      //   {model: Task, as: 'Jobs'},
+      //   {model: User, as: 'Beneficiaries'},
+      // ],
+      // }
+
+    });
+  }
+  static getCash4W(OrganisationId) {
+    return Campaign.findAll({
+      where: {
+        type: 'cash-for-work',
+        OrganisationId,
+      },
+      // attributes: {
+      //   include: [
+      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+      //   ]
+      // },
+      include: [
+        {model: Task, as: 'Jobs'},
+        {model: User, as: 'Beneficiaries'},
+      ],
+      // includeIgnoreAttributes: false,
+      // group: [
+      //   "Campaign.id"
+      // ],
+    });
+  }
   static getCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({

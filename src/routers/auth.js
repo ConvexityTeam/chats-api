@@ -1,6 +1,6 @@
 const router = require('express').Router();
 
-const {Auth} = require('../middleware'); //Auhorization middleware
+const {Auth, NgoAdminAuth} = require('../middleware'); //Auhorization middleware
 const {AuthController, BeneficiaryController} = require('../controllers');
 
 const multer = require('../middleware/multer-config'); //for uploading of profile picture and fingerprint
@@ -8,7 +8,8 @@ const e2e = require('../middleware/e2e'); //End2End Encryption middleware
 const {AuthValidator, UserValidator, FileValidator} = require('../validators');
 // router.use(e2e);
 
-router.post('/invite', AuthController.sendInvite);
+router.post('/:campaignId/confirm-campaign-invite/:token', AuthController.confirmInvite)
+router.post('/invite',NgoAdminAuth, AuthController.sendInvite);
 router.post('/donor-register', AuthController.createDonorAccount);
 router.post('/register', AuthController.createBeneficiary);
 router.post(

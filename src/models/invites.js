@@ -21,7 +21,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     email: DataTypes.STRING,
     token: DataTypes.STRING,
-    inviterId: DataTypes.INTEGER
+    inviterId: DataTypes.INTEGER,
+    CampaignId: DataTypes.INTEGER,
+    isAdded: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Invites',

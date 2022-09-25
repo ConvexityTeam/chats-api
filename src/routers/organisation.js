@@ -283,7 +283,6 @@ router
   .get(
     DonorAuth,
     ParamValidator.OrganisationId,
-    IsOrgMember,
     OrganisationController.getAllPrivateDonorCampaigns,
   );
 

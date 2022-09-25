@@ -268,20 +268,19 @@ class OrganisationController {
     try {
       let completed_task = 0;
       const assignmentTask = [];
-      const OrganisationId = req.params.organisation_id;
-      const {id} = await OrganisationService.checkExistEmail(req.user.email);
-      const query = SanitizeObject(req.query);
-      const transaction = await TransactionService.findOrgnaisationTransactions(
-        id,
-      );
 
-      const campaigns = await CampaignService.getCampaigns({
-        ...query,
-        OrganisationId,
-        is_public: false,
-      });
-      const organisationW = await OrganisationService.getOrganisationWallet(id);
-      for (let campaign of campaigns) {
+      const organisation = await OrganisationService.checkExistEmail(
+        req.user.email,
+      );
+      const query = SanitizeObject(req.query);
+      const [campaigns, organisationW, transaction] = await Promise.all([
+        CampaignService.getPrivateCampaigns(query, organisation.id),
+        OrganisationService.getOrganisationWallet(organisation.id),
+        TransactionService.findOrgnaisationTransactions(
+        organisation.id,
+      )
+      ]);
+      for (let campaign of campaigns.associatedCampaigns) {
         for (let task of campaign.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'},
@@ -297,15 +296,23 @@ class OrganisationController {
         campaign.dataValues.iDonate = false;
         const campaignW = await CampaignService.getCampaignWallet(
           campaign.id,
-          id,
+          organisation.id,
         );
-        // if(campaignW.Wallet &&  organisationW.Wallet){
-        //   for(let tran of transaction){
-        //     if(tran.ReceiverWalletId === campaignW.Wallet.uuid && tran.SenderWalletId === organisationW.Wallet.uuid){
-        //       campaign.dataValues.iDonate = true
-        //     }
-        // }
-        // }
+        if (
+          campaignW !== null &&
+          campaignW.Wallet &&
+          organisationW !== null &&
+          organisationW.Wallet
+        ) {
+          for (let tran of transaction) {
+            if (
+              tran.ReceiverWalletId === campaignW.Wallet.uuid &&
+              tran.SenderWalletId === organisationW.Wallet.uuid
+            ) {
+              campaign.dataValues.iDonate = true;
+            }
+          }
+        }
       }
       function isExist(id) {
         let find = assignmentTask.find(a => a && a.TaskId === id);
@@ -314,7 +321,7 @@ class OrganisationController {
         }
         return false;
       }
-      campaigns.forEach(data => {
+      campaigns.associatedCampaigns.forEach(data => {
         data.Jobs.forEach(task => {
           if (isExist(task.id)) {
             data.dataValues.completed_task++;
@@ -748,17 +755,17 @@ class OrganisationController {
         );
         return Response.send(res);
       } else {
-       const isVendorDeleted = await db.VendorProduct.destroy({
-          where:{
-            productId: ProductId
-          }
-        })
-        if(isVendorDeleted)
-        await db.Product.destroy({
+        const isVendorDeleted = await db.VendorProduct.destroy({
           where: {
-            id: ProductId,
+            productId: ProductId,
           },
         });
+        if (isVendorDeleted)
+          await db.Product.destroy({
+            where: {
+              id: ProductId,
+            },
+          });
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
           'Product Deleted in stores',
@@ -1314,7 +1321,6 @@ class OrganisationController {
       return Response.send(res);
     }
   }
-
 
   static async getCampaignVendors(req, res) {
     try {
