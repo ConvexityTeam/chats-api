@@ -283,13 +283,12 @@ router
   .get(
     DonorAuth,
     ParamValidator.OrganisationId,
-    IsOrgMember,
     OrganisationController.getAllPrivateDonorCampaigns,
   );
 
-router
-  .route('/:organisation_id/public_donor/campaigns/all')
-  .get(OrganisationController.getAllPublicDonorCampaigns);
+router.get('/donations/public_donor/campaigns/all',
+OrganisationController.getAllPublicDonorCampaigns)
+
 
 router
   .route('/:organisation_id/cash4works')
