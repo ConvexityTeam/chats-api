@@ -67,6 +67,7 @@ class ZohoService {
       return data;
     } catch (error) {
       Logger.error(`Error Creating Zoho Ticket: ${error}`);
+      throw new Error(error)
     }
   }
 }

@@ -1,4 +1,4 @@
-
+const {createClient} = require('redis');
 const axios = require('axios');
 const ethers = require('ethers');
 const crypto = require('crypto');
@@ -6,17 +6,28 @@ const sha256 = require('simple-sha256');
 const {tokenConfig, switchWallet} = require('../config');
 const {Encryption, Logger} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
-const {RedisService, RedisClient} = require('./RedisService');
 
-
+const client = createClient({
+  socket: {
+    port: 5000,
+    tls: true,
+  },
+});
 
 const Axios = axios.create();
 
 class BlockchainService {
-  
+  static async connectRedis() {
+    try {
+      await client.connect();
+      client.on('error', err => console.log('Redis Client Error'));
+    } catch (error) {
+      Logger.error('Redis ' + error);
+    }
+  }
 
   static async signInSwitchWallet() {
-    await RedisService.connectRedis()
+    this.connectRedis();
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Signing in to switch wallet');
@@ -38,12 +49,12 @@ class BlockchainService {
   static async switchGenerateAddress(body) {
     return new Promise(async (resolve, reject) => {
       try {
-        const switch_token = await RedisClient.get('switch_token');
-        const expires = await RedisClient.get('expires');
+        const switch_token = await client.get('switch_token');
+        const expires = await client.get('expires');
         if (expires < new Date() || expires === null) {
           const token = await this.signInSwitchWallet();
-          await RedisClient.set('expires', token.data.expires);
-          await RedisClient.set('switch_token', token.data.accessToken);
+          await client.set('expires', token.data.expires);
+          await client.set('switch_token', token.data.accessToken);
         }
         Logger.info('Generating wallet address');
         const {data} = await Axios.post(
@@ -66,11 +77,11 @@ class BlockchainService {
   static async switchWithdrawal(body) {
     return new Promise(async (resolve, reject) => {
       try {
-        const switch_token = await RedisClient.get('switch_token');
+        const switch_token = await client.get('switch_token');
 
         if (switch_token !== null && switch_token < new Date()) {
           const token = await this.signInSwitchWallet();
-          await RedisClient.set('switch_token', token.data.accessToken);
+          await client.set('switch_token', token.data.accessToken);
         }
         Logger.info('Withdrawing from my account');
         const {data} = await Axios.post(
