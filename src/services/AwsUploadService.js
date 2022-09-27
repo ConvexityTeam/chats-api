@@ -61,7 +61,6 @@ class AwsUploadService {
             return decodedBinarySecret;
           }
         });
-      console.log(secretName);
       return data;
     } catch (err) {
       if (err.code === 'DecryptionFailureException') {

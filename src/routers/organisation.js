@@ -79,7 +79,7 @@ router.get('/metric/:id', OrganisationController.getMetric);
 router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign);
 
 router.get('/matrics', NgoSubAdminAuth, OrganisationController.matrix);
-
+router.post('/zoho-cretate-ticket', OrganisationController.createTicket)
 router.get(
   '/non-org-beneficiary',
   FieldAgentAuth,
@@ -279,10 +279,9 @@ router
   );
 
 router
-  .route('/:organisation_id/private_donor/campaigns/all')
+  .route('/donations/private_donor/campaigns/all')
   .get(
     DonorAuth,
-    ParamValidator.OrganisationId,
     OrganisationController.getAllPrivateDonorCampaigns,
   );
 

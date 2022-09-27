@@ -224,6 +224,8 @@ class OrganisationController {
       });
 
       for (let campaign of campaigns) {
+        if (new Date(campaign.end_date) < new Date())
+          campaign.update({status: 'completed'});
         const organisation = await OrganisationService.checkExist(
           campaign.OrganisationId,
         );
@@ -281,6 +283,8 @@ class OrganisationController {
         TransactionService.findOrgnaisationTransactions(organisation.id),
       ]);
       for (let campaign of campaigns.associatedCampaigns) {
+        if (new Date(campaign.end_date) < new Date())
+          campaign.update({status: 'completed'});
         for (let task of campaign.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'},
@@ -350,6 +354,8 @@ class OrganisationController {
       });
 
       for (let data of campaigns) {
+        if (new Date(data.end_date) < new Date())
+          data.update({status: 'completed'});
         for (let task of data.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'},
@@ -2125,6 +2131,39 @@ class OrganisationController {
       );
       return Response.send(res);
     } catch (error) {
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`,
+      );
+      return Response.send(res);
+    }
+  }
+  static async createTicket(req, res){
+    const data = req.body
+    try{
+      const rules = {
+      email: 'required|email',
+      subject: 'required|string',
+      description: 'required|string',
+      'contact.email': 'email',
+      'contact.firstName': 'string',
+      'contact.lastName': 'string'
+    };
+
+    const validation = new Validator(data, rules);
+    if (validation.fails()) {
+      Response.setError(422, validation.errors);
+      return Response.send(res);
+    }
+      const createdTicket = await ZohoService.createTicket(data)
+      //const generate = await ZohoService.generatingToken()
+      Response.setSuccess(
+        201,
+        'Ticket Created Successfully',
+        createdTicket,
+      );
+      return Response.send(res);
+    }catch(error){
       Response.setError(
         500,
         `Internal server error. Contact support. ${error}`,
