@@ -1,96 +1,74 @@
 const {zohoCrmConfig} = require('../config');
-const ZohoClient = require('@zohocrm/nodejs-sdk-2.0');
+const {ZohoToken} = require('../models');
 const axios = require('axios');
 const {Logger} = require('../libs');
 
 const Axios = axios.create();
 
+function addMinutes(numOfMinutes, date = new Date()) {
+  date.setMinutes(date.getMinutes() + numOfMinutes);
+
+  return date;
+}
+
+console.log(addMinutes(20));
+
 class ZohoService {
-  static async zohiInitializer() {
-    let config = {
-      client_id: '',
-      client_secret: '',
-    };
-    return new Promise(async (resolve, reject) => {
-      try {
-        const ZohoInit = new ZohoClient.Initializer();
-        console.log(ZohoInit, 'ZohoInit');
-        resolve(ZohoInit);
-      } catch (error) {
-        console.log(error, 'error zoho');
-        reject(error);
-      }
-    });
-  }
-  static async zohoInit() {
-    return new Promise(async (resolve, reject) => {
-      try {
-        Logger.info('Generating Zoho Access Token');
-        const {data} = await Axios.post(
-          `${zohoCrmConfig.base}/auth?scope=${zohoCrmConfig.scope}&client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&response_type=code&redirect_uri=${zohoCrmConfig.redirect_uri}&prompt=consent`,
-        );
-        Logger.info(`Generated Zoho Code`);
-        resolve(data);
-      } catch (error) {
-        Logger.error(`Error Generating Zoho Code: ${error}`);
-        reject(error.response);
-      }
-    });
+  static async generatingToken() {
+    try {
+      Logger.info('Generating Zoho Access Token');
+      const {data} = await Axios.post(
+        `https://accounts.zoho.com/oauth/v2/token?client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&code=${zohoCrmConfig.code}`,
+      );
+      await ZohoToken.create({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_in: addMinutes(55),
+      });
+      Logger.info(`Generated Zoho Access And Refresh Token`);
+      return data;
+    } catch (error) {
+      Logger.error(
+        `Error Generating Zoho Access And Refresh Token: ${error.response.data}`,
+      );
+    }
   }
 
-  static async generateAccessToken() {
-    return new Promise(async (resolve, reject) => {
-      try {
-        Logger.info('Generating Zoho Access Token');
-        const {data} = await Axios.post(
-          `${zohoCrmConfig.base}/token?client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&redirect_uri=${zohoCrmConfig.redirect_uri}&code=1000.b86f79013f525b5df00163a70a933662.2c719b6e77738cfc032ae5d34b9f0c93`,
-        );
-        Logger.info(`Generated Zoho Code`);
-        resolve(data);
-      } catch (error) {
-        Logger.error(`Error Generating Zoho Code: ${error}`);
-        reject(error.response);
-      }
-    });
+  static async refreshingAccessToken(refresh_token) {
+    try {
+      Logger.info('Refreshing Token');
+      const {data} = await Axios.post(
+        `https://accounts.zoho.com/oauth/v2/token?client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=refresh_token&refresh_token=${refresh_token}&scope=${zohoCrmConfig.scope}`,
+      );
+      const zoho = await ZohoToken.findByPk(1);
+      await zoho.update(data);
+      Logger.info(`Generated Zoho Code`);
+      return data;
+    } catch (error) {
+      Logger.error(`Error Generating Zoho Code: ${error}`);
+      return false;
+    }
   }
 
-  static async generateRefreshToken(code) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        Logger.info('Generating Zoho Refresh Token');
-        const {data} = await Axios.post(
-          `${zohoCrmConfig.base}/token/revoke?token=1000.f9672648350b699645c6357470fc56ba.f4359a4e779b0e2e13b681359967bb11`,
-        );
-        Logger.info('Generated Zoho Refresh Token');
-        resolve(data);
-      } catch (error) {
-        Logger.error(`Error Generating Zoho Refresh Token: ${error}`);
-        reject(error.response);
+  static async createTicket(ticket) {
+    try {
+      const zoho = await ZohoToken.findByPk(1);
+      if (new Date() > new Date(zoho.expires_in)) {
+        await this.refreshingAccessToken(zoho.refresh_token);
       }
-    });
-  }
-  static async createTicket(subject, description, phone, email) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const refresh = await ZohoService.generateRefreshToken();
-        const access_token = refresh.access_token;
-        Logger.info('Creating Zoho Ticket');
-        const {data} = await Axios.post(
-          `${zohoCrmConfig.tickets}`,
-          {subject, description, phone, email},
-          {
-            headers: {
-              Authorization: `Zoho-oauthtoken ${access_token}`,
-            },
-          },
-        );
-        Logger.info('Created Zoho Ticket');
-        resolve(data);
-      } catch (error) {
-        Logger.error(`Error Creatingng Zoho Ticket: ${error}`);
-        reject(error);
-      }
-    });
+
+      Logger.info('Creating Zoho Ticket');
+      const {data} = await Axios.post(`${zohoCrmConfig.tickets}`, ticket, {
+        headers: {
+          Authorization: `Bearer ${zoho.access_token}`,
+        },
+      });
+      Logger.info('Created Zoho Ticket');
+      return data;
+    } catch (error) {
+      Logger.error(`Error Creating Zoho Ticket: ${error}`);
+      throw new Error(error)
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-const {Response} = require('../libs');
+const {Response, Logger} = require('../libs');
 const moment = require('moment');
 const {
   HttpStatusCode,
@@ -16,6 +16,7 @@ const {
   OrganisationService,
 } = require('../services');
 const db = require('../models');
+const Utils = require('../libs/Utils');
 class OrderController {
   static async getOrderByReference(req, res) {
     try {
@@ -119,6 +120,13 @@ class OrderController {
         );
         return Response.send(res);
       }
+      if (beneficiaryWallet.balance < data.total_cost) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Insufficient wallet balance.',
+        );
+        return Response.send(res);
+      }
       const transaction = await OrderService.processOrder(
         beneficiaryWallet,
         vendorWallet,
@@ -209,6 +217,15 @@ class OrderController {
         return Response.send(res);
       }
 
+      if (beneficiaryWallet.balance < data.total_cost) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Insufficient wallet balance.',
+        );
+        Logger.error('Insufficient wallet balance.')
+        return Response.send(res);
+      }
+
       const transaction = await OrderService.processOrder(
         beneficiaryWallet,
         vendorWallet,
@@ -217,7 +234,6 @@ class OrderController {
         data.order.Vendor,
         data.total_cost,
       );
-
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Order details',

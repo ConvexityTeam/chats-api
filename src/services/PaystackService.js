@@ -60,7 +60,6 @@ class PaystackService {
   }
 
   static async withdraw(source, amount, recipient, reason) {
-    return new Promise(async (resolve, reject) => {
       try {
         let value = amount * 100;
         Logger.info(`tranferring to bank account`);
@@ -71,12 +70,11 @@ class PaystackService {
           reason,
         });
         Logger.info(`success tranferring to bank account: ${response.data}`);
-        resolve(response.data);
+        return true
       } catch (error) {
         Logger.error(`Error tranferring to bank account: ${error}`);
-        reject(new Error('Could not make a withdrawal'));
+        return false
       }
-    });
   }
 
   static async resolveAccount(account_number, bank_code) {

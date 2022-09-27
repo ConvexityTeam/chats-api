@@ -23,6 +23,7 @@ const {
   QueueService,
   MailerService,
   OrganisationService,
+  CampaignService,
 } = require('../services');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
@@ -811,29 +812,37 @@ class AuthController {
   }
 
   static async sendInvite(req, res) {
-    const {inviteeEmail, organisationId} = req.body;
+    const {inviteeEmail, organisationId, campaignId} = req.body;
     try {
       const rules = {
         inviteeEmail: 'email|required',
         organisationId: 'integer|required',
+        campaignId: 'integer|required'
       };
-
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const {name} = await OrganisationService.checkExist(organisationId);
-      const {id} = await AuthService.inviteDonor(inviteeEmail, organisationId);
-      console.log(id);
-      const mail = await MailerService.sendInvite(inviteeEmail, id, name);
+      const [ngo, campaign, donor] = await Promise.all([
+         OrganisationService.checkExist(organisationId),
+         CampaignService.getCampaignById(campaignId),
+        OrganisationService.checkExistEmail(inviteeEmail)
+      ])
+      
+      if(!donor){
+      const token = await AuthService.inviteDonor(inviteeEmail, organisationId, campaignId);
+       await MailerService.sendInvite(inviteeEmail, token, campaign, ngo.name, false);
+      }else {
+      const token = await AuthService.inviteDonor(inviteeEmail, organisationId, campaignId);
+      await MailerService.sendInvite(inviteeEmail, token, campaign, ngo.name, true);
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        'Invite sent to donor.',
-        mail,
+        'Invite sent to donor.'
       );
       return Response.send(res);
-    } catch (error) {
+    } catch(error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error. Please try again.' + error,
@@ -842,6 +851,86 @@ class AuthController {
     }
   }
 
+  static async resetPassword(req, res) {
+    try {
+      await AuthService.updatedPassord(req.user, req.body.password);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Reset password request failed. Please try again.',
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async confirmInvite(req, res) {
+    const {token, campaignId} = req.params;
+    try {
+      const rules = {
+        token: 'required|string',
+        campaignId: 'integer|required'
+      };
+      const validation = new Validator(req.params, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const [campaign, token_exist] = await Promise.all([
+         CampaignService.getCampaignById(campaignId),
+        db.Invites.findOne({where:{token}}),
+        
+      ])
+      
+      if(!campaign){
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign ID Not Found');
+      return Response.send(res);
+      }
+      jwt.verify(token, process.env.SECRET_KEY, async (err, payload) => {
+        if(err){
+        Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, 'Unauthorised. Token Invalid');
+        return Response.send(res);
+        }
+        const donor = await OrganisationService.checkExistEmail(token_exist.email)
+        const isAdded = await db.Invites.findOne({where: {CampaignId: campaignId, token, isAdded: false}})
+        if(!isAdded){
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'You don\'t have access to view this campaign');
+      return Response.send(res);
+        }
+        if(!donor){
+          Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, 'Confirmation failed. it seems you don\'t have an account with us');
+        return Response.send(res);
+        }
+      const associate = await db.AssociatedCampaign.findOne({where:{
+          DonorId: donor.id,
+          CampaignId: campaignId
+        }})
+        
+        if(associate){
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'You already have access to this campaign');
+      return Response.send(res);
+      }
+        await db.AssociatedCampaign.create({
+          DonorId: donor.id,
+          CampaignId: campaignId
+        })
+        await isAdded.update({isAdded: true})
+        Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'campaign has been confirmed'
+      );
+      return Response.send(res);
+      })
+      
+    } catch(error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Please try again.' + error,
+      );
+      return Response.send(res);
+    }
+  }
   static async createDonorAccount(req, res) {
     const data = req.body;
     try {
@@ -850,6 +939,8 @@ class AuthController {
         password: 'required',
         website_url: 'required|url',
         token: 'required|string',
+        campaignId: 'integer|required',
+        email: 'email|required'
       };
       const validation = new Validator(data, rules, {
         url: 'Only valid url with https or http allowed',
@@ -858,26 +949,41 @@ class AuthController {
         Response.setError(400, validation.errors);
         return Response.send(res);
       }
-
+const [campaign, token_exist] = await Promise.all([
+         CampaignService.getCampaignById(data.campaignId),
+        db.Invites.findOne({where:{token: data.token}}),
+      ])
       const url_string = data.website_url;
       const domain = extractDomain(url_string);
-      const isInvited = await db.Invites.findOne({where: {id: data.token}});
-      const email = isInvited.email;
+
+      const email = data.email;
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       if (!email.match(new RegExp(re))) {
         Response.setError(400, 'Email must end in @' + domain);
         return Response.send(res);
       }
       const userExist = await UserService.findSingleUser({
-        email: isInvited.email,
+        email: email,
       });
-
-      const isOrgMem = await OrganisationService.isMember(isInvited.inviterId);
-
+      
+      
+      if(!campaign){
+        Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign ID Not Found');
+      return Response.send(res);
+      }
       if (userExist) {
         Response.setError(400, 'Email Already Exists, Recover Your Account');
         return Response.send(res);
       }
+      if (userExist) {
+        Response.setError(400, 'Email Already Exists, Recover Your Account');
+        return Response.send(res);
+      }
+      const isAdded = await db.Invites.findOne({where: {CampaignId: data.campaignId, token: data.token,email: data.email, isAdded: false}})
+        if(!isAdded){
+      Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'You don\'t have access to view this campaign');
+      return Response.send(res);
+        }
       const organisationExist = await db.Organisation.findOne({
         where: {
           [Op.or]: [
@@ -897,39 +1003,37 @@ class AuthController {
         );
         return Response.send(res);
       }
-
-      if (!isInvited) {
-        Response.setError(401, 'Unauthorised. Token Invalid');
+      
+      jwt.verify(data.token, process.env.SECRET_KEY, async (err, payload) => {
+        if(err){
+        Response.setError(HttpStatusCode.STATUS_UNAUTHORIZED, 'Unauthorised. Token Invalid');
         return Response.send(res);
-      }
-      const isTokenExpired = jwt.verify(
-        isInvited.token,
-        process.env.SECRET_KEY,
-      );
-      if (!isTokenExpired) {
-        Response.setError(401, 'Unauthorised. Token Expired');
-        return Response.send(res);
-      }
-      const password = await createHash(req.body.password);
+        }
+      const password =  createHash(req.body.password);
       const user = await UserService.addUser({
         RoleId: AclRoles.Donor,
-        email: isInvited.email,
+        email: data.email,
         password,
       });
 
       const createdOrganisation = await db.Organisation.create({
         name: data.organisation_name,
-        email: isInvited.email,
+        email: data.email,
         website_url: data.website_url,
         registration_id: generateOrganisationId(),
       });
 
-      const member = await db.OrganisationMembers.create({
+      await db.OrganisationMembers.create({
         UserId: user.id,
         role: 'donor',
-        OrganisationId: isInvited.inviterId,
+        OrganisationId: token_exist.inviterId,
       });
-      //QueueService.createWallet(createdOrganisation.id, 'organisation');
+       await db.AssociatedCampaign.create({
+          DonorId: createdOrganisation.id,
+          CampaignId: data.campaignId
+        })
+        
+      QueueService.createWallet(createdOrganisation.id, 'organisation');
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -937,10 +1041,11 @@ class AuthController {
         createdOrganisation,
       );
       return Response.send(res);
+      })
     } catch (error) {
-      Response.setSuccess(
+      Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support',
+        'Internal Server Error, Contact Support'+error,
       );
       return Response.send(res);
     }

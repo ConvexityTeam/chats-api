@@ -218,25 +218,31 @@ class OrganisationController {
       let completed_task = 0;
       const assignmentTask = [];
       const query = SanitizeObject(req.query);
-      const organisation = await CampaignService.getPublicCampaigns({
+      const campaigns = await CampaignService.getPublicCampaigns({
         ...query,
         is_public: true,
       });
-      for (let org of organisation) {
-        for (let campaign of org.Campaigns) {
-          for (let task of campaign.Jobs) {
-            const assignment = await db.TaskAssignment.findOne({
-              where: {TaskId: task.id, status: 'completed'},
-            });
-            assignmentTask.push(assignment);
-          }
 
-          (campaign.dataValues.beneficiaries_count =
-            campaign.Beneficiaries.length),
-            (campaign.dataValues.task_count = campaign.Jobs.length);
-          campaign.dataValues.completed_task = completed_task;
+      for (let campaign of campaigns) {
+        if (new Date(campaign.end_date) < new Date())
+          campaign.update({status: 'completed'});
+        const organisation = await OrganisationService.checkExist(
+          campaign.OrganisationId,
+        );
+        campaign.dataValues.Organisation = organisation;
+        for (let task of campaign.Jobs) {
+          const assignment = await db.TaskAssignment.findOne({
+            where: {TaskId: task.id, status: 'completed'},
+          });
+          assignmentTask.push(assignment);
         }
+
+        (campaign.dataValues.beneficiaries_count =
+          campaign.Beneficiaries.length),
+          (campaign.dataValues.task_count = campaign.Jobs.length);
+        campaign.dataValues.completed_task = completed_task;
       }
+
       function isExist(id) {
         let find = assignmentTask.find(a => a && a.TaskId === id);
         if (find) {
@@ -244,22 +250,20 @@ class OrganisationController {
         }
         return false;
       }
-      organisation.forEach(org => {
-        org.Campaigns.forEach(data => {
-          data.Jobs.forEach(task => {
-            if (isExist(task.id)) {
-              data.dataValues.completed_task++;
-            }
-          });
+
+      campaigns.forEach(data => {
+        data.Jobs.forEach(task => {
+          if (isExist(task.id)) {
+            data.dataValues.completed_task++;
+          }
         });
       });
-
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', organisation);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error,
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
@@ -268,20 +272,19 @@ class OrganisationController {
     try {
       let completed_task = 0;
       const assignmentTask = [];
-      const OrganisationId = req.params.organisation_id;
-      const {id} = await OrganisationService.checkExistEmail(req.user.email);
-      const query = SanitizeObject(req.query);
-      const transaction = await TransactionService.findOrgnaisationTransactions(
-        id,
-      );
 
-      const campaigns = await CampaignService.getCampaigns({
-        ...query,
-        OrganisationId,
-        is_public: false,
-      });
-      const organisationW = await OrganisationService.getOrganisationWallet(id);
-      for (let campaign of campaigns) {
+      const organisation = await OrganisationService.checkExistEmail(
+        req.user.email,
+      );
+      const query = SanitizeObject(req.query);
+      const [campaigns, organisationW, transaction] = await Promise.all([
+        CampaignService.getPrivateCampaigns(query, organisation.id),
+        OrganisationService.getOrganisationWallet(organisation.id),
+        TransactionService.findOrgnaisationTransactions(organisation.id),
+      ]);
+      for (let campaign of campaigns.associatedCampaigns) {
+        if (new Date(campaign.end_date) < new Date())
+          campaign.update({status: 'completed'});
         for (let task of campaign.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'},
@@ -297,15 +300,23 @@ class OrganisationController {
         campaign.dataValues.iDonate = false;
         const campaignW = await CampaignService.getCampaignWallet(
           campaign.id,
-          id,
+          organisation.id,
         );
-        // if(campaignW.Wallet &&  organisationW.Wallet){
-        //   for(let tran of transaction){
-        //     if(tran.ReceiverWalletId === campaignW.Wallet.uuid && tran.SenderWalletId === organisationW.Wallet.uuid){
-        //       campaign.dataValues.iDonate = true
-        //     }
-        // }
-        // }
+        if (
+          campaignW !== null &&
+          campaignW.Wallet &&
+          organisationW !== null &&
+          organisationW.Wallet
+        ) {
+          for (let tran of transaction) {
+            if (
+              tran.ReceiverWalletId === campaignW.Wallet.uuid &&
+              tran.SenderWalletId === organisationW.Wallet.uuid
+            ) {
+              campaign.dataValues.iDonate = true;
+            }
+          }
+        }
       }
       function isExist(id) {
         let find = assignmentTask.find(a => a && a.TaskId === id);
@@ -314,7 +325,7 @@ class OrganisationController {
         }
         return false;
       }
-      campaigns.forEach(data => {
+      campaigns.associatedCampaigns.forEach(data => {
         data.Jobs.forEach(task => {
           if (isExist(task.id)) {
             data.dataValues.completed_task++;
@@ -343,6 +354,8 @@ class OrganisationController {
       });
 
       for (let data of campaigns) {
+        if (new Date(data.end_date) < new Date())
+          data.update({status: 'completed'});
         for (let task of data.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'},
@@ -748,17 +761,17 @@ class OrganisationController {
         );
         return Response.send(res);
       } else {
-       const isVendorDeleted = await db.VendorProduct.destroy({
-          where:{
-            productId: ProductId
-          }
-        })
-        if(isVendorDeleted)
-        await db.Product.destroy({
+        const isVendorDeleted = await db.VendorProduct.destroy({
           where: {
-            id: ProductId,
+            productId: ProductId,
           },
         });
+        if (isVendorDeleted)
+          await db.Product.destroy({
+            where: {
+              id: ProductId,
+            },
+          });
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
           'Product Deleted in stores',
@@ -1314,7 +1327,6 @@ class OrganisationController {
       return Response.send(res);
     }
   }
-
 
   static async getCampaignVendors(req, res) {
     try {
@@ -2119,6 +2131,39 @@ class OrganisationController {
       );
       return Response.send(res);
     } catch (error) {
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`,
+      );
+      return Response.send(res);
+    }
+  }
+  static async createTicket(req, res){
+    const data = req.body
+    try{
+      const rules = {
+      email: 'required|email',
+      subject: 'required|string',
+      description: 'required|string',
+      'contact.email': 'email',
+      'contact.firstName': 'string',
+      'contact.lastName': 'string'
+    };
+
+    const validation = new Validator(data, rules);
+    if (validation.fails()) {
+      Response.setError(422, validation.errors);
+      return Response.send(res);
+    }
+      const createdTicket = await ZohoService.createTicket(data)
+      //const generate = await ZohoService.generatingToken()
+      Response.setSuccess(
+        201,
+        'Ticket Created Successfully',
+        createdTicket,
+      );
+      return Response.send(res);
+    }catch(error){
       Response.setError(
         500,
         `Internal server error. Contact support. ${error}`,

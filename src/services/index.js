@@ -23,8 +23,9 @@ const MailerService = require('./MailerService');
 const TransactionService = require('./TransactionService');
 const AwsService = require('./AwsUploadService');
 const ZohoService = require('./ZohoService');
-
+const RedisService = require('./RedisService')
 module.exports = {
+  RedisService,
   SmsService,
   MailerService,
   ZohoService,

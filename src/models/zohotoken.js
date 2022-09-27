@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Invites extends Model {
+  class ZohoToken extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -13,20 +13,13 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  Invites.init({
-    id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
-      },
-    email: DataTypes.STRING,
-    token: DataTypes.STRING,
-    inviterId: DataTypes.INTEGER,
-    CampaignId: DataTypes.INTEGER,
-    isAdded: DataTypes.BOOLEAN
+  ZohoToken.init({
+    access_token: DataTypes.STRING,
+    refresh_token: DataTypes.STRING,
+    expires_in: DataTypes.DATE
   }, {
     sequelize,
-    modelName: 'Invites',
+    modelName: 'ZohoToken',
   });
-  return Invites;
+  return ZohoToken;
 };

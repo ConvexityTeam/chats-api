@@ -79,7 +79,7 @@ router.get('/metric/:id', OrganisationController.getMetric);
 router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign);
 
 router.get('/matrics', NgoSubAdminAuth, OrganisationController.matrix);
-
+router.post('/zoho-cretate-ticket', OrganisationController.createTicket)
 router.get(
   '/non-org-beneficiary',
   FieldAgentAuth,
@@ -279,17 +279,15 @@ router
   );
 
 router
-  .route('/:organisation_id/private_donor/campaigns/all')
+  .route('/donations/private_donor/campaigns/all')
   .get(
     DonorAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
     OrganisationController.getAllPrivateDonorCampaigns,
   );
 
-router
-  .route('/:organisation_id/public_donor/campaigns/all')
-  .get(OrganisationController.getAllPublicDonorCampaigns);
+router.get('/donations/public_donor/campaigns/all',
+OrganisationController.getAllPublicDonorCampaigns)
+
 
 router
   .route('/:organisation_id/cash4works')

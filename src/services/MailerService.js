@@ -147,12 +147,12 @@ class MailerService {
       });
     });
   }
-  sendInvite(to, token, ngo) {
+  sendInvite(to, token, campaign, ngo, exist) {
     const body = `
     <div>
       <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
-      <p>We’ve given you access to our portal so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
-      <p>If you want to create an account, please click on the following link: https://chats.vercel.app?token=${token}</p>
+      <p>We’ve given you access to campaign titled: ${campaign.title} so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
+      <p>${exist ? `If you want to login to confirm access, please click on the following link: https://chats.vercel.app?token=${token}&campaign_id=${campaign.id}` : `If you want to create an account, please click on the following link: https://chats.vercel.app/sign-up?token=${token}&campaign_id=${campaign.id}`}</p>
       <p>Enjoy!</p>
       <p>Best,</p>
       <p>The ${ngo} team</p>

@@ -222,19 +222,19 @@ class AuthService {
       },
     });
   }
-  static async inviteDonor(email, inviterId) {
+  static async inviteDonor(email, inviterId, CampaignId) {
     const token = jwt.sign(
       {
         email,
       },
       process.env.SECRET_KEY,
       {
-        expiresIn: '48hr',
+        expiresIn: '24hr',
       },
     );
-    const uuid = await Invites.create({id: uuidv4(), email, inviterId, token});
-
-    return uuid;
+   const inv = await Invites.create({id: uuidv4(), email, inviterId, token, CampaignId});
+      console.log(inv)
+    return token;
   }
 }
 
