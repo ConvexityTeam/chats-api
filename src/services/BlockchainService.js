@@ -157,7 +157,7 @@ class BlockchainService {
         Logger.info('Approved to spend', res);
         return true
       } catch (error) {
-        Logger.error('Error approving to spend', error);
+        Logger.error('Error approving to spend'+ JSON.stringify(error.response.data));
         return false
       }
   }
@@ -171,7 +171,7 @@ class BlockchainService {
         Logger.info('Success transferring funds to', res.data);
         return true
       } catch (error) {
-        Logger.error('Error transferring funds to', error.response.data);
+        Logger.error('Error transferring funds to'+JSON.stringify(error.response.data));
         return false
       }
   }
@@ -239,7 +239,7 @@ class BlockchainService {
         Logger.info('Success redeeming token');
         return true
       } catch (error) {
-        Logger.error(`Error redeeming token`, JSON.stringify(error.response.data));
+        Logger.error(`Error redeeming token: `+ JSON.stringify(error.response.data));
         return false
       }
   }

@@ -301,13 +301,13 @@ RabbitMq['default']
             const beneficiary = await BlockchainService.setUserKeypair(
               `user_${userId}campaign_${campaign.id}`,
             );
-          await BlockchainService.approveToSpend(
+         const spend = await BlockchainService.approveToSpend(
               campaignAddress.address,
               campaignAddress.privateKey,
               beneficiary.address,
               share,
             );
-            await addWalletAmount(share, uuid);
+            if(spend) await addWalletAmount(share, uuid);
           }
 
           const User = beneficiaries.map(user => user.User);
