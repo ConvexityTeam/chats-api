@@ -638,7 +638,7 @@ class AuthController {
         user.dataValues.mainOrganisation = donorMainOrg;
       }
 
-      const data = await AuthService.login(user, req.body.password);
+      const data = await AuthService.login(user, req.body.password.trim());
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -698,7 +698,7 @@ class AuthController {
       });
       const data = await AuthService.login(
         user,
-        req.body.password,
+        req.body.password.trim(),
         AclRoles.Vendor,
       );
       Response.setSuccess(200, 'Login Successful.', data);

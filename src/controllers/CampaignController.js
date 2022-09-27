@@ -320,6 +320,10 @@ class CampaignController {
       const organisation = await OrganisationService.getOrganisationWallet(
         organisation_id,
       );
+      if (!organisation)
+        QueueService.createWallet(organisation_id, 'organisation');
+      if (!campaign)
+        QueueService.createWallet(organisation_id, 'organisation', campaign_id);
       const OrgWallet = organisation.Wallet;
 
       if (campaign.status == 'completed') {
@@ -360,7 +364,7 @@ class CampaignController {
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign approved and funded for ${beneficiaries.length} beneficiaries.`,
+        `Campaign fund to ${beneficiaries.length} beneficiaries is Processing.`,
         beneficiaries,
       );
       return Response.send(res);
@@ -873,7 +877,7 @@ class CampaignController {
   static async importBeneficiary(req, res) {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
-      const delay = 3000
+      const delay = 3000;
       const approvedBeneficiary = [];
       const replicaBeneficiary = [];
       const noDuplicate = [];
@@ -896,23 +900,22 @@ class CampaignController {
         });
       });
 
-      replicaBeneficiary.forEach( (UserId, i) => {
-
+      replicaBeneficiary.forEach((UserId, i) => {
         if (!approvedBeneficiary.includes(UserId)) {
           noDuplicate.push(UserId);
-          setTimeout(async()=> {
+          setTimeout(async () => {
             await db.Beneficiary.create({
-        CampaignId: campaign_id,
-        UserId,
-        source: 'Web app'
-          })
-          QueueService.createWallet(UserId, 'user', campaign_id);
-          }, delay * i)
+              CampaignId: campaign_id,
+              UserId,
+              source: 'Web app',
+            });
+            QueueService.createWallet(UserId, 'user', campaign_id);
+          }, delay * i);
         }
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaigns with onboarded with  ${noDuplicate.length}${ 
+        `Campaigns with onboarded with  ${noDuplicate.length}${
           noDuplicate.length > 1 ? ' beneficiaries' : 'beneficiary'
         }`,
         noDuplicate,
