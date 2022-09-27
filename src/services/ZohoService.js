@@ -11,7 +11,6 @@ function addMinutes(numOfMinutes, date = new Date()) {
   return date;
 }
 
-console.log(addMinutes(20));
 
 class ZohoService {
   static async generatingToken() {

@@ -453,14 +453,15 @@ RabbitMq['default']
           beneficiary.privateKey,
           amount,
         );
-        const payStack = await PaystackService.withdraw(
+         
+        if(transfer && redeem  ){
+        await PaystackService.withdraw(
           'balance',
           amount,
           bankAccount.recipient_code,
           'spending',
         );
-        if(transfer && redeem  && payStack){
-          await deductWalletAmount(amount, campaignWallet.uuid);
+        await deductWalletAmount(amount, campaignWallet.uuid);
         await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
         return 
@@ -482,13 +483,14 @@ RabbitMq['default']
           vendor.privateKey,
           amount,
         );
-        const payStack = await PaystackService.withdraw(
+
+        if(redeem){
+         await PaystackService.withdraw(
           'balance',
           amount,
           bankAccount.recipient_code,
           'spending',
         );
-        if(redeem && payStack){
         await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
         return

@@ -1420,7 +1420,7 @@ class UsersController {
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        'Transaction SuccessFull',
+        'Transaction Processing',
         transaction,
       );
       return Response.send(res);
@@ -1480,7 +1480,7 @@ class UsersController {
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        'Transaction SuccessFull..',
+        'Transaction Processing',
         transation,
       );
       return Response.send(res);
