@@ -294,7 +294,7 @@ RabbitMq['default']
           );
           const wallet = beneficiaries.map(user => user.User.Wallets);
           const mergeWallet = [].concat.apply([], wallet);
-
+          let generateSMS_Voucher = false;
           for (let i = 0; i < mergeWallet.length; i++) {
             const uuid = mergeWallet[i].uuid;
             const userId = mergeWallet[i].UserId;
@@ -307,9 +307,12 @@ RabbitMq['default']
               beneficiary.address,
               share,
             );
-            if(spend) await addWalletAmount(share, uuid);
+            if(spend) {
+              await addWalletAmount(share, uuid);
+              generateSMS_Voucher = true
+            }
           }
-
+          if(generateSMS_Voucher){
           const User = beneficiaries.map(user => user.User);
           for (let i = 0; i < User.length; i++) {
             let istoken = false;
@@ -353,6 +356,7 @@ RabbitMq['default']
               istoken = false;
             }
           }
+        }
           msg.ack();
         }
       })

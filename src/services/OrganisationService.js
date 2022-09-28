@@ -174,8 +174,7 @@ static async getAllDonorMember(UserId) {
           store = _store;
           QueueService.createWallet(account.id, 'user');
           MailerService.verify(data.email, data.first_name + " " + data.last_name, rawPassword, vendor_id)
-          SmsService.sendOtp(data.phone, `Your Convexity account password is: ${rawPassword} and ID is: ${vendor_id}`);
-
+          SmsService.sendOtp(data.phone, `Hi, ${data.first_name}  ${data.last_name} your CHATS account ID is: ${vendor_id} , password is: ${rawPassword}.`);
           account = account.toObject();
           account.Store = store.toJSON();
           resolve(account);

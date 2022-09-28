@@ -70,17 +70,14 @@ class MailerService {
   sendPassword(to, name, password, vendor_id) {
     const body = `
     <div>
-      <p>Hello ${name},</p>
-      <p>Your Convexity password is: ${
-        vendor_id ? password + ' and Vendor ID is: ' + vendor_id : password
-      }</p>
-      <p>CHATS - Convexity</p>
+      <p>Hi, ${name}\nYour CHATS account ${vendor_id ? 'ID is: '+ vendor_id + ', password is: '+password  : 'password is: '+ password}</p>
+      <p>Best,\nCHATS - Convexity</p>
     </div>
     `;
     const options = {
       from: this.config.from,
       to,
-      subject: 'Login credentials',
+      subject: 'Account Credentials',
       html: body,
     };
 

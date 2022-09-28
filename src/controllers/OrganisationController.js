@@ -2104,17 +2104,6 @@ class OrganisationController {
     }
   }
 
-  static async zohoInit(req, res) {
-    try {
-      const init = await ZohoService.zohoInit();
-      Response.setSuccess(200, 'initialization success', init);
-      Response.send(res);
-    } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
-      return Response.send(res);
-    }
-  }
-
   static async non_ngo_beneficiaries(req, res) {
     try {
       const query = SanitizeObject(req.query);
@@ -2138,32 +2127,28 @@ class OrganisationController {
       return Response.send(res);
     }
   }
-  static async createTicket(req, res){
-    const data = req.body
-    try{
+  static async createTicket(req, res) {
+    const data = req.body;
+    try {
       const rules = {
-      email: 'required|email',
-      subject: 'required|string',
-      description: 'required|string',
-      'contact.email': 'email',
-      'contact.firstName': 'string',
-      'contact.lastName': 'string'
-    };
+        email: 'required|email',
+        subject: 'required|string',
+        description: 'required|string',
+        'contact.email': 'email',
+        'contact.firstName': 'string',
+        'contact.lastName': 'string',
+      };
 
-    const validation = new Validator(data, rules);
-    if (validation.fails()) {
-      Response.setError(422, validation.errors);
-      return Response.send(res);
-    }
-      const createdTicket = await ZohoService.createTicket(data)
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }
+      const createdTicket = await ZohoService.createTicket(data);
       //const generate = await ZohoService.generatingToken()
-      Response.setSuccess(
-        201,
-        'Ticket Created Successfully',
-        createdTicket,
-      );
+      Response.setSuccess(201, 'Ticket Created Successfully', createdTicket);
       return Response.send(res);
-    }catch(error){
+    } catch (error) {
       Response.setError(
         500,
         `Internal server error. Contact support. ${error}`,

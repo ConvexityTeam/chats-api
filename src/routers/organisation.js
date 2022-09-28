@@ -85,7 +85,7 @@ router.get(
   FieldAgentAuth,
   OrganisationController.non_ngo_beneficiaries,
 );
-router.get('/zoho-init', OrganisationController.zohoInit);
+
 router.get(
   '/campaigns/transaction',
   NgoSubAdminAuth,
