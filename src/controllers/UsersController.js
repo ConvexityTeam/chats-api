@@ -144,6 +144,7 @@ class UsersController {
       }
 
       if (data.nin) {
+        const hash = createHash(data.nin)
         const isExist = await UserService.findSingleUser({nin: data.nin});
         if (isExist) {
           Response.setError(
@@ -161,6 +162,7 @@ class UsersController {
           return Response.send(res);
         }
         data.is_nin_verified = true;
+        data.nin = hash
         await req.user.update(data);
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
