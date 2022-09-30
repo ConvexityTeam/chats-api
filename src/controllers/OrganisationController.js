@@ -2156,6 +2156,46 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+
+  static async fetchToken(req, res){
+    try{
+      const token = await ZohoService.fetchToken()
+      Response.setSuccess(201, 'Ticket Created Successfully', token);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`,
+      );
+      return Response.send(res);
+    }
+  }
+  static async destroyToken(req, res){
+    try{
+      const token = await ZohoService.destroy(req.query.id)
+      Response.setSuccess(201, 'success', token);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`,
+      );
+      return Response.send(res);
+    }
+  }
+  static async saveToken(req, res){
+    try{
+      const token = await ZohoService.saveToken(req.body)
+      Response.setSuccess(201, 'success', token);
+      return Response.send(res);
+    }catch(error){
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`,
+      );
+      return Response.send(res);
+    }
+  }
 }
 
 function extractDomain(url) {
