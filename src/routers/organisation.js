@@ -80,6 +80,12 @@ router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign);
 
 router.get('/matrics', NgoSubAdminAuth, OrganisationController.matrix);
 router.post('/zoho-cretate-ticket', OrganisationController.createTicket)
+router.get('/zoho-token', )
+router.route('/zoho-token')
+.get(OrganisationController.fetchToken)
+.post(OrganisationController.saveToken)
+.delete(OrganisationController.destroyToken)
+
 router.get(
   '/non-org-beneficiary',
   FieldAgentAuth,

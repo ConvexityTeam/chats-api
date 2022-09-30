@@ -19,18 +19,29 @@ class ZohoService {
       const {data} = await Axios.post(
         `https://accounts.zoho.com/oauth/v2/token?client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&code=${zohoCrmConfig.code}`,
       );
-      await ZohoToken.create({
+      await this.saveToken({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
         expires_in: addMinutes(55),
-      });
+      })
       Logger.info(`Generated Zoho Access And Refresh Token`);
       return data;
     } catch (error) {
       Logger.error(
         `Error Generating Zoho Access And Refresh Token: ${error.response.data}`,
       );
+      throw new Error('Error Generating Zoho Access And Refresh Token')
     }
+  }
+  static async fetchToken (){
+    return ZohoToken.findByPk(1)
+  }
+  static async saveToken (data){
+    return ZohoToken.create(data)
+  }
+  static async destroy (id){
+    const find = await ZohoToken.findByPk(id)
+    return find.destroy()
   }
 
   static async refreshingAccessToken(refresh_token) {
@@ -45,7 +56,7 @@ class ZohoService {
       return data;
     } catch (error) {
       Logger.error(`Error Generating Zoho Code: ${error}`);
-      return false;
+      throw new Error('Error Generating Zoho Access And Refresh Token')
     }
   }
 
@@ -66,7 +77,7 @@ class ZohoService {
       return data;
     } catch (error) {
       Logger.error(`Error Creating Zoho Ticket: ${error}`);
-      throw new Error(error)
+      throw new Error('Error Creating Zoho Ticket')
     }
   }
 }
