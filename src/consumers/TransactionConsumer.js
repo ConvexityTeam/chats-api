@@ -151,7 +151,6 @@ RabbitMq['default']
           approved,
           status,
           amount,
-          walletId,
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
           const wallet = WalletService.findMainOrganisationWallet(
@@ -161,39 +160,36 @@ RabbitMq['default']
             QueueService.createWallet(OrganisationId, 'organisation');
             return;
           }
+          const organisation = await BlockchainService.setUserKeypair(
+            `organisation_${OrganisationId}`,
+          );
+          const mint = await BlockchainService.mintToken(
+            organisation.address,
+            amount,
+          );
+          if (!mint) {
+            await update_transaction(
+              {status: 'failed', is_approved: false},
+              transactionId,
+            );
+            return;
+          }
+
+          await update_transaction(
+            {status: 'success', is_approved: true},
+            transactionId,
+          );
+          Logger.info(`wallet: ${JSON.stringify(wallet)}`);
+          await wallet.update({
+            balance: Sequelize.literal(`balance + ${amount}`),
+            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
+          });
           await DepositService.updateFiatDeposit(transactionReference, {
             status: 'successful',
           });
+          Logger.info(`Minted with : ${amount}`);
+          msg.ack();
         }
-        const organisation = await BlockchainService.setUserKeypair(
-          `organisation_${OrganisationId}`,
-        );
-        const mint = await BlockchainService.mintToken(
-          organisation.address,
-          amount,
-        );
-        if (!mint) {
-          await update_transaction(
-            {status: 'failed', is_approved: false},
-            transactionId,
-          );
-          return;
-        }
-
-        await update_transaction(
-          {status: 'success', is_approved: true},
-          transactionId,
-        );
-        Logger.info(`wallet: ${JSON.stringify(wallet)}`);
-        await Wallet.update(
-          {
-            balance: Sequelize.literal(`balance + ${amount}`),
-            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
-          },
-          {where: {uuid: walletId}},
-        );
-        Logger.info(`Minted with : ${amount}`);
-        msg.ack();
       })
       .catch(error => {
         Logger.error(`Consumer Error: ${error.message}`);
