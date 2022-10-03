@@ -17,6 +17,7 @@ const {
   PAYSTACK_CAMPAIGN_DEPOSIT,
   FUND_BENEFICIARIES,
 } = require('../constants/queues.constant');
+const WalletService = require('./WalletService');
 
 const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
   durable: true,
@@ -107,7 +108,39 @@ class QueueService {
     );
   }
 
-  static verifyFiatDeposit(payload) {
+  static async verifyFiatDeposit({
+    transactionReference,
+    OrganisationId,
+    approved,
+    status,
+    amount,
+  }) {
+    const wallet = WalletService.findMainOrganisationWallet(OrganisationId);
+    if (!wallet) {
+      QueueService.createWallet(OrganisationId, 'organisation');
+      return;
+    }
+    const transaction = await Transaction.create({
+      log: transactionReference,
+      narration: 'Fiat Deposit Transaction',
+      ReceiverWalletId: wallet.uuid,
+      transaction_origin: 'wallet',
+      transaction_type: 'deposit',
+      status: 'processing',
+      is_approved: false,
+      OrganisationId,
+      reference: generateTransactionRef(),
+      amount,
+    });
+    const payload = {
+      transactionId: transaction.uuid,
+      transactionReference,
+      OrganisationId,
+      approved,
+      status,
+      amount,
+      wallet,
+    };
     verifyFaitDepositQueue.send(
       new Message(payload, {
         contentType: 'application/json',
