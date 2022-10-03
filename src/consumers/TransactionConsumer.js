@@ -156,7 +156,6 @@ RabbitMq['default']
           const wallet = WalletService.findMainOrganisationWallet(
             OrganisationId,
           );
-          Logger.info(OrganisationId);
           if (!wallet) {
             QueueService.createWallet(OrganisationId, 'organisation');
             return;
@@ -180,7 +179,7 @@ RabbitMq['default']
             {status: 'success', is_approved: true},
             transactionId,
           );
-          Logger.info(`wallet: ${JSON.stringify(wallet)}`);
+          Logger.info(amount);
           await wallet.update({
             balance: Sequelize.literal(`balance + ${amount}`),
             fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
