@@ -156,10 +156,7 @@ RabbitMq['default']
           const wallet = await WalletService.findMainOrganisationWallet(
             OrganisationId,
           );
-          if (!wallet) {
-            QueueService.createWallet(OrganisationId, 'organisation');
-            return;
-          }
+
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`,
           );
@@ -187,7 +184,6 @@ RabbitMq['default']
           await DepositService.updateFiatDeposit(transactionReference, {
             status: 'successful',
           });
-          Logger.info(`Minted with : ${amount}`);
           msg.ack();
         }
       })
@@ -208,8 +204,6 @@ RabbitMq['default']
           transactionId,
           realBudget,
         } = msg.getContent();
-
-        Logger.info('Transferring from organisation wallet to campaign wallet');
         const campaignAddress = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`,
         );
@@ -223,11 +217,16 @@ RabbitMq['default']
           campaignAddress.address,
           realBudget,
         );
+        Logger.info(JSON.stringify(org));
         if (!org) {
           await update_transaction({status: 'failed'}, transactionId);
           return;
         }
-        await update_transaction({status: 'success'}, transactionId);
+        //BlockchainService.confirmTransaction()
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transactionId,
+        );
 
         await deductWalletAmount(realBudget, OrgWallet.uuid);
         await addWalletAmount(realBudget, campaign.Wallet.uuid);

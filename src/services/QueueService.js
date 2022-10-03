@@ -1,6 +1,6 @@
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {Transaction} = require('../models');
-const {RabbitMq} = require('../libs');
+const {RabbitMq, Logger} = require('../libs');
 const {generateTransactionRef, AclRoles} = require('../utils');
 const {
   CREATE_WALLET,
@@ -218,9 +218,9 @@ class QueueService {
       }),
     );
   }
-  static async CampaignApproveAndFund(OrgWallet, campaignWallet, campaign) {
+  static async CampaignApproveAndFund(campaign, campaignWallet, OrgWallet) {
     const realBudget = campaign.budget;
-
+    Logger.info(JSON.stringify(OrgWallet));
     const transaction = await Transaction.create({
       amount: realBudget,
       reference: generateTransactionRef(),
@@ -244,6 +244,7 @@ class QueueService {
         contentType: 'application/json',
       }),
     );
+    return transaction;
   }
 
   static async FundBeneficiary(
