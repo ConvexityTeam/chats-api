@@ -115,6 +115,11 @@ class QueueService {
     status,
     amount,
   }) {
+    const wallet = WalletService.findMainOrganisationWallet(OrganisationId);
+    if (!wallet) {
+      QueueService.createWallet(OrganisationId, 'organisation');
+      return;
+    }
     const transaction = await Transaction.create({
       log: transactionReference,
       narration: 'Fiat Deposit Transaction',
