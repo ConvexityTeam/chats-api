@@ -151,9 +151,15 @@ RabbitMq['default']
           approved,
           status,
           amount,
-          wallet,
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
+          const wallet = WalletService.findMainOrganisationWallet(
+            OrganisationId,
+          );
+          if (!wallet) {
+            QueueService.createWallet(OrganisationId, 'organisation');
+            return;
+          }
           await DepositService.updateFiatDeposit(transactionReference, {
             status: 'successful',
           });
