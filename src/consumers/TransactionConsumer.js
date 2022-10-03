@@ -153,7 +153,7 @@ RabbitMq['default']
           amount,
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
-          const wallet = WalletService.findMainOrganisationWallet(
+          const wallet = await WalletService.findMainOrganisationWallet(
             OrganisationId,
           );
           if (!wallet) {
