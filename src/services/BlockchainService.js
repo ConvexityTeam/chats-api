@@ -162,8 +162,7 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.error(
-          'Error minting token',
-          JSON.stringify(error.response.data),
+          `Error minting token: ${JSON.stringify(error.response.data)}`,
         );
         reject(error);
       }
