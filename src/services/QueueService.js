@@ -115,7 +115,9 @@ class QueueService {
     status,
     amount,
   }) {
-    const wallet = WalletService.findMainOrganisationWallet(OrganisationId);
+    const wallet = await WalletService.findMainOrganisationWallet(
+      OrganisationId,
+    );
     if (!wallet) {
       QueueService.createWallet(OrganisationId, 'organisation');
       return;
