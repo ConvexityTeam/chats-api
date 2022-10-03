@@ -151,9 +151,15 @@ RabbitMq['default']
           approved,
           status,
           amount,
-          wallet,
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
+          const wallet = await WalletService.findMainOrganisationWallet(
+            OrganisationId,
+          );
+          if (!wallet) {
+            QueueService.createWallet(OrganisationId, 'organisation');
+            return;
+          }
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`,
           );
@@ -174,11 +180,10 @@ RabbitMq['default']
             transactionId,
           );
 
-          const balance = await wallet.update({
+          await wallet.update({
             balance: Sequelize.literal(`balance + ${amount}`),
             fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
           });
-          Logger.info(balance);
           await DepositService.updateFiatDeposit(transactionReference, {
             status: 'successful',
           });
