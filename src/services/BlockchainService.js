@@ -1,6 +1,6 @@
 const {createClient} = require('redis');
 const axios = require('axios');
-const {ethers} = require('ethers');
+const ethers = require('ethers');
 const crypto = require('crypto');
 const sha256 = require('simple-sha256');
 const {tokenConfig, switchWallet} = require('../config');
@@ -133,7 +133,7 @@ class BlockchainService {
         const {data} = await Axios.post(
           `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`,
         );
-        Logger.info(`Adding User Response: ${JSON.stringify(data)}`);
+        Logger.info(`User Added`);
         resolve(data);
       } catch (error) {
         Logger.error(
@@ -194,11 +194,11 @@ class BlockchainService {
         const response = await Axios.post(
           `${tokenConfig.baseURL}/txn/transfer/${senderaddr}/${senderpwsd}/${receiver}/${amount}`,
         );
-        Logger.info('Success transferring funds to', res.data);
+        Logger.info('Success transferring funds to');
         resolve(response);
       } catch (error) {
         Logger.error(
-          'Error transferring funds to' + JSON.stringify(error.response.data),
+          `Error transferring funds to: ${JSON.stringify(error.response.data)}`,
         );
         reject(error);
       }

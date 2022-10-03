@@ -14,7 +14,7 @@ const {
 const db = require('../models');
 const {Op} = require('sequelize');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
-const {Response} = require('../libs');
+const {Response, Logger} = require('../libs');
 const {
   HttpStatusCode,
   SanitizeObject,
@@ -415,18 +415,8 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (campaign.type === 'campaign' && !beneficiaries.length) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign has no approved beneficiaries. Please approve beneficiaries.',
-        );
-        return Response.send(res);
-      }
-      QueueService.CampaignApproveAndFund({
-        campaign,
-        campaignWallet,
-        OrgWallet,
-      });
+      Logger.info(JSON.stringify(OrgWallet));
+      QueueService.CampaignApproveAndFund(campaign, campaignWallet, OrgWallet);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`,
