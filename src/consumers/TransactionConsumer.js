@@ -170,7 +170,9 @@ RabbitMq['default']
             {status: 'failed', is_approved: false},
             transactionId,
           );
+          return;
         }
+
         await update_transaction(
           {status: 'success', is_approved: true},
           transactionId,
@@ -179,6 +181,7 @@ RabbitMq['default']
           balance: Sequelize.literal(`balance + ${amount}`),
           fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
         });
+        Logger.info(`Minted with : ${amount}`);
         msg.ack();
       })
       .catch(error => {
