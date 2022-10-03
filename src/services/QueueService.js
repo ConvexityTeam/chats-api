@@ -15,8 +15,12 @@ const {
   PAYSTACK_VENDOR_WITHDRAW,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_CAMPAIGN_DEPOSIT,
+  FUND_BENEFICIARIES,
 } = require('../constants/queues.constant');
 
+const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
+  durable: true,
+});
 const fundBeneficiary = RabbitMq['default'].declareQueue(FUND_BENEFICIARY, {
   durable: true,
 });
@@ -135,8 +139,71 @@ class QueueService {
       }),
     );
   }
+  static async fundBeneficiaries(
+    OrgWallet,
+    campaignWallet,
+    beneficiaries,
+    campaign,
+  ) {
+    const share = parseInt(campaign.budget / beneficiaries.length);
+    const realBudget = campaign.budget;
+    const parsedAmount =
+      parseInt(campaign.budget / beneficiaries.length) * beneficiaries.length;
+    beneficiaries.forEach(beneficiary => {
+      beneficiary.User.Wallets.forEach(async wallet => {
+        const transaction = await Transaction.create({
+          amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
+          reference: generateTransactionRef(),
+          status: 'processing',
+          transaction_origin: 'wallet',
+          transaction_type: 'transfer',
+          SenderWalletId: campaignWallet.uuid,
+          ReceiverWalletId: wallet.uuid,
+          BeneficiaryId: wallet.UserId,
+          OrganisationId: campaign.OrganisationId,
+          narration: 'Approve Beneficiary Funding',
+        });
+      });
+    });
 
-  static CampaignApproveAndFund(payload) {
+    const payload = {
+      OrgWallet,
+      campaignWallet,
+      beneficiaries,
+      campaign,
+      token_type,
+      transactionId: transaction.uuid,
+      realBudget,
+      share,
+      parsedAmount,
+    };
+    approveCampaignAndFund.send(
+      new Message(payload, {
+        contentType: 'application/json',
+      }),
+    );
+  }
+  static async CampaignApproveAndFund(OrgWallet, campaignWallet, campaign) {
+    const realBudget = campaign.budget;
+
+    const transaction = await Transaction.create({
+      amount: realBudget,
+      reference: generateTransactionRef(),
+      status: 'processing',
+      transaction_origin: 'wallet',
+      transaction_type: 'transfer',
+      SenderWalletId: OrgWallet.uuid,
+      ReceiverWalletId: campaignWallet.uuid,
+      OrganisationId: campaign.OrganisationId,
+      narration: 'Approve Campaign Funding',
+    });
+    const payload = {
+      OrgWallet,
+      campaignWallet,
+      campaign,
+      transactionId: transaction.uuid,
+      realBudget,
+    };
     approveCampaignAndFund.send(
       new Message(payload, {
         contentType: 'application/json',

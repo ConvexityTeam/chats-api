@@ -306,7 +306,7 @@ class CampaignController {
       return Response.send(res);
     }
   }
-  static async approveAndFund(req, res) {
+  static async approveAndFundBeneficiaries(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
       const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(
@@ -355,7 +355,7 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      QueueService.CampaignApproveAndFund({
+      QueueService.fundBeneficiaries({
         campaign,
         campaignWallet,
         OrgWallet,
@@ -366,6 +366,70 @@ class CampaignController {
         HttpStatusCode.STATUS_OK,
         `Campaign fund to ${beneficiaries.length} beneficiaries is Processing.`,
         beneficiaries,
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message,
+      );
+      return Response.send(res);
+    }
+  }
+  static async approveAndFundCampaign(req, res) {
+    const {organisation_id, campaign_id} = req.params;
+    try {
+      const campaign = await CampaignService.getCampaignWallet(
+        campaign_id,
+        organisation_id,
+      );
+      const campaignWallet = campaign.Wallet;
+      const organisation = await OrganisationService.getOrganisationWallet(
+        organisation_id,
+      );
+      if (!organisation)
+        QueueService.createWallet(organisation_id, 'organisation');
+      if (!campaign)
+        QueueService.createWallet(organisation_id, 'organisation', campaign_id);
+      const OrgWallet = organisation.Wallet;
+
+      if (campaign.status == 'completed') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already completed',
+        );
+        return Response.send(res);
+      }
+      if (campaign.status == 'ongoing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ongoing',
+        );
+        return Response.send(res);
+      }
+
+      if (campaign.budget > OrgWallet.balance || OrgWallet.balance == 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Insufficient wallet balance. Please fund organisation wallet.',
+        );
+        return Response.send(res);
+      }
+      if (campaign.type === 'campaign' && !beneficiaries.length) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign has no approved beneficiaries. Please approve beneficiaries.',
+        );
+        return Response.send(res);
+      }
+      QueueService.CampaignApproveAndFund({
+        campaign,
+        campaignWallet,
+        OrgWallet,
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Organisation fund to campaign is Processing.`,
       );
       return Response.send(res);
     } catch (error) {

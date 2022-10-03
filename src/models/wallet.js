@@ -1,5 +1,5 @@
-"use strict";
-const { Model } = require("sequelize");
+'use strict';
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Wallet extends Model {
     /**
@@ -11,24 +11,24 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Wallet.belongsTo(models.User, {
         as: 'User',
-        foreignKey: "UserId",
+        foreignKey: 'UserId',
       });
       Wallet.hasMany(models.Transaction, {
         as: 'ReceivedTransactions',
-        foreignKey: "ReceiverWalletId"
+        foreignKey: 'ReceiverWalletId',
       });
       Wallet.hasMany(models.Transaction, {
         as: 'SentTransactions',
-        foreignKey: "SenderWalletId"
+        foreignKey: 'SenderWalletId',
       });
       Wallet.belongsTo(models.Organisation, {
         as: 'Organisation',
-        foreignKey: "OrganisationId",
+        foreignKey: 'OrganisationId',
       });
 
       Wallet.belongsTo(models.Campaign, {
         as: 'Campaign',
-        foreignKey: 'CampaignId'
+        foreignKey: 'CampaignId',
       });
     }
   }
@@ -54,14 +54,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Wallet",
-    }
+      modelName: 'Wallet',
+    },
   );
-  Wallet.prototype.toObject = function() {
+  Wallet.prototype.toObject = function () {
     const wallet = this.toJSON();
     delete wallet.privateKey;
     delete wallet.bantuPrivateKey;
     return wallet;
-  }
+  };
   return Wallet;
 };
