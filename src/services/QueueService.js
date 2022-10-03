@@ -141,6 +141,7 @@ class QueueService {
       approved,
       status,
       amount,
+      wallet,
     };
     verifyFaitDepositQueue.send(
       new Message(payload, {
