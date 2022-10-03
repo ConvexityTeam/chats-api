@@ -145,79 +145,45 @@ RabbitMq['default']
     verifyFiatDepsoitQueue
       .activateConsumer(async msg => {
         const {
+          transactionId,
           transactionReference,
           OrganisationId,
           approved,
           status,
           amount,
+          wallet,
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
-          Logger.info(
-            `Checking data from Transaction consumer: ${
-              (transactionReference, OrganisationId, approved, status, amount)
-            }`,
-          );
-          WalletService.findMainOrganisationWallet(OrganisationId)
-            .then(async wallet => {
-              if (wallet) {
-                const reference = generateTransactionRef();
-                // const organisation = await BlockchainService.setUserKeypair(
-                //   `organisation_${OrganisationId}`,
-                // );
-                // const mint = await BlockchainService.mintToken(
-                //   organisation.address,
-                //   amount,
-                // );
-                // if(mint){
-                const exist = await DepositService.updateFiatDeposit(
-                  transactionReference,
-                  {
-                    status: 'successful',
-                  },
-                );
-                if (exist !== null) {
-                  await Transaction.create({
-                    log: transactionReference,
-                    narration: 'Fiat Deposit Transaction',
-                    ReceiverWalletId: wallet.uuid,
-                    transaction_origin: 'wallet',
-                    transaction_type: 'deposit',
-                    status: 'success',
-                    is_approved: true,
-                    OrganisationId,
-                    reference,
-                    amount,
-                  });
-                  return;
-                }
-                await Transaction.create({
-                  log: transactionReference,
-                  narration: 'Fiat Deposit Transaction',
-                  ReceiverWalletId: wallet.uuid,
-                  transaction_origin: 'wallet',
-                  transaction_type: 'deposit',
-                  status: 'failed',
-                  is_approved: false,
-                  OrganisationId,
-                  reference,
-                  amount,
-                });
-                // await wallet.update({
-                //   balance: Sequelize.literal(`balance + ${amount}`),
-                //   fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
-                // });
-                msg.ack();
-              } else {
-                QueueService.createWallet(OrganisationId, 'organisation');
-                Promise.reject('Organisation wallet does not exist');
-              }
-            })
-            .catch(error => {
-              console.log(error.message, '....///.....');
-              // msg.nack();
-              msg.ack();
-            });
+          await DepositService.updateFiatDeposit(transactionReference, {
+            status: 'successful',
+          });
         }
+        const organisation = await BlockchainService.setUserKeypair(
+          `organisation_${OrganisationId}`,
+        );
+        const mint = await BlockchainService.mintToken(
+          organisation.address,
+          amount,
+        );
+        if (!mint) {
+          await update_transaction(
+            {status: 'failed', is_approved: false},
+            transactionId,
+          );
+        }
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transactionId,
+        );
+        await wallet.update({
+          balance: Sequelize.literal(`balance + ${amount}`),
+          fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
+        });
+        msg.ack();
+      })
+      .catch(error => {
+        Logger.error(`Consumer Error: ${error.message}`);
+        // msg.nack();
       })
       .then(_ => {
         console.log(`Running Consumer For Verify Fiat Deposit.`);
@@ -337,32 +303,6 @@ RabbitMq['default']
         });
       });
     });
-    processPaystack
-      .activateConsumer(async msg => {
-        const {id, amount} = msg.getContent();
-        const organisation = await BlockchainService.setUserKeypair(
-          `organisation_${id}`,
-        );
-        Logger.info(`Getting KeyPair from AWS`);
-        const mint = await BlockchainService.mintToken(
-          organisation.address,
-          amount,
-        );
-        if (mint) {
-          await Wallet.update(
-            {
-              balance: Sequelize.literal(`balance + ${amount}`),
-            },
-            {
-              where: {
-                OrganisationId: id,
-              },
-            },
-          );
-          Logger.info(`Organisation Wallet Balance updated with: ${amount}`);
-        }
-      })
-      .catch(() => {});
 
     processCampaignPaystack
       .activateConsumer(async msg => {

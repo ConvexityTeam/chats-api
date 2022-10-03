@@ -180,7 +180,7 @@ class BlockchainService {
         resolve(res);
       } catch (error) {
         Logger.error(
-          'Error approving to spend' + JSON.stringify(error.response.data),
+          `Error approving to spend: ${JSON.stringify(error.response.data)}`,
         );
         reject(error);
       }
