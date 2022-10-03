@@ -156,7 +156,7 @@ RabbitMq['default']
           const wallet = WalletService.findMainOrganisationWallet(
             OrganisationId,
           );
-          Logger.info(JSON.stringify(wallet));
+          Logger.info(OrganisationId);
           if (!wallet) {
             QueueService.createWallet(OrganisationId, 'organisation');
             return;
