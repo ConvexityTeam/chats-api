@@ -151,6 +151,7 @@ RabbitMq['default']
           approved,
           status,
           amount,
+          walletId,
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
           const wallet = WalletService.findMainOrganisationWallet(
@@ -184,10 +185,13 @@ RabbitMq['default']
           transactionId,
         );
         Logger.info(`wallet: ${JSON.stringify(wallet)}`);
-        await wallet.update({
-          balance: Sequelize.literal(`balance + ${amount}`),
-          fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
-        });
+        await Wallet.update(
+          {
+            balance: Sequelize.literal(`balance + ${amount}`),
+            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`),
+          },
+          {where: {uuid: walletId}},
+        );
         Logger.info(`Minted with : ${amount}`);
         msg.ack();
       })
