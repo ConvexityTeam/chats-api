@@ -6,6 +6,7 @@ module.exports = {
   TRANSFER_TO: 'transferTo',
   FROM_NGO_TO_CAMPAIGN: 'fromNgoToCampaign',
   FUND_BENEFICIARY: 'fundBeneficiary',
+  FUND_BENEFICIARIES: 'fundBeneficiaries',
   PAYSTACK_DEPOSIT: 'paystackdeposit',
   VERIFY_NIN: 'VerifyNIN',
   VERIFY_FIAT_DEPOSIT: 'verifyFiatDeposit',
@@ -13,5 +14,5 @@ module.exports = {
   PAYSTACK_VENDOR_WITHDRAW: 'paystackVendorWithdraw',
   PAYSTACK_CAMPAIGN_DEPOSIT: 'paystackcampaigndeposit',
   PAYSTACK_BENEFICIARY_WITHDRAW: 'paystackBeneficiaryWithdraw',
-  PAY_FOR_PRODUCT: 'payForProduct'
-}
+  PAY_FOR_PRODUCT: 'payForProduct',
+};

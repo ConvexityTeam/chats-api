@@ -1,15 +1,13 @@
 const {
   VERIFY_FIAT_DEPOSIT,
   PROCESS_VENDOR_ORDER,
-  TRANSFER_TO,
   FROM_NGO_TO_CAMPAIGN,
-  PAYSTACK_WITHDRAW,
   PAYSTACK_CAMPAIGN_DEPOSIT,
   PAYSTACK_DEPOSIT,
-  PAY_FOR_PRODUCT,
   FUND_BENEFICIARY,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_VENDOR_WITHDRAW,
+  FUND_BENEFICIARIES,
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -48,6 +46,13 @@ const verifyFiatDepsoitQueue = RabbitMq['default'].declareQueue(
 
 const processFundBeneficiary = RabbitMq['default'].declareQueue(
   FUND_BENEFICIARY,
+  {
+    durable: true,
+    prefetch: 1,
+  },
+);
+const processFundBeneficiaries = RabbitMq['default'].declareQueue(
+  FUND_BENEFICIARIES,
   {
     durable: true,
     prefetch: 1,
@@ -223,150 +228,115 @@ RabbitMq['default']
         const {
           OrgWallet,
           campaignWallet,
-          beneficiaries,
           campaign,
-          token_type,
+          transactionId,
+          realBudget,
         } = msg.getContent();
-        if (
-          Math.sign(OrgWallet.balance - campaign.budget) == -1 ||
-          Math.sign(OrgWallet.balance - campaign.budget) == -0
-        ) {
-          Logger.error(
-            'Insufficient wallet balance. Please fund organisation wallet.',
-          );
-        } else {
-          Logger.info(
-            'Transferring from organisation wallet to campaign wallet',
-          );
-          const campaignAddress = await BlockchainService.setUserKeypair(
-            `campaign_${campaignWallet.CampaignId}`,
-          );
-          const organisationAddress = await BlockchainService.setUserKeypair(
-            `organisation_${OrgWallet.OrganisationId}`,
-          );
-          const share = parseInt(campaign.budget / beneficiaries.length);
-          const realBudget = campaign.budget;
-          const parsedAmount =
-            parseInt(campaign.budget / beneficiaries.length) *
-            beneficiaries.length;
-          const org = await BlockchainService.transferTo(
-            organisationAddress.address,
-            organisationAddress.privateKey,
-            campaignAddress.address,
-            beneficiaries.length > 0 ? parsedAmount : realBudget,
-          );
-          Logger.info(`Transferred to campaign wallet: ${org}`);
-          if (!org) {
-            await Transaction.create({
-              amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
-              reference: generateTransactionRef(),
-              status: 'failed',
-              transaction_origin: 'wallet',
-              transaction_type: 'transfer',
-              SenderWalletId: OrgWallet.uuid,
-              ReceiverWalletId: campaignWallet.uuid,
-              OrganisationId: campaign.OrganisationId,
-              narration: 'Approve Campaign Funding',
-            });
-            return;
-          }
-          await Transaction.create({
-            amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
-            reference: generateTransactionRef(),
-            status: 'success',
-            transaction_origin: 'wallet',
-            transaction_type: 'transfer',
-            SenderWalletId: OrgWallet.uuid,
-            ReceiverWalletId: campaignWallet.uuid,
-            OrganisationId: campaign.OrganisationId,
-            narration: 'Approve Campaign Funding',
-          });
-          await update_campaign(campaign.id, {
-            status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
-            is_funded: true,
-            amount_disbursed:
-              beneficiaries.length > 0 ? parsedAmount : realBudget,
-          });
-          await deductWalletAmount(
-            beneficiaries.length > 0 ? parsedAmount : realBudget,
-            OrgWallet.uuid,
-          );
-          await addWalletAmount(
-            beneficiaries.length > 0 ? parsedAmount : realBudget,
-            campaign.Wallet.uuid,
-          );
-          const wallet = beneficiaries.map(user => user.User.Wallets);
-          const mergeWallet = [].concat.apply([], wallet);
-          let generateSMS_Voucher = false;
-          for (let i = 0; i < mergeWallet.length; i++) {
-            const uuid = mergeWallet[i].uuid;
-            const userId = mergeWallet[i].UserId;
-            const beneficiary = await BlockchainService.setUserKeypair(
-              `user_${userId}campaign_${campaign.id}`,
-            );
-            const spend = await BlockchainService.approveToSpend(
-              campaignAddress.address,
-              campaignAddress.privateKey,
-              beneficiary.address,
-              share,
-            );
-            if (spend) {
-              await addWalletAmount(share, uuid);
-              generateSMS_Voucher = true;
-            }
-          }
-          if (generateSMS_Voucher) {
-            const User = beneficiaries.map(user => user.User);
-            for (let i = 0; i < User.length; i++) {
-              let istoken = false;
-              let QrCode;
-              const smsToken = GenearteSMSToken();
-              const qrCodeData = {
-                OrganisationId: campaign.OrganisationId,
-                Campaign: {id: campaign.id, title: campaign.title},
-                Beneficiary: {
-                  id: User[i].id,
-                  name:
-                    User[i].first_name || User[i].last_name
-                      ? User[i].first_name + ' ' + User[i].last_name
-                      : '',
-                },
-                amount: share,
-              };
-              if (token_type === 'papertoken') {
-                QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
-                istoken = true;
-              } else if (token_type === 'smstoken') {
-                SmsService.sendOtp(
-                  User[i].phone,
-                  `Hello ${
-                    User[i].first_name || User[i].last_name
-                      ? User[i].first_name + ' ' + User[i].last_name
-                      : ''
-                  } your convexity token is ${smsToken}, you are approved to spend ${share}.`,
-                );
-                istoken = true;
-              }
-              if (istoken) {
-                await VoucherToken.create({
-                  organisationId: campaign.OrganisationId,
-                  beneficiaryId: User[i].id,
-                  campaignId: campaign.id,
-                  tokenType: token_type,
-                  token: token_type === 'papertoken' ? QrCode : smsToken,
-                  amount: share,
-                });
-                istoken = false;
-              }
-            }
-          }
-          msg.ack();
+
+        Logger.info('Transferring from organisation wallet to campaign wallet');
+        const campaignAddress = await BlockchainService.setUserKeypair(
+          `campaign_${campaignWallet.CampaignId}`,
+        );
+        const organisationAddress = await BlockchainService.setUserKeypair(
+          `organisation_${OrgWallet.OrganisationId}`,
+        );
+
+        const org = await BlockchainService.transferTo(
+          organisationAddress.address,
+          organisationAddress.privateKey,
+          campaignAddress.address,
+          realBudget,
+        );
+        if (!org) {
+          await update_transaction({status: 'failed'}, transactionId);
+          return;
         }
+        await update_transaction({status: 'success'}, transactionId);
+
+        await deductWalletAmount(realBudget, OrgWallet.uuid);
+        await addWalletAmount(realBudget, campaign.Wallet.uuid);
+
+        msg.ack();
       })
       .catch(error => {
-        console.log(error.message, '....///.....');
-        // msg.nack();
+        Logger.error(`RabbitMq Error: ${error.message}`);
+        msg.nack();
       });
+    processFundBeneficiaries.activateConsumer(async msg => {
+      const {
+        OrgWallet,
+        campaignWallet,
+        beneficiaries,
+        campaign,
+        token_type,
+        transactionId,
+        realBudget,
+        share,
+        parsedAmount,
+      } = msg.getContent();
+      beneficiaries.forEach(beneficiary => {
+        beneficiary.User.Wallets.forEach(async wallet => {
+          const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
+            `user_${wallet.UserId}campaign_${campaign.id}`,
+          );
+          const approve_to_spend = await BlockchainService.approveToSpend(
+            campaignAddress.address,
+            campaignAddress.privateKey,
+            beneficiaryKeyPair.address,
+            share,
+          );
+          const uuid = wallet.uuid;
+          if (approve_to_spend) {
+            await addWalletAmount(share, uuid);
+            let istoken = false;
+            let QrCode;
+            const smsToken = GenearteSMSToken();
+            const qrCodeData = {
+              OrganisationId: campaign.OrganisationId,
+              Campaign: {id: campaign.id, title: campaign.title},
+              Beneficiary: {
+                id: User[i].id,
+                name:
+                  User[i].first_name || User[i].last_name
+                    ? User[i].first_name + ' ' + User[i].last_name
+                    : '',
+              },
+              amount: share,
+            };
+            if (token_type === 'papertoken') {
+              QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
+              istoken = true;
+            } else if (token_type === 'smstoken') {
+              SmsService.sendOtp(
+                User[i].phone,
+                `Hello ${
+                  User[i].first_name || User[i].last_name
+                    ? User[i].first_name + ' ' + User[i].last_name
+                    : ''
+                } your convexity token is ${smsToken}, you are approved to spend ${share}.`,
+              );
+              istoken = true;
+            }
+            if (istoken) {
+              await VoucherToken.create({
+                organisationId: campaign.OrganisationId,
+                beneficiaryId: User[i].id,
+                campaignId: campaign.id,
+                tokenType: token_type,
+                token: token_type === 'papertoken' ? QrCode : smsToken,
+                amount: share,
+              });
+              istoken = false;
+            }
+            await update_campaign(campaign.id, {
+              status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+              is_funded: true,
+              amount_disbursed: ternary_amount,
+            });
+          }
+        });
+      });
+    });
     processPaystack
       .activateConsumer(async msg => {
         const {id, amount} = msg.getContent();

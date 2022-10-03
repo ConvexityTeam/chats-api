@@ -53,23 +53,22 @@ router.post('/update-profile', OrganisationController.updateProfile);
 router.post('/transfer/token', OrganisationController.transferToken);
 router.get('/financials/:id', OrganisationController.getFinancials);
 
-router
-.get(
+router.get(
   '/:organisation_id/onboarded/:campaign_id',
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignIdOptional,
-  CampaignController.campaignsWithOnboardedBeneficiary
-)
+  CampaignController.campaignsWithOnboardedBeneficiary,
+);
 router.post(
   '/:organisation_id/onboarded/:campaign_id/:replicaCampaignId',
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignIdOptional,
-  CampaignController.importBeneficiary
-)
+  CampaignController.importBeneficiary,
+);
 router.get(
   '/beneficiaries-summary/:id',
   OrganisationController.getBeneficiariesFinancials,
@@ -79,12 +78,13 @@ router.get('/metric/:id', OrganisationController.getMetric);
 router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign);
 
 router.get('/matrics', NgoSubAdminAuth, OrganisationController.matrix);
-router.post('/zoho-cretate-ticket', OrganisationController.createTicket)
-router.get('/zoho-token', )
-router.route('/zoho-token')
-.get(OrganisationController.fetchToken)
-.post(OrganisationController.saveToken)
-.delete(OrganisationController.destroyToken)
+router.post('/zoho-cretate-ticket', OrganisationController.createTicket);
+router.get('/zoho-token');
+router
+  .route('/zoho-token')
+  .get(OrganisationController.fetchToken)
+  .post(OrganisationController.saveToken)
+  .delete(OrganisationController.destroyToken);
 
 router.get(
   '/non-org-beneficiary',
@@ -149,7 +149,8 @@ router
   );
 
 // Refactord routes
-router.route('/:organisation_id/profile')
+router
+  .route('/:organisation_id/profile')
   .get(
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
@@ -286,14 +287,12 @@ router
 
 router
   .route('/donations/private_donor/campaigns/all')
-  .get(
-    DonorAuth,
-    OrganisationController.getAllPrivateDonorCampaigns,
-  );
+  .get(DonorAuth, OrganisationController.getAllPrivateDonorCampaigns);
 
-router.get('/donations/public_donor/campaigns/all',
-OrganisationController.getAllPublicDonorCampaigns)
-
+router.get(
+  '/donations/public_donor/campaigns/all',
+  OrganisationController.getAllPublicDonorCampaigns,
+);
 
 router
   .route('/:organisation_id/cash4works')
@@ -330,7 +329,17 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
-    CampaignController.approveAndFund,
+    CampaignController.approveAndFundBeneficiaries,
+  );
+
+router
+  .route('/:organisation_id/campaigns/:campaign_id/fund-campaign')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.approveAndFundCampaign,
   );
 router
   .route('/:organisation_id/campaigns/:campaign_id/crypto_pay')
