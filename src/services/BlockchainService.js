@@ -10,10 +10,12 @@ const AwsUploadService = require('./AwsUploadService');
 const client = createClient({
   socket: {
     port: 5000,
-    tls: true,
-  },
+    tls: true
+  }
 });
-const provider = new ethers.providers.JsonRpcProvider();
+const provider = new ethers.providers.getDefaultProvider(
+  process.env.BLOCKCHAINSERV_TEST
+);
 const Axios = axios.create();
 
 class BlockchainService {
@@ -35,8 +37,8 @@ class BlockchainService {
           `${switchWallet.baseURL}/v1/authlock/login`,
           {
             emailAddress: switchWallet.email,
-            password: switchWallet.password,
-          },
+            password: switchWallet.password
+          }
         );
         Logger.info('Signed in to switch wallet');
         resolve(data);
@@ -62,9 +64,9 @@ class BlockchainService {
           body,
           {
             headers: {
-              Authorization: `Bearer ${switch_token}`,
-            },
-          },
+              Authorization: `Bearer ${switch_token}`
+            }
+          }
         );
         Logger.info('Generated wallet address');
         resolve(data);
@@ -89,9 +91,9 @@ class BlockchainService {
           body,
           {
             headers: {
-              Authorization: `Bearer ${switch_token}`,
-            },
-          },
+              Authorization: `Bearer ${switch_token}`
+            }
+          }
         );
         Logger.info('Withdrawal success');
         resolve(data);
@@ -106,9 +108,11 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Confirming transaction');
-        const receipt = await provider.getTransactionReceipt(hash);
+        const {data} = await Axios.get(
+          `https://api-testnet.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+        );
         Logger.info('Transaction confirmed');
-        resolve(receipt);
+        resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
         reject(error);
@@ -131,13 +135,13 @@ class BlockchainService {
       try {
         let keyPair = await this.setUserKeypair(arg);
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`,
+          `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`
         );
         Logger.info(`User Added`);
         resolve(data);
       } catch (error) {
         Logger.error(
-          `Adding User Error: ${JSON.stringify(error.response.data)}`,
+          `Adding User Error: ${JSON.stringify(error.response.data)}`
         );
         reject(error);
       }
@@ -154,78 +158,118 @@ class BlockchainService {
           null,
           {
             headers: {
-              'X-CHECKSUM': checksum,
-            },
-          },
+              'X-CHECKSUM': checksum
+            }
+          }
         );
         Logger.info('Token minted', data);
         resolve(data);
       } catch (error) {
         Logger.error(
-          `Error minting token: ${JSON.stringify(error.response.data)}`,
+          `Error minting token: ${JSON.stringify(error.response.data)}`
+        );
+        reject(error);
+      }
+    });
+  }
+  static async redeem(senderpswd, amount) {
+    return new Promise(async (resolve, reject) => {
+      const mintTo = senderpswd;
+      const payload = {mintTo, amount};
+      const checksum = Encryption.encryptTokenPayload(payload);
+      try {
+        Logger.info('Redeeming token');
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/redeem/${senderpswd}/${amount}`,
+          null,
+          {
+            headers: {
+              'X-CHECKSUM': checksum
+            }
+          }
+        );
+        Logger.info('Success redeeming token');
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `Error redeeming token: ` + JSON.stringify(error.response.data)
         );
         reject(error);
       }
     });
   }
 
-  static async approveToSpend(ngoAddress, ngoPassword, benWallet, amount) {
+  static async approveToSpend(ownerPassword, spenderAdd, amount) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
-        const res = await Axios.post(
-          `${tokenConfig.baseURL}/txn/approve/${ngoAddress}/${ngoPassword}/${benWallet}/${amount}`,
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/approve/${ownerPassword}/${spenderAdd}/${amount}`
         );
         Logger.info('Approved to spend');
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `Error approving to spend: ${JSON.stringify(error.response.data)}`
+        );
+        reject(error);
+      }
+    });
+  }
+
+  static async disApproveToSpend(ownerPassword, spenderAdd, amount) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('disapproving to spend');
+        const res = await Axios.post(
+          `${tokenConfig.baseURL}/txn/disapprove/${ownerPassword}/${spenderAdd}/${amount}`
+        );
+        Logger.info('Disapproved to spend');
         resolve(res);
       } catch (error) {
         Logger.error(
-          `Error approving to spend: ${JSON.stringify(error.response.data)}`,
+          `Error disapproving to spend: ${JSON.stringify(error.response.data)}`
         );
         reject(error);
       }
     });
   }
 
-  static async transferTo(senderaddr, senderpwsd, receiver, amount) {
+  static async transferTo(senderPass, receiverAdd, amount) {
+    //Logger.info(senderaddr, senderpwsd, receiver, amount);
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Transferring to');
-        const response = await Axios.post(
-          `${tokenConfig.baseURL}/txn/transfer/${senderaddr}/${senderpwsd}/${receiver}/${amount}`,
+        Logger.info('Transferring to campaign wallet');
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/transfer/${senderPass}/${receiverAdd}/${amount}`
         );
-        Logger.info('Success transferring funds to');
-        resolve(response);
+        Logger.info('Transferred to campaign wallet');
+        resolve(data);
       } catch (error) {
         Logger.error(
-          `Error transferring funds to: ${JSON.stringify(error.response.data)}`,
+          `Error transferring to campaign wallet: ${JSON.stringify(
+            error.response.data
+          )}`
         );
         reject(error);
       }
     });
   }
 
-  static async transferFrom(
-    tokenowneraddr,
-    to,
-    spenderaddr,
-    spenderpwsd,
-    amount,
-  ) {
+  static async transferFrom(tokenownerAdd, receiver, spenderPass, amount) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring funds from..');
-        const response = await Axios.post(
-          `${tokenConfig.baseURL}/txn/transferfrom/${tokenowneraddr}/${to}/${spenderaddr}/${spenderpwsd}/${amount}`,
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/transferfrom/${tokenownerAdd}/${receiver}/${spenderPass}/${amount}`
         );
-
-        Logger.info('Success transferring funds from', res.data);
-        resolve(response);
+        Logger.info('Success transferring funds from');
+        resolve(data);
       } catch (error) {
         Logger.info(
-          `Error transferring funds from: ${JSON.stringify(
-            error.response.data,
-          )}`,
+          `Error transferring funds from:  ${
+            error.response ? JSON.stringify(error.response.data) : error
+          } `
         );
         reject(error);
       }
@@ -236,7 +280,7 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         const {data} = await Axios.get(
-          `${tokenConfig.baseURL}/account/allowance/${tokenOwner}/${spenderAddr}`,
+          `${tokenConfig.baseURL}/account/allowance/${tokenOwner}/${spenderAddr}`
         );
         resolve(data);
       } catch (error) {
@@ -249,7 +293,7 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         const {data} = await Axios.get(
-          `${tokenConfig.baseURL}/account/balance/${address}`,
+          `${tokenConfig.baseURL}/account/balance/${address}`
         );
         resolve(data);
       } catch (error) {
@@ -258,27 +302,29 @@ class BlockchainService {
     });
   }
 
-  static async redeem(senderaddr, senderpswd, amount) {
-    const mintTo = senderaddr;
-    const payload = {mintTo, amount};
-    const checksum = Encryption.encryptTokenPayload(payload);
+  static async redeemx(senderpswd, amount) {
+    Logger.info(senderpswd);
+
     return new Promise(async (resolve, reject) => {
+      const mintTo = senderaddr;
+      const payload = {mintTo, amount};
+      const checksum = Encryption.encryptTokenPayload(payload);
       try {
         Logger.info('Redeeming token');
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/txn/redeem/${senderaddr}/${senderpswd}/${amount}`,
+          `${tokenConfig.baseURL}/txn/redeem/${senderpswd}/${amount}`,
           null,
           {
             headers: {
-              'X-CHECKSUM': checksum,
-            },
-          },
+              'X-CHECKSUM': checksum
+            }
+          }
         );
         Logger.info('Success redeeming token');
         resolve(data);
       } catch (error) {
         Logger.error(
-          `Error redeeming token: ` + JSON.stringify(error.response.data),
+          `Error redeeming token: ` + JSON.stringify(error.response.data)
         );
         reject(error);
       }
@@ -292,7 +338,7 @@ class BlockchainService {
     let buffer = crypto.scryptSync(hash, salt, 32, {
       N: Math.pow(2, 14),
       r: 8,
-      p: 1,
+      p: 1
     });
 
     const generatedKeyPair = new Wallet(buffer);
@@ -305,11 +351,11 @@ class BlockchainService {
     // TODO: Rebuild user public and private key after retrieving mnemonic key and return account keypair
     try {
       var mnemonic = await AwsUploadService.getMnemonic();
-      //console.log(mnemonic,'mnooop')
       mnemonic = JSON.parse(mnemonic);
+
       pair = await this.createNewBSCAccount({
         mnemonicString: mnemonic.toString(),
-        userSalt: id,
+        userSalt: id
       });
       return pair;
     } catch (error) {

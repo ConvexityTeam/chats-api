@@ -15,70 +15,70 @@ const {
   PAYSTACK_VENDOR_WITHDRAW,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_CAMPAIGN_DEPOSIT,
-  FUND_BENEFICIARIES,
+  FUND_BENEFICIARIES
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
 const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
-  durable: true,
+  durable: true
 });
 const fundBeneficiary = RabbitMq['default'].declareQueue(FUND_BENEFICIARY, {
-  durable: true,
+  durable: true
 });
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
-  durable: true,
+  durable: true
 });
 const payStackDepositQueue = RabbitMq['default'].declareQueue(
   PAYSTACK_DEPOSIT,
   {
-    durable: true,
-  },
+    durable: true
+  }
 );
 
 const payStackCampaignDepositQueue = RabbitMq['default'].declareQueue(
   PAYSTACK_CAMPAIGN_DEPOSIT,
   {
-    durable: true,
-  },
+    durable: true
+  }
 );
 
 const verifyFaitDepositQueue = RabbitMq['default'].declareQueue(
   VERIFY_FIAT_DEPOSIT,
   {
-    durable: true,
-  },
+    durable: true
+  }
 );
 
 const processOrderQueue = RabbitMq['default'].declareQueue(
   PROCESS_VENDOR_ORDER,
   {
-    durable: true,
-  },
+    durable: true
+  }
 );
 
 const approveCampaignAndFund = RabbitMq['default'].declareQueue(
   FROM_NGO_TO_CAMPAIGN,
   {
-    durable: true,
-  },
+    durable: true
+  }
 );
 
 const fundVendorBankAccount = RabbitMq['default'].declareQueue(
   PAYSTACK_VENDOR_WITHDRAW,
   {
-    durable: true,
-  },
+    durable: true
+  }
 );
 
 const fundBeneficiaryBankAccount = RabbitMq['default'].declareQueue(
   PAYSTACK_BENEFICIARY_WITHDRAW,
   {
-    durable: true,
-  },
+    durable: true
+  }
 );
 
 const payForProduct = RabbitMq['default'].declareQueue(PAY_FOR_PRODUCT, {
-  durable: true,
+  durable: true
 });
 
 class QueueService {
@@ -86,8 +86,8 @@ class QueueService {
     const payload = {wallet_type, ownerId, CampaignId};
     createWalletQueue.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
   }
 
@@ -95,16 +95,16 @@ class QueueService {
     const payload = {id, amount};
     payStackDepositQueue.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
   }
   static createCampaignPayStack(camp_id, camp_uuid, org_uuid, org_id, amount) {
     const payload = {camp_id, camp_uuid, org_uuid, org_id, amount};
     payStackCampaignDepositQueue.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
   }
 
@@ -113,10 +113,10 @@ class QueueService {
     OrganisationId,
     approved,
     status,
-    amount,
+    amount
   }) {
     const wallet = await WalletService.findMainOrganisationWallet(
-      OrganisationId,
+      OrganisationId
     );
     if (!wallet) {
       QueueService.createWallet(OrganisationId, 'organisation');
@@ -132,7 +132,7 @@ class QueueService {
       is_approved: false,
       OrganisationId,
       reference: generateTransactionRef(),
-      amount,
+      amount
     });
     const payload = {
       transactionId: transaction.uuid,
@@ -141,12 +141,12 @@ class QueueService {
       approved,
       status,
       amount,
-      wallet,
+      wallet
     };
     verifyFaitDepositQueue.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
   }
 
@@ -157,7 +157,7 @@ class QueueService {
     order,
     vendor,
     amount,
-    transaction,
+    transaction
   ) {
     const payload = {
       beneficiaryWallet,
@@ -166,12 +166,12 @@ class QueueService {
       order,
       vendor,
       amount,
-      transaction,
+      transaction
     };
     processOrderQueue.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
   }
   static async fundBeneficiaries(
@@ -179,48 +179,23 @@ class QueueService {
     campaignWallet,
     beneficiaries,
     campaign,
+    token_type
   ) {
-    const share = parseInt(campaign.budget / beneficiaries.length);
-    const realBudget = campaign.budget;
-    const parsedAmount =
-      parseInt(campaign.budget / beneficiaries.length) * beneficiaries.length;
-    beneficiaries.forEach(beneficiary => {
-      beneficiary.User.Wallets.forEach(async wallet => {
-        const transaction = await Transaction.create({
-          amount: beneficiaries.length > 0 ? parsedAmount : realBudget,
-          reference: generateTransactionRef(),
-          status: 'processing',
-          transaction_origin: 'wallet',
-          transaction_type: 'transfer',
-          SenderWalletId: campaignWallet.uuid,
-          ReceiverWalletId: wallet.uuid,
-          BeneficiaryId: wallet.UserId,
-          OrganisationId: campaign.OrganisationId,
-          narration: 'Approve Beneficiary Funding',
-        });
-      });
-    });
-
     const payload = {
       OrgWallet,
       campaignWallet,
       beneficiaries,
       campaign,
-      token_type,
-      transactionId: transaction.uuid,
-      realBudget,
-      share,
-      parsedAmount,
+      token_type
     };
-    approveCampaignAndFund.send(
+    fundBeneficiaries.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
   }
   static async CampaignApproveAndFund(campaign, campaignWallet, OrgWallet) {
     const realBudget = campaign.budget;
-    Logger.info(JSON.stringify(OrgWallet));
     const transaction = await Transaction.create({
       amount: realBudget,
       reference: generateTransactionRef(),
@@ -230,19 +205,19 @@ class QueueService {
       SenderWalletId: OrgWallet.uuid,
       ReceiverWalletId: campaignWallet.uuid,
       OrganisationId: campaign.OrganisationId,
-      narration: 'Approve Campaign Funding',
+      narration: 'Approve Campaign Funding'
     });
     const payload = {
       OrgWallet,
       campaignWallet,
       campaign,
       transactionId: transaction.uuid,
-      realBudget,
+      realBudget
     };
     approveCampaignAndFund.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
     return transaction;
   }
@@ -251,7 +226,7 @@ class QueueService {
     beneficiaryWallet,
     campaignWallet,
     task_assignment,
-    amount_disburse,
+    amount_disburse
   ) {
     const transaction = await Transaction.create({
       amount: amount_disburse,
@@ -264,7 +239,7 @@ class QueueService {
       BeneficiaryId: beneficiaryWallet.UserId,
       narration: 'for task completed by beneficiary',
       OrganisationId: campaignWallet.OrganisationId,
-      is_approved: true,
+      is_approved: true
     });
 
     const payload = {
@@ -272,12 +247,12 @@ class QueueService {
       campaignWallet,
       task_assignment,
       amount_disburse,
-      transaction,
+      transaction
     };
     fundBeneficiary.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
     return transaction;
   }
@@ -287,7 +262,7 @@ class QueueService {
     campaignWallet,
     userWallet,
     userId,
-    amount,
+    amount
   ) {
     const transaction = await Transaction.create({
       amount: amount,
@@ -296,7 +271,7 @@ class QueueService {
       transaction_origin: 'wallet',
       transaction_type: 'withdrawal',
       BeneficiaryId: userId,
-      narration: 'Wallet withdrawal to bank account',
+      narration: 'Wallet withdrawal to bank account'
     });
     const payload = {
       bankAccount,
@@ -304,12 +279,12 @@ class QueueService {
       userWallet,
       userId,
       amount,
-      transaction,
+      transaction
     };
     fundBeneficiaryBankAccount.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
     return transaction;
   }
@@ -322,13 +297,13 @@ class QueueService {
       transaction_origin: 'wallet',
       transaction_type: 'withdrawal',
       VendorId: userId,
-      narration: 'Wallet withdrawal to bank account',
+      narration: 'Wallet withdrawal to bank account'
     });
     const payload = {bankAccount, userWallet, userId, amount, transaction};
     fundVendorBankAccount.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
 
     return transaction;
@@ -340,7 +315,7 @@ class QueueService {
     campaignWallet,
     VendorWallet,
     BenWallet,
-    product,
+    product
   ) {
     const payload = {
       vendor,
@@ -348,12 +323,12 @@ class QueueService {
       campaignWallet,
       VendorWallet,
       BenWallet,
-      product,
+      product
     };
     payForProduct.send(
       new Message(payload, {
-        contentType: 'application/json',
-      }),
+        contentType: 'application/json'
+      })
     );
   }
 }

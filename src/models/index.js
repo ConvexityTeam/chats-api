@@ -1,8 +1,8 @@
-"use strict";
-require("dotenv").config();
-const fs = require("fs");
-const path = require("path");
-const Sequelize = require("sequelize");
+'use strict';
+require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 
 const config = {
@@ -10,7 +10,7 @@ const config = {
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   host: process.env.DB_HOST,
-  dialect: "postgres",
+  dialect: 'postgres',
   logging: false
 };
 const db = {};
@@ -23,12 +23,12 @@ let sequelize = new Sequelize(
 );
 
 fs.readdirSync(__dirname)
-  .filter((file) => {
+  .filter(file => {
     return (
-      file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".js"
+      file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js'
     );
   })
-  .forEach((file) => {
+  .forEach(file => {
     const model = require(path.join(__dirname, file))(
       sequelize,
       Sequelize.DataTypes
@@ -36,7 +36,7 @@ fs.readdirSync(__dirname)
     db[model.name] = model;
   });
 
-Object.keys(db).forEach((modelName) => {
+Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
     db[modelName].associate(db);
   }

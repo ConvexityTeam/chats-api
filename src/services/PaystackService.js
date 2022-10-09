@@ -18,7 +18,7 @@ class PaystackService {
           await paystack.transaction.initialize({
             reference: ref,
             amount,
-            email: organisation.email,
+            email: organisation.email
           })
         ).data || null;
     }
@@ -28,7 +28,7 @@ class PaystackService {
       service: 'paystack',
       OrganisationId: organisation.id,
       amount: _amount,
-      transactionReference: ref,
+      transactionReference: ref
     });
 
     return {
@@ -40,11 +40,11 @@ class PaystackService {
       amount,
 
       metadata: {
-        organisation_id: organisation.id,
+        organisation_id: organisation.id
       },
       ...(dev_data && {
-        dev_data,
-      }),
+        dev_data
+      })
     };
   }
 
@@ -60,21 +60,23 @@ class PaystackService {
   }
 
   static async withdraw(source, amount, recipient, reason) {
+    return new Promise(async (resolve, reject) => {
       try {
         let value = amount * 100;
-        Logger.info(`tranferring to bank account`);
+        Logger.info(`Transferring Funds to Bank Account`);
         const response = await paystack.transfer.create({
           source,
           amount: value,
           recipient,
-          reason,
+          reason
         });
-        Logger.info(`success tranferring to bank account: ${response.data}`);
-        return true
+        Logger.info(`Funds Transferred to Bank Account`);
+        resolve(response);
       } catch (error) {
-        Logger.error(`Error tranferring to bank account: ${error}`);
-        return false
+        Logger.error(`Error Transferring Funds to Bank account: ${error}`);
+        reject(error);
       }
+    });
   }
 
   static async resolveAccount(account_number, bank_code) {
@@ -82,7 +84,7 @@ class PaystackService {
       try {
         const resoponse = await paystack.verification.resolveAccount({
           account_number,
-          bank_code,
+          bank_code
         });
         if (!resoponse.status) throw new Error('Request failed.');
         resolve(resoponse.data);
@@ -100,7 +102,7 @@ class PaystackService {
           name: bank.name,
           country: bank.country,
           currency: bank.currency,
-          code: bank.code,
+          code: bank.code
         }));
         resolve(banks);
       } catch (error) {
@@ -116,7 +118,7 @@ class PaystackService {
           type: 'nuban',
           name,
           account_number,
-          bank_code,
+          bank_code
         });
         if (!response.status) throw new Error('Request failed.');
         resolve(response.data);
