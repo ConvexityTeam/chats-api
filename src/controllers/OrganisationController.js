@@ -3,7 +3,7 @@ const {
   HttpStatusCode,
   SanitizeObject,
   generateOrganisationId,
-  generateProductRef,
+  generateProductRef
 } = require('../utils');
 
 const moment = require('moment');
@@ -30,18 +30,18 @@ const {
   ProductService,
   WalletService,
   ZohoService,
-  TransactionService,
+  TransactionService
 } = require('../services');
 const AwsUploadService = require('../services/AwsUploadService');
 
 const createWalletQueue = amqp['default'].declareQueue('createWallet', {
-  durable: true,
+  durable: true
 });
 const transferToQueue = amqp['default'].declareQueue('transferTo', {
-  durable: true,
+  durable: true
 });
 const mintTokenQueue = amqp['default'].declareQueue('mintToken', {
-  durable: true,
+  durable: true
 });
 
 class OrganisationController {
@@ -54,7 +54,7 @@ class OrganisationController {
       phone: 'required|string',
       address: 'required|string',
       location: 'required|string',
-      logo_link: 'url',
+      logo_link: 'url'
     };
 
     const validation = new Validator(data, rules);
@@ -63,7 +63,7 @@ class OrganisationController {
       return Response.send(res);
     } else {
       const organisation = await OrganisationService.checkExistEmail(
-        data.email,
+        data.email
       );
 
       if (organisation) {
@@ -82,21 +82,21 @@ class OrganisationController {
       const buket = 'convexity-ngo-logo';
       const logo_link = await AwsUploadService.uploadFile(file, key, buket);
       await OrganisationService.updateOrganisationProfile(req.organisation.id, {
-        logo_link,
+        logo_link
       });
       const updated = await OrganisationService.findOneById(
-        req.organisation.id,
+        req.organisation.id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation logo updated.',
-        updated,
+        updated
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -107,7 +107,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -120,7 +120,7 @@ class OrganisationController {
         'state',
         'address',
         'year_of_inception',
-        'website_url',
+        'website_url'
       ]);
       data.profile_completed = true;
 
@@ -129,19 +129,19 @@ class OrganisationController {
       }
       await OrganisationService.updateOrganisationProfile(
         organisation.id,
-        data,
+        data
       );
       const updated = await OrganisationService.findOneById(organisation.id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation profile updated.',
-        updated,
+        updated
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -150,18 +150,18 @@ class OrganisationController {
   static async getProfile(req, res) {
     try {
       const profile = await OrganisationService.findOneById(
-        req.organisation.id,
+        req.organisation.id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation profile.',
-        profile,
+        profile
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -172,11 +172,11 @@ class OrganisationController {
       const _query = SanitizeObject(req.query, ['type']);
       const query = {
         ..._query,
-        status: 'active',
+        status: 'active'
       };
       const campaigns = await CampaignService.getCampaigns({
         ...query,
-        OrganisationId,
+        OrganisationId
       });
       let campaignsArray = [];
       for (let campaign of campaigns) {
@@ -196,19 +196,19 @@ class OrganisationController {
           createdAt: campaign.createdAt,
           updatedAt: campaign.updatedAt,
           beneficiaries_count: beneficiaries_count,
-          Jobs: campaign.Jobs,
+          Jobs: campaign.Jobs
         });
       }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaigns.',
-        campaignsArray,
+        campaignsArray
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -220,19 +220,19 @@ class OrganisationController {
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getPublicCampaigns({
         ...query,
-        is_public: true,
+        is_public: true
       });
 
       for (let campaign of campaigns) {
         if (new Date(campaign.end_date) < new Date())
           campaign.update({status: 'completed'});
         const organisation = await OrganisationService.checkExist(
-          campaign.OrganisationId,
+          campaign.OrganisationId
         );
         campaign.dataValues.Organisation = organisation;
         for (let task of campaign.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'},
+            where: {TaskId: task.id, status: 'completed'}
           });
           assignmentTask.push(assignment);
         }
@@ -263,7 +263,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -274,20 +274,20 @@ class OrganisationController {
       const assignmentTask = [];
 
       const organisation = await OrganisationService.checkExistEmail(
-        req.user.email,
+        req.user.email
       );
       const query = SanitizeObject(req.query);
       const [campaigns, organisationW, transaction] = await Promise.all([
         CampaignService.getPrivateCampaigns(query, organisation.id),
         OrganisationService.getOrganisationWallet(organisation.id),
-        TransactionService.findOrgnaisationTransactions(organisation.id),
+        TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
       for (let campaign of campaigns.associatedCampaigns) {
         if (new Date(campaign.end_date) < new Date())
           campaign.update({status: 'completed'});
         for (let task of campaign.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'},
+            where: {TaskId: task.id, status: 'completed'}
           });
           assignmentTask.push(assignment);
         }
@@ -300,7 +300,7 @@ class OrganisationController {
         campaign.dataValues.iDonate = false;
         const campaignW = await CampaignService.getCampaignWallet(
           campaign.id,
-          organisation.id,
+          organisation.id
         );
         if (
           campaignW !== null &&
@@ -337,7 +337,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error,
+        'Request failed. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -350,7 +350,7 @@ class OrganisationController {
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getCampaigns({
         ...query,
-        OrganisationId,
+        OrganisationId
       });
 
       for (let data of campaigns) {
@@ -358,7 +358,7 @@ class OrganisationController {
           data.update({status: 'completed'});
         for (let task of data.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'},
+            where: {TaskId: task.id, status: 'completed'}
           });
           assignmentTask.push(assignment);
         }
@@ -385,13 +385,13 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'All Campaigns.',
-        campaigns,
+        campaigns
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -422,13 +422,13 @@ class OrganisationController {
         task_completed,
         task_uncompleted,
         total_tasks,
-        cashforworks,
+        cashforworks
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -437,18 +437,18 @@ class OrganisationController {
   static async getBeneficiariesTransactions(req, res) {
     try {
       const transactions = await BeneficiaryService.findOrganisationVendorTransactions(
-        req.organisation.id,
+        req.organisation.id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiaries transactions.',
-        transactions,
+        transactions
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.',
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -457,18 +457,18 @@ class OrganisationController {
   static async vendorsTransactions(req, res) {
     try {
       const transactions = await VendorService.organisationVendorsTransactions(
-        req.organisation.id,
+        req.organisation.id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Vendors transactions.',
-        transactions,
+        transactions
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please try again.',
+        'Server Error. Please try again.'
       );
       return Response.send(res);
     }
@@ -479,7 +479,7 @@ class OrganisationController {
     const rules = {
       user_id: 'required|numeric',
       organisation_id: 'required|numeric',
-      role: 'required|string|in:admin,member',
+      role: 'required|string|in:admin,member'
     };
     const validation = new Validator(data, rules);
     if (validation.fails()) {
@@ -487,7 +487,7 @@ class OrganisationController {
       return Response.send(res);
     } else {
       const organisation = await OrganisationService.checkExist(
-        data.organisation_id,
+        data.organisation_id
       );
       const user = await UserService.getAUser(data.user_id);
       var errors = [];
@@ -503,13 +503,13 @@ class OrganisationController {
       } else {
         const is_member = await OrganisationService.isMember(
           organisation.id,
-          user.id,
+          user.id
         );
         if (!is_member) {
           await organisation
             .createMember({
               UserId: data.user_id,
-              role: 'member',
+              role: 'member'
             })
             .then(() => {
               Response.setSuccess(201, 'User Added to NGO successfully.');
@@ -534,7 +534,7 @@ class OrganisationController {
         'location',
         'start_date',
         'end_date',
-        'status',
+        'status'
       ]);
 
       // TODO: Check title conflict
@@ -546,16 +546,16 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign updated.',
-        campaign,
+        campaign
       );
       return Response.send(res);
     } catch (error) {
       console.log({
-        error,
+        error
       });
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Campaign update failed. Please retry.',
+        'Campaign update failed. Please retry.'
       );
       return Response.send(res);
     }
@@ -569,7 +569,7 @@ class OrganisationController {
       description: 'required|string',
       spending: 'in:vendor,all',
       status: 'in:pending,in-progress,deleted,paused',
-      organisation_id: 'required|numeric',
+      organisation_id: 'required|numeric'
     };
 
     const validation = new Validator(data, rules);
@@ -580,8 +580,8 @@ class OrganisationController {
     } else {
       const campaignExist = await db.Campaign.findOne({
         where: {
-          id: data.campaignId,
-        },
+          id: data.campaignId
+        }
       });
 
       if (!campaignExist) {
@@ -591,7 +591,7 @@ class OrganisationController {
 
       const campaignData = {
         budget: data.budget,
-        description: data.description,
+        description: data.description
       };
 
       if (data.status) {
@@ -613,23 +613,23 @@ class OrganisationController {
 
       const organisationExist = await db.Organisations.findOne({
         where: {
-          id: organisationId,
+          id: organisationId
         },
         include: {
           as: 'Transaction',
-          model: db.Transaction,
-        },
+          model: db.Transaction
+        }
       });
 
       const mintTransactions = await db.FundAccount.findAll({
         where: {
-          OrganisationId: organisationId,
-        },
+          OrganisationId: organisationId
+        }
       });
 
       Response.setSuccess(201, 'Transactions', {
         transaction: organisationExist.Transaction,
-        mintTransaction: mintTransactions,
+        mintTransaction: mintTransactions
       });
 
       return Response.send(res);
@@ -653,13 +653,13 @@ class OrganisationController {
       const OrganisationId = req.organisation.id;
 
       const OrgWallet = await OrganisationService.getOrganisationWallet(
-        OrganisationId,
+        OrganisationId
       );
 
       if (data.budget > OrgWallet.balance || OrgWallet.balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient Org wallet balance. Try reducing Budget',
+          'Insufficient Org wallet balance. Try reducing Budget'
         );
         return Response.send(res);
       }
@@ -667,18 +667,18 @@ class OrganisationController {
         ...data,
         spending,
         OrganisationId,
-        status: 'pending',
+        status: 'pending'
       })
         .then(campaign => {
           QueueService.createWallet(
             OrganisationId,
             'organisation',
-            campaign.id,
+            campaign.id
           );
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',
-            campaign,
+            campaign
           );
           return Response.send(res);
         })
@@ -688,7 +688,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Campaign creation failed. Please retry.',
+        'Campaign creation failed. Please retry.'
       );
       return Response.send(res);
     }
@@ -703,7 +703,7 @@ class OrganisationController {
       if (isExist.length > 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Product With Tag: ${isExist[0].tag} Already Exist`,
+          `Product With Tag: ${isExist[0].tag} Already Exist`
         );
         return Response.send(res);
       }
@@ -714,38 +714,38 @@ class OrganisationController {
 
           const createdProduct = await db.Product.create({
             ...data,
-            CampaignId: campaign.id,
+            CampaignId: campaign.id
           });
           //console.log(createdProduct)
           if (createdProduct) {
             _body.vendors.forEach(async VendorId => {
               await db.VendorProduct.create({
                 vendorId: VendorId,
-                productId: createdProduct.id,
+                productId: createdProduct.id
               });
               await CampaignService.approveVendorForCampaign(
                 campaign.id,
-                VendorId,
+                VendorId
               );
             });
           }
 
           return createdProduct;
           //return ProductService.addProduct(data, _body.vendors, campaign.id);
-        }),
+        })
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Product added to stores',
-        products,
+        products
       );
       Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support.`
       );
       return Response.send(res);
     }
@@ -757,24 +757,24 @@ class OrganisationController {
       if (!iSProduct) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          `Product with this ID  ${ProductId} Not Approved`,
+          `Product with this ID  ${ProductId} Not Approved`
         );
         return Response.send(res);
       } else {
         const isVendorDeleted = await db.VendorProduct.destroy({
           where: {
-            productId: ProductId,
-          },
+            productId: ProductId
+          }
         });
         if (isVendorDeleted)
           await db.Product.destroy({
             where: {
-              id: ProductId,
-            },
+              id: ProductId
+            }
           });
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
-          'Product Deleted in stores',
+          'Product Deleted in stores'
         );
         Response.send(res);
       }
@@ -782,7 +782,7 @@ class OrganisationController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support. ${error}`,
+        `Internal server error. Contact support. ${error}`
       );
       return Response.send(res);
     }
@@ -795,23 +795,23 @@ class OrganisationController {
       if (!iSProduct) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          `Product with this ID  ${ProductId} Not Approved`,
+          `Product with this ID  ${ProductId} Not Approved`
         );
         return Response.send(res);
       } else {
         await db.Product.update(
           {
-            ...req.body,
+            ...req.body
           },
           {
             where: {
-              id: ProductId,
-            },
-          },
+              id: ProductId
+            }
+          }
         );
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
-          'Product Updated in stores',
+          'Product Updated in stores'
         );
         Response.send(res);
       }
@@ -819,7 +819,7 @@ class OrganisationController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support.`
       );
       return Response.send(res);
     }
@@ -830,13 +830,13 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Product's Vendors.`,
-        productvendors,
+        productvendors
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.${error}`,
+        `Internal server error. Contact support.${error}`
       );
       return Response.send(res);
     }
@@ -858,13 +858,13 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Campaign Products.`,
-        products,
+        products
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -876,13 +876,13 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
-        vendor,
+        vendor
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -898,7 +898,7 @@ class OrganisationController {
         fourty5up = 0;
       const CampaignId = req.params.campaign_id;
       const wallet = await BeneficiaryService.getApprovedBeneficiaries(
-        CampaignId,
+        CampaignId
       );
 
       for (let user of wallet) {
@@ -960,13 +960,13 @@ class OrganisationController {
         twentyTo24999,
         twenty5To29999,
         fourtyTo44999,
-        fourty5up,
+        fourty5up
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -976,18 +976,18 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId,
+        CampaignId
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
-        beneficiaries,
+        beneficiaries
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -997,19 +997,19 @@ class OrganisationController {
       const CampaignId = req.params.campaign_id;
       //const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
       const transactions = await BeneficiaryService.findVendorTransactionsPerBene(
-        CampaignId,
+        CampaignId
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
-        transactions,
+        transactions
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1023,7 +1023,7 @@ class OrganisationController {
         Jos = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId,
+        CampaignId
       );
       for (let beneficiary of beneficiaries) {
         if (beneficiary.User.location.includes('state')) {
@@ -1038,13 +1038,13 @@ class OrganisationController {
         Abuja,
         Lagos,
         Kaduna,
-        Jos,
+        Jos
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1057,7 +1057,7 @@ class OrganisationController {
       let divorce = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId,
+        CampaignId
       );
       if (beneficiaries.length > 0) {
         for (let i = 0; i < beneficiaries.length; i++) {
@@ -1073,13 +1073,13 @@ class OrganisationController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
         single,
         married,
-        divorce,
+        divorce
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1094,18 +1094,18 @@ class OrganisationController {
       let sixty6Up = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId,
+        CampaignId
       );
 
       for (let i = 0; i < beneficiaries.length; i++) {
         if (
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) >= 18 &&
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) <= 29
         ) {
           eighteenTo29++;
@@ -1113,11 +1113,11 @@ class OrganisationController {
         if (
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) >= 30 &&
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) <= 41
         ) {
           thirtyTo41++;
@@ -1125,11 +1125,11 @@ class OrganisationController {
         if (
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) >= 42 &&
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) <= 53
         ) {
           forty2To53++;
@@ -1137,11 +1137,11 @@ class OrganisationController {
         if (
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) >= 54 &&
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) <= 65
         ) {
           fifty4To65++;
@@ -1149,7 +1149,7 @@ class OrganisationController {
         if (
           parseInt(
             moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY'),
+              moment(beneficiaries[i].User.dob).format('YYYY')
           ) >= 66
         ) {
           sixty6Up++;
@@ -1160,13 +1160,13 @@ class OrganisationController {
         thirtyTo41,
         forty2To53,
         fifty4To65,
-        sixty6Up,
+        sixty6Up
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.',
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1192,25 +1192,25 @@ class OrganisationController {
       if (campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campagin Fund Already Disbursed.',
+          'Campagin Fund Already Disbursed.'
         );
         return Response.send(res);
       }
       const approval = await BeneficiaryService.updateCampaignBeneficiary(
         campaign.id,
         req.beneficiary_id,
-        data,
+        data
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiary Approval Updated!',
-        approval,
+        approval
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1220,18 +1220,18 @@ class OrganisationController {
     try {
       const organisation = req.organisation;
       const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
-        organisation.id,
+        organisation.id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation beneficiaries',
-        beneficiaries,
+        beneficiaries
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.',
+        'Internal server error. Please try again later.'
       );
       return Response.send(res);
     }
@@ -1242,18 +1242,18 @@ class OrganisationController {
       const id = req.params.beneficiary_id;
       const beneficiary = await BeneficiaryService.organisationBeneficiaryDetails(
         id,
-        req.organisation.id,
+        req.organisation.id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiary Details.',
-        beneficiary,
+        beneficiary
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.',
+        'Server Error: Unexpected error occured.'
       );
       return Response.send(res);
     }
@@ -1266,21 +1266,21 @@ class OrganisationController {
       if (campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campagin Fund Already Disbursed.',
+          'Campagin Fund Already Disbursed.'
         );
         return Response.send(res);
       }
       const [
-        approvals,
+        approvals
       ] = await BeneficiaryService.approveAllCampaignBeneficiaries(campaign.id);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
-        approvals,
+        approvals
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1290,18 +1290,18 @@ class OrganisationController {
     try {
       const approved = await CampaignService.approveVendorForCampaign(
         req.campaign.id,
-        req.body.vendor_id,
+        req.body.vendor_id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Vendor approved.',
-        approved,
+        approved
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1311,18 +1311,18 @@ class OrganisationController {
     try {
       const removed = await CampaignService.removeVendorForCampaign(
         req.campaign.id,
-        req.body.vendor_id,
+        req.body.vendor_id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Vendor removed.',
-        removed,
+        removed
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -1332,7 +1332,7 @@ class OrganisationController {
     try {
       Logger.info('Fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(
-        req.params.campaign_id,
+        req.params.campaign_id
       );
       const setObj = new Set();
       const result = vendors.reduce((acc, item) => {
@@ -1346,14 +1346,14 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Vendors.',
-        result,
+        result
       );
       return Response.send(res);
     } catch (error) {
       Logger.error('Error fetching campaign vendors');
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error occurred.',
+        'Server Error. Unexpected error occurred.'
       );
       return Response.send(res);
     }
@@ -1374,10 +1374,10 @@ class OrganisationController {
           country: 'required|string',
           registration_id: 'required|string',
           year: 'required',
-          website_url: 'url',
+          website_url: 'url'
         };
         const validation = new Validator(fields, rules, {
-          url: 'Only valid url with https or http allowed',
+          url: 'Only valid url with https or http allowed'
         });
         if (validation.fails()) {
           Response.setError(400, validation.errors);
@@ -1397,15 +1397,15 @@ class OrganisationController {
             if (!allowed_types.includes(files.logo.type)) {
               Response.setError(
                 400,
-                'Invalid File type. Only jpg, png and jpeg files allowed for Profile picture',
+                'Invalid File type. Only jpg, png and jpeg files allowed for Profile picture'
               );
               return Response.send(res);
             }
           }
           const organisation_exist = await db.Organisations.findOne({
             where: {
-              email: fields.email,
-            },
+              email: fields.email
+            }
           });
           if (
             !organisation_exist ||
@@ -1426,17 +1426,17 @@ class OrganisationController {
                 country: fields.country,
                 registration_id: fields.registration_id,
                 year_of_inception: fields.year,
-                website_url: fields.website_url,
+                website_url: fields.website_url
               })
               .then(async () => {
                 if (files.logo) {
                   await uploadFile(
                     files.logo,
                     'ngo-l-' + org.id,
-                    'convexity-ngo-logo',
+                    'convexity-ngo-logo'
                   ).then(url => {
                     org.update({
-                      logo_link: url,
+                      logo_link: url
                     });
                   });
                 }
@@ -1444,15 +1444,15 @@ class OrganisationController {
                   user
                     .update({
                       first_name: fields.first_name,
-                      last_name: fields.last_name,
+                      last_name: fields.last_name
                     })
                     .then(() => {
                       Response.setSuccess(
                         201,
                         'NGO profile updated successfully',
                         {
-                          org,
-                        },
+                          org
+                        }
                       );
                       return Response.send(res);
                     });
@@ -1461,7 +1461,7 @@ class OrganisationController {
           } else {
             Response.setError(
               400,
-              'Email has been taken by another organisation',
+              'Email has been taken by another organisation'
             );
             return Response.send(res);
           }
@@ -1479,11 +1479,11 @@ class OrganisationController {
     fs.writeFile('sample.txt', JSON.stringify(data), function (err) {
       if (err) {
         return res.json({
-          status: 'Error',
+          status: 'Error'
         });
       }
       return res.json({
-        status: 'DOne',
+        status: 'DOne'
       });
     });
   }
@@ -1493,27 +1493,27 @@ class OrganisationController {
       const id = req.params.id;
       let ngo = await db.Organisations.findOne({
         where: {
-          id,
+          id
         },
         include: {
           model: db.Wallet,
-          as: 'Wallet',
-        },
+          as: 'Wallet'
+        }
       });
       const recieved = await db.Transaction.sum('amount', {
         where: {
-          walletRecieverId: ngo.Wallet.uuid,
-        },
+          walletRecieverId: ngo.Wallet.uuid
+        }
       });
       const sent = await db.Transaction.sum('amount', {
         where: {
-          walletSenderId: ngo.Wallet.uuid,
-        },
+          walletSenderId: ngo.Wallet.uuid
+        }
       });
       Response.setSuccess(200, 'Organisation Financials Retrieved', {
         balance: ngo.Wallet.balance,
         recieved,
-        disbursed: sent,
+        disbursed: sent
       });
       return Response.send(res);
     } catch (error) {
@@ -1530,7 +1530,7 @@ class OrganisationController {
     const data = req.body;
     const rules = {
       organisation_id: 'required|numeric',
-      xbnAmount: 'required|numeric',
+      xbnAmount: 'required|numeric'
     };
 
     const validation = new Validator(data, rules);
@@ -1540,30 +1540,30 @@ class OrganisationController {
     } else {
       const organisation = await db.Organisations.findOne({
         where: {
-          id: data.organisation_id,
+          id: data.organisation_id
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           where: {
             bantuAddress: {
-              [Op.ne]: null,
-            },
-          },
-        },
+              [Op.ne]: null
+            }
+          }
+        }
       });
 
       if (organisation) {
         await BantuService.transferToken(
           organisation.Wallet[0].bantuPrivateKey,
-          data.xbnAmount,
+          data.xbnAmount
         )
           .then(async response => {
             await organisation
               .createMintTransaction({
                 amount: data.xbnAmount,
                 transactionReference: response.hash,
-                channel: 'bantu',
+                channel: 'bantu'
               })
               .then(fundTransaction => {
                 const messageBody = {
@@ -1571,12 +1571,12 @@ class OrganisationController {
                   fund: fundTransaction.id,
                   address: organisation.Wallet[0].address,
                   walletId: organisation.Wallet[0].uuid,
-                  amount: data.xbnAmount,
+                  amount: data.xbnAmount
                 };
                 mintTokenQueue.send(
                   new Message(messageBody, {
-                    contentType: 'application/json',
-                  }),
+                    contentType: 'application/json'
+                  })
                 );
                 Response.setSuccess(200, 'Token Minting Initiated');
                 return Response.send(res);
@@ -1604,9 +1604,9 @@ class OrganisationController {
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${secretKey}`,
-        },
-      },
+          Authorization: `Bearer ${secretKey}`
+        }
+      }
     );
 
     const organisationId = response.data.data.meta.orgId;
@@ -1614,23 +1614,23 @@ class OrganisationController {
 
     const organisation = await db.Organisations.findOne({
       where: {
-        id: organisationId,
+        id: organisationId
       },
       include: {
         model: db.Wallet,
         as: 'Wallet',
         where: {
           bantuAddress: {
-            [Op.ne]: null,
-          },
-        },
-      },
+            [Op.ne]: null
+          }
+        }
+      }
     });
 
     const reference = await db.FundAccount.findOne({
       where: {
-        transactionReference: txRef,
-      },
+        transactionReference: txRef
+      }
     });
     if (reference) {
       Response.setError(400, 'Transaction Reference already exist');
@@ -1642,7 +1642,7 @@ class OrganisationController {
         .createMintTransaction({
           amount: amount,
           transactionReference: txRef,
-          channel: 'bantu',
+          channel: 'bantu'
         })
         .then(fundTransaction => {
           const messageBody = {
@@ -1650,12 +1650,12 @@ class OrganisationController {
             fund: fundTransaction.id,
             address: organisation.Wallet[0].address,
             walletId: organisation.Wallet[0].uuid,
-            amount: amount,
+            amount: amount
           };
           mintTokenQueue.send(
             new Message(messageBody, {
-              contentType: 'application/json',
-            }),
+              contentType: 'application/json'
+            })
           );
           Response.setSuccess(200, 'Mint Action Initiated');
           return Response.send(res);
@@ -1671,18 +1671,18 @@ class OrganisationController {
       const id = req.params.organisationId;
       const organisation = await db.Organisations.findOne({
         where: {
-          id,
+          id
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           attributes: {
-            exclude: ['bantuPrivateKey', 'privateKey'],
-          },
-        },
+            exclude: ['bantuPrivateKey', 'privateKey']
+          }
+        }
       });
       Response.setSuccess(200, 'Organisation Wallet Retrieved', {
-        wallets: organisation.Wallet,
+        wallets: organisation.Wallet
       });
       return Response.send(res);
     } catch (error) {
@@ -1697,23 +1697,23 @@ class OrganisationController {
       console.log(id, 'id');
       const organisation = await db.Organisations.findOne({
         where: {
-          id,
+          id
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           attributes: {
-            exclude: ['bantuPrivateKey', 'privateKey'],
+            exclude: ['bantuPrivateKey', 'privateKey']
           },
           where: {
             bantuAddress: {
-              [Op.ne]: null,
-            },
-          },
-        },
+              [Op.ne]: null
+            }
+          }
+        }
       });
       Response.setSuccess(200, 'Organisation Wallet Retrieved', {
-        wallet: organisation.Wallet[0],
+        wallet: organisation.Wallet[0]
       });
       return Response.send(res);
     } catch (error) {
@@ -1728,21 +1728,21 @@ class OrganisationController {
       const campaign = req.params.campaignId;
       const organisation = await db.Organisations.findOne({
         where: {
-          id,
+          id
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           attributes: {
-            exclude: ['bantuPrivateKey', 'privateKey'],
+            exclude: ['bantuPrivateKey', 'privateKey']
           },
           where: {
-            CampaignId: campaign,
-          },
-        },
+            CampaignId: campaign
+          }
+        }
       });
       Response.setSuccess(200, 'Organisation Wallet Retrieved', {
-        wallet: organisation.Wallet[0],
+        wallet: organisation.Wallet[0]
       });
       return Response.send(res);
     } catch (error) {
@@ -1756,7 +1756,7 @@ class OrganisationController {
     const rules = {
       campaign: 'required|numeric',
       organisation_id: 'required|numeric',
-      amount: 'required|numeric|min:100',
+      amount: 'required|numeric|min:100'
     };
 
     const validation = new Validator(data, rules);
@@ -1766,12 +1766,12 @@ class OrganisationController {
     } else {
       const organisation = await db.Organisations.findOne({
         where: {
-          id: data.organisation_id,
+          id: data.organisation_id
         },
         include: {
           model: db.Wallet,
-          as: 'Wallet',
-        },
+          as: 'Wallet'
+        }
       });
 
       if (!organisation) {
@@ -1796,7 +1796,7 @@ class OrganisationController {
       if (!campaignExist) {
         Response.setError(
           400,
-          'Organisation does not have a wallet attached to this campaign',
+          'Organisation does not have a wallet attached to this campaign'
         );
         return Response.send(res);
       }
@@ -1812,7 +1812,7 @@ class OrganisationController {
             walletSenderId: mainWallet.uuid,
             walletRecieverId: reciepientWallet.uuid,
             amount: data.amount,
-            narration: 'Funding ' + campaign.title + ' campaign ',
+            narration: 'Funding ' + campaign.title + ' campaign '
           })
           .then(transaction => {
             transferToQueue.send(
@@ -1822,12 +1822,12 @@ class OrganisationController {
                   senderPass: mainWallet.privateKey,
                   reciepientAddress: reciepientWallet.address,
                   amount: data.amount,
-                  transaction: transaction.uuid,
+                  transaction: transaction.uuid
                 },
                 {
-                  contentType: 'application/json',
-                },
-              ),
+                  contentType: 'application/json'
+                }
+              )
             );
           });
         Response.setSuccess(200, 'Transfer has been Initiated');
@@ -1841,12 +1841,12 @@ class OrganisationController {
     const id = req.params.id;
     let ngo = await db.Organisations.findOne({
       where: {
-        id,
+        id
       },
       include: {
         model: db.OrganisationMembers,
-        as: 'Member',
-      },
+        as: 'Member'
+      }
     });
     if (ngo) {
       const members = ngo['Member'].map(element => {
@@ -1855,8 +1855,8 @@ class OrganisationController {
       const campaigns = await db.Campaign.findAll({
         where: {
           OrganisationMemberId: {
-            [Op.or]: members,
-          },
+            [Op.or]: members
+          }
         },
         include: {
           model: db.Beneficiaries,
@@ -1866,10 +1866,10 @@ class OrganisationController {
             as: 'User',
             include: {
               model: db.Wallet,
-              as: 'Wallet',
-            },
-          },
-        },
+              as: 'Wallet'
+            }
+          }
+        }
       });
       const wallets = [];
       let remaining = 0;
@@ -1885,21 +1885,21 @@ class OrganisationController {
       const spent = await db.Transaction.sum('amount', {
         where: {
           walletSenderId: {
-            [Op.or]: wallets,
-          },
-        },
+            [Op.or]: wallets
+          }
+        }
       });
       const recieved = await db.Transaction.sum('amount', {
         where: {
           walletRecieverId: {
-            [Op.or]: wallets,
-          },
-        },
+            [Op.or]: wallets
+          }
+        }
       });
       Response.setSuccess(200, 'Beneficiaries', {
         spent,
         recieved,
-        remaining,
+        remaining
       });
       return Response.send(res);
     }
@@ -1915,12 +1915,12 @@ class OrganisationController {
         'phone',
         'address',
         'store_name',
-        'location',
+        'location'
       ]);
       const vendor = await OrganisationService.createVendorAccount(
         organisation,
         data,
-        user,
+        user
       );
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
@@ -1980,19 +1980,19 @@ class OrganisationController {
       const vendorId = req.params.vendor_id || req.body.vendor_id;
       const vendorProducts = await VendorService.vendorStoreProducts(vendorId);
       const vendor = await VendorService.vendorPublicDetails(vendorId, {
-        OrganisationId,
+        OrganisationId
       });
       vendor.dataValues.Store = {
-        Products: vendorProducts,
+        Products: vendorProducts
       };
       vendor.dataValues.total_received = vendor.Wallets.map(wallet =>
         wallet.ReceivedTransactions.map(tx => tx.amount).reduce(
           (a, b) => a + b,
-          0,
-        ),
+          0
+        )
       ).reduce((a, b) => a + b, 0);
       vendor.dataValues.total_spent = vendor.Wallets.map(wallet =>
-        wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0),
+        wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0)
       ).reduce((a, b) => a + b, 0);
       Response.setSuccess(200, 'Organisation vendor', vendor);
       return Response.send(res);
@@ -2011,20 +2011,20 @@ class OrganisationController {
       const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
       const previous_stat = await VendorService.organisationDailyVendorStat(
         organisation.id,
-        yesterday,
+        yesterday
       );
       const today_stat = await VendorService.organisationDailyVendorStat(
-        organisation.id,
+        organisation.id
       );
       const Transactions = await VendorService.organisationVendorsTransactions(
-        organisation.id,
+        organisation.id
       );
       Response.setSuccess(200, 'Organisation vendors Summary', {
         organisation,
         vendors_count,
         previous_stat,
         today_stat,
-        Transactions,
+        Transactions
       });
       return Response.send(res);
     } catch (error) {
@@ -2042,10 +2042,10 @@ class OrganisationController {
 
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
-        is_funded: true,
+        is_funded: true
       });
       const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId,
+        isOrgMember.OrganisationId
       );
       isOrganisationCamp.forEach(matric => {
         disbursedDates.push(matric.updatedAt);
@@ -2070,10 +2070,10 @@ class OrganisationController {
       const isOrgMember = await OrganisationService.isMemberUser(req.user.id);
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
-        is_funded: true,
+        is_funded: true
       });
       const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId,
+        isOrgMember.OrganisationId
       );
       function getDifference() {
         return isOrganisationCampWallet.filter(wallet => {
@@ -2095,7 +2095,7 @@ class OrganisationController {
       Response.setSuccess(200, 'transaction', {
         campaign_budget,
         amount_disbursed,
-        balance,
+        balance
       });
       return Response.send(res);
     } catch (error) {
@@ -2111,18 +2111,18 @@ class OrganisationController {
       const org = await OrganisationService.isMemberUser(req.user.id);
       const nonOrgBeneficiaries = await BeneficiaryService.nonOrgBeneficiaries({
         ...query,
-        OrganisationId: org.OrganisationId,
+        OrganisationId: org.OrganisationId
       });
       Response.setSuccess(
         200,
         'this beneficiary not under your organisation',
-        nonOrgBeneficiaries,
+        nonOrgBeneficiaries
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`,
+        `Internal server error. Contact support. ${error}`
       );
       return Response.send(res);
     }
@@ -2136,7 +2136,7 @@ class OrganisationController {
         description: 'required|string',
         'contact.email': 'email',
         'contact.firstName': 'string',
-        'contact.lastName': 'string',
+        'contact.lastName': 'string'
       };
 
       const validation = new Validator(data, rules);
@@ -2151,7 +2151,47 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`,
+        `Internal server error. Contact support. ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async createTicketOrg(req, res) {
+    const data = req.body;
+    try {
+      const rules = {
+        subject: 'required|string',
+        description: 'required|string'
+      };
+
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, validation.errors);
+        return Response.send(res);
+      }
+      const member = await OrganisationService.isMemberUser(req.user.id);
+      const organisation = await OrganisationService.findOneById(
+        member.OrganisationId
+      );
+
+      const org = organisation.Organisations[0];
+      data.departmentId = '661286000000006907';
+      data.email = org.email;
+      data.contact = {
+        firstName: organisation.first_name,
+        lastName: organisation.first_name,
+        phone: org.phone,
+        email: org.email
+      };
+
+      const createdTicket = await ZohoService.createTicket(data);
+      Response.setSuccess(201, 'Ticket Created Successfully', createdTicket);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`
       );
       return Response.send(res);
     }
@@ -2165,7 +2205,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`,
+        `Internal server error. Contact support. ${error}`
       );
       return Response.send(res);
     }
@@ -2178,7 +2218,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`,
+        `Internal server error. Contact support. ${error}`
       );
       return Response.send(res);
     }
@@ -2191,7 +2231,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`,
+        `Internal server error. Contact support. ${error}`
       );
       return Response.send(res);
     }

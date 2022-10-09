@@ -4,7 +4,7 @@ const {
   Wallet,
   Organisation,
   Transaction,
-  OrganisationMembers,
+  OrganisationMembers
 } = require('../models');
 const {
   OrgRoles,
@@ -13,23 +13,18 @@ const {
   generateRandom
 } = require('../utils');
 const QueueService = require('./QueueService');
-const bcrypt = require("bcryptjs");
-const {
-  Op,
-  Sequelize
-} = require('sequelize');
-const {
-  userConst
-} = require('../constants');
+const bcrypt = require('bcryptjs');
+const {Op, Sequelize} = require('sequelize');
+const {userConst} = require('../constants');
 const SmsService = require('./SmsService');
 const MailerService = require('./MailerService');
 
-
 class OrganisationService {
   static findOneById(id) {
-    return User.findByPk(id,{include: {model: Organisation, as: 'Organisations'}});
+    return User.findByPk(id, {
+      include: {model: Organisation, as: 'Organisations'}
+    });
   }
-
 
   static async getAllOrganisations() {
     return Organisation.findAll();
@@ -57,25 +52,24 @@ class OrganisationService {
   }
 
   static async addOrganisation(data, user) {
-    return Organisation.create(data).then((organisation) => {
+    return Organisation.create(data).then(organisation => {
       organisation.createMember({
         UserId: user.id,
         role: OrgRoles.Admin
-      })
+      });
     });
   }
 
   static async addDonor(data, user, inviteeId) {
-    console.log(inviteeId, 'iddd')
-    return Organisation.create(data).then((organisation) => {
+    console.log(inviteeId, 'iddd');
+    return Organisation.create(data).then(organisation => {
       organisation.createMember({
         UserId: user.id,
         OrganisationId: inviteeId,
         role: 'donor'
-      })
+      });
     });
   }
-
 
   static async updateOrganisationProfile(id, data = {}) {
     return Organisation.update(data, {
@@ -105,7 +99,7 @@ class OrganisationService {
   }
 
   static async checkExist(id) {
-    return Organisation.findByPk(id)
+    return Organisation.findByPk(id);
   }
 
   static async checkExistEmail(email) {
@@ -115,7 +109,6 @@ class OrganisationService {
       }
     });
   }
-  
 
   static async isMember(organisation, user) {
     return database.OrganisationMembers.findOne({
@@ -125,7 +118,7 @@ class OrganisationService {
       }
     });
   }
-static async getAllDonorMember(UserId) {
+  static async getAllDonorMember(UserId) {
     return OrganisationMembers.findAll({
       where: {UserId}
     });
@@ -143,38 +136,42 @@ static async getAllDonorMember(UserId) {
       let account = null;
       let store = null;
 
-      const {
-        address,
-        store_name,
-        location
-      } = data;
+      const {address, store_name, location} = data;
       const rawPassword = generateRandom(8);
       const RoleId = AclRoles.Vendor;
       const OrganisationId = organisation.id;
       const password = bcrypt.hashSync(rawPassword, 10);
       const vendor_id = GenearteVendorId();
       User.create({
-          ...data,
-          vendor_id,
-          RoleId,
-          OrganisationId,
-          password
-        })
+        ...data,
+        vendor_id,
+        RoleId,
+        OrganisationId,
+        password
+      })
         .then(async _account => {
           account = _account;
-          this.createMember(account.id, OrganisationId, OrgRoles.Vendor)
+          this.createMember(account.id, OrganisationId, OrgRoles.Vendor);
           return Market.create({
             store_name,
             address,
             location,
             UserId: account.id
-          })
+          });
         })
         .then(_store => {
           store = _store;
           QueueService.createWallet(account.id, 'user');
-          MailerService.verify(data.email, data.first_name + " " + data.last_name, rawPassword, vendor_id)
-          SmsService.sendOtp(data.phone, `Hi, ${data.first_name}  ${data.last_name} your CHATS account ID is: ${vendor_id} , password is: ${rawPassword}.`);
+          MailerService.verify(
+            data.email,
+            data.first_name + ' ' + data.last_name,
+            rawPassword,
+            vendor_id
+          );
+          SmsService.sendOtp(
+            data.phone,
+            `Hi, ${data.first_name}  ${data.last_name} your CHATS account ID is: ${vendor_id} , password is: ${rawPassword}`
+          );
           account = account.toObject();
           account.Store = store.toJSON();
           resolve(account);
@@ -188,17 +185,20 @@ static async getAllDonorMember(UserId) {
             });
           }
           reject(error);
-        })
+        });
     });
   }
-
 
   static async beneficiariesTransactions(OrganisationId) {
     return Transaction.findAll({
       where: {
-        SenderWalletId: Sequelize.where(Sequelize.col('SenderWallet.UserId'), OrganisationId)
+        SenderWalletId: Sequelize.where(
+          Sequelize.col('SenderWallet.UserId'),
+          OrganisationId
+        )
       },
-      include: [{
+      include: [
+        {
           model: Wallet,
           as: 'SenderWallet',
           attributes: [],
@@ -216,17 +216,17 @@ static async getAllDonorMember(UserId) {
           attributes: {
             exclude: ['privateKey', 'bantuPrivateKey']
           },
-          include: [{
-            model: User,
-            as: 'User',
-            attributes: userConst.publicAttr
-          }]
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: userConst.publicAttr
+            }
+          ]
         }
-
       ]
     });
   }
-
 }
 
 module.exports = OrganisationService;

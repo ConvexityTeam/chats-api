@@ -4,7 +4,7 @@ const {
   compareHash,
   createHash,
   SanitizeObject,
-  HttpStatusCode,
+  HttpStatusCode
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -17,7 +17,7 @@ const {
   UserService,
   PaystackService,
   QueueService,
-  WalletService,
+  WalletService
 } = require('../services');
 const {Response} = require('../libs');
 
@@ -29,11 +29,11 @@ const sanitizeObject = require('../utils/sanitizeObject');
 const AwsUploadService = require('../services/AwsUploadService');
 
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
-  durable: true,
+  durable: true
 });
 
 var transferFromQueue = amqp_1['default'].declareQueue('transferFrom', {
-  durable: true,
+  durable: true
 });
 
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
@@ -75,7 +75,7 @@ class UsersController {
       try {
         const resolved = await PaystackService.resolveAccount(
           data.account_number,
-          data.bank_code,
+          data.bank_code
         );
         data.account_name = resolved.account_name;
       } catch (err) {
@@ -87,7 +87,7 @@ class UsersController {
         const recipient = await PaystackService.createRecipientReference(
           data.account_name,
           data.account_number,
-          data.bank_code,
+          data.bank_code
         );
         data.bank_name = recipient.details.bank_name;
         data.recipient_code = recipient.recipient_code;
@@ -101,13 +101,13 @@ class UsersController {
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Bank Account Added',
-        account,
+        account
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -121,7 +121,7 @@ class UsersController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -134,7 +134,7 @@ class UsersController {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
         phone: ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-        nin: 'digits:11|numeric',
+        nin: 'digits:11|numeric'
       };
 
       const validation = new Validator(data, rules);
@@ -144,12 +144,12 @@ class UsersController {
       }
 
       if (data.nin) {
-        const hash = createHash(data.nin)
+        const hash = createHash(data.nin);
         const isExist = await UserService.findSingleUser({nin: data.nin});
         if (isExist) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            `user with this nin: ${data.nin} exist`,
+            `user with this nin: ${data.nin} exist`
           );
           return Response.send(res);
         }
@@ -157,17 +157,17 @@ class UsersController {
         if (!nin.status) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-            'Not a Valid NIN',
+            'Not a Valid NIN'
           );
           return Response.send(res);
         }
         data.is_nin_verified = true;
-        data.nin = hash
+        data.nin = hash;
         await req.user.update(data);
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
-          req.user.toObject(),
+          req.user.toObject()
         );
         return Response.send(res);
       }
@@ -175,13 +175,13 @@ class UsersController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
-        req.user.toObject(),
+        req.user.toObject()
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -195,7 +195,7 @@ class UsersController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.',
+        'Server Error. Please retry.'
       );
       return Response.send(res);
     }
@@ -215,7 +215,7 @@ class UsersController {
         dob: 'date|before:today',
         bvn: 'numeric',
         nin: 'numeric',
-        id: 'required|numeric',
+        id: 'required|numeric'
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
@@ -231,7 +231,7 @@ class UsersController {
           marital_status: data.marital_status,
           dob: data.dob,
           bvn: data.bvn,
-          nin: data.nin,
+          nin: data.nin
         };
 
         var updateData = {};
@@ -262,7 +262,7 @@ class UsersController {
     var form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
       const rules = {
-        userId: 'required|numeric',
+        userId: 'required|numeric'
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
@@ -276,15 +276,15 @@ class UsersController {
           const user = await db.User.findByPk(fields.userId);
           if (user) {
             const extension = files.profile_pic.name.substring(
-              files.profile_pic.name.lastIndexOf('.') + 1,
+              files.profile_pic.name.lastIndexOf('.') + 1
             );
             await uploadFile(
               files.profile_pic,
               'u-' + environ + '-' + user.id + '-i.' + extension,
-              'convexity-profile-images',
+              'convexity-profile-images'
             ).then(url => {
               user.update({
-                profile_pic: url,
+                profile_pic: url
               });
             });
             Response.setSuccess(200, 'Profile Picture Updated');
@@ -303,7 +303,7 @@ class UsersController {
       const data = req.body;
       const rules = {
         nfc: 'required|string',
-        id: 'required|numeric',
+        id: 'required|numeric'
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
@@ -312,8 +312,8 @@ class UsersController {
       } else {
         await db.User.update(data, {
           where: {
-            id: data.id,
-          },
+            id: data.id
+          }
         }).then(() => {
           Response.setSuccess(200, 'User NFC Data Updated Successfully');
           return Response.send(res);
@@ -353,8 +353,8 @@ class UsersController {
       //check if users exist in the db with email address
       db.User.findOne({
         where: {
-          email: email,
-        },
+          email: email
+        }
       })
         .then(user => {
           //reset users email password
@@ -368,20 +368,20 @@ class UsersController {
                 const encryptedPassword = hash;
                 return db.User.update(
                   {
-                    password: encryptedPassword,
+                    password: encryptedPassword
                   },
                   {
                     where: {
-                      email: email,
-                    },
-                  },
+                      email: email
+                    }
+                  }
                 ).then(updatedRecord => {
                   //mail user a new password
                   //respond with a success message
                   res.status(201).json({
                     status: 'success',
                     message:
-                      'An email has been sent to the provided email address, kindly login to your email address to continue',
+                      'An email has been sent to the provided email address, kindly login to your email address to continue'
                   });
                 });
               });
@@ -391,7 +391,7 @@ class UsersController {
         .catch(err => {
           res.status(404).json({
             status: 'error',
-            error: err,
+            error: err
           });
         });
     } catch (error) {
@@ -426,8 +426,8 @@ class UsersController {
     const userId = req.user.id;
     db.User.findOne({
       where: {
-        id: userId,
-      },
+        id: userId
+      }
     })
       .then(user => {
         bcrypt
@@ -443,7 +443,7 @@ class UsersController {
                 const encryptedPassword = hash;
                 await user
                   .update({
-                    password: encryptedPassword,
+                    password: encryptedPassword
                   })
                   .then(updatedRecord => {
                     //mail user a new password
@@ -505,13 +505,13 @@ class UsersController {
         where: {
           [Op.or]: {
             walletRecieverId: {
-              [Op.in]: wallets,
+              [Op.in]: wallets
             },
             walletSenderId: {
-              [Op.in]: wallets,
-            },
-          },
-        },
+              [Op.in]: wallets
+            }
+          }
+        }
       }).then(response => {
         Response.setSuccess(200, 'Transactions Retrieved', response);
         return Response.send(res);
@@ -535,15 +535,15 @@ class UsersController {
         where: {
           [Op.or]: {
             walletRecieverId: {
-              [Op.in]: wallets,
+              [Op.in]: wallets
             },
             walletSenderId: {
-              [Op.in]: wallets,
-            },
-          },
+              [Op.in]: wallets
+            }
+          }
         },
         order: [['createdAt', 'DESC']],
-        limit: 10,
+        limit: 10
       }).then(response => {
         Response.setSuccess(200, 'Transactions Retrieved', response);
         return Response.send(res);
@@ -558,9 +558,9 @@ class UsersController {
     const uuid = req.params.uuid;
     const transaction_exist = await db.Transaction.findOne({
       where: {
-        uuid: uuid,
+        uuid: uuid
       },
-      include: ['SenderWallet', 'RecievingWallet'],
+      include: ['SenderWallet', 'RecievingWallet']
     });
     if (transaction_exist) {
       Response.setSuccess(200, 'Transaction Retrieved', transaction_exist);
@@ -577,9 +577,9 @@ class UsersController {
     var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     const wallet = await db.User.findOne({
       where: {
-        id: req.user.id,
+        id: req.user.id
       },
-      include: ['Wallet'],
+      include: ['Wallet']
     });
     const wallets = wallet.Wallet.map(element => {
       return element.uuid;
@@ -588,35 +588,35 @@ class UsersController {
     const income = await db.Transaction.findAll({
       where: {
         walletRecieverId: {
-          [Op.in]: wallets,
+          [Op.in]: wallets
         },
         createdAt: {
           [Op.gte]: firstDay,
-          [Op.lte]: lastDay,
-        },
+          [Op.lte]: lastDay
+        }
       },
       attributes: [[sequelize.fn('sum', sequelize.col('amount')), 'income']],
-      raw: true,
+      raw: true
     });
     const expense = await db.Transaction.findAll({
       where: {
         walletSenderId: {
-          [Op.in]: wallets,
+          [Op.in]: wallets
         },
         createdAt: {
           [Op.gte]: firstDay,
-          [Op.lte]: lastDay,
-        },
+          [Op.lte]: lastDay
+        }
       },
       attributes: [[sequelize.fn('sum', sequelize.col('amount')), 'expense']],
-      raw: true,
+      raw: true
     });
     Response.setSuccess(200, 'Statistics Retrieved', [
       {
         balance: wallet.Wallet.balance,
         income: income[0].income == null ? 0 : income[0].income,
-        expense: expense[0].expense == null ? 0 : expense[0].expense,
-      },
+        expense: expense[0].expense == null ? 0 : expense[0].expense
+      }
     ]);
     return Response.send(res);
   }
@@ -626,20 +626,20 @@ class UsersController {
       where: {
         RoleId: 5,
         dob: {
-          [Op.ne]: null,
-        },
-      },
+          [Op.ne]: null
+        }
+      }
     });
     const gender_chart = {
       male: 0,
-      female: 0,
+      female: 0
     };
     const age_groups = {
       '18-29': 0,
       '30-41': 0,
       '42-53': 0,
       '54-65': 0,
-      '65~': 0,
+      '65~': 0
     };
     for (const user of users) {
       if (user.gender == 'male') {
@@ -663,7 +663,7 @@ class UsersController {
     }
     Response.setSuccess(200, 'Chart Data Retrieved', {
       gender_chart: gender_chart,
-      age_chart: age_groups,
+      age_chart: age_groups
     });
     return Response.send(res);
   }
@@ -671,17 +671,17 @@ class UsersController {
   static async countUserTypes(req, res) {
     let vendors = await db.User.count({
       where: {
-        RoleId: 4,
-      },
+        RoleId: 4
+      }
     });
     let beneficiaries = await db.User.count({
       where: {
-        RoleId: 5,
-      },
+        RoleId: 5
+      }
     });
     Response.setSuccess(200, 'Users Type Counted', {
       vendors,
-      beneficiaries,
+      beneficiaries
     });
     return Response.send(res);
   }
@@ -690,23 +690,23 @@ class UsersController {
     let id = req.params.id;
     await db.User.findOne({
       where: {
-        id: req.params.id,
+        id: req.params.id
       },
       include: {
         model: db.Wallet,
-        as: 'Wallet',
-      },
+        as: 'Wallet'
+      }
     }).then(async user => {
       await db.Transaction.findAll({
         where: {
-          walletRecieverId: user.Wallet.uuid,
+          walletRecieverId: user.Wallet.uuid
         },
         attributes: [
-          [sequelize.fn('sum', sequelize.col('amount')), 'amount_recieved'],
-        ],
+          [sequelize.fn('sum', sequelize.col('amount')), 'amount_recieved']
+        ]
       }).then(async transactions => {
         Response.setSuccess(200, 'Recieved Transactions', {
-          transactions,
+          transactions
         });
         return Response.send(res);
       });
@@ -717,9 +717,9 @@ class UsersController {
     const user_id = req.params.id;
     const userExist = await db.User.findOne({
       where: {
-        id: user_id,
+        id: user_id
       },
-      include: ['Wallet'],
+      include: ['Wallet']
     })
       .then(user => {
         Response.setSuccess(200, 'User Wallet Balance', user.Wallet);
@@ -736,7 +736,7 @@ class UsersController {
     let rules = {
       userId: 'required|numeric',
       productId: 'required|numeric',
-      quantity: 'required|numeric',
+      quantity: 'required|numeric'
     };
     let validation = new Validator(data, rules);
     if (validation.fails()) {
@@ -750,12 +750,12 @@ class UsersController {
       }
       let product = await db.Products.findOne({
         where: {
-          id: data.productId,
+          id: data.productId
         },
         include: {
           model: db.Market,
-          as: 'Vendor',
-        },
+          as: 'Vendor'
+        }
       });
       if (!product) {
         Response.setError(404, 'Invalid Product');
@@ -764,7 +764,7 @@ class UsersController {
       let pendingOrder = await db.Order.findOne({
         where: {
           UserId: data.userId,
-          status: 'pending',
+          status: 'pending'
         },
         include: {
           model: db.OrderProducts,
@@ -772,18 +772,18 @@ class UsersController {
           order: [['createdAt', 'DESC']],
           include: {
             model: db.Products,
-            as: 'Product',
-          },
-        },
+            as: 'Product'
+          }
+        }
       });
 
       if (!pendingOrder) {
         let uniqueId = String(
-          Math.random().toString(36).substring(2, 12),
+          Math.random().toString(36).substring(2, 12)
         ).toUpperCase();
         await user
           .createOrder({
-            OrderUniqueId: uniqueId,
+            OrderUniqueId: uniqueId
           })
           .then(async order => {
             await order
@@ -791,12 +791,12 @@ class UsersController {
                 ProductId: product.id,
                 unit_price: product.price,
                 quantity: data.quantity,
-                total_amount: product.price * data.quantity,
+                total_amount: product.price * data.quantity
               })
               .then(cart => {
                 Response.setSuccess(
                   201,
-                  product.name + ' has been added to cart',
+                  product.name + ' has been added to cart'
                 );
                 return Response.send(res);
               });
@@ -806,26 +806,26 @@ class UsersController {
           if (pendingOrder.Cart[0].Product.MarketId != product.MarketId) {
             Response.setError(
               400,
-              'Cannot add product that belongs to a different vendor',
+              'Cannot add product that belongs to a different vendor'
             );
             return Response.send(res);
           } else {
             let productAddedToCart = await db.OrderProducts.findOne({
               where: {
-                ProductId: product.id,
-              },
+                ProductId: product.id
+              }
             });
             if (productAddedToCart) {
               await productAddedToCart
                 .update({
                   quantity: data.quantity,
                   total_amount: data.quantity * product.price,
-                  unit_price: product.price,
+                  unit_price: product.price
                 })
                 .then(() => {
                   Response.setSuccess(
                     201,
-                    product.name + ' has been added to cart',
+                    product.name + ' has been added to cart'
                   );
                   return Response.send(res);
                 });
@@ -835,12 +835,12 @@ class UsersController {
                   ProductId: product.id,
                   quantity: data.quantity,
                   total_amount: data.quantity * product.price,
-                  unit_price: product.price,
+                  unit_price: product.price
                 })
                 .then(() => {
                   Response.setSuccess(
                     201,
-                    product.name + ' has been added to cart',
+                    product.name + ' has been added to cart'
                   );
                   return Response.send(res);
                 });
@@ -852,12 +852,12 @@ class UsersController {
               ProductId: product.id,
               quantity: data.quantity,
               total_amount: data.quantity * product.price,
-              unit_price: product.price,
+              unit_price: product.price
             })
             .then(() => {
               Response.setSuccess(
                 201,
-                product.name + ' has been added to cart',
+                product.name + ' has been added to cart'
               );
               return Response.send(res);
             });
@@ -876,20 +876,20 @@ class UsersController {
     let pendingOrder = await db.Order.findOne({
       where: {
         UserId: id,
-        status: 'pending',
+        status: 'pending'
       },
       include: {
         model: db.OrderProducts,
         as: 'Cart',
         attributes: {
-          exclude: ['OrderId'],
-        },
-      },
+          exclude: ['OrderId']
+        }
+      }
     });
 
     if (pendingOrder && pendingOrder.Cart.length) {
       Response.setSuccess(200, 'Cart', {
-        cart: pendingOrder.Cart,
+        cart: pendingOrder.Cart
       });
       return Response.send(res);
     } else {
@@ -902,7 +902,7 @@ class UsersController {
     let data = req.body;
     let rules = {
       userId: 'required|numeric',
-      pin: 'required|numeric',
+      pin: 'required|numeric'
     };
     let validation = new Validator(data, rules);
     if (validation.fails()) {
@@ -916,7 +916,7 @@ class UsersController {
       } else {
         await user
           .update({
-            pin: data.pin,
+            pin: data.pin
           })
           .then(() => {
             Response.setSuccess(200, 'Pin updated Successfully');
@@ -931,12 +931,12 @@ class UsersController {
 
     const user = await db.User.findOne({
       where: {
-        id: req.params.id,
+        id: req.params.id
       },
       include: {
         model: db.Wallet,
-        as: 'Wallet',
-      },
+        as: 'Wallet'
+      }
     });
 
     if (!user) {
@@ -951,21 +951,21 @@ class UsersController {
     const spent = await db.Transaction.sum('amount', {
       where: {
         walletSenderId: {
-          [Op.in]: wallets,
-        },
-      },
+          [Op.in]: wallets
+        }
+      }
     });
     const recieved = await db.Transaction.sum('amount', {
       where: {
         walletRecieverId: {
-          [Op.in]: wallets,
-        },
-      },
+          [Op.in]: wallets
+        }
+      }
     });
     Response.setSuccess(200, 'Summary', {
       balance: user.Wallet.balance,
       recieved,
-      spent,
+      spent
     });
     return Response.send(res);
   }
@@ -978,23 +978,23 @@ class UsersController {
       let pendingOrder = await db.Order.findOne({
         where: {
           UserId: userId,
-          status: 'pending',
+          status: 'pending'
         },
         include: {
           model: db.OrderProducts,
           as: 'Cart',
           attributes: {
-            exclude: ['OrderId'],
+            exclude: ['OrderId']
           },
           include: {
             model: db.Products,
             as: 'Product',
             include: {
               model: db.Market,
-              as: 'Vendor',
-            },
-          },
-        },
+              as: 'Vendor'
+            }
+          }
+        }
       });
 
       if (pendingOrder) {
@@ -1003,14 +1003,14 @@ class UsersController {
         result = {
           orderUniqueId: pendingOrder.OrderUniqueId,
           image,
-          status: pendingOrder.status,
+          status: pendingOrder.status
         };
         if (pendingOrder.Cart) {
           let cart = pendingOrder.Cart.map(cart => {
             return {
               quantity: cart.quantity,
               price: cart.unit_price,
-              product: cart.Product.name,
+              product: cart.Product.name
             };
           });
           result['vendor'] = pendingOrder.Cart[0].Product.Vendor.store_name;
@@ -1033,7 +1033,7 @@ class UsersController {
     const rules = {
       senderAddr: 'required|string',
       recieverAddr: 'required|string',
-      amount: 'required|numeric',
+      amount: 'required|numeric'
     };
 
     let validation = new Validator(data, rules);
@@ -1047,9 +1047,9 @@ class UsersController {
           address: data.senderAddr,
           CampaignId: NULL,
           [Op.or]: {
-            AccountUserType: ['user', 'organisation'],
-          },
-        },
+            AccountUserType: ['user', 'organisation']
+          }
+        }
       });
 
       if (!senderExist) {
@@ -1062,9 +1062,9 @@ class UsersController {
           address: data.recieverAddr,
           CampaignId: NULL,
           [Op.or]: {
-            AccountUserType: ['user', 'organisation'],
-          },
-        },
+            AccountUserType: ['user', 'organisation']
+          }
+        }
       });
 
       if (!senderExist) {
@@ -1075,7 +1075,7 @@ class UsersController {
       if (senderExist.balance < data.amount) {
         Response.setError(
           422,
-          'Sender Balance Insufficient to fund Transaction',
+          'Sender Balance Insufficient to fund Transaction'
         );
         return Response.send(res);
       } else {
@@ -1083,7 +1083,7 @@ class UsersController {
         if (senderExist.AccountUserType === 'organisation') {
           parentType = 'organisation';
           parentEntity = await db.Organisations.findByPk(
-            senderExist.AccountUserId,
+            senderExist.AccountUserId
           );
         } else if (senderExist.AccountUserType === 'user') {
           parentType = 'user';
@@ -1097,7 +1097,7 @@ class UsersController {
             narration:
               parentType === 'organisation'
                 ? `Transfer to ${parentEntity.name}`
-                : `Transfer to ${parentEntity.first_name} ${parentEntity.last_name}`,
+                : `Transfer to ${parentEntity.first_name} ${parentEntity.last_name}`
           })
           .then(transaction => {
             transferToQueue.send(
@@ -1107,12 +1107,12 @@ class UsersController {
                   senderPass: senderExist.privateKey,
                   reciepientAddress: recieverExist.address,
                   amount: data.amount,
-                  transaction: transaction.uuid,
+                  transaction: transaction.uuid
                 },
                 {
-                  contentType: 'application/json',
-                },
-              ),
+                  contentType: 'application/json'
+                }
+              )
             );
           });
 
@@ -1129,7 +1129,7 @@ class UsersController {
       userId: 'required|numeric',
       pin: 'required|numeric',
       orderId: 'required|numeric',
-      campaign: 'campaign|numeric',
+      campaign: 'campaign|numeric'
     };
 
     let validation = new Validator(data, rules);
@@ -1140,15 +1140,15 @@ class UsersController {
     } else {
       let user = await db.User.findOne({
         where: {
-          id: data.userId,
+          id: data.userId
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           where: {
-            CampaignId: NULL,
-          },
-        },
+            CampaignId: NULL
+          }
+        }
       });
 
       if (!user) {
@@ -1164,7 +1164,7 @@ class UsersController {
       let pendingOrder = await db.Order.findOne({
         where: {
           UserId: data.userId,
-          status: 'pending',
+          status: 'pending'
         },
         include: {
           model: db.OrderProducts,
@@ -1174,10 +1174,10 @@ class UsersController {
             as: 'Product',
             include: {
               model: db.Market,
-              as: 'Vendor',
-            },
-          },
-        },
+              as: 'Vendor'
+            }
+          }
+        }
       });
 
       if (pendingOrder && pendingOrder.Cart.length) {
@@ -1187,7 +1187,7 @@ class UsersController {
         if (user.Wallet[0].balance < sum) {
           Response.setError(
             400,
-            'Insufficient Funds in Wallet to clear Cart Items',
+            'Insufficient Funds in Wallet to clear Cart Items'
           );
           return Response.send(res);
         } else {
@@ -1197,16 +1197,16 @@ class UsersController {
                 where: {
                   AccountUserId: pendingOrder.Cart[0].Product.Vendor.UserId,
                   AccountUserType: 'user',
-                  CampaignId: null,
-                },
+                  CampaignId: null
+                }
               });
               let buyer, type;
 
               const belongsToCampaign = await db.Beneficiaries.findOne({
                 where: {
                   CampaignId: data.campaign,
-                  UserId: vendor.AccountUserId,
-                },
+                  UserId: vendor.AccountUserId
+                }
               });
 
               if (belongsToCampaign) {
@@ -1215,8 +1215,8 @@ class UsersController {
                   where: {
                     AccountUserId: data.userId,
                     AccountUserType: 'user',
-                    CampaignId: data.campaign,
-                  },
+                    CampaignId: data.campaign
+                  }
                 });
               } else {
                 type = 'main';
@@ -1224,16 +1224,16 @@ class UsersController {
                   where: {
                     AccountUserId: data.userId,
                     AccountUserType: 'user',
-                    CampaignId: null,
-                  },
+                    CampaignId: null
+                  }
                 });
               }
 
               let ngo = await db.Wallet.findOne({
                 where: {
                   AccountUserType: 'organisation',
-                  CampaignId: data.campaign,
-                },
+                  CampaignId: data.campaign
+                }
               });
 
               await pendingOrder
@@ -1243,7 +1243,7 @@ class UsersController {
                   amount: sum,
                   status: 'processing',
                   is_approved: false,
-                  narration: 'Payment for Order ' + pendingOrder.OrderUniqueId,
+                  narration: 'Payment for Order ' + pendingOrder.OrderUniqueId
                 })
                 .then(async transaction => {
                   if (type === 'campaign') {
@@ -1254,12 +1254,12 @@ class UsersController {
                       senderKey: buyer.privateKey,
                       amount: sum,
                       transactionId: transaction.uuid,
-                      pendingOrder: pendingOrder.id,
+                      pendingOrder: pendingOrder.id
                     };
                     transferFromQueue.send(
                       new Message(transferFromQueueMessage, {
-                        contentType: 'application/json',
-                      }),
+                        contentType: 'application/json'
+                      })
                     );
                   } else if (type == 'main') {
                     const transferToQueueMessage = {
@@ -1267,13 +1267,13 @@ class UsersController {
                       senderAddress: buyer.address,
                       senderPass: buyer.privateKey,
                       amount: sum,
-                      transaction: transaction.uuid,
+                      transaction: transaction.uuid
                     };
 
                     transferToQueue.send(
                       new Message(transferToQueueMessage, {
-                        contentType: 'application/json',
-                      }),
+                        contentType: 'application/json'
+                      })
                     );
                   }
                   Response.setSuccess(200, 'Transfer Initiated');
@@ -1297,13 +1297,13 @@ class UsersController {
       if (req.user.pin) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'PIN already set. Chnage PIN or contact support.',
+          'PIN already set. Chnage PIN or contact support.'
         );
         return Response.send(res);
       }
       const pin = createHash(req.body.pin.trim());
       await UserService.update(req.user.id, {
-        pin,
+        pin
       });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'PIN set successfully.');
       return Response.send(res);
@@ -1311,7 +1311,7 @@ class UsersController {
       console.log('setAccountPin', error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'PIN update failed..',
+        'PIN update failed..'
       );
       return Response.send(res);
     }
@@ -1322,7 +1322,7 @@ class UsersController {
       if (!req.user.pin) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'PIN not found. Set PIN first.',
+          'PIN not found. Set PIN first.'
         );
         return Response.send(res);
       }
@@ -1330,24 +1330,24 @@ class UsersController {
       if (!compareHash(req.body.old_pin, req.user.pin)) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Invalid or wrong old PIN.',
+          'Invalid or wrong old PIN.'
         );
         return Response.send(res);
       }
       const pin = createHash(req.body.new_pin);
       await UserService.update(req.user.id, {
-        pin,
+        pin
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        'PIN changed successfully.',
+        'PIN changed successfully.'
       );
       return Response.send(res);
     } catch (error) {
       console.log('updateAccountPin', error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'PIN update failed..',
+        'PIN update failed..'
       );
       return Response.send(res);
     }
@@ -1367,69 +1367,68 @@ class UsersController {
         return Response.send(res);
       }
       const bankAccount = await db.BankAccount.findOne({
-        where: {UserId: req.user.id, account_number: accountno},
+        where: {UserId: req.user.id, account_number: accountno}
       });
       const userWallet = await WalletService.findUserCampaignWallet(
         req.user.id,
-        campaignId,
+        campaignId
       );
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: campaignId,
-        UserId: null,
+        UserId: null
       });
       if (!bankAccount) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          "User Dos'nt Have a Bank Account",
+          "User Dos'nt Have a Bank Account"
         );
         return Response.send(res);
       }
       if (!userWallet) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'User Wallet Not Found',
+          'User Wallet Not Found'
         );
         return Response.send(res);
       }
       if (!campaignWallet) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Campaign Wallet Not Found',
+          'Campaign Wallet Not Found'
         );
         return Response.send(res);
       }
       if (!userWallet.balance > campaignWallet.balance) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Insufficient Fund',
+          'Insufficient Fund'
         );
         return Response.send(res);
       }
       if (userWallet.balance < amount) {
         Response.setSuccess(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient Wallet Balance',
+          'Insufficient Wallet Balance'
         );
         return Response.send(res);
       }
 
-      const transaction = await QueueService.fundBeneficiaryBankAccount(
+      await QueueService.fundBeneficiaryBankAccount(
         bankAccount,
         campaignWallet,
         userWallet,
         req.user.id,
-        amount,
+        amount
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        'Transaction Processing',
-        transaction,
+        'Transaction Processing'
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.' + error,
+        'Internal server error. Please try again later.' + error
       );
       return Response.send(res);
     }
@@ -1447,49 +1446,48 @@ class UsersController {
         return Response.send(res);
       }
       const bankAccount = await db.BankAccount.findOne({
-        where: {UserId: req.user.id, account_number: accountno},
+        where: {UserId: req.user.id, account_number: accountno}
       });
       const userWallet = await db.Wallet.findOne({
-        where: {UserId: req.user.id},
+        where: {UserId: req.user.id}
       });
 
       if (!bankAccount) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          "User Dos'nt Have a Bank Account",
+          "User Dos'nt Have a Bank Account"
         );
         return Response.send(res);
       }
       if (!userWallet) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'User Wallet Not Found',
+          'User Wallet Not Found'
         );
         return Response.send(res);
       }
       if (userWallet.balance < amount) {
         Response.setSuccess(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient Wallet Balance',
+          'Insufficient Wallet Balance'
         );
         return Response.send(res);
       }
-      const transation = await QueueService.fundVendorBankAccount(
+      await QueueService.fundVendorBankAccount(
         bankAccount,
         userWallet,
         req.user.id,
-        amount,
+        amount
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        'Transaction Processing',
-        transation,
+        'Transaction Processing'
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.' + error,
+        'Internal server error. Please try again later.' + error
       );
       return Response.send(res);
     }
@@ -1516,7 +1514,7 @@ class UsersController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error' + error,
+        'Internal server error' + error
       );
       return Response.send(res);
     }
@@ -1527,20 +1525,20 @@ class UsersController {
       const user = req.user;
       const {old_password, new_password} = SanitizeObject(req.body, [
         'old_password',
-        'new_password',
+        'new_password'
       ]);
 
       if (!compareHash(old_password, user.password)) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Invalid old password',
+          'Invalid old password'
         );
         return Response.send(res);
       }
 
       const password = createHash(new_password);
       await UserService.update(user.id, {
-        password,
+        password
       });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
       return Response.send(res);
@@ -1548,7 +1546,7 @@ class UsersController {
       console.log('ChangePassword', error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Password update failed. Please retry.',
+        'Password update failed. Please retry.'
       );
       return Response.send(res);
     }

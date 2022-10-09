@@ -13,7 +13,7 @@ const {
   FieldAgent,
   Vendor,
   Beneficiary,
-  Donor,
+  Donor
 } = require('../utils').AclRoles;
 
 const Auth = (roleIds = null) => (req, res, next) => {
@@ -23,7 +23,7 @@ const Auth = (roleIds = null) => (req, res, next) => {
       if (err) {
         Response.setError(
           HttpStatusCode.STATUS_UNAUTHORIZED,
-          'Unauthorised. Token Invalid',
+          'Unauthorised. Token Invalid'
         );
         return Response.send(res);
       }
@@ -34,7 +34,7 @@ const Auth = (roleIds = null) => (req, res, next) => {
       if (!user || !userOrgs) {
         Response.setError(
           HttpStatusCode.STATUS_UNAUTHORIZED,
-          'Unauthorised. User does not exist in our system',
+          'Unauthorised. User does not exist in our system'
         );
         return Response.send(res);
       }
@@ -49,7 +49,7 @@ const Auth = (roleIds = null) => (req, res, next) => {
       ) {
         Response.setError(
           HttpStatusCode.STATUS_FORBIDDEN,
-          'Access Denied, Unauthorised Access',
+          'Access Denied, Unauthorised Access'
         );
         return Response.send(res);
       }
@@ -61,7 +61,7 @@ const Auth = (roleIds = null) => (req, res, next) => {
   } catch (error) {
     Response.setError(
       HttpStatusCode.STATUS_UNAUTHORIZED,
-      'Unauthorised. Token Invalid',
+      'Unauthorised. Token Invalid'
     );
     return Response.send(res);
   }
@@ -87,5 +87,5 @@ exports.GuestAuth = Auth([
   FieldAgent,
   Vendor,
   Beneficiary,
-  Donor,
+  Donor
 ]);

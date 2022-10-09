@@ -4,7 +4,7 @@ const {
   VendorController,
   AuthController,
   OrderController,
-  OrganisationController,
+  OrganisationController
 } = require('../controllers');
 const {
   Auth,
@@ -12,7 +12,7 @@ const {
   NgoSubAdminAuth,
   IsOrgMember,
   BeneficiaryAuth,
-  IsRequestWithValidPin,
+  IsRequestWithValidPin
 } = require('../middleware');
 const {ParamValidator, FileValidator} = require('../validators');
 const VendorValidator = require('../validators/VendorValidator');
@@ -28,7 +28,7 @@ router.get(
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
-  OrderController.productPurchased,
+  OrderController.productPurchased
 );
 router.post('/product', VendorController.addProduct);
 router.get('/products/single/:id', VendorController.singleProduct);
@@ -40,7 +40,7 @@ router.post('/auth/login', AuthController.signInVendor);
 router.post(
   '/verify/sms-token/:smstoken',
   VendorAuth,
-  VendorController.verifySMStoken,
+  VendorController.verifySMStoken
 );
 router.get('/product_vendors', OrganisationController.ProductVendors);
 
@@ -49,7 +49,7 @@ router.post(
   VendorAuth,
   VendorValidator.VendorExists,
   FileValidator.checkProfilePic(),
-  VendorController.uploadprofilePic,
+  VendorController.uploadprofilePic
 );
 
 router
@@ -57,7 +57,7 @@ router
   .get(
     VendorAuth,
     VendorValidator.VendorExists,
-    VendorController.vendorProducts,
+    VendorController.vendorProducts
   );
 
 router
@@ -65,7 +65,7 @@ router
   .get(
     VendorAuth,
     VendorValidator.VendorExists,
-    VendorController.vendorCampaigns,
+    VendorController.vendorCampaigns
   );
 
 router
@@ -74,7 +74,7 @@ router
     VendorAuth,
     ParamValidator.CampaignId,
     VendorValidator.VendorExists,
-    VendorController.vendorCampaignProducts,
+    VendorController.vendorCampaignProducts
   );
 
 router
@@ -85,7 +85,7 @@ router
     VendorValidator.VendorExists,
     VendorValidator.VendorApprovedForCampaign,
     VendorValidator.createOrder,
-    VendorController.createOrder,
+    VendorController.createOrder
   );
 
 router
