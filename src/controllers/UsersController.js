@@ -156,7 +156,10 @@ class UsersController {
           );
           return Response.send(res);
         }
-        const nin = await UserService.nin_verification({number: data.nin});
+        const nin = await UserService.nin_verification(
+          {number: data.nin},
+          data.ip
+        );
         if (!nin.status) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
