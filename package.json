@@ -43,6 +43,7 @@
     "faker": "^5.4.0",
     "formidable": "^1.2.2",
     "g": "^2.0.1",
+    "geoip-country": "^4.1.25",
     "helmet": "^4.1.1",
     "js-sha512": "^0.8.0",
     "jsonwebtoken": "^8.5.1",

@@ -1,5 +1,6 @@
-const {User, Campaign, BankAccount, OrganisationMembers} = require('../models');
+const {User, BankAccount, OrganisationMembers} = require('../models');
 const axios = require('axios');
+const geoIp = require('geoip-country');
 const Axios = axios.create();
 const {AclRoles} = require('../utils');
 const {Logger} = require('../libs');
@@ -9,7 +10,7 @@ class UserService {
   static async getAllUsers() {
     try {
       return await User.findAll({
-        attributes: userConst.publicAttr,
+        attributes: userConst.publicAttr
       });
     } catch (error) {
       throw error;
@@ -24,15 +25,15 @@ class UserService {
     try {
       const UserToUpdate = await User.findOne({
         where: {
-          id: id,
-        },
+          id: id
+        }
       });
 
       if (UserToUpdate) {
         await User.update(updateUser, {
           where: {
-            id: id,
-          },
+            id: id
+          }
         });
 
         return updateUser;
@@ -46,8 +47,8 @@ class UserService {
     try {
       const theUser = await User.findOne({
         where: {
-          id: id,
-        },
+          id: id
+        }
       });
 
       return theUser;
@@ -60,15 +61,15 @@ class UserService {
     try {
       const UserToDelete = await User.findOne({
         where: {
-          id: id,
-        },
+          id: id
+        }
       });
 
       if (UserToDelete) {
         const deletedUser = await User.destroy({
           where: {
-            id: id,
-          },
+            id: id
+          }
         });
         return deletedUser;
       }
@@ -84,16 +85,16 @@ class UserService {
     return User.findOne({
       where: {
         id,
-        ...extraClause,
+        ...extraClause
       },
       include: [
         'Store',
         {
           model: OrganisationMembers,
           as: 'AssociatedOrganisations',
-          include: ['Organisation'],
-        },
-      ],
+          include: ['Organisation']
+        }
+      ]
     });
   }
 
@@ -101,8 +102,8 @@ class UserService {
     return User.findOne({
       where: {
         email,
-        ...extraClause,
-      },
+        ...extraClause
+      }
     });
   }
 
@@ -110,14 +111,14 @@ class UserService {
     return User.findOne({
       where: {
         phone,
-        ...extraClause,
-      },
+        ...extraClause
+      }
     });
   }
 
   static findSingleUser(where) {
     return User.findOne({
-      where,
+      where
     });
   }
 
@@ -125,22 +126,22 @@ class UserService {
     return User.findOne({
       where: {
         id,
-        RoleId: AclRoles.Beneficiary,
+        RoleId: AclRoles.Beneficiary
 
         // ...(OrganisationId && {
         //     OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
         // }
         // )
       },
-      attributes: userConst.publicAttr,
+      attributes: userConst.publicAttr
     });
   }
 
   static update(id, data) {
     return User.update(data, {
       where: {
-        id,
-      },
+        id
+      }
     });
   }
 
@@ -148,39 +149,45 @@ class UserService {
     return BankAccount.create(
       {
         ...data,
-        UserId,
+        UserId
       },
       {
-        include: ['AccountHolder'],
-      },
+        include: ['AccountHolder']
+      }
     );
   }
 
   static findUserAccounts(UserId) {
     return BankAccount.findAll({
       where: {
-        UserId,
+        UserId
       },
       include: {
         model: User,
         as: 'AccountHolder',
-        attributes: ['first_name', 'last_name', 'phone', 'dob'],
-      },
+        attributes: ['first_name', 'last_name', 'phone', 'dob']
+      }
     });
   }
+  //"/api/v1/biometrics/merchant/data/verification/"
 
-  static async nin_verification(number) {
+  static async nin_verification(number, ip) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Verifying NIN');
+        const Ip = geoIp.lookup(ip);
+        const NG = 'nin_wo_face';
+        const KE = 'ke/national_id';
         const {data} = await Axios.post(
-          'https://api.myidentitypay.com/api/v1/biometrics/merchant/data/verification/nin_wo_face',
+          `https://api.myidentitypay.com/api/v1/biometrics/merchant/data/verification/${
+            Ip.country === 'NG' ? NG : KE
+          }`,
           number,
           {
             headers: {
-              'x-api-key': ` ${process.env.IDENTITY_API_KEY}`,
-            },
-          },
+              'x-api-key': ` ${process.env.IDENTITY_API_KEY}`
+            }
+          }
         );
         data.status
           ? Logger.info('NIN verified')

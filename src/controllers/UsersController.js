@@ -134,7 +134,10 @@ class UsersController {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
         phone: ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-        nin: 'digits:11|numeric'
+        nin: 'digits:11|numeric',
+        ip: [
+          'regex:/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/'
+        ]
       };
 
       const validation = new Validator(data, rules);
@@ -153,7 +156,10 @@ class UsersController {
           );
           return Response.send(res);
         }
-        const nin = await UserService.nin_verification({number: data.nin});
+        const nin = await UserService.nin_verification(
+          {number: data.nin},
+          data.ip
+        );
         if (!nin.status) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
