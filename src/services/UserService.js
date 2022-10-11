@@ -169,7 +169,6 @@ class UserService {
       }
     });
   }
-  //"/api/v1/biometrics/merchant/data/verification/"
 
   static async nin_verification(number, ip) {
     return new Promise(async (resolve, reject) => {
