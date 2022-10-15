@@ -122,6 +122,30 @@ class AdminController {
       return Response.send(res);
     }
   }
+
+
+
+
+
+
+
+
+
+  static async getAllNGO(req, res) {
+    try {
+      const allNGOs = await OrganisationService.getAllOrganisations();
+      if (allNGOs.length > 0) {
+        Response.setSuccess(200, 'NGOs retrieved', allNGOs);
+      } else {
+        Response.setSuccess(200, 'No NGO found');
+      }
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
 }
 
 module.exports = AdminController;

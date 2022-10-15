@@ -712,6 +712,38 @@ class AuthController {
     }
   }
 
+  static async signInAdmin(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email,
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+      const data = await AuthService.login(
+        user,
+        req.body.password.trim(),
+        AclRoles.SuperAdmin
+      );
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.';
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+
   static async setTwoFactorSecret(req, res) {
     try {
       const data = await AuthService.add2faSecret(req.user);
