@@ -3,7 +3,15 @@ const {util, Response} = require('../libs');
 const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
-const {UserService, OrganisationService} = require('../services');
+const {
+  UserService, 
+  OrganisationService, 
+  VendorService,
+  BeneficiaryService,
+  CampaignService,
+  TransactionService
+} = require('../services');
+const { SanitizeObject } = require('../utils')
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
 class AdminController {
@@ -146,6 +154,86 @@ class AdminController {
       return Response.send(res);
     }
   }
+
+  static async getNGODisbursedAndBeneficiaryTotal(req, res) {
+
+    const OrganisationId = req.params.organisation_id;
+
+    try {
+      let total = await TransactionService.getTotalTransactionAmountAdmin(OrganisationId);
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(OrganisationId);
+      const beneficiariesCount = Object.keys(beneficiaries).length
+
+      let spend_for_campaign = total.map(a => a.dataValues.amount);    
+      let disbursedSum = 0;     
+      for (let i = 0; i < spend_for_campaign.length; i++) {
+        disbursedSum += Math.floor(spend_for_campaign[i]);
+      }
+
+        Response.setSuccess(200, 'Disbursed and Beneficiaries total retrieved', {
+          disbursedSum,
+          beneficiariesCount
+        });
+      
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+  static async getAllVendors(req, res) {
+    try {
+      const allVendors = await VendorService.getAllVendorsAdmin();
+      Response.setSuccess(200, 'Vendors retrieved', allVendors);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+
+  static async getAllBeneficiaries(req, res) {
+    try {
+      const allBeneficiaries = await BeneficiaryService.getBeneficiariesAdmin();
+      Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+  static async getAllCampaigns(req, res) {
+    try {
+      const query = SanitizeObject(req.query, ['type']);
+      const allCampaign = await CampaignService.getAllCampaigns({
+        ...query,
+        status: 'active'
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign retrieved',
+        allCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  
 }
+
+
+
+
+
+
 
 module.exports = AdminController;

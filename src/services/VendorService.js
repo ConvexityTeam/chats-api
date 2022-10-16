@@ -48,6 +48,14 @@ class VendorService {
     });
   }
 
+  static async getAllVendorsAdmin() {
+    return User.findAll({
+      where: {
+        RoleId: 6,
+      },
+    });
+  }
+
   static async addUser(newUser) {
     return User.create(newUser);
   }

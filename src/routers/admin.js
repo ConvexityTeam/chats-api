@@ -8,7 +8,8 @@ const {
   FileValidator,
 } = require('../validators');
 const AdminController = require('../controllers/AdminController');
-const { AuthController, NgoController } = require('../controllers')
+const { AuthController, 
+  NgoController, VendorController } = require('../controllers')
 
 router.put('/update-user', AdminController.updateUserStatus);
 // router.post("/register", AuthCtrl.createUser);
@@ -30,6 +31,11 @@ router.post(
 
 
 router.post('/auth/login', AuthController.signInAdmin);
-router.get('/ngos', SuperAdminAuth, NgoController.getAllNGO);
+router.get('/ngos', SuperAdminAuth, AdminController.getAllNGO);
+router.get('/ngos/:organisation_id/', SuperAdminAuth, AdminController.getNGODisbursedAndBeneficiaryTotal);
+router.get('/vendors', SuperAdminAuth, AdminController.getAllVendors);
+router.get('/beneficiaries', SuperAdminAuth, AdminController.getAllBeneficiaries);
+router.get('/campaigns', SuperAdminAuth, AdminController.getAllCampaigns);
+
 
 module.exports = router;
