@@ -10,10 +10,12 @@ const AwsUploadService = require('./AwsUploadService');
 const client = createClient({
   socket: {
     port: 5000,
-    tls: true,
-  },
+    tls: true
+  }
 });
-
+const provider = new ethers.providers.getDefaultProvider(
+  process.env.BLOCKCHAINSERV_TEST
+);
 const Axios = axios.create();
 
 class BlockchainService {
@@ -35,8 +37,8 @@ class BlockchainService {
           `${switchWallet.baseURL}/v1/authlock/login`,
           {
             emailAddress: switchWallet.email,
-            password: switchWallet.password,
-          },
+            password: switchWallet.password
+          }
         );
         Logger.info('Signed in to switch wallet');
         resolve(data);
@@ -62,9 +64,9 @@ class BlockchainService {
           body,
           {
             headers: {
-              Authorization: `Bearer ${switch_token}`,
-            },
-          },
+              Authorization: `Bearer ${switch_token}`
+            }
+          }
         );
         Logger.info('Generated wallet address');
         resolve(data);
@@ -89,9 +91,9 @@ class BlockchainService {
           body,
           {
             headers: {
-              Authorization: `Bearer ${switch_token}`,
-            },
-          },
+              Authorization: `Bearer ${switch_token}`
+            }
+          }
         );
         Logger.info('Withdrawal success');
         resolve(data);
@@ -101,32 +103,52 @@ class BlockchainService {
       }
     });
   }
-  static async createAccountWallet() {
+
+  static async confirmTransaction(hash) {
+    return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Create Account Wallet Request');
-        const {data} = await Axios.post(`${tokenConfig.baseURL}/user/register`);
-        Logger.info('Create Account Wallet Response', data);
-        return true
+        Logger.info('Confirming transaction');
+        const {data} = await Axios.get(
+          `https://api-testnet.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+        );
+        Logger.info('Transaction confirmed');
+        resolve(data);
       } catch (error) {
-        Logger.error('Create Account Wallet Error', error.response.data);
-        return false
+        Logger.error(`Error confirming transaction: ${error}`);
+        reject(error);
       }
+    });
+  }
+  static async createAccountWallet() {
+    try {
+      Logger.info('Create Account Wallet Request');
+      const {data} = await Axios.post(`${tokenConfig.baseURL}/user/register`);
+      Logger.info('Create Account Wallet Response', data);
+      return true;
+    } catch (error) {
+      Logger.error('Create Account Wallet Error', error.response.data);
+      return false;
+    }
   }
   static async addUser(arg) {
+    return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`,
+          `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`
         );
-        Logger.info(`Adding User Response: ${JSON.stringify(data)}`);
-        return true
+        Logger.info(`User Added`);
+        resolve(data);
       } catch (error) {
-        console.log(error);
-        Logger.error(`Adding User Error: ${JSON.stringify(error.response.data)}`);
-        return false
+        Logger.error(
+          `Adding User Error: ${JSON.stringify(error.response.data)}`
+        );
+        reject(error);
       }
+    });
   }
   static async mintToken(mintTo, amount) {
+    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
         const payload = {mintTo, amount};
@@ -136,83 +158,129 @@ class BlockchainService {
           null,
           {
             headers: {
-              'X-CHECKSUM': checksum,
-            },
-          },
+              'X-CHECKSUM': checksum
+            }
+          }
         );
         Logger.info('Token minted', data);
-        return true
+        resolve(data);
       } catch (error) {
-        Logger.error('Error minting token', JSON.stringify(error.response.data));
-        return false
+        Logger.error(
+          `Error minting token: ${JSON.stringify(error.response.data)}`
+        );
+        reject(error);
       }
+    });
+  }
+  static async redeem(senderpswd, amount) {
+    return new Promise(async (resolve, reject) => {
+      const mintTo = senderpswd;
+      const payload = {mintTo, amount};
+      const checksum = Encryption.encryptTokenPayload(payload);
+      try {
+        Logger.info('Redeeming token');
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/redeem/${senderpswd}/${amount}`,
+          null,
+          {
+            headers: {
+              'X-CHECKSUM': checksum
+            }
+          }
+        );
+        Logger.info('Success redeeming token');
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `Error redeeming token: ` + JSON.stringify(error.response.data)
+        );
+        reject(error);
+      }
+    });
   }
 
-  static async approveToSpend(ngoAddress, ngoPassword, benWallet, amount) {
+  static async approveToSpend(ownerPassword, spenderAdd, amount) {
+    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
-        const res = await Axios.post(
-          `${tokenConfig.baseURL}/txn/approve/${ngoAddress}/${ngoPassword}/${benWallet}/${amount}`,
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/approve/${ownerPassword}/${spenderAdd}/${amount}`
         );
-        Logger.info('Approved to spend', res);
-        return true
+        Logger.info('Approved to spend');
+        resolve(data);
       } catch (error) {
-        Logger.error('Error approving to spend', error);
-        return false
+        Logger.error(
+          `Error approving to spend: ${JSON.stringify(error.response.data)}`
+        );
+        reject(error);
       }
+    });
   }
 
-  static async transferTo(senderaddr, senderpwsd, receiver, amount) {
+  static async disApproveToSpend(ownerPassword, spenderAdd, amount) {
+    return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Transferring to');
+        Logger.info('disapproving to spend');
         const res = await Axios.post(
-          `${tokenConfig.baseURL}/txn/transfer/${senderaddr}/${senderpwsd}/${receiver}/${amount}`,
+          `${tokenConfig.baseURL}/txn/disapprove/${ownerPassword}/${spenderAdd}/${amount}`
         );
-        Logger.info('Success transferring funds to', res.data);
-        return true
+        Logger.info('Disapproved to spend');
+        resolve(res);
       } catch (error) {
-        Logger.error('Error transferring funds to', error.response.data);
-        return false
+        Logger.error(
+          `Error disapproving to spend: ${JSON.stringify(error.response.data)}`
+        );
+        reject(error);
       }
+    });
   }
 
-  static async transferFrom(
-    tokenowneraddr,
-    to,
-    spenderaddr,
-    spenderpwsd,
-    amount,
-  ) {
+  static async transferTo(senderPass, receiverAdd, amount) {
+    //Logger.info(senderaddr, senderpwsd, receiver, amount);
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Transferring to campaign wallet');
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/transfer/${senderPass}/${receiverAdd}/${amount}`
+        );
+        Logger.info('Transferred to campaign wallet');
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `Error transferring to campaign wallet: ${JSON.stringify(
+            error.response.data
+          )}`
+        );
+        reject(error);
+      }
+    });
+  }
+
+  static async transferFrom(tokenownerAdd, receiver, spenderPass, amount) {
+    return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring funds from..');
-        const res = await Axios.post(
-          `${tokenConfig.baseURL}/txn/transferfrom/${tokenowneraddr}/${to}/${spenderaddr}/${spenderpwsd}/${amount}`,
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/transferfrom/${tokenownerAdd}/${receiver}/${spenderPass}/${amount}`
         );
-        
-        Logger.info('Success transferring funds from', res.data);
-        return true
+        Logger.info('Success transferring funds from');
+        resolve(data);
       } catch (error) {
-        Logger.info(`Error transferring funds from: ${JSON.stringify(error.response.data)}`);
-        return false
+        Logger.info(
+          `Error transferring funds from:  ${
+            error.response ? JSON.stringify(error.response.data) : error
+          } `
+        );
+        reject(error);
       }
+    });
   }
 
   static async allowance(tokenOwner, spenderAddr) {
-      try {
-        const {data} = await Axios.get(
-          `${tokenConfig.baseURL}/account/allowance/${tokenOwner}/${spenderAddr}`,
-        );
-        return data
-      } catch (error) {
-        return false
-      }
-  }
-
-  static async balance(address) {
     return new Promise(async (resolve, reject) => {
       try {
         const {data} = await Axios.get(
-          `${tokenConfig.baseURL}/account/balance/${address}`,
+          `${tokenConfig.baseURL}/account/allowance/${tokenOwner}/${spenderAddr}`
         );
         resolve(data);
       } catch (error) {
@@ -221,27 +289,46 @@ class BlockchainService {
     });
   }
 
-  static async redeem(senderaddr, senderpswd, amount) {
-    const mintTo = senderaddr;
-    const payload = {mintTo, amount};
-    const checksum = Encryption.encryptTokenPayload(payload);
+  static async balance(address) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {data} = await Axios.get(
+          `${tokenConfig.baseURL}/account/balance/${address}`
+        );
+        resolve(data);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  static async redeemx(senderpswd, amount) {
+    Logger.info(senderpswd);
+
+    return new Promise(async (resolve, reject) => {
+      const mintTo = senderaddr;
+      const payload = {mintTo, amount};
+      const checksum = Encryption.encryptTokenPayload(payload);
       try {
         Logger.info('Redeeming token');
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/txn/redeem/${senderaddr}/${senderpswd}/${amount}`,
+          `${tokenConfig.baseURL}/txn/redeem/${senderpswd}/${amount}`,
           null,
           {
             headers: {
-              'X-CHECKSUM': checksum,
-            },
-          },
+              'X-CHECKSUM': checksum
+            }
+          }
         );
         Logger.info('Success redeeming token');
-        return true
+        resolve(data);
       } catch (error) {
-        Logger.error(`Error redeeming token`, JSON.stringify(error.response.data));
-        return false
+        Logger.error(
+          `Error redeeming token: ` + JSON.stringify(error.response.data)
+        );
+        reject(error);
       }
+    });
   }
 
   static async createNewBSCAccount({mnemonicString, userSalt}) {
@@ -251,7 +338,7 @@ class BlockchainService {
     let buffer = crypto.scryptSync(hash, salt, 32, {
       N: Math.pow(2, 14),
       r: 8,
-      p: 1,
+      p: 1
     });
 
     const generatedKeyPair = new Wallet(buffer);
@@ -264,11 +351,11 @@ class BlockchainService {
     // TODO: Rebuild user public and private key after retrieving mnemonic key and return account keypair
     try {
       var mnemonic = await AwsUploadService.getMnemonic();
-      //console.log(mnemonic,'mnooop')
       mnemonic = JSON.parse(mnemonic);
+
       pair = await this.createNewBSCAccount({
         mnemonicString: mnemonic.toString(),
-        userSalt: id,
+        userSalt: id
       });
       return pair;
     } catch (error) {

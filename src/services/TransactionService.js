@@ -12,6 +12,7 @@ class TransactionService {
         ...extraClause,
         OrganisationId,
       },
+      attributes: ['reference','amount', 'status', 'transaction_type', 'createdAt', 'updatedAt'],
       include: [
         {
           model: Wallet,
@@ -22,6 +23,7 @@ class TransactionService {
               model: User,
               as: 'User',
               attributes: userConst.publicAttr,
+              attributes: []
             },
           ],
         },
@@ -34,6 +36,7 @@ class TransactionService {
               model: User,
               as: 'User',
               attributes: userConst.publicAttr,
+              attributes: []
             },
           ],
         },
