@@ -4,7 +4,7 @@ const {
   WalletController,
   OrganisationController,
   CampaignController,
-  ComplaintController,
+  ComplaintController
 } = require('../controllers');
 const CashForWorkController = require('../controllers/CashForWorkController');
 
@@ -13,7 +13,7 @@ const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
-  IsOrgMember,
+  IsOrgMember
 } = require('../middleware');
 const multer = require('../middleware/multer');
 const {
@@ -26,7 +26,7 @@ const {
   BeneficiaryValidator,
   WalletValidator,
   FileValidator,
-  ParamValidator,
+  ParamValidator
 } = require('../validators');
 
 router.post('/flutterwave/webhook', OrganisationController.mintToken);
@@ -36,16 +36,16 @@ router.post('/bantu/webhook', OrganisationController.bantuTransfer);
 router.get('/wallets/:organisationId', OrganisationController.getWallets);
 router.get(
   '/wallets/main/:organisationId',
-  OrganisationController.getMainWallet,
+  OrganisationController.getMainWallet
 );
 router.get(
   '/wallets/campaign/:organisationId/:campaignId',
-  OrganisationController.getCampignWallet,
+  OrganisationController.getCampignWallet
 );
 router.post('/member', OrganisationController.addMember);
 router.get(
   '/transactions/:organisationId',
-  OrganisationController.fetchTransactions,
+  OrganisationController.fetchTransactions
 );
 router.post('/campaign', OrganisationController.createCampaign);
 router.put('/campaign', OrganisationController.updateCampaign);
@@ -53,15 +53,14 @@ router.post('/update-profile', OrganisationController.updateProfile);
 router.post('/transfer/token', OrganisationController.transferToken);
 router.get('/financials/:id', OrganisationController.getFinancials);
 
-router
-.get(
+router.get(
   '/:organisation_id/onboarded/:campaign_id',
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignIdOptional,
   CampaignController.campaignsWithOnboardedBeneficiary
-)
+);
 router.post(
   '/:organisation_id/onboarded/:campaign_id/:replicaCampaignId',
   NgoSubAdminAuth,
@@ -69,27 +68,39 @@ router.post(
   IsOrgMember,
   ParamValidator.CampaignIdOptional,
   CampaignController.importBeneficiary
-)
+);
 router.get(
   '/beneficiaries-summary/:id',
-  OrganisationController.getBeneficiariesFinancials,
+  OrganisationController.getBeneficiariesFinancials
 );
 router.get('/metric/:id', OrganisationController.getMetric);
 
 router.post('/cash-for-work/field', CashForWorkController.pickTaskFromCampaign);
 
 router.get('/matrics', NgoSubAdminAuth, OrganisationController.matrix);
-router.post('/zoho-cretate-ticket', OrganisationController.createTicket)
+router.post('/zoho-cretate-ticket', OrganisationController.createTicket);
+router.post(
+  '/ngo/zoho-create-ticket',
+  NgoSubAdminAuth,
+  OrganisationController.createTicketOrg
+);
+router.get('/zoho-token');
+router
+  .route('/zoho-token')
+  .get(OrganisationController.fetchToken)
+  .post(OrganisationController.saveToken)
+  .delete(OrganisationController.destroyToken);
+
 router.get(
   '/non-org-beneficiary',
   FieldAgentAuth,
-  OrganisationController.non_ngo_beneficiaries,
+  OrganisationController.non_ngo_beneficiaries
 );
-router.get('/zoho-init', OrganisationController.zohoInit);
+
 router.get(
   '/campaigns/transaction',
   NgoSubAdminAuth,
-  OrganisationController.record,
+  OrganisationController.record
 );
 router.post('/beneficiaries/sms-token', CampaignController.sendSMStoken);
 
@@ -99,7 +110,7 @@ router.get(
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignIdOptional,
-  WalletController.CampaignBalance,
+  WalletController.CampaignBalance
 );
 
 router
@@ -109,7 +120,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.ReferenceOptional,
-    WalletController.getOrgnaisationTransaction,
+    WalletController.getOrgnaisationTransaction
   );
 
 router
@@ -119,7 +130,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.CampaignIdOptional,
-    WalletController.getOrganisationCampaignWallet,
+    WalletController.getOrganisationCampaignWallet
   );
 
 router
@@ -130,7 +141,7 @@ router
     IsOrgMember,
     WalletValidator.fiatDepositRules(),
     WalletValidator.validate,
-    WalletController.paystackDeposit,
+    WalletController.paystackDeposit
   );
 router
   .route('/:organisation_id/wallets/:wallet_id?')
@@ -139,16 +150,17 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.WalletIdOptional,
-    WalletController.getOrganisationWallet,
+    WalletController.getOrganisationWallet
   );
 
 // Refactord routes
-router.route('/:organisation_id/profile')
+router
+  .route('/:organisation_id/profile')
   .get(
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getProfile,
+    OrganisationController.getProfile
   )
   .put(
     NgoAdminAuth,
@@ -156,7 +168,7 @@ router.route('/:organisation_id/profile')
     IsOrgMember,
     OrganisationValidator.profileUpdateRules(),
     OrganisationValidator.validate,
-    OrganisationController.completeProfile,
+    OrganisationController.completeProfile
   );
 router
   .route('/:organisation_id/logo')
@@ -165,7 +177,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     FileValidator.checkLogoFile(),
-    OrganisationController.changeOrganisationLogo,
+    OrganisationController.changeOrganisationLogo
   );
 
 router
@@ -174,7 +186,7 @@ router
     FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getOrganisationBeneficiaries,
+    OrganisationController.getOrganisationBeneficiaries
   );
 
 router
@@ -183,7 +195,7 @@ router
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getBeneficiariesTransactions,
+    OrganisationController.getBeneficiariesTransactions
   );
 
 router
@@ -193,7 +205,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     BeneficiaryValidator.BeneficiaryExists,
-    OrganisationController.getOrganisationBeneficiaryDetails,
+    OrganisationController.getOrganisationBeneficiaryDetails
   );
 
 router.get('/');
@@ -203,13 +215,13 @@ router
     FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getDonorVendors,
+    OrganisationController.getDonorVendors
   )
   .get(
     FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getOrganisationVendors,
+    OrganisationController.getOrganisationVendors
   )
   .post(
     FieldAgentAuth,
@@ -220,7 +232,7 @@ router
     VendorValidator.VendorStoreExists,
     CommonValidator.checkEmailNotTaken,
     CommonValidator.checkPhoneNotTaken,
-    OrganisationController.createVendor,
+    OrganisationController.createVendor
   );
 
 router
@@ -229,7 +241,7 @@ router
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.vendorsTransactions,
+    OrganisationController.vendorsTransactions
   );
 
 router
@@ -238,7 +250,7 @@ router
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getVendorsSummary,
+    OrganisationController.getVendorsSummary
   );
 
 router
@@ -249,7 +261,7 @@ router
     IsOrgMember,
     ParamValidator.VendorId,
     VendorValidator.VendorExists,
-    OrganisationController.getVendorDetails,
+    OrganisationController.getVendorDetails
   );
 
 router
@@ -257,7 +269,7 @@ router
   .get(
     ParamValidator.OrganisationId,
     OrganisationValidator.organisationExists,
-    OrganisationController.getAvailableOrgCampaigns,
+    OrganisationController.getAvailableOrgCampaigns
   )
   .post(
     NgoSubAdminAuth,
@@ -266,7 +278,7 @@ router
     CampaignValidator.campaignTitleExists,
     CampaignValidator.createCampaignRules(),
     CampaignValidator.validate,
-    OrganisationController.createCampaign,
+    OrganisationController.createCampaign
   );
 
 router
@@ -275,19 +287,17 @@ router
     FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getAllOrgCampaigns,
+    OrganisationController.getAllOrgCampaigns
   );
 
 router
   .route('/donations/private_donor/campaigns/all')
-  .get(
-    DonorAuth,
-    OrganisationController.getAllPrivateDonorCampaigns,
-  );
+  .get(DonorAuth, OrganisationController.getAllPrivateDonorCampaigns);
 
-router.get('/donations/public_donor/campaigns/all',
-OrganisationController.getAllPublicDonorCampaigns)
-
+router.get(
+  '/donations/public_donor/campaigns/all',
+  OrganisationController.getAllPublicDonorCampaigns
+);
 
 router
   .route('/:organisation_id/cash4works')
@@ -295,7 +305,7 @@ router
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    OrganisationController.getAllOrgCash4W,
+    OrganisationController.getAllOrgCash4W
   );
 
 router
@@ -305,7 +315,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
-    CampaignController.getCampaign,
+    CampaignController.getCampaign
   )
   .put(
     NgoAdminAuth,
@@ -314,7 +324,7 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignValidator.updateCampaignRules(),
     CampaignValidator.validate,
-    OrganisationController.updateOrgCampaign,
+    OrganisationController.updateOrgCampaign
   );
 
 router
@@ -324,7 +334,17 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
-    CampaignController.approveAndFund,
+    CampaignController.approveAndFundBeneficiaries
+  );
+
+router
+  .route('/:organisation_id/campaigns/:campaign_id/fund-campaign')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.approveAndFundCampaign
   );
 router
   .route('/:organisation_id/campaigns/:campaign_id/crypto_pay')
@@ -333,7 +353,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
-    CampaignController.cryptoPayment,
+    CampaignController.cryptoPayment
   );
 router
   .route('/:organisation_id/task/:campaign_id/fund_beneficiary')
@@ -342,7 +362,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
-    CampaignController.fundApprovedBeneficiary,
+    CampaignController.fundApprovedBeneficiary
   );
 router
   .route('/:organisation_id/:campaign_id/:token_type/tokens/:page')
@@ -351,7 +371,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
-    CampaignController.campaignTokens,
+    CampaignController.campaignTokens
   );
 
 router
@@ -365,7 +385,7 @@ router
     IsOrgMember,
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
-    OrganisationController.getCampaignVendors,
+    OrganisationController.getCampaignVendors
   )
 
   .post(
@@ -375,7 +395,7 @@ router
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     VendorValidator.approveCampaignVendor,
-    OrganisationController.approveCampaignVendor,
+    OrganisationController.approveCampaignVendor
   )
   .delete(
     NgoAdminAuth,
@@ -384,12 +404,12 @@ router
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     VendorValidator.approveCampaignVendor,
-    OrganisationController.removeCampaignVendor,
+    OrganisationController.removeCampaignVendor
   );
 router.get(
   '/pub_campaigns/:campaign_id/beneficiary_location',
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesLocation,
+  OrganisationController.getCampaignBeneficiariesLocation
 );
 
 router.get(
@@ -398,13 +418,13 @@ router.get(
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesLocation,
+  OrganisationController.getCampaignBeneficiariesLocation
 );
 
 router.get(
   '/pub_campaigns/:campaign_id/beneficiary_balance',
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesBalance,
+  OrganisationController.getCampaignBeneficiariesBalance
 );
 
 router.get(
@@ -413,7 +433,7 @@ router.get(
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesBalance,
+  OrganisationController.getCampaignBeneficiariesBalance
 );
 router.get(
   '/:organisation_id/campaigns/:campaign_id/beneficiary_transaction',
@@ -421,12 +441,12 @@ router.get(
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignId,
-  OrganisationController.getVendorTransactionPerBene,
+  OrganisationController.getVendorTransactionPerBene
 );
 router.get(
   '/pub_campaigns/:campaign_id/beneficiary_age',
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesAge,
+  OrganisationController.getCampaignBeneficiariesAge
 );
 router.get(
   '/:organisation_id/campaigns/:campaign_id/beneficiary_age',
@@ -434,12 +454,12 @@ router.get(
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesAge,
+  OrganisationController.getCampaignBeneficiariesAge
 );
 router.get(
   '/pub_campaigns/:campaign_id/beneficiary_mstatus',
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesMStatus,
+  OrganisationController.getCampaignBeneficiariesMStatus
 );
 router.get(
   '/:organisation_id/campaigns/:campaign_id/beneficiary_mstatus',
@@ -447,13 +467,13 @@ router.get(
   ParamValidator.OrganisationId,
   IsOrgMember,
   ParamValidator.CampaignId,
-  OrganisationController.getCampaignBeneficiariesMStatus,
+  OrganisationController.getCampaignBeneficiariesMStatus
 );
 router
   .route('/pub_campaigns/:campaign_id/beneficiaries')
   .get(
     ParamValidator.CampaignId,
-    OrganisationController.getCampaignBeneficiaries,
+    OrganisationController.getCampaignBeneficiaries
   );
 router
   .route('/:organisation_id/campaigns/:campaign_id/beneficiaries')
@@ -462,7 +482,7 @@ router
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.CampaignId,
-    OrganisationController.getCampaignBeneficiaries,
+    OrganisationController.getCampaignBeneficiaries
   )
   .put(
     NgoAdminAuth,
@@ -472,7 +492,7 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     BeneficiaryValidator.ApprovedBeneficiary,
     BeneficiaryValidator.IsCampaignBeneficiary,
-    OrganisationController.updaeCampaignBeneficiary,
+    OrganisationController.updaeCampaignBeneficiary
   );
 
 router
@@ -483,7 +503,7 @@ router
     IsOrgMember,
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
-    OrganisationController.approvedAllbeneficiaries,
+    OrganisationController.approvedAllbeneficiaries
   );
 router
   .route('/products/:vendor_id')
@@ -497,7 +517,7 @@ router
     IsOrgMember,
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
-    OrganisationController.getCampaignProducts,
+    OrganisationController.getCampaignProducts
   )
   .post(
     NgoAdminAuth,
@@ -506,7 +526,7 @@ router
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     ProductValidator.addProductRules,
-    OrganisationController.addCampaignProduct,
+    OrganisationController.addCampaignProduct
   );
 router.post(
   '/product/:organisation_id/:campaign_id/destroy',
@@ -515,7 +535,7 @@ router.post(
   IsOrgMember,
   ParamValidator.CampaignId,
   CampaignValidator.campaignBelongsToOrganisation,
-  OrganisationController.DeleteCampaignProduct,
+  OrganisationController.DeleteCampaignProduct
 );
 
 router.post(
@@ -525,7 +545,7 @@ router.post(
   IsOrgMember,
   ParamValidator.CampaignId,
   CampaignValidator.campaignBelongsToOrganisation,
-  OrganisationController.UpdateCampaignProduct,
+  OrganisationController.UpdateCampaignProduct
 );
 
 router
@@ -540,7 +560,7 @@ router
     IsOrgMember,
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
-    ComplaintController.getCampaignConplaints,
+    ComplaintController.getCampaignConplaints
   );
 
 router
@@ -548,7 +568,7 @@ router
   .get(
     ParamValidator.CampaignId,
     ComplaintValidator.complaintBelongsToCampaign,
-    ComplaintController.getCampaignConplaint,
+    ComplaintController.getCampaignConplaint
   );
 router
   .route('/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id')
@@ -558,13 +578,13 @@ router
     IsOrgMember,
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
-    ComplaintController.getCampaignConplaint,
+    ComplaintController.getCampaignConplaint
   );
 router.patch(
   '/pub_campaigns/:campaign_id/complaints/:complaint_id/resolve',
   ParamValidator.CampaignId,
   ComplaintValidator.complaintBelongsToCampaign,
-  ComplaintController.resolveCampaignConplaint,
+  ComplaintController.resolveCampaignConplaint
 );
 router.patch(
   '/:organisation_id/campaigns/:campaign_id/complaints/:complaint_id/resolve',
@@ -574,7 +594,7 @@ router.patch(
   ParamValidator.CampaignId,
   CampaignValidator.campaignBelongsToOrganisation,
   ComplaintValidator.complaintBelongsToCampaign,
-  ComplaintController.resolveCampaignConplaint,
+  ComplaintController.resolveCampaignConplaint
 );
 
 module.exports = router;

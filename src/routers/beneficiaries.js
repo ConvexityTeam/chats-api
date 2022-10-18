@@ -16,7 +16,6 @@ const {
   CommonValidator,
   BeneficiaryValidator,
   ComplaintValidator,
-  CampaignValidator,
 } = require('../validators');
 const router = require('express').Router();
 
@@ -129,13 +128,6 @@ router.post(
 router
   .route('/campaigns')
   .get(BeneficiaryAuth, CampaignController.getBeneficiaryCampaigns);
-
-// router.route('/transactions')
-//   .get(
-//     BeneficiaryAuth,
-//     CampaignController.getBeneficiaryCampaigns
-//   );
-
 router.post(
   '/campaigns/:campaign_id/join',
   FieldAgentBeneficiaryAuth,

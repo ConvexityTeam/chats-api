@@ -3,7 +3,6 @@ const QueueService = require('./QueueService');
 const {Logger} = require('../libs');
 class WebhookService {
   static async verifyPaystackDeposit(data) {
-    Logger.info(`Checking data from webhook service: ${JSON.stringify(data)}`)
     if (data.event == 'charge.success') {
       const transactionReference = data.data.reference;
       const record = await FundAccount.findOne({
@@ -18,14 +17,6 @@ class WebhookService {
         });
         record.dataValues.approved = true;
         QueueService.verifyFiatDeposit(record);
-        const isOrganisation = await Wallet.findOne({
-          where: {OrganisationId: record.OrganisationId},
-        });
-        if (isOrganisation) {
-          QueueService.createPayStack(record.OrganisationId, record.amount);
-          Logger.info(`Sending record to the queue for db wallet update`)
-
-        }
         return record;
       }
       return null;

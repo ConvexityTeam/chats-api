@@ -475,11 +475,12 @@ class VendorService {
         ...filter,
         transaction_origin: 'store',
       },
+      attributes: ['reference','amount', 'createdAt', 'updatedAt'],
       include: [
         {
           model: User,
           as: 'Vendor',
-          attributes: userConst.publicAttr,
+          attributes: ['first_name', 'last_name'],
           include: [
             'Store',
             {
