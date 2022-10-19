@@ -513,6 +513,26 @@ class VendorService {
     });
   }
 
+  static async vendorsTransactionsAdmin(VendorId) {
+    return Transaction.findAll({
+      where: {
+        // transaction_origin: 'wallet',
+        transaction_type: 'withdrawal',
+      },
+      attributes: ['reference','amount', 'createdAt', 'updatedAt'],
+      include: [
+        {
+          model: User,
+          as: 'Vendor',
+          attributes: ['first_name', 'last_name', ],
+          where: {
+            vendor_id: VendorId,
+          },
+        }
+      ]
+    });
+  }
+
   static async uploadVendorEvidence(vendorId) {
     const RoleId = AclRoles.Vendor;
     const exist = User.findAll({

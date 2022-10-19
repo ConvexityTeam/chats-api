@@ -198,6 +198,21 @@ class CampaignService {
     });
   }
 
+  static async getVendorCampaignsAdmin(VendorId) {
+    return CampaignVendor.findAll({
+      include: [
+        {
+          model: User,
+          as: 'Vendor',
+          attributes: ['first_name', 'last_name', ],
+          where: {
+            vendor_id: VendorId,
+          },
+        }
+      ]
+    });
+  }
+
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
       order: [['updatedAt', 'ASC']],

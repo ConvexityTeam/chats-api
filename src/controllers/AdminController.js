@@ -155,13 +155,26 @@ class AdminController {
     }
   }
 
+
+
+  static async getAllVendors(req, res) {
+    try {
+      const allVendors = await VendorService.getAllVendorsAdmin();
+      Response.setSuccess(200, 'Vendors retrieved', allVendors);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
   static async getNGODisbursedAndBeneficiaryTotal(req, res) {
 
-    const OrganisationId = req.params.organisation_id;
+    const { organisation_id } = req.params;
 
     try {
-      let total = await TransactionService.getTotalTransactionAmountAdmin(OrganisationId);
-      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(OrganisationId);
+      let total = await TransactionService.getTotalTransactionAmountAdmin(organisation_id);
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
       const beneficiariesCount = Object.keys(beneficiaries).length
 
       let spend_for_campaign = total.map(a => a.dataValues.amount);    
@@ -183,15 +196,31 @@ class AdminController {
     }
   }
 
-  static async getAllVendors(req, res) {
+  static async getVendorCampaignAndAmountTotal(req, res) {
+    const { vendor_id } = req.params;
     try {
-      const allVendors = await VendorService.getAllVendorsAdmin();
-      Response.setSuccess(200, 'Vendors retrieved', allVendors);
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(400, error);
-      return Response.send(res);
-    }
+      const transactions = await VendorService.vendorsTransactionsAdmin(vendor_id);
+      const campaigns = await CampaignService.getVendorCampaignsAdmin(vendor_id);
+      const campaignsCount = Object.keys(campaigns).length
+
+
+      let spend_for_campaign = transactions.map(a => a.dataValues.amount);    
+      let amount_sold = 0;     
+      for (let i = 0; i < spend_for_campaign.length; i++) {
+        amount_sold += Math.floor(spend_for_campaign[i]);
+      }
+
+      Response.setSuccess(200, 'Campaign and amount sold total retrieved', {
+        amount_sold,
+        campaignsCount
+      });
+    
+    return Response.send(res);
+  } catch (error) {
+    console.log(error);
+    Response.setError(400, error);
+    return Response.send(res);
+  }
   }
 
 
