@@ -146,7 +146,7 @@ class UsersController {
         return Response.send(res);
       }
 
-      if (data.nin) {
+      if (data.nin && !process.env.ENVIRONMENT === 'staging') {
         const hash = createHash(data.nin);
         const isExist = await UserService.findSingleUser({nin: data.nin});
         if (isExist) {
