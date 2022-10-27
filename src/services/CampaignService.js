@@ -281,6 +281,21 @@ class CampaignService {
       ],
     });
   }
+
+  static beneficiaryCampaingsAdmin(UserId) {
+    return Beneficiary.findAll({
+      where: {
+        UserId,
+      },
+      include: [
+        {
+          model: Campaign,
+          as: 'Campaign',
+          include: ['Organisation'],
+        },
+      ],
+    });
+  }
   static getPublicCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
@@ -299,7 +314,7 @@ class CampaignService {
           ],
     });
   }
- static getPrivateCampaigns(query, id) {
+  static getPrivateCampaigns(query, id) {
 
     return Organisation.findOne({
       where: {
@@ -330,6 +345,29 @@ class CampaignService {
       //   {model: User, as: 'Beneficiaries'},
       // ],
       // }
+
+    });
+  }
+
+  static getPrivateCampaignsAdmin(id) {
+
+    return Organisation.findOne({
+      where: {
+        id
+      },
+      order: [['updatedAt', 'ASC']],
+      include: {
+        model: Campaign,
+        where: {
+          is_public: false,
+        },
+        as: 'associatedCampaigns',
+        
+        include: [
+        {model: Task, as: 'Jobs'},
+        {model: User, as: 'Beneficiaries'},
+      ],
+      }
 
     });
   }

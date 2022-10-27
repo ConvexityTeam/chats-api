@@ -94,6 +94,15 @@ class TransactionService {
     });
   }
 
+  static async getBeneficiaryTotalTransactionAmountAdmin(BeneficiaryId) {
+    return Transaction.findAll({
+      where: {
+        BeneficiaryId,
+        transaction_type: 'spent',
+      },
+    });
+  }
+
 
   static async getAllTransactions() {
     try {

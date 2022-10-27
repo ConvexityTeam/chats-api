@@ -36,7 +36,14 @@ router.get('/ngos/:organisation_id/', SuperAdminAuth, AdminController.getNGODisb
 router.get('/vendors', SuperAdminAuth, AdminController.getAllVendors);
 router.get('/vendors/:vendor_id/', SuperAdminAuth, AdminController.getVendorCampaignAndAmountTotal);
 router.get('/beneficiaries', SuperAdminAuth, AdminController.getAllBeneficiaries);
+router.get('/beneficiaries/:beneficiary_id', SuperAdminAuth, AdminController.getBeneficiaryAmountAndCampaignsTotal);
 router.get('/campaigns', SuperAdminAuth, AdminController.getAllCampaigns);
+router.get('/donors', SuperAdminAuth, AdminController.getAllDonors);
+router.get('/donors/:donor_id/campaigns', SuperAdminAuth, AdminController.getDonorCampaignCount);
+
+
+
+
 
 
 module.exports = router;

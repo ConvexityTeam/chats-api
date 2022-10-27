@@ -123,6 +123,16 @@ class OrganisationService {
       where: {UserId}
     });
   }
+
+  static async getAllDonorsAdmin() {
+    return User.findAll({
+      where: {
+        RoleId: 8,
+      },
+    });
+  }
+
+  
   static async isMemberUser(user) {
     return OrganisationMembers.findOne({
       where: {
