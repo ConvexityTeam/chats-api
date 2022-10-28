@@ -230,7 +230,6 @@ RabbitMq['default']
           transactionId,
           realBudget
         } = msg.getContent();
-
         const campaignAddress = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -239,6 +238,9 @@ RabbitMq['default']
         );
 
         let transfer;
+        Logger.info(
+          'Sending Transfer Params from Consumer to Blockchain Service'
+        );
         if (!has_run_once) {
           transfer = await BlockchainService.transferTo(
             organisationAddress.privateKey,
