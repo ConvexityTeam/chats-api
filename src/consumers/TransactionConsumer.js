@@ -230,6 +230,7 @@ RabbitMq['default']
           transactionId,
           realBudget
         } = msg.getContent();
+
         const campaignAddress = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -250,6 +251,7 @@ RabbitMq['default']
         if (!transfer) {
           await update_transaction({status: 'failed'}, transactionId);
           msg.nack();
+          has_run_once = false;
           return;
         }
 
