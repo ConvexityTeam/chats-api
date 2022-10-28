@@ -413,12 +413,18 @@ class CampaignController {
       }
 
       QueueService.CampaignApproveAndFund(campaign, campaignWallet, OrgWallet);
+      Logger.info('Processing Transfer From NGO Wallet to Campaign Wallet');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(
+        `Error Processing Transfer From NGO Wallet to Campaign Wallet: ${JSON.stringify(
+          error
+        )}`
+      );
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         error.message
