@@ -1,21 +1,42 @@
 const router = require('express').Router();
 
-const {Auth, NgoAdminAuth} = require('../middleware'); //Auhorization middleware
+const {
+  Auth,
+  NgoAdminAuth,
+  IsOrgMember,
+  IsRecaptchaVerified
+} = require('../middleware'); //Auhorization middleware
 const {AuthController, BeneficiaryController} = require('../controllers');
 
 const multer = require('../middleware/multer-config'); //for uploading of profile picture and fingerprint
 const e2e = require('../middleware/e2e'); //End2End Encryption middleware
-const {AuthValidator, UserValidator, FileValidator} = require('../validators');
+const {
+  AuthValidator,
+  CampaignValidator,
+  ParamValidator,
+  FileValidator
+} = require('../validators');
 // router.use(e2e);
 
-router.post('/:campaignId/confirm-campaign-invite/:token', AuthController.confirmInvite)
-router.post('/invite',NgoAdminAuth, AuthController.sendInvite);
+router.post(
+  '/:campaignId/confirm-campaign-invite/:token',
+  AuthController.confirmInvite
+);
+
+router.post(
+  '/:organisation_id/invite/:campaign_id',
+  NgoAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  CampaignValidator.campaignBelongsToOrganisation,
+  AuthController.sendInvite
+);
 router.post('/donor-register', AuthController.createDonorAccount);
 router.post('/register', AuthController.createBeneficiary);
 router.post(
   '/self-registration',
   FileValidator.checkProfilePic(),
-  AuthController.beneficiaryRegisterSelf,
+  AuthController.beneficiaryRegisterSelf
 );
 router.post('/ngo-register', AuthController.createNgoAccount);
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
@@ -37,13 +58,13 @@ router
     AuthValidator.requestPasswordResetRules(),
     AuthValidator.validate,
     AuthValidator.canResetPassword,
-    AuthController.requestPasswordReset,
+    AuthController.requestPasswordReset
   )
   .put(
     AuthValidator.resetPasswordRules(),
     AuthValidator.validate,
     AuthValidator.checkResetPasswordToken,
-    AuthController.resetPassword,
+    AuthController.resetPassword
   );
 
 module.exports = router;

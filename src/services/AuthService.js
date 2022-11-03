@@ -33,21 +33,21 @@ class AuthService {
           }
           const uid = user.id;
           const oids = user.AssociatedOrganisations.map(
-            assoc => assoc.OrganisationId,
+            assoc => assoc.OrganisationId
           );
           const token = jwt.sign(
             {
               uid,
-              oids,
+              oids
             },
             process.env.SECRET_KEY,
             {
-              expiresIn: '48hr',
-            },
+              expiresIn: '48hr'
+            }
           );
           resolve({
             user,
-            token,
+            token
           });
         }
 
@@ -72,7 +72,7 @@ class AuthService {
             qrcodeData = _data;
             return User.update(
               {tfa_secret: _data.secret},
-              {where: {id: user.id}},
+              {where: {id: user.id}}
             );
           })
           .then(() => {
@@ -170,7 +170,7 @@ class AuthService {
           }
           User.update(
             {is_tfa_enabled: !_user.is_tfa_enabled},
-            {where: {id: user.id}},
+            {where: {id: user.id}}
           )
             .then(() => {
               user.is_tfa_enabled = false;
@@ -197,12 +197,12 @@ class AuthService {
       UserId,
       token,
       expires_at,
-      request_ip,
+      request_ip
     });
     await MailerService.sendOTP(otp, reset.ref, user.email, name);
     await SmsService.sendOtp(
       user.phone,
-      `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`,
+      `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`
     );
     return reset;
   }
@@ -217,23 +217,22 @@ class AuthService {
       where: {
         ref,
         expires_at: {
-          [Op.gte]: new Date(),
-        },
-      },
+          [Op.gte]: new Date()
+        }
+      }
     });
   }
   static async inviteDonor(email, inviterId, CampaignId) {
     const token = jwt.sign(
       {
-        email,
+        email
       },
       process.env.SECRET_KEY,
       {
-        expiresIn: '24hr',
-      },
+        expiresIn: '24hr'
+      }
     );
-   const inv = await Invites.create({id: uuidv4(), email, inviterId, token, CampaignId});
-      console.log(inv)
+    await Invites.create({id: uuidv4(), email, inviterId, token, CampaignId});
     return token;
   }
 }

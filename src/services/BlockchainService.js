@@ -71,7 +71,11 @@ class BlockchainService {
         Logger.info('Generated wallet address');
         resolve(data);
       } catch (error) {
-        Logger.error('Error while Generating wallet address', error.response);
+        Logger.error(
+          `Error while Generating wallet address: ${JSON.stringify(
+            error.message
+          )}`
+        );
         reject(error);
       }
     });
