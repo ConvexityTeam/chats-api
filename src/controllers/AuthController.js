@@ -811,51 +811,52 @@ class AuthController {
   }
 
   static async sendInvite(req, res) {
-    const {inviteeEmail, organisationId, campaignId} = req.body;
+    const {inviteeEmail, message, link} = req.body;
+    const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
-        inviteeEmail: 'email|required',
-        organisationId: 'integer|required',
-        campaignId: 'integer|required'
+        'inviteeEmail*': 'email|required',
+        link: 'required|url'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const [ngo, campaign, donor] = await Promise.all([
-        OrganisationService.checkExist(organisationId),
-        CampaignService.getCampaignById(campaignId),
-        OrganisationService.checkExistEmail(inviteeEmail)
-      ]);
-
-      if (!donor) {
+      for (let email of inviteeEmail) {
+        const [ngo, campaign, donor] = await Promise.all([
+          OrganisationService.checkExist(organisation_id),
+          CampaignService.getCampaignById(campaign_id),
+          OrganisationService.checkExistEmail(email)
+        ]);
         const token = await AuthService.inviteDonor(
-          inviteeEmail,
-          organisationId,
-          campaignId
+          email,
+          organisation_id,
+          campaign_id
         );
-        await MailerService.sendInvite(
-          inviteeEmail,
-          token,
-          campaign,
-          ngo.name,
-          false
-        );
-      } else {
-        const token = await AuthService.inviteDonor(
-          inviteeEmail,
-          organisationId,
-          campaignId
-        );
-        await MailerService.sendInvite(
-          inviteeEmail,
-          token,
-          campaign,
-          ngo.name,
-          true
-        );
+        if (!donor) {
+          await MailerService.sendInvite(
+            email,
+            token,
+            campaign,
+            ngo.name,
+            false,
+            message,
+            link
+          );
+        } else {
+          await MailerService.sendInvite(
+            email,
+            token,
+            campaign,
+            ngo.name,
+            false,
+            message,
+            link
+          );
+        }
       }
+
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Invite sent to donor.'
