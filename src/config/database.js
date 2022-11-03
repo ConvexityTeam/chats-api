@@ -32,6 +32,6 @@ module.exports = {
     host: config.DB_HOST,
     logging: config.DB_LOG,
     dialect: "postgres",
-    dialectOptions: {ssl: true}
+    dialectOptions: {rejectUnauthorized: false}
   },
 };
