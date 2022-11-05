@@ -11,13 +11,13 @@ class MailerService {
       port: this.config.port,
       auth: {
         user: this.config.user,
-        pass: this.config.pass,
+        pass: this.config.pass
       },
       secure: true,
       tls: {
         // do not fail on invalid certs
-        rejectUnauthorized: false,
-      },
+        rejectUnauthorized: false
+      }
     });
   }
 
@@ -26,7 +26,7 @@ class MailerService {
       from: this.config.from,
       to,
       subject,
-      html,
+      html
     };
     return new Promise((resolve, reject) => {
       this.transporter.sendMail(options, (err, data) => {
@@ -70,7 +70,11 @@ class MailerService {
   sendPassword(to, name, password, vendor_id) {
     const body = `
     <div>
-      <p>Hi, ${name}\nYour CHATS account ${vendor_id ? 'ID is: '+ vendor_id + ', password is: '+password  : 'password is: '+ password}</p>
+      <p>Hi, ${name}\nYour CHATS account ${
+      vendor_id
+        ? 'ID is: ' + vendor_id + ', password is: ' + password
+        : 'password is: ' + password
+    }</p>
       <p>Best,\nCHATS - Convexity</p>
     </div>
     `;
@@ -78,7 +82,7 @@ class MailerService {
       from: this.config.from,
       to,
       subject: 'Account Credentials',
-      html: body,
+      html: body
     };
 
     return new Promise((resolve, reject) => {
@@ -104,7 +108,7 @@ class MailerService {
       from: this.config.from,
       to,
       subject: 'SMS Token',
-      html: body,
+      html: body
     };
 
     return new Promise((resolve, reject) => {
@@ -131,7 +135,7 @@ class MailerService {
       from: this.config.from,
       to,
       subject: 'Reset password',
-      html: body,
+      html: body
     };
 
     return new Promise((resolve, reject) => {
@@ -144,12 +148,19 @@ class MailerService {
       });
     });
   }
-  sendInvite(to, token, campaign, ngo, exist) {
+  sendInvite(to, token, campaign, ngo, exist, message, link) {
     const body = `
     <div>
       <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
-      <p>We’ve given you access to campaign titled: ${campaign.title} so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
-      <p>${exist ? `If you want to login to confirm access, please click on the following link: https://chats.vercel.app?token=${token}&campaign_id=${campaign.id}` : `If you want to create an account, please click on the following link: https://chats.vercel.app/sign-up?token=${token}&campaign_id=${campaign.id}`}</p>
+      <p>We’ve given you access to campaign titled: ${
+        campaign.title
+      } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
+      <p>${
+        exist
+          ? `If you want to login to confirm access, please click on the following link: ${link}&token=${token}&first_timer=false&is_public=${campaign.is_public}`
+          : `If you want to create an account, please click on the following link: ${link}&token=${token}&first_timer=false&is_public=${campaign.is_public}`
+      }</p>
+      <p>${message}</p>
       <p>Enjoy!</p>
       <p>Best,</p>
       <p>The ${ngo} team</p>
@@ -159,7 +170,7 @@ class MailerService {
       from: this.config.from,
       to,
       subject: 'Donor Invitation',
-      html: body,
+      html: body
     };
 
     return new Promise((resolve, reject) => {
