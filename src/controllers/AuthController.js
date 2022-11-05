@@ -631,17 +631,17 @@ class AuthController {
       });
 
       const data = await AuthService.login(user, req.body.password.trim());
-      if (
-        user.RoleId === AclRoles.Donor ||
-        user.RoleId === AclRoles.FieldAgent ||
-        user.RoleId === AclRoles.Vendor
-      ) {
-        Response.setError(
-          HttpStatusCode.STATUS_FORBIDDEN,
-          'Access Denied, Unauthorised Access'
-        );
-        return Response.send(res);
-      }
+      // if (
+      //   user.RoleId === AclRoles.Donor ||
+      //   user.RoleId === AclRoles.FieldAgent ||
+      //   user.RoleId === AclRoles.Vendor
+      // ) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_FORBIDDEN,
+      //     'Access Denied, Unauthorised Access'
+      //   );
+      //   return Response.send(res);
+      // }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
