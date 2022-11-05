@@ -310,7 +310,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      const wallet = await BlockchainService.switchGenerateAddress(body);
+      const wallet = await BlockchainService.signInSwitchWallet();
       const qr = await generateQrcodeURL(
         JSON.stringify({
           'campaign title': findCampaign.title,

@@ -630,21 +630,25 @@ class AuthController {
         }
       });
 
-      if (user.RoleId === AclRoles.Donor) {
-        const donorMainOrg = await OrganisationService.checkExistEmail(
-          req.body.email
-        );
-        user.dataValues.mainOrganisation = donorMainOrg;
-      }
-
       const data = await AuthService.login(user, req.body.password.trim());
+      if (
+        user.RoleId === AclRoles.Donor ||
+        user.RoleId === AclRoles.FieldAgent ||
+        user.RoleId === AclRoles.Vendor
+      ) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.';
+          : 'Login failed. Please try again later.' + error;
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -680,6 +684,83 @@ class AuthController {
     }
   }
 
+  static async donorSignIn(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+
+      const data = await AuthService.login(user, req.body.password.trim());
+      if (user && user.RoleId !== AclRoles.Donor) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+      const donorMainOrg = await OrganisationService.checkExistEmail(
+        req.body.email
+      );
+      user.dataValues.mainOrganisation = donorMainOrg;
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.' + error;
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+
+  static async signInField(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email,
+          RoleId: AclRoles.FieldAgent
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+
+      const data = await AuthService.login(user, req.body.password);
+      if (user && user.RoleId !== AclRoles.FieldAgent) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.';
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+
   static async signInVendor(req, res) {
     try {
       const user = await db.User.findOne({
@@ -695,11 +776,19 @@ class AuthController {
           }
         }
       });
+
       const data = await AuthService.login(
         user,
         req.body.password.trim(),
         AclRoles.Vendor
       );
+      if (user.RoleId !== AclRoles.Vendor) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
