@@ -45,11 +45,13 @@ class OrderController {
     try {
       const data = await VendorService.getOrder({reference});
       const user = await UserService.findSingleUser({id});
+      Logger.info(`${req.body}, ref: ${reference}`);
       if (!user) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Invalid beneficiary'
         );
+        Logger.error('Invalid beneficiary');
         return Response.send(res);
       }
       if (!compareHash(pin, user.pin)) {
@@ -57,6 +59,7 @@ class OrderController {
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Invalid or wrong PIN.'
         );
+        Logger.error('Invalid or wrong PIN.');
         return Response.send(res);
       }
 
@@ -65,6 +68,7 @@ class OrderController {
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Order not found.'
         );
+        Logger.error('Order not found.');
         return Response.send(res);
       }
 
@@ -73,6 +77,7 @@ class OrderController {
           HttpStatusCode.STATUS_BAD_REQUEST,
           `Order ${data.order.status}`
         );
+        Logger.error(`Order ${data.order.status}`);
         return Response.send(res);
       }
 
@@ -93,6 +98,7 @@ class OrderController {
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Account not eligible to pay for order'
         );
+        Logger.error(`Account not eligible to pay for order`);
         return Response.send(res);
       }
       if (!vendorWallet) {
@@ -100,6 +106,7 @@ class OrderController {
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Vendor Wallet Not Found..'
         );
+        Logger.error(`Vendor Wallet Not Found..`);
         return Response.send(res);
       }
       if (!campaignWallet) {
@@ -107,6 +114,7 @@ class OrderController {
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign Wallet Not Found..'
         );
+        Logger.error(`Campaign Wallet Not Found..`);
         return Response.send(res);
       }
 
@@ -115,6 +123,7 @@ class OrderController {
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
         );
+        Logger.error(`Insufficient wallet balance.`);
         return Response.send(res);
       }
       if (beneficiaryWallet.balance < data.total_cost) {
@@ -122,6 +131,7 @@ class OrderController {
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
         );
+        Logger.error(`Insufficient wallet balance.`);
         return Response.send(res);
       }
       await OrderService.processOrder(
