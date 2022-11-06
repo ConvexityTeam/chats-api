@@ -130,6 +130,7 @@ class UsersController {
   static async updateProfile(req, res) {
     try {
       const data = req.body;
+      const location = JSON.parse(req.user.location);
       const rules = {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
@@ -158,7 +159,7 @@ class UsersController {
         }
         const nin = await UserService.nin_verification(
           {number: data.nin},
-          data.ip
+          location.country
         );
         if (!nin.status) {
           Response.setError(
