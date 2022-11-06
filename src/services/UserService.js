@@ -173,7 +173,6 @@ class UserService {
   static async nin_verification(number, country) {
     return new Promise(async (resolve, reject) => {
       try {
-        Logger(`number: ${number}, ip: ${country}`);
         Logger.info('Verifying NIN');
         const NG = 'nin_wo_face';
         const KE = 'ke/national_id';
