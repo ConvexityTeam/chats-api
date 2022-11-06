@@ -173,6 +173,7 @@ class UserService {
   static async nin_verification(number, ip) {
     return new Promise(async (resolve, reject) => {
       try {
+        Logger(`number: ${number}, ip: ${ip}`);
         Logger.info('Verifying NIN');
         const Ip = geoIp.lookup(ip);
         const NG = 'nin_wo_face';
