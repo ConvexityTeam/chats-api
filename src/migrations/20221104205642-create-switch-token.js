@@ -9,7 +9,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       accessToken: {
-        type: Sequelize.STRING,
+        type: Sequelize.TEXT,
         allowNull: false
       },
       expires: {

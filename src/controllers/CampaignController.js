@@ -310,7 +310,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      const wallet = await BlockchainService.signInSwitchWallet();
+      const wallet = await BlockchainService.switchGenerateAddress(body);
       const qr = await generateQrcodeURL(
         JSON.stringify({
           'campaign title': findCampaign.title,
@@ -325,6 +325,7 @@ class CampaignController {
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(`Internal Server Error. Contact Support!.. ${error}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error. Contact Support!..'
