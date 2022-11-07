@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class SwitchToken extends Model {
     /**
@@ -13,12 +11,15 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  SwitchToken.init({
-    accessToken: DataTypes.STRING,
-    expires: DataTypes.DATE
-  }, {
-    sequelize,
-    modelName: 'SwitchToken',
-  });
+  SwitchToken.init(
+    {
+      accessToken: DataTypes.TEXT,
+      expires: DataTypes.DATE
+    },
+    {
+      sequelize,
+      modelName: 'SwitchToken'
+    }
+  );
   return SwitchToken;
 };

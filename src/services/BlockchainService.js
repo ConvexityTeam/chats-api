@@ -26,15 +26,15 @@ class BlockchainService {
             password: switchWallet.password
           }
         );
-        // const exist = await SwitchToken.findOne(1);
-        // if (!exist) await SwitchToken.create({...data});
-        // else await exist.update({...data});
+        const token = data.data;
+        const exist = await SwitchToken.findByPk(1);
+
+        if (!exist) await SwitchToken.create({...token});
+        else await exist.update({...token});
         Logger.info('Signed in to switch wallet');
         resolve(data);
       } catch (error) {
-        Logger.error(
-          'Create Account Wallet Error: ' + JSON.stringify(error.response)
-        );
+        Logger.error('Create Account Wallet Error: ' + JSON.stringify(error));
         reject(error);
       }
     });
@@ -42,8 +42,9 @@ class BlockchainService {
   static async switchGenerateAddress(body) {
     return new Promise(async (resolve, reject) => {
       try {
-        const switchWallet = await SwitchToken.findOne(1);
-        if (moment().isAfter(switchWallet.expires)) {
+        const token = await SwitchToken.findByPk(1);
+        console.log(token);
+        if (!token || moment().isAfter(token.expires)) {
           await this.signInSwitchWallet();
         }
         Logger.info('Generating wallet address');
@@ -52,7 +53,7 @@ class BlockchainService {
           body,
           {
             headers: {
-              Authorization: `Bearer ${switchWallet.accessToken}`
+              Authorization: `Bearer ${token.accessToken}`
             }
           }
         );
@@ -60,10 +61,33 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.error(
-          `Error while Generating wallet address: ${JSON.stringify(
-            error.message
-          )}`
+          `Error while Generating wallet address: ${JSON.stringify(error)}`
         );
+        reject(error);
+      }
+    });
+  }
+  static async switchWebhook(data) {
+    return Promise(async (resolve, reject) => {
+      try {
+        console.log(data);
+        const token = await SwitchToken.findByPk(1);
+        if (!token || moment().isAfter(token.expires)) {
+          await this.signInSwitchWallet();
+        }
+        console.log(token);
+        const {data} = await Axios.put(
+          `${switchWallet.baseURL}/v1/merchant/webhook`,
+          {webhookUrl: '', publicKey: switchWallet.publicKey},
+          {
+            headers: {
+              Authorization: `Bearer ${token.accessToken}`
+            }
+          }
+        );
+        resolve(data);
+      } catch (error) {
+        Logger.error(`Error Verifying webhook: ${JSON.stringify(error)}`);
         reject(error);
       }
     });

@@ -38,11 +38,7 @@ router.post(
   FileValidator.checkProfilePic(),
   AuthController.beneficiaryRegisterSelf
 );
-router.post(
-  '/ngo-register',
-  IsRecaptchaVerified,
-  AuthController.createNgoAccount
-);
+router.post('/ngo-register', AuthController.createNgoAccount);
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
 router.post('/nin-verification', AuthController.verifyNin);
 router.post('/update-profile', Auth, AuthController.updateProfile);
@@ -51,6 +47,9 @@ router.get('/user-detail/:id', Auth, AuthController.userDetails);
 // Refactored
 router.post('/login', AuthController.signIn);
 router.post('/donor-login', AuthController.donorSignIn);
+router.post('field-login', AuthController.signInField);
+router.post('beneficiary-login', AuthController.signInBeneficiary);
+router.post('ngo-login', AuthController.signInNGO);
 router.get('/2fa/init', Auth, AuthController.setTwoFactorSecret);
 router.post('/2fa/enable', Auth, AuthController.enableTwoFactorAuth);
 router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
