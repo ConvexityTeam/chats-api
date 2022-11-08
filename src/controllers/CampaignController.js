@@ -264,6 +264,32 @@ class CampaignController {
    */
 
   // REFACTORED
+
+  static async networkChain(req, res) {
+    try {
+      const networkChain = ['POLYGON'];
+      const currency = ['USDT', 'BTC', 'XRP', 'XDP'];
+
+      const net_cur = {
+        networkChain,
+        currency
+      };
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Chain and currency retrieved',
+        net_cur
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support!..'
+      );
+      return Response.send(res);
+    }
+  }
+
   static async cryptoPayment(req, res) {
     const {campaign_id} = req.params;
     const {currency} = SanitizeObject(req.body);
@@ -299,6 +325,7 @@ class CampaignController {
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(`Internal Server Error. Contact Support!.. ${error}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error. Contact Support!..'
@@ -340,10 +367,10 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.budget > OrgWallet.balance || OrgWallet.balance == 0) {
+      if (campaign.amount == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance. Please fund organisation wallet.'
+          'Insufficient wallet balance. Please fund campaign wallet.'
         );
         return Response.send(res);
       }
@@ -413,12 +440,18 @@ class CampaignController {
       }
 
       QueueService.CampaignApproveAndFund(campaign, campaignWallet, OrgWallet);
+      Logger.info('Processing Transfer From NGO Wallet to Campaign Wallet');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(
+        `Error Processing Transfer From NGO Wallet to Campaign Wallet: ${JSON.stringify(
+          error
+        )}`
+      );
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         error.message
@@ -636,7 +669,28 @@ class CampaignController {
       return Response.send(res);
     }
   }
-
+  static async toggleCampaign(req, res) {
+    const {campaign_id} = req.params;
+    try {
+      const campaign = await CampaignService.getCampaignById(campaign_id);
+      if (!campaign) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          `Campaign With ID :${campaign_id} Not Found`
+        );
+        return Response.send(res);
+      }
+      await campaign.update({is_public: !campaign.is_public});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, `Campaign updated`);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
   static async updatedCampaign(req, res) {
     const alteredCampaign = req.body;
     const {id} = req.params;

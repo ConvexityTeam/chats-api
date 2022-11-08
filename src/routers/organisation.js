@@ -325,6 +325,15 @@ router
     CampaignValidator.updateCampaignRules(),
     CampaignValidator.validate,
     OrganisationController.updateOrgCampaign
+  )
+  .patch(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignValidator.updateCampaignRules(),
+    CampaignValidator.validate,
+    CampaignController.toggleCampaign
   );
 
 router
@@ -346,6 +355,8 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.approveAndFundCampaign
   );
+
+router.get('/chain_currency', NgoSubAdminAuth, CampaignController.networkChain);
 router
   .route('/:organisation_id/campaigns/:campaign_id/crypto_pay')
   .post(

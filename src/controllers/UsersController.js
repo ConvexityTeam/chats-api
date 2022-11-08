@@ -19,7 +19,7 @@ const {
   QueueService,
   WalletService
 } = require('../services');
-const {Response} = require('../libs');
+const {Response, Logger} = require('../libs');
 
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 var amqp_1 = require('./../libs/RabbitMQ/Connection');
@@ -130,6 +130,7 @@ class UsersController {
   static async updateProfile(req, res) {
     try {
       const data = req.body;
+      const location = JSON.parse(req.user.location);
       const rules = {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
@@ -139,14 +140,14 @@ class UsersController {
           'regex:/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/'
         ]
       };
-
+      Logger.info(`Request Body: ${JSON.stringify(data)}`);
       const validation = new Validator(data, rules);
       if (validation.fails()) {
         Response.setError(422, validation.errors);
         return Response.send(res);
       }
 
-      if (data.nin && !process.env.ENVIRONMENT === 'staging') {
+      if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
         const isExist = await UserService.findSingleUser({nin: data.nin});
         if (isExist) {
@@ -158,7 +159,7 @@ class UsersController {
         }
         const nin = await UserService.nin_verification(
           {number: data.nin},
-          data.ip
+          location.country
         );
         if (!nin.status) {
           Response.setError(
@@ -177,6 +178,8 @@ class UsersController {
         );
         return Response.send(res);
       }
+      data.is_nin_verified = true;
+
       await req.user.update(data);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -187,7 +190,7 @@ class UsersController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.'
+        'Server Error. Please retry.' + error
       );
       return Response.send(res);
     }

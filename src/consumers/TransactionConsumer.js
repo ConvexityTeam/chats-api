@@ -238,6 +238,9 @@ RabbitMq['default']
         );
 
         let transfer;
+        Logger.info(
+          'Sending Transfer Params from Consumer to Blockchain Service'
+        );
         if (!has_run_once) {
           transfer = await BlockchainService.transferTo(
             organisationAddress.privateKey,
@@ -250,6 +253,7 @@ RabbitMq['default']
         if (!transfer) {
           await update_transaction({status: 'failed'}, transactionId);
           msg.nack();
+          has_run_once = false;
           return;
         }
 

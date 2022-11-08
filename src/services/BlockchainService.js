@@ -1,35 +1,21 @@
 const {createClient} = require('redis');
 const axios = require('axios');
 const ethers = require('ethers');
+const moment = require('moment');
 const crypto = require('crypto');
 const sha256 = require('simple-sha256');
 const {tokenConfig, switchWallet} = require('../config');
+const {SwitchToken} = require('../models');
 const {Encryption, Logger} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
 
-const client = createClient({
-  socket: {
-    port: 5000,
-    tls: true
-  }
-});
 const provider = new ethers.providers.getDefaultProvider(
   process.env.BLOCKCHAINSERV_TEST
 );
 const Axios = axios.create();
 
 class BlockchainService {
-  static async connectRedis() {
-    try {
-      await client.connect();
-      client.on('error', err => console.log('Redis Client Error'));
-    } catch (error) {
-      Logger.error('Redis ' + error);
-    }
-  }
-
   static async signInSwitchWallet() {
-    this.connectRedis();
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Signing in to switch wallet');
@@ -40,10 +26,15 @@ class BlockchainService {
             password: switchWallet.password
           }
         );
+        const token = data.data;
+        const exist = await SwitchToken.findByPk(1);
+
+        if (!exist) await SwitchToken.create({...token});
+        else await exist.update({...token});
         Logger.info('Signed in to switch wallet');
         resolve(data);
       } catch (error) {
-        Logger.error('Create Account Wallet Error', error.response.data);
+        Logger.error('Create Account Wallet Error: ' + JSON.stringify(error));
         reject(error);
       }
     });
@@ -51,12 +42,10 @@ class BlockchainService {
   static async switchGenerateAddress(body) {
     return new Promise(async (resolve, reject) => {
       try {
-        const switch_token = await client.get('switch_token');
-        const expires = await client.get('expires');
-        if (expires < new Date() || expires === null) {
-          const token = await this.signInSwitchWallet();
-          await client.set('expires', token.data.expires);
-          await client.set('switch_token', token.data.accessToken);
+        const token = await SwitchToken.findByPk(1);
+        console.log(token);
+        if (!token || moment().isAfter(token.expires)) {
+          await this.signInSwitchWallet();
         }
         Logger.info('Generating wallet address');
         const {data} = await Axios.post(
@@ -64,14 +53,41 @@ class BlockchainService {
           body,
           {
             headers: {
-              Authorization: `Bearer ${switch_token}`
+              Authorization: `Bearer ${token.accessToken}`
             }
           }
         );
         Logger.info('Generated wallet address');
         resolve(data);
       } catch (error) {
-        Logger.error('Error while Generating wallet address', error.response);
+        Logger.error(
+          `Error while Generating wallet address: ${JSON.stringify(error)}`
+        );
+        reject(error);
+      }
+    });
+  }
+  static async switchWebhook(data) {
+    return Promise(async (resolve, reject) => {
+      try {
+        console.log(data);
+        const token = await SwitchToken.findByPk(1);
+        if (!token || moment().isAfter(token.expires)) {
+          await this.signInSwitchWallet();
+        }
+        console.log(token);
+        const {data} = await Axios.put(
+          `${switchWallet.baseURL}/v1/merchant/webhook`,
+          {webhookUrl: '', publicKey: switchWallet.publicKey},
+          {
+            headers: {
+              Authorization: `Bearer ${token.accessToken}`
+            }
+          }
+        );
+        resolve(data);
+      } catch (error) {
+        Logger.error(`Error Verifying webhook: ${JSON.stringify(error)}`);
         reject(error);
       }
     });

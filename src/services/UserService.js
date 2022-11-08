@@ -170,16 +170,15 @@ class UserService {
     });
   }
 
-  static async nin_verification(number, ip) {
+  static async nin_verification(number, country) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Verifying NIN');
-        const Ip = geoIp.lookup(ip);
         const NG = 'nin_wo_face';
         const KE = 'ke/national_id';
         const {data} = await Axios.post(
           `https://api.myidentitypay.com/api/v1/biometrics/merchant/data/verification/${
-            Ip.country === 'NG' ? NG : KE
+            country === 'Nigeria' ? NG : KE
           }`,
           number,
           {

@@ -630,14 +630,56 @@ class AuthController {
         }
       });
 
-      if (user.RoleId === AclRoles.Donor) {
-        const donorMainOrg = await OrganisationService.checkExistEmail(
-          req.body.email
-        );
-        user.dataValues.mainOrganisation = donorMainOrg;
-      }
-
       const data = await AuthService.login(user, req.body.password.trim());
+      // if (
+      //   user.RoleId === AclRoles.Donor ||
+      //   user.RoleId === AclRoles.FieldAgent ||
+      //   user.RoleId === AclRoles.Vendor
+      // ) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_FORBIDDEN,
+      //     'Access Denied, Unauthorised Access'
+      //   );
+      //   return Response.send(res);
+      // }
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.' + error;
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+
+  static async signInNGO(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+      if (
+        (user && user.RoleId !== AclRoles.NgoAdmin) ||
+        user.RoleId !== AclRoles.NgoAdmin
+      ) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+      const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -654,8 +696,7 @@ class AuthController {
     try {
       const user = await db.User.findOne({
         where: {
-          email: req.body.email,
-          RoleId: AclRoles.FieldAgent
+          email: req.body.email
         },
         include: {
           model: db.OrganisationMembers,
@@ -667,7 +708,127 @@ class AuthController {
         }
       });
 
+      if (user && user.RoleId !== AclRoles.FieldAgent) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+
       const data = await AuthService.login(user, req.body.password);
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.';
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+
+  static async donorSignIn(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+      if (user && user.RoleId !== AclRoles.Donor) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+
+      const data = await AuthService.login(user, req.body.password.trim());
+
+      const donorMainOrg = await OrganisationService.checkExistEmail(
+        req.body.email
+      );
+      user.dataValues.mainOrganisation = donorMainOrg;
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.' + error;
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+
+  static async signInField(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+      if (user && user.RoleId !== AclRoles.FieldAgent) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+      const data = await AuthService.login(user, req.body.password);
+
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.';
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+  static async signInBeneficiary(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+      if (user && user.RoleId !== AclRoles.Beneficiary) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+      const data = await AuthService.login(user, req.body.password);
+
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -695,11 +856,19 @@ class AuthController {
           }
         }
       });
+      if (user && user.RoleId !== AclRoles.Vendor) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
       const data = await AuthService.login(
         user,
         req.body.password.trim(),
         AclRoles.Vendor
       );
+
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -843,51 +1012,52 @@ class AuthController {
   }
 
   static async sendInvite(req, res) {
-    const {inviteeEmail, organisationId, campaignId} = req.body;
+    const {inviteeEmail, message, link} = req.body;
+    const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
-        inviteeEmail: 'email|required',
-        organisationId: 'integer|required',
-        campaignId: 'integer|required'
+        'inviteeEmail*': 'email|required',
+        link: 'required|url'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const [ngo, campaign, donor] = await Promise.all([
-        OrganisationService.checkExist(organisationId),
-        CampaignService.getCampaignById(campaignId),
-        OrganisationService.checkExistEmail(inviteeEmail)
-      ]);
-
-      if (!donor) {
+      for (let email of inviteeEmail) {
+        const [ngo, campaign, donor] = await Promise.all([
+          OrganisationService.checkExist(organisation_id),
+          CampaignService.getCampaignById(campaign_id),
+          OrganisationService.checkExistEmail(email)
+        ]);
         const token = await AuthService.inviteDonor(
-          inviteeEmail,
-          organisationId,
-          campaignId
+          email,
+          organisation_id,
+          campaign_id
         );
-        await MailerService.sendInvite(
-          inviteeEmail,
-          token,
-          campaign,
-          ngo.name,
-          false
-        );
-      } else {
-        const token = await AuthService.inviteDonor(
-          inviteeEmail,
-          organisationId,
-          campaignId
-        );
-        await MailerService.sendInvite(
-          inviteeEmail,
-          token,
-          campaign,
-          ngo.name,
-          true
-        );
+        if (!donor) {
+          await MailerService.sendInvite(
+            email,
+            token,
+            campaign,
+            ngo.name,
+            false,
+            message,
+            link
+          );
+        } else {
+          await MailerService.sendInvite(
+            email,
+            token,
+            campaign,
+            ngo.name,
+            false,
+            message,
+            link
+          );
+        }
       }
+
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Invite sent to donor.'
