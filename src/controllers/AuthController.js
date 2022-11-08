@@ -671,7 +671,7 @@ class AuthController {
       });
       if (
         (user && user.RoleId !== AclRoles.NgoAdmin) ||
-        user.RoleId !== AclRoles.NgoAdmin
+        user.RoleId !== AclRoles.SuperAdmin
       ) {
         Response.setError(
           HttpStatusCode.STATUS_FORBIDDEN,
