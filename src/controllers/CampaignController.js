@@ -941,18 +941,16 @@ class CampaignController {
         'campaign'
       );
       campaign.forEach(app => {
-        app.Beneficiaries.forEach(beneficiary => {
-          delete beneficiary.pin;
-          delete beneficiary.password;
+        if (app.Beneficiaries.length)
           approved.push({
             id: app.id,
             OrganisationId: app.OrganisationId,
             title: app.title,
             type: app.type,
             spending: app.spending,
-            description: app.description
+            description: app.description,
+            total_beneficiaries: app.Beneficiaries.length
           });
-        });
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -973,48 +971,34 @@ class CampaignController {
   static async importBeneficiary(req, res) {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
-      const delay = 3000;
-      const approvedBeneficiary = [];
-      const replicaBeneficiary = [];
-      const noDuplicate = [];
-      const ongoingCampaign = await CampaignService.getACampaignWithReplica(
-        campaign_id,
-        'campaign'
-      );
+      const {source, type} = SanitizeObject(req.body, ['source', 'type']);
+
       const replicaCampaign = await CampaignService.getACampaignWithReplica(
         replicaCampaignId,
-        'campaign'
+        type
       );
-      ongoingCampaign.forEach(app => {
-        app.Beneficiaries.forEach(beneficiary => {
-          approvedBeneficiary.push(beneficiary.Beneficiary.UserId);
-        });
-      });
-      replicaCampaign.forEach(app => {
-        app.Beneficiaries.forEach(beneficiary => {
-          replicaBeneficiary.push(beneficiary.Beneficiary.UserId);
-        });
+      const onboard = [];
+      replicaCampaign.Beneficiaries.forEach(async (beneficiary, i) => {
+        setTimeout(async () => {
+          const joined = await CampaignService.addBeneficiary(
+            campaign_id,
+            beneficiary.id,
+            source
+          );
+          onboard.push(joined);
+        }, 5000 * i);
       });
 
-      replicaBeneficiary.forEach((UserId, i) => {
-        if (!approvedBeneficiary.includes(UserId)) {
-          noDuplicate.push(UserId);
-          setTimeout(async () => {
-            await db.Beneficiary.create({
-              CampaignId: campaign_id,
-              UserId,
-              source: 'Web app'
-            });
-            QueueService.createWallet(UserId, 'user', campaign_id);
-          }, delay * i);
-        }
-      });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaigns with onboarded with  ${noDuplicate.length}${
-          noDuplicate.length > 1 ? ' beneficiaries' : 'beneficiary'
+        `Campaigns with onboarded with  ${
+          replicaCampaign.Beneficiaries.length
+        }${
+          replicaCampaign.Beneficiaries.length > 1
+            ? ' beneficiaries'
+            : 'beneficiary'
         }`,
-        noDuplicate
+        onboard
       );
       return Response.send(res);
     } catch (error) {
