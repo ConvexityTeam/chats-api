@@ -669,16 +669,15 @@ class AuthController {
           }
         }
       });
-      if (
-        (user && user.RoleId !== AclRoles.NgoAdmin) ||
-        user.RoleId !== AclRoles.SuperAdmin
-      ) {
+
+      if (user && user.RoleId != AclRoles.NgoAdmin) {
         Response.setError(
           HttpStatusCode.STATUS_FORBIDDEN,
           'Access Denied, Unauthorised Access'
         );
         return Response.send(res);
       }
+
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -686,7 +685,7 @@ class AuthController {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.';
+          : 'Login failed. Please try again later.' + error;
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -770,41 +769,41 @@ class AuthController {
     }
   }
 
-  static async signInField(req, res) {
-    try {
-      const user = await db.User.findOne({
-        where: {
-          email: req.body.email
-        },
-        include: {
-          model: db.OrganisationMembers,
-          as: 'AssociatedOrganisations',
-          include: {
-            model: db.Organisation,
-            as: 'Organisation'
-          }
-        }
-      });
-      if (user && user.RoleId !== AclRoles.FieldAgent) {
-        Response.setError(
-          HttpStatusCode.STATUS_FORBIDDEN,
-          'Access Denied, Unauthorised Access'
-        );
-        return Response.send(res);
-      }
-      const data = await AuthService.login(user, req.body.password);
+  // static async signInField(req, res) {
+  //   try {
+  //     const user = await db.User.findOne({
+  //       where: {
+  //         email: req.body.email
+  //       },
+  //       include: {
+  //         model: db.OrganisationMembers,
+  //         as: 'AssociatedOrganisations',
+  //         include: {
+  //           model: db.Organisation,
+  //           as: 'Organisation'
+  //         }
+  //       }
+  //     });
+  //     if (user && user.RoleId !== AclRoles.FieldAgent) {
+  //       Response.setError(
+  //         HttpStatusCode.STATUS_FORBIDDEN,
+  //         'Access Denied, Unauthorised Access'
+  //       );
+  //       return Response.send(res);
+  //     }
+  //     const data = await AuthService.login(user, req.body.password);
 
-      Response.setSuccess(200, 'Login Successful.', data);
-      return Response.send(res);
-    } catch (error) {
-      const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
-      Response.setError(401, message);
-      return Response.send(res);
-    }
-  }
+  //     Response.setSuccess(200, 'Login Successful.', data);
+  //     return Response.send(res);
+  //   } catch (error) {
+  //     const message =
+  //       error.status == 401
+  //         ? error.message
+  //         : 'Login failed. Please try again later.';
+  //     Response.setError(401, message);
+  //     return Response.send(res);
+  //   }
+  // }
   static async signInBeneficiary(req, res) {
     try {
       const user = await db.User.findOne({
