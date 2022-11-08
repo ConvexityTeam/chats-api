@@ -177,13 +177,14 @@ class UserService {
         const NG = 'nin_wo_face';
         const KE = 'ke/national_id';
         const {data} = await Axios.post(
-          `https://api.myidentitypay.com/api/v1/biometrics/merchant/data/verification/${
+          `https://api.myidentitypay.com/api/v2/biometrics/merchant/data/verification/${
             country === 'Nigeria' ? NG : KE
           }`,
           number,
           {
             headers: {
-              'x-api-key': ` ${process.env.IDENTITY_API_KEY}`
+              'x-api-key': ` ${process.env.IDENTITY_API_KEY}`,
+              'app-id': process.env.IDENTITY_APP_ID
             }
           }
         );
