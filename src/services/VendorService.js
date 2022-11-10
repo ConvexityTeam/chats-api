@@ -48,6 +48,14 @@ class VendorService {
     });
   }
 
+  static async getAllVendorsAdmin() {
+    return User.findAll({
+      where: {
+        RoleId: 6,
+      },
+    });
+  }
+
   static async addUser(newUser) {
     return User.create(newUser);
   }
@@ -502,6 +510,26 @@ class VendorService {
           attributes: userConst.publicAttr,
         },
       ],
+    });
+  }
+
+  static async vendorsTransactionsAdmin(VendorId) {
+    return Transaction.findAll({
+      where: {
+        // transaction_origin: 'wallet',
+        transaction_type: 'withdrawal',
+      },
+      attributes: ['reference','amount', 'createdAt', 'updatedAt'],
+      include: [
+        {
+          model: User,
+          as: 'Vendor',
+          attributes: ['first_name', 'last_name', ],
+          where: {
+            vendor_id: VendorId,
+          },
+        }
+      ]
     });
   }
 

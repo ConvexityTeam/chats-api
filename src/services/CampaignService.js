@@ -196,6 +196,21 @@ class CampaignService {
     });
   }
 
+  static async getVendorCampaignsAdmin(VendorId) {
+    return CampaignVendor.findAll({
+      include: [
+        {
+          model: User,
+          as: 'Vendor',
+          attributes: ['first_name', 'last_name', ],
+          where: {
+            vendor_id: VendorId,
+          },
+        }
+      ]
+    });
+  }
+
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
       order: [['updatedAt', 'ASC']],
@@ -264,6 +279,21 @@ class CampaignService {
       ]
     });
   }
+
+  static beneficiaryCampaingsAdmin(UserId) {
+    return Beneficiary.findAll({
+      where: {
+        UserId,
+      },
+      include: [
+        {
+          model: Campaign,
+          as: 'Campaign',
+          include: ['Organisation'],
+        },
+      ],
+    });
+  }
   static getPublicCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
@@ -312,6 +342,29 @@ class CampaignService {
       //   {model: User, as: 'Beneficiaries'},
       // ],
       // }
+    });
+  }
+
+  static getPrivateCampaignsAdmin(id) {
+
+    return Organisation.findOne({
+      where: {
+        id
+      },
+      order: [['updatedAt', 'ASC']],
+      include: {
+        model: Campaign,
+        where: {
+          is_public: false,
+        },
+        as: 'associatedCampaigns',
+        
+        include: [
+        {model: Task, as: 'Jobs'},
+        {model: User, as: 'Beneficiaries'},
+      ],
+      }
+
     });
   }
   static getCash4W(OrganisationId) {

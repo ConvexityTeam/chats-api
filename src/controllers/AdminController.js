@@ -1,9 +1,17 @@
 const db = require('../models');
-const {util, Response} = require('../libs');
-const {HttpStatusCode} = require('../utils');
+const { util, Response } = require('../libs');
+const { HttpStatusCode } = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
-const {UserService, OrganisationService} = require('../services');
+const {
+  UserService,
+  OrganisationService,
+  VendorService,
+  BeneficiaryService,
+  CampaignService,
+  TransactionService
+} = require('../services');
+const { SanitizeObject } = require('../utils')
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
 class AdminController {
@@ -19,9 +27,9 @@ class AdminController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      const userExist = await db.User.findOne({where: {id: data.userId}});
+      const userExist = await db.User.findOne({ where: { id: data.userId } });
       if (userExist) {
-        await userExist.update({status: data.status}).then(response => {
+        await userExist.update({ status: data.status }).then(response => {
           util.setError(200, 'User Updated');
           return util.send(res);
         });
@@ -45,10 +53,10 @@ class AdminController {
       return util.send(res);
     } else {
       const campaignExist = await db.Campaign.findOne({
-        where: {id: data.campaignId},
+        where: { id: data.campaignId },
       });
       if (campaignExist) {
-        await campaignExist.update({status: data.status}).then(response => {
+        await campaignExist.update({ status: data.status }).then(response => {
           util.setError(200, 'Campaign Status Updated');
           return util.send(res);
         });
@@ -61,7 +69,7 @@ class AdminController {
 
   static async verifyAccount(req, res) {
     try {
-      const {userprofile_id} = req.params;
+      const { userprofile_id } = req.params;
       const data = req.body;
       data.country = 'Nigeria';
       data.currency = 'NGN';
@@ -105,7 +113,7 @@ class AdminController {
           status: 'activated',
           is_nin_verified: true,
         },
-        {where: {id: organisation.id}},
+        { where: { id: organisation.id } },
       );
 
       Response.setSuccess(
@@ -122,6 +130,235 @@ class AdminController {
       return Response.send(res);
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+  static async getAllNGO(req, res) {
+    try {
+      const allNGOs = await OrganisationService.getAllOrganisations();
+      if (allNGOs.length > 0) {
+        Response.setSuccess(200, 'NGOs retrieved', allNGOs);
+      } else {
+        Response.setSuccess(200, 'No NGO found');
+      }
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+  static async getNGODisbursedAndBeneficiaryTotal(req, res) {
+
+    const { organisation_id } = req.params;
+
+    try {
+      let total = await TransactionService.getTotalTransactionAmountAdmin(organisation_id);
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
+      const beneficiariesCount = Object.keys(beneficiaries).length
+
+      let spend_for_campaign = total.map(a => a.dataValues.amount);
+      let disbursedSum = 0;
+      for (let i = 0; i < spend_for_campaign.length; i++) {
+        disbursedSum += Math.floor(spend_for_campaign[i]);
+      }
+
+      Response.setSuccess(200, 'Disbursed and Beneficiaries total retrieved', {
+        disbursedSum,
+        beneficiariesCount
+      });
+
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+
+  static async getAllVendors(req, res) {
+    try {
+      const allVendors = await VendorService.getAllVendorsAdmin();
+      Response.setSuccess(200, 'Vendors retrieved', allVendors);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+
+  static async getVendorCampaignAndAmountTotal(req, res) {
+    const { vendor_id } = req.params;
+    try {
+      const transactions = await VendorService.vendorsTransactionsAdmin(vendor_id);
+      const campaigns = await CampaignService.getVendorCampaignsAdmin(vendor_id);
+      const campaignsCount = Object.keys(campaigns).length
+
+
+      let spend_for_campaign = transactions.map(a => a.dataValues.amount);
+      let amount_sold = 0;
+      for (let i = 0; i < spend_for_campaign.length; i++) {
+        amount_sold += Math.floor(spend_for_campaign[i]);
+      }
+
+      Response.setSuccess(200, 'Campaign and amount sold total retrieved', {
+        amount_sold,
+        campaignsCount
+      });
+
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+
+  static async getAllBeneficiaries(req, res) {
+    try {
+      const allBeneficiaries = await BeneficiaryService.getBeneficiariesAdmin();
+      Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+  static async getBeneficiaryAmountAndCampaignsTotal(req, res) {
+
+    const { beneficiary_id } = req.params;
+
+    try {
+      let total = await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(beneficiary_id);
+      const campaigns = await CampaignService.beneficiaryCampaingsAdmin(beneficiary_id)
+      const campaignCount = Object.keys(campaigns).length
+
+      let spend_for_campaign = total.map(a => a.dataValues.amount);
+      let spentSum = 0;
+      for (let i = 0; i < spend_for_campaign.length; i++) {
+        spentSum += Math.floor(spend_for_campaign[i]);
+      }
+
+      Response.setSuccess(200, 'Spent and campaign total retrieved', {
+        spentSum,
+        campaignCount
+      });
+
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+  static async getAllCampaigns(req, res) {
+    try {
+      const query = SanitizeObject(req.query, ['type']);
+      const allCampaign = await CampaignService.getAllCampaigns({
+        ...query,
+        status: 'active'
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign retrieved',
+        allCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async getAllDonors(req, res) {
+    try {
+      const allDonors = await OrganisationService.getAllDonorsAdmin();
+      if (allDonors.length > 0) {
+        Response.setSuccess(200, 'Donors retrieved', allDonors);
+      } else {
+        Response.setSuccess(200, 'No NGO found');
+      }
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
+  static async getDonorCampaignCount(req, res) {
+
+    try {
+      const userId = await db.User.findOne({
+        where: {
+          id: req.params.donor_id
+        }
+      })
+
+      const donor = await db.Organisation.findOne({
+        where: {
+          email: userId.email
+        }
+      });
+
+      if (!donor) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          "User not a donor"
+        );
+        return Response.send(res);
+      }
+
+      let total = await TransactionService.getTotalTransactionAmountAdmin(donor.id);
+      const campaigns = await CampaignService.getPrivateCampaignsAdmin(donor.id)
+      // const campaignsCount = Object.keys(campaigns).length
+
+      let spend_for_campaign = total.map(a => a.dataValues.amount);
+      let disbursedSum = 0;
+      for (let i = 0; i < spend_for_campaign.length; i++) {
+        disbursedSum += Math.floor(spend_for_campaign[i]);
+      }
+
+
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', {
+        disbursedSum,
+        campaigns
+      });
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+
+  }
+
+
 }
+
+
+
+
+
+
+
 
 module.exports = AdminController;

@@ -362,6 +362,14 @@ class BeneficiariesService {
     });
   }
 
+  static async getBeneficiariesAdmin() {
+    return User.findAll({
+      where: {
+        RoleId: 7,
+      },
+    });
+  }
+
   static async getBeneficiaries(OrganisationId) {
     return User.findAll({
       where: {

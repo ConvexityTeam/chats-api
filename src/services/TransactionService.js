@@ -85,6 +85,25 @@ class TransactionService {
     });
   }
 
+  static async getTotalTransactionAmountAdmin(OrganisationId) {
+    return Transaction.findAll({
+      where: {
+        OrganisationId,
+        transaction_type: 'transfer',
+      },
+    });
+  }
+
+  static async getBeneficiaryTotalTransactionAmountAdmin(BeneficiaryId) {
+    return Transaction.findAll({
+      where: {
+        BeneficiaryId,
+        transaction_type: 'spent',
+      },
+    });
+  }
+
+
   static async getAllTransactions() {
     try {
       return await Transaction.findAll();
