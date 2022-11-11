@@ -135,10 +135,7 @@ class UsersController {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
         phone: ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-        nin: 'size:16',
-        ip: [
-          'regex:/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/'
-        ]
+        nin: 'size:16'
       };
       Logger.info(`Request Body: ${JSON.stringify(data)}`);
       const validation = new Validator(data, rules);
