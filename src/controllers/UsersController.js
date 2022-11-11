@@ -140,6 +140,7 @@ class UsersController {
       Logger.info(`Request Body: ${JSON.stringify(data)}`);
       const validation = new Validator(data, rules);
       if (validation.fails()) {
+        Logger.error(`Validation Error: ${JSON.stringify(validation.errors)}`);
         Response.setError(422, validation.errors);
         return Response.send(res);
       }
