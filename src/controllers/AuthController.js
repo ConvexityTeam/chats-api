@@ -10,7 +10,7 @@ const {Message} = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const {Response} = require('../libs');
+const {Response, Logger} = require('../libs');
 const {Beneficiary, Invites} = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
@@ -205,6 +205,7 @@ class AuthController {
 
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
+        Logger.error(`Validation Error: ${JSON.stringify(validation.errors)}`);
         Response.setError(400, validation.errors);
         return Response.send(res);
       } else {
@@ -215,6 +216,7 @@ class AuthController {
           //   return Response.send(res);
           // }
         } else {
+          Logger.error('Profile Pic Required');
           Response.setError(400, 'Profile Pic Required');
           return Response.send(res);
         }
@@ -227,6 +229,7 @@ class AuthController {
         });
 
         if (!campaignExist) {
+          Logger.error('Invalid Campaign');
           Response.setError(400, 'Invalid Campaign');
           return Response.send(res);
         }
@@ -884,7 +887,7 @@ class AuthController {
     try {
       const user = await db.User.findOne({
         where: {
-          email: req.body.email,
+          email: req.body.email
         },
         include: {
           model: db.OrganisationMembers,
