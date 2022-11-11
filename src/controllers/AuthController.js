@@ -195,7 +195,7 @@ class AuthController {
         gender: 'required|in:male,female',
         address: 'string',
         location: 'string',
-        nin: 'required|digits_between:10,11',
+        nin: 'required|size:16',
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
