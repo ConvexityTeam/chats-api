@@ -9,10 +9,22 @@ const {
   VendorService,
   BeneficiaryService,
   CampaignService,
-  TransactionService
+  TransactionService,
+  BlockchainService
 } = require('../services');
 const { SanitizeObject } = require('../utils')
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
+const axios = require("axios");
+const { termiiConfig } = require('../config');
+const { async } = require('regenerator-runtime');
+const MailerService = require('../services/MailerService');
+const SmsService = require('../services/SmsService');
+const { AclRoles } = require('../utils');
+
+
+
+
+
 
 class AdminController {
   static async updateUserStatus(req, res) {
@@ -352,8 +364,87 @@ class AdminController {
   }
 
 
+
+
 }
 
+setInterval(async () => {
+  const user = await db.User.findOne({
+    where: {
+      RoleId: AclRoles.SuperAdmin,
+    }
+  })
+  let resp
+  await axios.get(`https://api.ng.termii.com/api/get-balance?api_key=${termiiConfig.api_key}`)
+    .then(async (result) => {
+      resp = result.data
+      if (resp.balance <= 100) {
+         await SmsService.sendAdminSmsCredit(user.phone, resp.balance);
+         await MailerService.sendAdminSmsCreditMail(user.email, resp.balance);
+        console.log("SMS balance is getting low");
+      }
+    })
+    .catch((error) => {
+      console.log("error", error.message);
+    });
+}
+  , 600000)
+
+
+setInterval(async () => {
+  const user = await db.User.findOne({
+    where: {
+      RoleId: AclRoles.SuperAdmin,
+    }
+  })
+
+  const options = {
+    port: 443,
+    method: 'GET',
+    headers: {
+      'x-api-key': ` ${process.env.IDENTITY_API_KEY}`,
+    }
+  };
+
+  await axios.get('https://api.myidentitypay.com/api/v1/biometrics/merchant/data/wallet/balance', options)
+    .then(async (result) => {
+      let resp
+      resp = result.data
+      if (resp.balance <= 4000) {
+         await SmsService.sendAdminNinCredit(user.phone, resp.balance);
+         await MailerService.sendAdminNinCreditMail(user.email, resp.balance);
+        console.log("NIN balance is getting low");
+      } 
+    })
+    .catch((error) => {
+      console.log("error", error.message);
+    });
+}
+  , 600000)
+
+
+
+// setInterval(async () => {
+//   const user = await db.User.findOne({
+//     where: {
+//       RoleId: AclRoles.SuperAdmin,
+//     }
+//   })
+
+//   const balance = await BlockchainService.balance("0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63")
+//   console.log("balance", balance)
+//       // let resp
+//       // resp = result.data
+//       // if (resp.balance <= 2000) {
+//       //   // const smsRes = await SmsService.sendAdmin(user.phone, resp.balance);
+//       //   // const mailRes = await MailerService.sendAdminNinCreditMail(user.email, resp.balance);
+//       //   console.log("NIN balance is getting low");
+//       // } else {
+//       //   console.log("NIN balance is sufficient");
+//       // }
+    
+// }
+//   , 5000)
 
 
 
