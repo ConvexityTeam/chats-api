@@ -239,7 +239,7 @@ RabbitMq['default']
 
         let transfer;
         Logger.info(
-          'Sending Transfer Params from Consumer to Blockchain Service'
+          'Sending Transfer Parameter from Consumer to Blockchain Service'
         );
         if (!has_run_once) {
           transfer = await BlockchainService.transferTo(
