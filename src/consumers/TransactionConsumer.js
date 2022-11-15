@@ -271,6 +271,10 @@ RabbitMq['default']
             is_funded: true,
             amount_disbursed: realBudget
           });
+        } else {
+          await update_campaign(campaign.id, {
+            is_funded: true
+          });
         }
 
         await update_transaction(
@@ -404,11 +408,11 @@ RabbitMq['default']
             istoken = false;
           }
         }
-        await update_campaign(campaign.id, {
-          status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
-          is_funded: true,
-          amount_disbursed: beneficiaries.length > 0 ? parsedAmount : realBudget
-        });
+        // await update_campaign(campaign.id, {
+        //   status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+        //   is_funded: true,
+        //   amount_disbursed: beneficiaries.length > 0 ? parsedAmount : realBudget
+        // });
         benefitIndex = null;
         transfer_once = false;
         msg.ack();
