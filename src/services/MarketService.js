@@ -1,51 +1,49 @@
+const {AclRoles} = require('../utils');
 const {
-    AclRoles
-  } = require('../utils');
-  const {
-    Market,
-    Product,
-    OrderProduct,
-    Beneficiary,
-    Organisation,
-    Campaign,
-    Order,
-    User
-  } = require('../models');
-  const {
-    Op,
-    Sequelize
-  } = require('sequelize');
-  const {
-    userConst
-  } = require('../constants');
-  
-  class MarketService {
+  Market,
+  Product,
+  OrderProduct,
+  Beneficiary,
+  Organisation,
+  Campaign,
+  Order,
+  User,
+} = require('../models');
+const {Op, Sequelize} = require('sequelize');
+const {userConst} = require('../constants');
 
-    static findPurchasedProductByGender(gender){
-        return Organisation.findAll({
-            include: [{
-                model: User,
-                as: 'Vendors',
-                
-                include: [{
-                  model: Market,
-                  as: 'Store',
+class MarketService {
+  static findPurchasedProductByGender(gender) {
+    return Organisation.findAll({
+      include: [
+        {
+          model: User,
+          as: 'Vendors',
 
-                  include:[{
-                    model: Product,
-                    as: 'Products',
+          include: [
+            {
+              model: Market,
+              as: 'Store',
 
-                    include: [{
+              include: [
+                {
+                  model: Product,
+                  as: 'Products',
+
+                  include: [
+                    {
                       model: OrderProduct,
-                      as: 'Product'
-                    }]
-                  }]
-                }]
-                
-              }]
-        });
-    }
-    
+                      as: 'Product',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
   }
-  
-  module.exports = MarketService;
+}
+
+module.exports = MarketService;

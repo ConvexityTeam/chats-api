@@ -1,6 +1,6 @@
-require("dotenv").config();
-const AWS = require("aws-sdk");
-const fileSystem = require("fs");
+require('dotenv').config();
+const AWS = require('aws-sdk');
+const fileSystem = require('fs');
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -12,12 +12,13 @@ async function uploadFile(fileName, fileKey, bucket) {
     const params = {
       Bucket: bucket,
       Key: fileKey,
-      ACL: "public-read",
+      ACL: 'public-read',
       Body: fileSystem.createReadStream(fileName.path),
       ContentType: fileName.type,
     };
     await s3.upload(params, function (s3Err, data) {
       if (s3Err) {
+        console.log(s3Err, 'err');
         reject(s3Err);
       } else {
         console.log(`File uploaded successfully at ${data.Location}`);

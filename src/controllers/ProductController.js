@@ -1,23 +1,36 @@
-const { Response } = require("../libs");
-const { ProductService } = require('../services');
-const { HttpStatusCode, SanitizeObject } = require('../utils');
-
+const {Response} = require('../libs');
+const {ProductService, UserService} = require('../services');
+const {HttpStatusCode, SanitizeObject} = require('../utils');
+const db = require('../models');
 class ProductController {
-  static async addCampaignProduct(req, res) {
+  static async getCampaignProduct(req, res) {
     try {
-      const {body, campaign} = req;
-      const products = await  Promise.all(body.map(
-        _body => {
-          const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
-          return ProductService.addProduct(data, _body.vendors, campaign.id);
-        }
-      ));
-       
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Product added to stores', products);
-      Response.send(res)
+      const campaignId = req.params.campaign_id;
+      const productId = req.params.productId;
+      const products = await ProductService.findCampaignProduct(
+        campaignId,
+        productId,
+      );
+
+      const campaign = await db.Campaign.findOne({where: {id: campaignId}});
+      products.dataValues.campaign_status = campaign.status;
+
+      products.ProductVendors.forEach(vendor => {
+        vendor.dataValues.VendorName =
+          vendor.first_name + ' ' + vendor.last_name;
+      });
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign Product.',
+        products,
+      );
+      return Response.send(res);
     } catch (error) {
-      console.log(error)
-      Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, `Internal server error. Contact support.`);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Unexpected error. Please retry.' + error,
+      );
       return Response.send(res);
     }
   }

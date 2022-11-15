@@ -2,6 +2,7 @@
 const {
   Model
 } = require("sequelize");
+const { userConst } = require("../constants");
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**
@@ -48,6 +49,13 @@ module.exports = (sequelize, DataTypes) => {
       Campaign.hasMany(models.Product,{
         as: 'CampaignProducts'
       })
+        
+      Campaign.hasMany(models.User, {
+        as: 'CampaignVendors',
+        foreignKey: 'vendor_id'
+      })
+      
+      Campaign.hasMany(models.VoucherToken,{foreignKey: 'beneficiaryId', as: "CampaignTokens"})
     }
   }
 
@@ -57,8 +65,9 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.ENUM("campaign", "cash-for-work"),
     spending: DataTypes.STRING,
     description: DataTypes.TEXT,
-    status: DataTypes.ENUM('pending', 'active', 'paused', 'completed'),
+    status: DataTypes.ENUM('pending', 'ongoing', 'active', 'paused', 'completed'),
     is_funded: DataTypes.BOOLEAN,
+    is_public: DataTypes.BOOLEAN,
     funded_with: DataTypes.STRING,
     budget: DataTypes.FLOAT,
     amount_disbursed: DataTypes.FLOAT,

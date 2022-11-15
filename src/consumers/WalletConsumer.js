@@ -1,46 +1,52 @@
-const {
-  BlockchainService,
-  WalletService,
-  BantuService
-} = require('../services');
-const {
-  RabbitMq
-} = require('../libs')
-const {
-  CREATE_WALLET
-} = require('../constants').queuesConst;
+const {BlockchainService, WalletService} = require('../services');
+const {RabbitMq, Logger} = require('../libs');
+const {CREATE_WALLET} = require('../constants').queuesConst;
 
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
   durable: true,
-  prefetch: 1,
+  prefetch: 1
 });
 
 RabbitMq['default']
   .completeConfiguration()
-  .then(function () {
-    createWalletQueue.activateConsumer(async msg => {
+  .then(() => {
+    createWalletQueue
+      .activateConsumer(async msg => {
         const content = msg.getContent();
-        Promise.all([
-          BlockchainService.createAccountWallet(),
-          BantuService.createPair()
-        ]).then(([token, bantu]) => {
-          WalletService.updateOrCreate(content, {
-            ...token,
-            ...bantu
+        const token = await BlockchainService.addUser(
+          `${
+            !content.CampaignId && content.wallet_type == 'user'
+              ? 'user_' + content.ownerId
+              : content.CampaignId && content.wallet_type == 'user'
+              ? `user_${content.ownerId}campaign_${content.CampaignId}`
+              : !content.CampaignId && content.wallet_type == 'organisation'
+              ? 'organisation_' + content.ownerId
+              : content.CampaignId &&
+                content.wallet_type == 'organisation' &&
+                'campaign_' + content.CampaignId
+          }`
+        );
+        if (token) {
+          await WalletService.updateOrCreate(content, {
+            ...token
           });
+          Logger.info('Account Wallet Created');
           msg.ack();
-        }).catch(error => {
-          console.log(error.message);
+        } else {
+          Logger.error(
+            `Error Creating Account Wallet: ${JSON.stringify(token)}`
+          );
+          ///await createWalletQueue.delete();
           msg.nack();
-        });
-      })
-      .then(_ => {
-        console.log(`Running Consumer For Create Wallet.`)
+        }
       })
       .catch(error => {
-        console.log(`Error Starting Create Wallet Consumer:`, error);
+        Logger.error(`Consumer Error: ${error.message}`);
       })
+      .then(() => {
+        Logger.info(`Running Process For Wallet Creation`);
+      });
   })
   .catch(error => {
-    console.log(`RabbitMq Error:`, error);
+    Logger.error(`RabbitMq Error: ${error}`);
   });

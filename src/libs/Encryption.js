@@ -1,7 +1,7 @@
-require("dotenv").config();
-const JSEncrypt = require("node-jsencrypt");
-const { tokenConfig } = require("../config");
-const { createHmac } = require('crypto');
+require('dotenv').config();
+const JSEncrypt = require('node-jsencrypt');
+const {tokenConfig} = require('../config');
+const {createHmac} = require('crypto');
 
 class Encryption {
   constructor(publicKey, privateKey) {
@@ -24,11 +24,10 @@ class Encryption {
 
   encryptTokenPayload(payload) {
     const key = tokenConfig.secret;
-
-    if(!Array.isArray(payload)) {
+    if (!Array.isArray(payload)) {
       payload = [payload];
     }
-    
+
     const message = payload.map(data => data.toString()).join('');
     return createHmac('sha256', key).update(message).digest('hex');
   }
@@ -36,5 +35,5 @@ class Encryption {
 
 module.exports = new Encryption(
   process.env.ENCRYPTION_PUBLIC_KEY,
-  process.env.ENCRYPTION_PRIVATE_KEY
+  process.env.ENCRYPTION_PRIVATE_KEY,
 );

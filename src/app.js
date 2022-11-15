@@ -3,11 +3,13 @@ const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
+const {Logger} = require('./libs')
 
 
 const { Response } = require("./libs");
 const { HttpStatusCode } = require("./utils");
 //Routers link
+const adminRoute = require("./routers/admin");
 const usersRoute = require("./routers/users");
 const transactionRouter = require("./routers/transaction");
 const authRouter = require("./routers/auth");
@@ -24,8 +26,9 @@ const webhookRouter = require('./routers/webhooks');
 const taskRouter = require('./routers/task');
 const marketRouter = require('./routers/market');
 const utilRouter = require('./routers/utils');
-
 const orderRouter = require('./routers/order');
+const appRouter = require('./routers/app');
+const productRouter = require('./routers/product');
 
 
 const app = express();
@@ -38,7 +41,7 @@ app.use(express.urlencoded({extended: true}));
 // const adminRouter = require("./routers/admin");
 
 // Routing endpoint
-
+app.use("/v1/admin", adminRoute);
 app.use("/v1/market", marketRouter);
 app.use("/v1/users", usersRoute);
 app.use("/v1/transactions", transactionRouter);
@@ -56,8 +59,9 @@ app.use("/v1/organisations", organisationRouter);
 app.use('/v1/webhooks', webhookRouter)
 app.use('/v1/tasks', taskRouter);
 app.use('/v1/orders', orderRouter);
-app.use('/v1/utils', utilRouter)
-
+app.use('/v1/utils', utilRouter);
+app.use('/v1/app', appRouter);
+app.use('/v1/products', productRouter);
 app.get("/", (req, res) => {
   try {
     Response.setSuccess(HttpStatusCode.STATUS_OK, "Welcome to CHATS App ");
@@ -70,10 +74,12 @@ app.get("/", (req, res) => {
 });
 app.all("*", (req, res) => {
   try {
+    Logger.info('trying to get an unknown route')
     Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, "Requested resource not found.");
     return Response.send(res);
   } catch (error) {
     const message = process.env.NODE_ENV === 'production' ? 'Internal Server Error.' : error.toString();
+    Logger.error(message)
     Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, message);
     return Response.send(res);
   }

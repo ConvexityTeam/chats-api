@@ -15,7 +15,7 @@ class Logger {
       // Message to be logged
       message: message,
       // Level of the message logging
-      level: 'info'
+      level: 'info',
     });
   }
 
@@ -41,31 +41,36 @@ class Logger {
         new winston.transports.Console({
           colorize: true,
           prettyPrint: true,
-          level: 'info'
+          level: 'info',
         }),
         new winston.transports.File({
           level: 'error',
           // Create the log directory if it does not exist
-          filename: `${path.join(process.cwd(), 'logs', 'error.log')}`
-        })
+          filename: `${path.join(process.cwd(), 'logs', 'error.log')}`,
+        }),
       ],
       format: winston.format.combine(
         winston.format.label({
-          label: `${this.context}`
+          label: `${this.context}`,
         }),
         winston.format.timestamp({
-          format: 'MMM-DD-YYYY HH:mm:ss'
+          format: 'MMM-DD-YYYY HH:mm:ss',
         }),
-        winston.format.printf(info => `${info.label}:${info.level.toUpperCase()} [${[info.timestamp]}] ${info.message}`),
-      )
-    }
+        winston.format.printf(
+          info =>
+            `${info.label}:${info.level.toUpperCase()} [${[info.timestamp]}] ${
+              info.message
+            }`,
+        ),
+      ),
+    };
     winston.addColors({
       error: 'red',
       warn: 'yellow',
       info: 'cyan',
-      debug: 'green'
-  });
+      debug: 'green',
+    });
   }
 }
 
-module.exports = new Logger('CHATSAPI')
+module.exports = new Logger('CHATSAPI');

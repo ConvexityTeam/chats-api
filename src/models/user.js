@@ -2,7 +2,9 @@
 const {
   Model
 } = require("sequelize");
-const { AclRoles } = require("../utils");
+const {
+  AclRoles
+} = require("../utils");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     capitalizeFirstLetter(str) {
@@ -87,12 +89,18 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.BankAccount, {
         as: "BankAccounts"
       });
-      User.hasMany(models.VerificationToken, { as: "VerificationTokens"});
-      User.hasMany(models.TaskAssignment, {as: "Assignments"});
+      User.hasMany(models.VerificationToken, {
+        as: "VerificationTokens"
+      });
+      User.hasMany(models.TaskAssignment, {
+        as: "Assignments"
+      });
       User.belongsTo(models.Role, {
         foreignKey: "RoleId",
         as: "Role"
       });
+      User.belongsToMany(models.Product, {foreignKey: 'vendorId', through: 'VendorProduct', as: 'ProductVendors' });
+      //Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
     }
   }
   User.init({
@@ -129,6 +137,7 @@ module.exports = (sequelize, DataTypes) => {
     pin: DataTypes.STRING,
     address: DataTypes.STRING,
     vendor_id: DataTypes.STRING,
+    device_imei: DataTypes.STRING,
     is_email_verified: DataTypes.BOOLEAN,
     is_phone_verified: DataTypes.BOOLEAN,
     is_bvn_verified: DataTypes.BOOLEAN,

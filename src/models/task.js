@@ -19,6 +19,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "CampaignId",
         as: "Campaign",
       });
+
+      
     }
   }
   Task.init(
@@ -28,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
       description: DataTypes.STRING,
       amount: DataTypes.INTEGER,
       // status: DataTypes.ENUM("fulfilled", "pending"),
-      // approval: DataTypes.STRING,
+      isCompleted: DataTypes.BOOLEAN,
       assignment_count: DataTypes.INTEGER,
       assigned: DataTypes.INTEGER,
       require_vendor_approval: DataTypes.INTEGER,

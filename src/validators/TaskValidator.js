@@ -1,6 +1,6 @@
 const {
   body,
-  param
+  param,
 } = require('express-validator');
 const BaseValidator = require('./BaseValidator');
 
@@ -37,6 +37,15 @@ class TaskValidator extends BaseValidator {
       param('taskProgressId').isNumeric().withMessage('task progress Id must be numeric')
       .notEmpty()
       .withMessage('task progress Id must not be empty.'),
+     
+    ]
+  }
+
+  static taskId(){
+    return [
+      param('task_id').isNumeric().withMessage('task Id must be numeric')
+      .notEmpty()
+      .withMessage('task Id must not be empty.'),
      
     ]
   }

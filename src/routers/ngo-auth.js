@@ -1,4 +1,4 @@
-const router = require("express").Router();
+const router = require('express').Router();
 
 const NgoAuthCtrl = require('../controllers/NgoAuthController');
 

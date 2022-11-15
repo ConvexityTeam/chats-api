@@ -11,8 +11,11 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Product.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Store' });
+      //Product.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Store' });
       Product.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' });
+      Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
+      Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductBeneficiaries', through: 'ProductBeneficiary'  })
+
       //Product.hasMany(models.OrderProduct, { foreignKey: 'ProductId', as: 'Product' });
     }
   };
@@ -20,8 +23,10 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.ENUM("product", "service"),
     tag: DataTypes.STRING,
     cost: DataTypes.FLOAT,
-    MarketId: DataTypes.INTEGER,
+    product_ref: DataTypes.STRING,
+    //MarketId: DataTypes.INTEGER,
     CampaignId: DataTypes.INTEGER,
+    
   }, {
     sequelize,
     modelName: 'Product',

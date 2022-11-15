@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   TaskAssignment.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true
+    },
     TaskId: DataTypes.INTEGER,
     UserId: DataTypes.INTEGER,
     uploaded_evidence: DataTypes.BOOLEAN,
@@ -40,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
     approved: DataTypes.BOOLEAN,
     approved_by: DataTypes.INTEGER,
     approved_at: DataTypes.DATE,
-    status: DataTypes.ENUM('pending', 'approved', 'completed')
+    status: DataTypes.ENUM('pending','in progress', 'rejected', 'disbursed', 'approved', 'completed'), //approved -> recieved approval from NGO admin | completed -> paid
   }, {
     sequelize,
     modelName: 'TaskAssignment',

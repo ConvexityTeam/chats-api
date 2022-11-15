@@ -3,15 +3,56 @@ const {
   body
 } = require('express-validator');
 const {
-  HttpStatusCode, formInputToDate
+  HttpStatusCode,
+  formInputToDate
 } = require('../utils');
-const {CampaignService, BeneficiaryService, UserService} = require('../services');
+const {
+  CampaignService,
+  BeneficiaryService,
+  UserService
+} = require('../services');
 const formidable = require("formidable");
 const Validator = require("validatorjs");
-const {Response} = require('../libs');
+const {
+  Response
+} = require('../libs');
 const BaseValidator = require('./BaseValidator');
 
 class BeneficiaryValidator extends BaseValidator {
+  static ApprovedBeneficiary = [
+    body('beneficiary_id')
+    .notEmpty()
+    .withMessage('Valid beneficiary is required.')
+    .bail()
+    .isInt()
+    .withMessage('Beneficiary ID must be a valid integer.'),
+    body('approved')
+    .custom((approved, { req }) => new Promise((resolve, reject) => {
+      if (typeof req.body.rejected == 'undefined' && typeof approved == 'undefined') {
+        reject('Either approval or rejection state is required.');
+        return;
+      }
+      resolve(true)
+    }))
+    .bail()
+    .if(body('approved').exists())
+    .isBoolean()
+    .withMessage('Approval state must be a boolean.'),
+    body('rejected')
+    .custom((rejected, { req }) => new Promise((resolve, reject) => {
+      if (typeof req.body.approved == 'undefined' && typeof rejected == 'undefined') {
+        reject('Either rejection or approval state is required.');
+        return;
+      }
+      resolve(true)
+    }))
+    .bail()
+    .if(body('rejected').exists())
+    .isBoolean()
+    .withMessage('Rejection state must be a boolean.'),
+    this.validate
+  ];
+
   static selfRegisterRules() {
     return [
       body('first_name')
@@ -47,23 +88,23 @@ class BeneficiaryValidator extends BaseValidator {
     ]
   }
 
-  static gender(){
+  static gender() {
     return [
       param('gender').isString().withMessage('gender must be string')
       .notEmpty()
       .withMessage('task progress Id must not be empty.'),
-     
+
     ]
   }
-  static ageGroup(){
+  static ageGroup() {
     return [
       param('ageGroup').isNumeric().withMessage('gender must be numeric')
       .notEmpty()
       .withMessage('task progress Id must not be empty.'),
-     
+
     ]
   }
-  
+
 
   static async validateSelfRegister(req, res, next) {
     const form = new formidable.IncomingForm({
@@ -101,8 +142,7 @@ class BeneficiaryValidator extends BaseValidator {
 
       if (!files.profile_pic) {
         Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed!', {
-            profile_pic: ["Profile image is required"]
-          ,
+          profile_pic: ["Profile image is required"],
         });
         return Response.send(res);
       }
@@ -110,15 +150,18 @@ class BeneficiaryValidator extends BaseValidator {
       if (!allowedFileTypes.includes(files.profile_pic.type.toLowerCase())) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed!', {
-              profile_pic: ["Invalid File type. Only jpg, png and jpeg files allowed for Profile picture"]
-            },
-          
+            profile_pic: ["Invalid File type. Only jpg, png and jpeg files allowed for Profile picture"]
+          },
+
         );
         return Response.send(res);
       }
 
       req.files = files;
-      req.body = {...req.body, ...fields}
+      req.body = {
+        ...req.body,
+        ...fields
+      }
       next();
     });
   }
@@ -128,19 +171,19 @@ class BeneficiaryValidator extends BaseValidator {
       const campaignId = req.params.campaign_id || req.body.campaign_id || campaign.id;
       const beneficiaryId = req.params.beneficiary_id || req.body.beneficiary_id || req.user.id;
 
-      if(!campaignId.trim()) {
+      if (!campaignId.trim()) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Valid campaign ID is missing.');
         return Response.send(res);
       }
 
       const campaign = req.campaign || await CampaignService.getCampaignById(campaignId);
 
-      if(!campaign) {
+      if (!campaign) {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign not found.');
         return Response.send(res);
       }
 
-      if(await CampaignService.campaignBeneficiaryExists(campaignId, beneficiaryId)) {
+      if (await CampaignService.campaignBeneficiaryExists(campaignId, beneficiaryId)) {
         req.campaign = campaign;
         req.beneficiary_id = beneficiaryId;
         next();
@@ -150,7 +193,7 @@ class BeneficiaryValidator extends BaseValidator {
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'User is not a campaign beneficiary.');
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Internal server error. Please try again or contact the administrator.');
       return Response.send(res);
     }
@@ -161,21 +204,21 @@ class BeneficiaryValidator extends BaseValidator {
       const campaignId = req.params.campaign_id || req.body.campaign_id || campaign.id || '';
       const beneficiaryId = req.params.beneficiary_id || req.body.beneficiary_id || req.user.id || '';
 
-      if(!campaignId.trim()) {
+      if (!campaignId.trim()) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Valid campaign ID is missing.');
         return Response.send(res);
       }
 
       const campaign = await CampaignService.getCampaignById(campaignId);
 
-      if(!campaign) {
+      if (!campaign) {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Campaign not found.');
         return Response.send(res);
       }
 
       const beneficiary = await CampaignService.campaignBeneficiaryExists(campaignId, beneficiaryId);
 
-      if(! beneficiary) {
+      if (!beneficiary) {
         req.campaign = campaign;
         req.beneficiary_id = beneficiaryId;
         return next();
@@ -184,7 +227,7 @@ class BeneficiaryValidator extends BaseValidator {
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'User is already a beneficiary.');
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Server Error: Please try again.');
       return Response.send(res);
     }
@@ -195,13 +238,13 @@ class BeneficiaryValidator extends BaseValidator {
       const organisationId = req.organisation.id || req.params.organisation_id || req.body.organisation_id || null;
       const id = req.params.beneficiary_id || req.body.beneficiary_id || req.params.id;
 
-      if(!id) {
+      if (!id) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Beneficiary ID is missing.');
         return Response.send(res);
       }
       const beneficiary = await UserService.findBeneficiary(id, organisationId);
-      
-      if(!beneficiary) {
+
+      if (!beneficiary) {
         Response.setError(HttpStatusCode.STATUS_RESOURCE_NOT_FOUND, 'Organisation beneficiary not found.');
         return Response.send(res);
       }
@@ -209,7 +252,7 @@ class BeneficiaryValidator extends BaseValidator {
       req.beneficiary = beneficiary;
       next();
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Request failed. Please try again.');
       return Response.send(res);
     }

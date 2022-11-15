@@ -41,7 +41,7 @@ class ComplaintValidator extends BaseValidator {
       req.complaint = complaint;
       next();
     } catch (error) {
-      console.log(error);
+      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Technical Error occured. Please try again.');
       return Response.send(res);
     }

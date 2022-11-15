@@ -1,5 +1,4 @@
-version: "3.9"
-
+version: "3.3"
 services:
   rabbitmq:
     image: "rabbitmq:3.8.14-alpine"
@@ -74,7 +73,7 @@ services:
 networks:
   gateway:
     driver: bridge
-    name: gateway
+    # name: gateway
   rabbitmq:
     internal: true
   # postgres:
