@@ -265,6 +265,7 @@ RabbitMq['default']
           msg.nack();
           return;
         }
+
         if (campaign.type === 'cash-for-work') {
           await update_campaign(campaign.id, {
             status: 'active',
