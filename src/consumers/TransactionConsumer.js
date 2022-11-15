@@ -272,11 +272,10 @@ RabbitMq['default']
             is_funded: true,
             amount_disbursed: realBudget
           });
-        } else {
+        } else
           await update_campaign(campaign.id, {
             is_funded: true
           });
-        }
 
         await update_transaction(
           {
