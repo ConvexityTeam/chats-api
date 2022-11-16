@@ -1,6 +1,8 @@
 const axios = require('axios');
+const dotenv = require('dotenv');
 const {Response} = require('../libs');
 const {HttpStatusCode} = require('../utils');
+dotenv.config();
 const Axios = axios.create();
 const IsRecaptchaVerified = async (req, res, next) => {
   try {
