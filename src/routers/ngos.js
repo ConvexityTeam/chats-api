@@ -1,19 +1,20 @@
 const {
   AuthController,
   NgoController,
-  OrganisationController,
+  OrganisationController
 } = require('../controllers');
 const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
   IsOrgMember,
+  IsRecaptchaVerified
 } = require('../middleware');
 const {
   NgoValidator,
   CommonValidator,
   VendorValidator,
-  ParamValidator,
+  ParamValidator
 } = require('../validators');
 const router = require('express').Router();
 
@@ -21,7 +22,11 @@ router.get('/', NgoController.getAllNGO);
 router.get('/:id', NgoController.getOneNGO);
 
 // auth/register
-router.post('/auth/onboard', AuthController.createNgoAccount);
+router.post(
+  '/auth/onboard',
+  IsRecaptchaVerified,
+  AuthController.createNgoAccount
+);
 
 // admin/create - email
 router
@@ -30,7 +35,7 @@ router
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    NgoController.members,
+    NgoController.members
   )
   .post(
     NgoAdminAuth,
@@ -39,7 +44,7 @@ router
     NgoValidator.validate,
     CommonValidator.checkEmailNotTaken,
     CommonValidator.checkPhoneNotTaken,
-    NgoController.createAdminMember,
+    NgoController.createAdminMember
   );
 
 // sub-admin/reset-password
@@ -53,12 +58,12 @@ router.post(
   VendorValidator.createVendorRules(),
   VendorValidator.validate,
   VendorValidator.VendorStoreExists,
-  OrganisationController.createVendor,
+  OrganisationController.createVendor
 );
 
 router.get(
   '/campaign/vendor/product',
-  NgoController.viewProductVendorOnCampaign,
+  NgoController.viewProductVendorOnCampaign
 );
 
 // vendors/deactivate'
@@ -68,14 +73,14 @@ router.post(
   FieldAgentAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
-  AuthController.createBeneficiary,
+  AuthController.createBeneficiary
 );
 router.post(
   '/:organisation_id/beneficiaries/special-case',
   FieldAgentAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
-  AuthController.sCaseCreateBeneficiary,
+  AuthController.sCaseCreateBeneficiary
 );
 
 module.exports = router;
