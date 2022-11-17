@@ -7,8 +7,7 @@ const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
-  IsOrgMember,
-  IsRecaptchaVerified
+  IsOrgMember
 } = require('../middleware');
 const {
   NgoValidator,
@@ -22,11 +21,7 @@ router.get('/', NgoController.getAllNGO);
 router.get('/:id', NgoController.getOneNGO);
 
 // auth/register
-router.post(
-  '/auth/onboard',
-  IsRecaptchaVerified,
-  AuthController.createNgoAccount
-);
+router.post('/auth/onboard', AuthController.createNgoAccount);
 
 // admin/create - email
 router
