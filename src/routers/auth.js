@@ -53,7 +53,7 @@ router.post('/login', AuthController.signIn);
 router.post('/donor-login', AuthController.donorSignIn);
 router.post('/field-login', AuthController.signInField);
 router.post('/beneficiary-login', AuthController.signInBeneficiary);
-router.post('/ngo-login', IsRecaptchaVerified, AuthController.signInNGO);
+router.post('/ngo-login', AuthController.signInNGO);
 router.get('/2fa/init', Auth, AuthController.setTwoFactorSecret);
 router.post('/2fa/enable', Auth, AuthController.enableTwoFactorAuth);
 router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
