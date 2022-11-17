@@ -9,10 +9,10 @@ const IsRecaptchaVerified = async (req, res, next) => {
     const {token} = req.body;
     const secrete_key = process.env.RECAPTCHA_SECRET_KEY;
 
-    const data = await Axios.post(
+    const {success} = await Axios.post(
       `https://www.google.com/recaptcha/api/siteverify?secret=${secrete_key}&response=${token}`
     );
-    if (!data) {
+    if (!success) {
       Response.setError(
         HttpStatusCode.STATUS_FORBIDDEN,
         'Error verifying recaptcha.'
