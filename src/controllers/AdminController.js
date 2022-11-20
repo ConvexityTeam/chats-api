@@ -306,7 +306,7 @@ class AdminController {
       if (allDonors.length > 0) {
         Response.setSuccess(200, 'Donors retrieved', allDonors);
       } else {
-        Response.setSuccess(200, 'No NGO found');
+        Response.setSuccess(200, 'No Donors found');
       }
       return Response.send(res);
     } catch (error) {
