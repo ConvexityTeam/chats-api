@@ -206,7 +206,7 @@ class AuthController {
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
         Logger.error(`Validation Error: ${JSON.stringify(validation.errors)}`);
-        Response.setError(400, validation.errors);
+        Response.setError(400, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       } else {
         if (files.profile_pic) {
