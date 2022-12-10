@@ -978,22 +978,20 @@ class CampaignController {
         type
       );
       const onboard = [];
-      replicaCampaign.Beneficiaries.forEach(async (beneficiary, i) => {
-        setTimeout(async () => {
-          const joined = await CampaignService.addBeneficiary(
+      await Promise.all(
+        replicaCampaign.Beneficiaries.map(async beneficiary => {
+          const res = await CampaignService.addBeneficiary(
             campaign_id,
             beneficiary.id,
             source
           );
-          onboard.push(joined);
-        }, 5000 * i);
-      });
+          onboard.push(res);
+        })
+      );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaigns with onboarded with  ${
-          replicaCampaign.Beneficiaries.length
-        }${
+        `Campaign onboarded with  ${replicaCampaign.Beneficiaries.length}${
           replicaCampaign.Beneficiaries.length > 1
             ? ' beneficiaries'
             : 'beneficiary'

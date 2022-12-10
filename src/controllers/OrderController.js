@@ -43,15 +43,21 @@ class OrderController {
     const id = req.body.beneficiaryId;
     const {reference} = req.params;
     try {
+      Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
       const data = await VendorService.getOrder({reference});
       const user = await UserService.findSingleUser({id});
-      Logger.info(`${req.body}, ref: ${reference}`);
+
       if (!user) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Invalid beneficiary'
         );
         Logger.error('Invalid beneficiary');
+        return Response.send(res);
+      }
+      if (!user.pin) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
+        Logger.error('Pin not set');
         return Response.send(res);
       }
       if (!compareHash(pin, user.pin)) {
@@ -146,6 +152,7 @@ class OrderController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
     } catch (error) {
+      Logger.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal server error. Please try again later.',

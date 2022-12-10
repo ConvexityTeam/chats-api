@@ -38,7 +38,11 @@ router.post(
   FileValidator.checkProfilePic(),
   AuthController.beneficiaryRegisterSelf
 );
-router.post('/ngo-register', AuthController.createNgoAccount);
+router.post(
+  '/ngo-register',
+
+  AuthController.createNgoAccount
+);
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
 router.post('/nin-verification', AuthController.verifyNin);
 router.post('/update-profile', Auth, AuthController.updateProfile);

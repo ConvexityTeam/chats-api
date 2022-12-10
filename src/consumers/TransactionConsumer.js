@@ -239,7 +239,7 @@ RabbitMq['default']
 
         let transfer;
         Logger.info(
-          'Sending Transfer Params from Consumer to Blockchain Service'
+          'Sending Transfer Parameter from Consumer to Blockchain Service'
         );
         if (!has_run_once) {
           transfer = await BlockchainService.transferTo(
@@ -265,13 +265,17 @@ RabbitMq['default']
           msg.nack();
           return;
         }
+
         if (campaign.type === 'cash-for-work') {
           await update_campaign(campaign.id, {
             status: 'active',
             is_funded: true,
             amount_disbursed: realBudget
           });
-        }
+        } else
+          await update_campaign(campaign.id, {
+            is_funded: true
+          });
 
         await update_transaction(
           {
@@ -404,11 +408,11 @@ RabbitMq['default']
             istoken = false;
           }
         }
-        await update_campaign(campaign.id, {
-          status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
-          is_funded: true,
-          amount_disbursed: beneficiaries.length > 0 ? parsedAmount : realBudget
-        });
+        // await update_campaign(campaign.id, {
+        //   status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+        //   is_funded: true,
+        //   amount_disbursed: beneficiaries.length > 0 ? parsedAmount : realBudget
+        // });
         benefitIndex = null;
         transfer_once = false;
         msg.ack();

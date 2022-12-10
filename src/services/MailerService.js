@@ -184,6 +184,60 @@ class MailerService {
       });
     });
   }
+
+  sendAdminSmsCreditMail(to, amount) {
+    const body = `
+    <div>
+      <p>Hello Admin,</p>
+      <p>This is to inform you that your SMS service balance is running low. Current balance is ${amount}. Please recharge your account.</p>
+      <p>CHATS - Convexity</p>
+    </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to: [to, "charles@withconvexity.com"],
+      subject: 'Recharge Your Wallet Balance',
+      html: body
+    };
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          console.log('sent');
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  sendAdminNinCreditMail(to, amount) {
+    const body = `
+    <div>
+      <p>Hello Admin,</p>
+      <p>This is to inform you that your NIN service balance is running low. Current balance is ${amount}. Please recharge your account</p>
+      <p>CHATS - Convexity</p>
+    </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to: [to, "charles@withconvexity.com"],
+      subject: 'Recharge Your Wallet Balance',
+      html: body
+    };
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          console.log('sent');
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
 }
 
 module.exports = new MailerService();
