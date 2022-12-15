@@ -186,11 +186,16 @@ RabbitMq['default']
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`
           );
+
           const mint = await BlockchainService.mintToken(
             organisation.address,
             amount
           );
-          if (!mint) {
+
+          const confirm = await BlockchainService.confirmTransaction(
+            mint.Minted
+          );
+          if (!confirm) {
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
@@ -350,7 +355,10 @@ RabbitMq['default']
               beneficiaryKeyPair.address,
               share
             );
-          if (!approve_to_spend) {
+          const confirm = await BlockchainService.confirmTransaction(
+            approve_to_spend.Approved
+          );
+          if (!confirm) {
             await update_transaction({status: 'failed'}, transaction.uuid);
             benefitIndex = index;
             msg.nack();
@@ -549,7 +557,9 @@ RabbitMq['default']
           vendor.privateKey,
           amount
         );
-
+        // const confirm = await BlockchainService.confirmTransaction(
+        //   transfer.TransferedFrom
+        // );
         if (!redeem) {
           msg.nack();
           await update_transaction({status: 'failed'}, transaction.uuid);

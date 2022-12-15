@@ -70,7 +70,6 @@ class BlockchainService {
   static async switchWebhook(data) {
     return Promise(async (resolve, reject) => {
       try {
-        console.log(data);
         const token = await SwitchToken.findByPk(1);
         if (!token || moment().isAfter(token.expires)) {
           await this.signInSwitchWallet();
@@ -125,7 +124,7 @@ class BlockchainService {
       try {
         Logger.info('Confirming transaction');
         const {data} = await Axios.get(
-          `https://api-testnet.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+          `https://${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
         );
         Logger.info('Transaction confirmed');
         resolve(data);
