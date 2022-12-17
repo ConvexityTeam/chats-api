@@ -195,8 +195,8 @@ RabbitMq['default']
           const confirm = await BlockchainService.confirmTransaction(
             mint.Minted
           );
-          Logger.info(`confirm: ${JSON.stringify(confirm)}`);
-          if (!confirm) {
+          Logger.info(JSON.stringify(mint));
+          if (typeof confirm === null) {
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
@@ -204,7 +204,7 @@ RabbitMq['default']
             msg.nack();
             return;
           }
-
+          Logger.info('Transaction confirmed');
           await update_transaction(
             {status: 'success', is_approved: true},
             transactionId
