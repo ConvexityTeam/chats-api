@@ -195,7 +195,7 @@ RabbitMq['default']
             mint.Minted
           );
           Logger.info(`Mint: ${confirm}`);
-          if (!confirm) {
+          if (confirm && !confirm.blockNumber) {
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
