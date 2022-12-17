@@ -128,7 +128,6 @@ class BlockchainService {
       }
     });
   }
-
   static async confirmTransaction(hash) {
     return new Promise(async (resolve, reject) => {
       try {
