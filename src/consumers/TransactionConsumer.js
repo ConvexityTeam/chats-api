@@ -196,7 +196,7 @@ RabbitMq['default']
             mint.Minted
           );
           Logger.info(JSON.stringify(mint));
-          if (typeof confirm === null) {
+          if (confirm === null) {
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
