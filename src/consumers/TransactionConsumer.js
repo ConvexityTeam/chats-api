@@ -186,19 +186,16 @@ RabbitMq['default']
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`
           );
-          let mint;
-          if (!minted) {
-            mint = await BlockchainService.mintToken(
-              organisation.address,
-              amount
-            );
-            if (mint) minted = true;
-          }
+
+          const mint = await BlockchainService.mintToken(
+            organisation.address,
+            amount
+          );
           const confirm = await BlockchainService.confirmTransaction(
             mint.Minted
           );
           Logger.info(JSON.stringify(confirm));
-          if (confirm === null) {
+          if (!confirm) {
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
@@ -206,7 +203,7 @@ RabbitMq['default']
             msg.nack();
             return;
           }
-          Logger.info('Transaction confirmed');
+
           await update_transaction(
             {status: 'success', is_approved: true},
             transactionId
