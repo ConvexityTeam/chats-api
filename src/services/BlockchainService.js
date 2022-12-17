@@ -121,6 +121,7 @@ class BlockchainService {
 
   static async confirmTransaction(hash) {
     return new Promise(async (resolve, reject) => {
+      Logger.info('base_url: ' + process.env.POLYGON_BASE_URL);
       try {
         Logger.info('Confirming transaction');
         const {data} = await Axios.get(
