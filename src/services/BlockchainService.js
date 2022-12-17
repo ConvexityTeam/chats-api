@@ -121,15 +121,13 @@ class BlockchainService {
 
   static async confirmTransaction(hash) {
     return new Promise(async (resolve, reject) => {
-      Logger.info('base_url: ' + process.env.POLYGON_BASE_URL);
       try {
         Logger.info('Confirming transaction');
-        const txReceipt = await provider.getTransactionReceipt(hash);
-
-        // const {data} = await Axios.get(
-        //   `https://${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-        // );
-        resolve(txReceipt);
+        //const txReceipt = await provider.getTransactionReceipt(hash);
+        const {data} = await Axios.get(
+          `https://api-testnet.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+        );
+        resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
         reject(error);

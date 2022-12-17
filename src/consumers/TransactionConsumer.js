@@ -191,12 +191,12 @@ RabbitMq['default']
             organisation.address,
             amount
           );
-          //Logger.info(`Mint: ${confirm}`);
+          Logger.info(`Mint: ${mint}`);
           const confirm = await BlockchainService.confirmTransaction(
             mint.Minted
           );
           Logger.info(`confirm: ${confirm}`);
-          if (confirm && !confirm.blockNumber) {
+          if (confirm) {
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
