@@ -194,27 +194,28 @@ RabbitMq['default']
           const confirm = await BlockchainService.confirmTransaction(
             mint.Minted
           );
-          if (!confirm) {
+
+          if (confirm && confirm.blockNumber) {
             await update_transaction(
-              {status: 'failed', is_approved: false},
+              {status: 'success', is_approved: true},
               transactionId
             );
-            return;
-          }
 
+            await wallet.update({
+              balance: Sequelize.literal(`balance + ${amount}`),
+              fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+            });
+            await DepositService.updateFiatDeposit(transactionReference, {
+              status: 'successful'
+            });
+            msg.ack();
+          }
           await update_transaction(
-            {status: 'success', is_approved: true},
+            {status: 'failed', is_approved: false},
             transactionId
           );
-
-          await wallet.update({
-            balance: Sequelize.literal(`balance + ${amount}`),
-            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-          });
-          await DepositService.updateFiatDeposit(transactionReference, {
-            status: 'successful'
-          });
-          msg.ack();
+          msg.nack();
+          return;
         }
       })
       .catch(error => {
