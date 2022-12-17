@@ -127,6 +127,7 @@ class BlockchainService {
         const {data} = await Axios.get(
           `https://api-testnet.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
         );
+        Logger.info('Transaction confirmed');
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
