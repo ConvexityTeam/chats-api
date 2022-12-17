@@ -182,15 +182,18 @@ RabbitMq['default']
           const wallet = await WalletService.findMainOrganisationWallet(
             OrganisationId
           );
-
+          let minted = false;
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`
           );
-
-          const mint = await BlockchainService.mintToken(
-            organisation.address,
-            amount
-          );
+          let mint;
+          if (!minted) {
+            mint = await BlockchainService.mintToken(
+              organisation.address,
+              amount
+            );
+            if (mint) minted = true;
+          }
           const confirm = await BlockchainService.confirmTransaction(
             mint.Minted
           );
