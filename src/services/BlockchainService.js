@@ -132,7 +132,7 @@ class BlockchainService {
         //   `https://${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
         // );
         Logger.info('Transaction confirmed');
-        resolve(data);
+        resolve(txReceipt);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
         reject(error);
