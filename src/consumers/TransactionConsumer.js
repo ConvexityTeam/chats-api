@@ -191,7 +191,7 @@ RabbitMq['default']
             organisation.address,
             amount
           );
-
+          Logger.info(`Hash: ${mint}`);
           const confirm = await BlockchainService.confirmTransaction(
             mint.Minted
           );
