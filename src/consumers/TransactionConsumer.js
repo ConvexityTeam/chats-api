@@ -195,27 +195,27 @@ RabbitMq['default']
             mint.Minted
           );
 
-          if (confirm && confirm.blockNumber) {
+          if (!confirm) {
             await update_transaction(
-              {status: 'success', is_approved: true},
+              {status: 'failed', is_approved: false},
               transactionId
             );
-
-            await wallet.update({
-              balance: Sequelize.literal(`balance + ${amount}`),
-              fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-            });
-            await DepositService.updateFiatDeposit(transactionReference, {
-              status: 'successful'
-            });
-            msg.ack();
+            return;
           }
+
           await update_transaction(
-            {status: 'failed', is_approved: false},
+            {status: 'success', is_approved: true},
             transactionId
           );
-          msg.nack();
-          return;
+
+          await wallet.update({
+            balance: Sequelize.literal(`balance + ${amount}`),
+            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+          });
+          await DepositService.updateFiatDeposit(transactionReference, {
+            status: 'successful'
+          });
+          msg.ack();
         }
       })
       .catch(error => {
