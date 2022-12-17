@@ -133,7 +133,10 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Confirming transaction');
-        const txReceipt = await provider.getTransactionReceipt(hash);
+        const txReceipt = await provider.waitForTransaction(hash, [
+          ,
+          (confirms = (1)[5000])
+        ]);
         // const {data} = await Axios.get(
         //   `https://${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
         // );
