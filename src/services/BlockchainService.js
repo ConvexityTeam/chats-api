@@ -10,7 +10,7 @@ const {Encryption, Logger} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
 
 const provider = new ethers.providers.getDefaultProvider(
-  process.env.BLOCKCHAINSERV_TEST
+  process.env.BLOCKCHAINSERV
 );
 const Axios = axios.create();
 
@@ -124,9 +124,13 @@ class BlockchainService {
       Logger.info('base_url: ' + process.env.POLYGON_BASE_URL);
       try {
         Logger.info('Confirming transaction');
-        const {data} = await Axios.get(
-          `https://${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-        );
+        const txReceipt = await provider.getTransactionReceipt(hash);
+        if (txReceipt && txReceipt.blockNumber) {
+          return txReceipt;
+        }
+        // const {data} = await Axios.get(
+        //   `https://${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+        // );
         Logger.info('Transaction confirmed');
         resolve(data);
       } catch (error) {
