@@ -39,7 +39,7 @@ class OrderController {
     }
   }
   static async comfirmsmsTOKEN(req, res) {
-    const pin = req.body.pin;
+    const pin = req.body.pin.trim();
     const id = req.body.beneficiaryId;
     const {reference} = req.params;
     try {

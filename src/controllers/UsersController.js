@@ -1304,10 +1304,11 @@ class UsersController {
       if (req.user.pin) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'PIN already set. Chnage PIN or contact support.'
+          'PIN already set. Change PIN or contact support.'
         );
         return Response.send(res);
       }
+      Logger.info(`Pin: ${req.body.pin.trim()}`);
       const pin = createHash(req.body.pin.trim());
       await UserService.update(req.user.id, {
         pin
