@@ -258,6 +258,7 @@ class AuthController {
             return Response.send(res);
           }
         }
+        Logger.info(`pin: ${fields.pin}`);
         const encryptedPin = createHash(fields.pin);
         bcrypt.genSalt(10, (err, salt) => {
           if (err) {
