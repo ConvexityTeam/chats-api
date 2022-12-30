@@ -13,6 +13,8 @@ require('dotenv').config();
 const provider = new ethers.providers.getDefaultProvider(
   process.env.BLOCKCHAINSERV
 );
+
+const polygonBaseURL = process.env.POLYGON_BASE_URL;
 // async function check() {
 //   const txReceipt = await provider.getTransactionReceipt(
 //     '0x7b0fa1f758ea48e3097090fb62b19b51b06d69711aa3f027a52b8e81eeaaab06'
@@ -137,7 +139,7 @@ class BlockchainService {
 
 
         // const {data} = await Axios.get(
-        //   `https://api-testnet.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+        //   `${polygonBaseURL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
         // );
         Logger.info('Transaction confirmed');
         resolve(txReceipt);
