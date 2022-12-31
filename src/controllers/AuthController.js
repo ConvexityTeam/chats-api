@@ -258,7 +258,8 @@ class AuthController {
             return Response.send(res);
           }
         }
-        const encryptedPin = createHash(fields.pin);
+        Logger.info(`pin: ${fields.pin.trim()}`);
+        const encryptedPin = createHash(fields.pin.trim());
         bcrypt.genSalt(10, (err, salt) => {
           if (err) {
             console.log('Error Ocurred hashing');

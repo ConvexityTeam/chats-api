@@ -39,11 +39,10 @@ class OrderController {
     }
   }
   static async comfirmsmsTOKEN(req, res) {
-    const pin = req.body.pin;
+    const pin = req.body.pin.trim();
     const id = req.body.beneficiaryId;
     const {reference} = req.params;
     try {
-      Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
       const data = await VendorService.getOrder({reference});
       const user = await UserService.findSingleUser({id});
 
