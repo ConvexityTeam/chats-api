@@ -26,11 +26,7 @@ RabbitMq['default']
                 'campaign_' + content.CampaignId
           }`
         );
-        const confirm = await BlockchainService.confirmTransaction(
-          token.AddedUser
-        );
-
-        if (confirm) {
+        if (token) {
           await WalletService.updateOrCreate(content, {
             ...token
           });

@@ -8,22 +8,10 @@ const {tokenConfig, switchWallet} = require('../config');
 const {SwitchToken} = require('../models');
 const {Encryption, Logger} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
-require('dotenv').config();
 
 const provider = new ethers.providers.getDefaultProvider(
-  process.env.BLOCKCHAINSERV
+  process.env.BLOCKCHAINSERV_TEST
 );
-
-const polygonBaseURL = process.env.POLYGON_BASE_URL;
-// async function check() {
-//   const txReceipt = await provider.getTransactionReceipt(
-//     '0x7b0fa1f758ea48e3097090fb62b19b51b06d69711aa3f027a52b8e81eeaaab06'
-//   );
-//   return txReceipt;
-// }
-// check().then(rec => {
-//   console.log(rec);
-// });
 const Axios = axios.create();
 
 class BlockchainService {
@@ -82,6 +70,7 @@ class BlockchainService {
   static async switchWebhook(data) {
     return Promise(async (resolve, reject) => {
       try {
+        console.log(data);
         const token = await SwitchToken.findByPk(1);
         if (!token || moment().isAfter(token.expires)) {
           await this.signInSwitchWallet();
@@ -130,15 +119,16 @@ class BlockchainService {
       }
     });
   }
+
   static async confirmTransaction(hash) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Confirming transaction');
-        const txReceipt = await provider.getTransactionReceipt(hash);
-        // const {data} = await Axios.get(
-        //   `https://${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-        // );
-        resolve(txReceipt);
+        const {data} = await Axios.get(
+          `https://api-testnet.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+        );
+        Logger.info('Transaction confirmed');
+        resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
         reject(error);
