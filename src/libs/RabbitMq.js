@@ -5,5 +5,5 @@ const {Connection} = require('@droidsolutions-oss/amqp-ts');
 exports.default = new Connection(
   connectionURL,
   {},
-  {interval: 30000, retries: 300000}
+  {interval: 30000, retries: 3000}
 );

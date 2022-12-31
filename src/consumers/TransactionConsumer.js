@@ -160,6 +160,8 @@ const create_transaction = async (amount, sender, receiver, args) => {
   return transaction;
 };
 
+let minted = false;
+let confirmed = false;
 let has_run_once = false;
 let benefitIndex = null;
 let transfer_once = false;
@@ -182,22 +184,19 @@ RabbitMq['default']
           const wallet = await WalletService.findMainOrganisationWallet(
             OrganisationId
           );
-          let minted = false;
-          let confirmed = false;
+
           let mint, confirm;
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`
           );
 
-          if (!mint.Minted) {
+          if (!minted) {
             mint = await BlockchainService.mintToken(
               organisation.address,
               amount
             );
             Logger.info(`Hash: ${mint.Minted}`);
-            if (mint.Minted) {
-              minted = true;
-            }
+            if (mint.Minted) minted = true;
           }
 
           if (!confirm && minted) {
@@ -207,11 +206,8 @@ RabbitMq['default']
               transactionId
             );
 
-            if (confirm) {
-              confirmed = true;
-            }
+            if (confirm) confirmed = true;
           }
-
           Logger.info(JSON.stringify(confirm));
 
           if (confirm && minted) {
@@ -219,7 +215,6 @@ RabbitMq['default']
               {status: 'success', is_approved: true},
               transactionId
             );
-
             await wallet.update({
               balance: Sequelize.literal(`balance + ${amount}`),
               fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
