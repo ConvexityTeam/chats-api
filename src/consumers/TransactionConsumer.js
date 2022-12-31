@@ -199,11 +199,10 @@ RabbitMq['default']
             Logger.info(`Hash: ${mint.Minted}`);
             if (mint.Minted) {
               minted = true;
-              msg.nack();
             }
           }
 
-          if (!confirm && minted) {
+          if (!confirmed && minted) {
             confirm = await BlockchainService.confirmTransaction(mint.Minted);
             await update_transaction(
               {status: 'failed', is_approved: false},
@@ -212,7 +211,6 @@ RabbitMq['default']
 
             if (confirm) {
               confirmed = true;
-              msg.nack();
             }
           }
           Logger.info(JSON.stringify(confirm));
@@ -233,6 +231,7 @@ RabbitMq['default']
             confirmed = false;
             minted = false;
             msg.ack();
+            return;
           }
         }
       })
