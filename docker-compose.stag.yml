@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: "rabbitmq:3.8.14-alpine"
+    container_name: rabbitmq
+    networks:
+      - rabbitmq
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  backend:
+    depends_on:
+      - rabbitmq
+    container_name: backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes: 
+    - ./:/app
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
+    ports: 
+      - 8080:8080
+    expose:
+      - 8080
+    networks:
+      - gateway
+      - rabbitmq
+    restart: unless-stopped
+    command: npm run start:dev
+
+  consumer:
+    depends_on:
+      - rabbitmq
+      - backend
+    container_name: consumer
+    build:
+      context: .
+      dockerfile: Dockerfile.Consumer
+    volumes: 
+    - ./:/app
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
+    networks:
+      - gateway
+      - rabbitmq
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command: npm run start:consumer:dev
+
+networks:
+  gateway:
+    driver: bridge
+    name: gateway
+  rabbitmq:
+    internal: true
