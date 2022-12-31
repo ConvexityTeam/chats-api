@@ -194,8 +194,10 @@ RabbitMq['default']
               organisation.address,
               amount
             );
-            if (mint.Minted) minted = true;
-            else msg.nack();
+            Logger.info(`Hash: ${mint.Minted}`);
+            if (mint.Minted) {
+              minted = true;
+            } else msg.nack();
           }
 
           if (!confirm && minted) {
@@ -205,8 +207,9 @@ RabbitMq['default']
               transactionId
             );
 
-            if (confirm) confirmed = true;
-            else msg.nack();
+            if (confirm) {
+              confirmed = true;
+            } else msg.nack();
           }
 
           Logger.info(JSON.stringify(confirm));
