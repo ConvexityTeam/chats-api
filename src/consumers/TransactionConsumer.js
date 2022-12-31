@@ -189,16 +189,15 @@ RabbitMq['default']
             `organisation_${OrganisationId}`
           );
 
-          if (!minted) {
+          if (!mint.Minted) {
             mint = await BlockchainService.mintToken(
               organisation.address,
               amount
             );
             Logger.info(`Hash: ${mint.Minted}`);
-            Logger.info(`${typeof mint.Minted === 'string'}`);
             if (mint.Minted) {
               minted = true;
-            } else msg.nack();
+            }
           }
 
           if (!confirm && minted) {
@@ -210,7 +209,7 @@ RabbitMq['default']
 
             if (confirm) {
               confirmed = true;
-            } else msg.nack();
+            }
           }
 
           Logger.info(JSON.stringify(confirm));
