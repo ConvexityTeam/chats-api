@@ -212,7 +212,6 @@ RabbitMq['default']
 
             if (confirm) {
               confirmed = true;
-              msg.nack();
             }
           }
           Logger.info(JSON.stringify(confirm));
