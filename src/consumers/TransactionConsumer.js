@@ -204,8 +204,9 @@ RabbitMq['default']
               {status: 'failed', is_approved: false},
               transactionId
             );
-            msg.nack();
-            return;
+
+            if (confirm) confirmed = true;
+            else msg.nack();
           }
 
           Logger.info(JSON.stringify(confirm));
@@ -224,6 +225,8 @@ RabbitMq['default']
               status: 'successful'
             });
             Logger.info('Transaction confirmed');
+            confirmed = false;
+            minted = false;
             msg.ack();
           }
         }
