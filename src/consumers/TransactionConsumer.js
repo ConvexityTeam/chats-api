@@ -195,7 +195,7 @@ RabbitMq['default']
               amount
             );
             Logger.info(`Hash: ${mint.Minted}`);
-            if (mint.Minted) {
+            if (typeof mint.Minted === 'string') {
               minted = true;
             } else msg.nack();
           }
