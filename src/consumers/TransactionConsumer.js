@@ -199,7 +199,6 @@ RabbitMq['default']
             Logger.info(`Hash: ${mint.Minted}`);
             if (mint.Minted) {
               minted = true;
-              msg.nack();
             }
           }
 
