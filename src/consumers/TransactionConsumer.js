@@ -189,7 +189,7 @@ RabbitMq['default']
             `organisation_${OrganisationId}`
           );
 
-          if (!minted.Minted) {
+          if (!minted) {
             mint = await BlockchainService.mintToken(
               organisation.address,
               amount
