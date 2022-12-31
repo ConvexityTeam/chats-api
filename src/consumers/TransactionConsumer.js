@@ -212,7 +212,6 @@ RabbitMq['default']
 
             if (confirm) {
               confirmed = true;
-              msg.ack();
             }
           }
           Logger.info(JSON.stringify(confirm));
@@ -233,6 +232,7 @@ RabbitMq['default']
             confirmed = false;
             minted = false;
             msg.ack();
+            return;
           }
         }
       })
