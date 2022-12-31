@@ -183,40 +183,55 @@ RabbitMq['default']
             OrganisationId
           );
           let minted = false;
+          let confirmed = false;
+          let mint, confirm;
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`
           );
 
-          const mint = await BlockchainService.mintToken(
-            organisation.address,
-            amount
-          );
-          const confirm = await BlockchainService.confirmTransaction(
-            mint.Minted
-          );
-          Logger.info(JSON.stringify(confirm));
-          if (!confirm) {
+          if (!mint.Minted) {
+            mint = await BlockchainService.mintToken(
+              organisation.address,
+              amount
+            );
+            Logger.info(`Hash: ${mint.Minted}`);
+            if (mint.Minted) {
+              minted = true;
+            }
+          }
+
+          if (!confirm && minted) {
+            confirm = await BlockchainService.confirmTransaction(mint.Minted);
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
             );
-            msg.nack();
-            return;
+
+            if (confirm) {
+              confirmed = true;
+            }
           }
 
-          await update_transaction(
-            {status: 'success', is_approved: true},
-            transactionId
-          );
+          Logger.info(JSON.stringify(confirm));
 
-          await wallet.update({
-            balance: Sequelize.literal(`balance + ${amount}`),
-            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-          });
-          await DepositService.updateFiatDeposit(transactionReference, {
-            status: 'successful'
-          });
-          msg.ack();
+          if (confirm && minted) {
+            await update_transaction(
+              {status: 'success', is_approved: true},
+              transactionId
+            );
+
+            await wallet.update({
+              balance: Sequelize.literal(`balance + ${amount}`),
+              fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+            });
+            await DepositService.updateFiatDeposit(transactionReference, {
+              status: 'successful'
+            });
+            Logger.info('Transaction confirmed');
+            confirmed = false;
+            minted = false;
+            msg.ack();
+          }
         }
       })
       .catch(error => {
