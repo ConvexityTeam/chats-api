@@ -216,7 +216,6 @@ RabbitMq['default']
               {status: 'success', is_approved: true},
               transactionId
             );
-
             await wallet.update({
               balance: Sequelize.literal(`balance + ${amount}`),
               fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
