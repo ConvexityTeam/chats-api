@@ -5,7 +5,7 @@
 
 # Convexity Humanitarian Aid Transfer Solution (CHATS)
 
-Convexity Humanitarian Aid Transfer Solution (CHATS) is an ongoing project aimed at addressing Nigeria’s peculiar Cash & Vouchers Assistance distribution problem and to improve the wellbeing of vulnerable children and their households.
+CHATS(Convexity Humanitarian Aid Transfer Solution), enables the transparent transfer of cash and voucher assistance to the beneficiaries while leveraging the blockchain technology for livelihood programs and logistics management for aid distribution.
 ##  Technology Stack
     -NodeJS (preferably ^14.10)
     -PostgresSQL Database
