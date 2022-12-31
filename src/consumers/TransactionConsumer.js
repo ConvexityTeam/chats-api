@@ -208,7 +208,6 @@ RabbitMq['default']
 
             if (confirm) confirmed = true;
           }
-
           Logger.info(JSON.stringify(confirm));
 
           if (confirm && minted) {
