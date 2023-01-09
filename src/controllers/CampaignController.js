@@ -338,6 +338,10 @@ class CampaignController {
     const {token_type} = req.body;
 
     try {
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${campaign_id}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
       const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(
         campaign_id
       );
@@ -367,7 +371,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.amount == 0) {
+      if (token.Balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund campaign wallet.'
@@ -405,6 +409,10 @@ class CampaignController {
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
+      const organisation_token = await BlockchainService.setUserKeypair(
+        `organisation_${organisation_id}`
+      );
+      const token = await BlockchainService.balance(organisation_token.address);
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
         organisation_id
@@ -431,7 +439,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.budget > OrgWallet.balance || OrgWallet.balance == 0) {
+      if (campaign.budget > token.Balance || token.Balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund organisation wallet.'
@@ -439,7 +447,11 @@ class CampaignController {
         return Response.send(res);
       }
 
-      QueueService.CampaignApproveAndFund(campaign, campaignWallet, OrgWallet);
+      await QueueService.CampaignApproveAndFund(
+        campaign,
+        campaignWallet,
+        OrgWallet
+      );
       Logger.info('Processing Transfer From NGO Wallet to Campaign Wallet');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,

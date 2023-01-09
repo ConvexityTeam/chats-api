@@ -10,6 +10,7 @@ const {
   UserService,
   OrderService,
   CampaignService,
+  BlockchainService,
   OrganisationService
 } = require('../services');
 const db = require('../models');
@@ -85,7 +86,10 @@ class OrderController {
         Logger.error(`Order ${data.order.status}`);
         return Response.send(res);
       }
-
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `user_${req.user.id}campaign_${data.order.CampaignId}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: data.order.CampaignId,
         UserId: null
@@ -131,7 +135,7 @@ class OrderController {
       //   Logger.error(`Insufficient wallet balance.`);
       //   return Response.send(res);
       // }
-      if (beneficiaryWallet.balance < data.total_cost) {
+      if (token.Balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
@@ -179,7 +183,10 @@ class OrderController {
         );
         return Response.send(res);
       }
-
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `user_${req.user.id}campaign_${data.order.CampaignId}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
       const [
         campaignWallet,
         vendorWallet,
@@ -215,15 +222,15 @@ class OrderController {
         return Response.send(res);
       }
 
-      if (campaignWallet.balance < data.total_cost) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance.'
-        );
-        return Response.send(res);
-      }
+      // if (token.Balance < data.total_cost) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Insufficient wallet balance.'
+      //   );
+      //   return Response.send(res);
+      // }
 
-      if (beneficiaryWallet.balance < data.total_cost) {
+      if (token.Balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
