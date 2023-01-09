@@ -413,6 +413,7 @@ class CampaignController {
         `organisation_${organisation_id}`
       );
       const token = await BlockchainService.balance(organisation_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
         organisation_id
@@ -439,7 +440,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.budget > token.Balance || token.Balance == 0) {
+      if (campaign.budget > balance || balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund organisation wallet.'

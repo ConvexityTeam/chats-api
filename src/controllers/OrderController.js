@@ -90,6 +90,7 @@ class OrderController {
         `user_${req.user.id}campaign_${data.order.CampaignId}`
       );
       const token = await BlockchainService.balance(campaign_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: data.order.CampaignId,
         UserId: null
@@ -135,7 +136,7 @@ class OrderController {
       //   Logger.error(`Insufficient wallet balance.`);
       //   return Response.send(res);
       // }
-      if (token.Balance < data.total_cost) {
+      if (balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
