@@ -27,11 +27,12 @@ RabbitMq['default']
           }`
         );
         const confirm = await BlockchainService.confirmTransaction(
-          token.AddedUser
+          token.data.AddedUser
         );
 
         if (confirm) {
           await WalletService.updateOrCreate(content, {
+            address: token.keyPair.address,
             ...token
           });
           Logger.info('Account Wallet Created');

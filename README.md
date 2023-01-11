@@ -1,5 +1,5 @@
 <a href="https://withconvexity.com">
-    <img width="200" src="https://gitlab.com/uploads/-/system/group/avatar/8492718/cropped-chats.png?width=64" alt="CHATS Logo" />
+    <img width="200" src="./chats_logo.svg?width=64" alt="CHATS Logo" />
 </a>
 
 
