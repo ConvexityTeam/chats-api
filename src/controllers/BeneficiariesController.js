@@ -3,7 +3,8 @@ const {
   WalletService,
   CampaignService,
   QueueService,
-  OrganisationService
+  OrganisationService,
+  BlockchainService
 } = require('../services');
 const util = require('../libs/Utils');
 const db = require('../models');
@@ -484,10 +485,17 @@ class BeneficiariesController {
   static async getWallets(req, res) {
     try {
       const Wallets = await WalletService.findUserWallets(req.user.id);
-      const total_balance = Wallets.map(wallet => wallet.balance).reduce(
-        (a, b) => a + b,
-        0
-      );
+      const total_balance = Wallets.map(async wallet => {
+        let total = 0;
+        if (wallet.CampaignId) {
+          const campaign_token = await BlockchainService.setUserKeypair(
+            `user_${req.user.id}campaign_${wallet.CampaignId}`
+          );
+          const token = await BlockchainService.balance(campaign_token.address);
+          total += Number(token.Balance.split(',').join(''));
+        }
+        return total;
+      });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary wallets', {
         total_balance,
         Wallets
