@@ -10,7 +10,7 @@ const {
   TaskService,
   BlockchainService
 } = require('../services');
-
+const Validator = require('validatorjs');
 const db = require('../models');
 const {Op} = require('sequelize');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
@@ -1016,6 +1016,38 @@ class CampaignController {
             : 'beneficiary'
         }`,
         onboard
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async campaignForm(req, res) {
+    const id = req.params.campaign_id;
+    const data = req.body;
+    try {
+      const rules = {
+        answers: 'required',
+        question: 'required|string',
+        select: 'required|string'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      data.campaignId = id;
+      const form = await CampaignService.campaignForm(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaign form created',
+        form
       );
       return Response.send(res);
     } catch (error) {

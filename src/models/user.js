@@ -1,10 +1,6 @@
-"use strict";
-const {
-  Model
-} = require("sequelize");
-const {
-  AclRoles
-} = require("../utils");
+'use strict';
+const {Model} = require('sequelize');
+const {AclRoles} = require('../utils');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     capitalizeFirstLetter(str) {
@@ -22,138 +18,145 @@ module.exports = (sequelize, DataTypes) => {
       // User.hasMany(models.Login, { as: 'logins' });
 
       User.hasMany(models.Transaction, {
-        as: "OrderTransaction",
-        foreignKey: "BeneficiaryId",
+        as: 'OrderTransaction',
+        foreignKey: 'BeneficiaryId'
         // scope: {
         //   transaction_type: 'order'
         // }
       });
 
       User.belongsToMany(models.Campaign, {
-        as: "Campaigns",
-        foreignKey: "UserId",
+        as: 'Campaigns',
+        foreignKey: 'UserId',
         through: models.Beneficiary
       });
 
       User.hasMany(models.Complaint, {
-        as: "Complaints",
-        foreignKey: "UserId",
+        as: 'Complaints',
+        foreignKey: 'UserId'
       });
 
-
       User.hasMany(models.Wallet, {
-        as: "Wallet",
-        foreignKey: "UserId",
+        as: 'Wallet',
+        foreignKey: 'UserId',
         constraints: false,
         scope: {
-          wallet_type: "user",
-        },
+          wallet_type: 'user'
+        }
       });
       User.hasMany(models.Wallet, {
-        as: "Wallets",
-        foreignKey: "UserId",
+        as: 'Wallets',
+        foreignKey: 'UserId',
         constraints: false,
         scope: {
-          wallet_type: "user",
-        },
+          wallet_type: 'user'
+        }
       });
       ////////////////////////
       User.hasOne(models.Market, {
-        as: "Store",
-        foreignKey: "UserId"
+        as: 'Store',
+        foreignKey: 'UserId'
       });
       User.hasMany(models.Order, {
-        as: "Orders",
+        as: 'Orders',
         foreignKey: 'VendorId',
         scope: {
           RoleId: AclRoles.Vendor
         }
       });
       User.hasMany(models.Transaction, {
-        as: "StoreTransactions",
+        as: 'StoreTransactions',
         foreignKey: 'VendorId',
         scope: {
           transaction_origin: 'store'
         }
       });
       User.hasMany(models.OrganisationMembers, {
-        as: "AssociatedOrganisations",
+        as: 'AssociatedOrganisations'
       });
       User.belongsToMany(models.Organisation, {
         as: 'Organisations',
         through: models.OrganisationMembers
       });
       User.hasMany(models.FingerPrints, {
-        as: "Print"
+        as: 'Print'
       });
       User.hasMany(models.BankAccount, {
-        as: "BankAccounts"
+        as: 'BankAccounts'
       });
       User.hasMany(models.VerificationToken, {
-        as: "VerificationTokens"
+        as: 'VerificationTokens'
       });
       User.hasMany(models.TaskAssignment, {
-        as: "Assignments"
+        as: 'Assignments'
       });
       User.belongsTo(models.Role, {
-        foreignKey: "RoleId",
-        as: "Role"
+        foreignKey: 'RoleId',
+        as: 'Role'
       });
-      User.belongsToMany(models.Product, {foreignKey: 'vendorId', through: 'VendorProduct', as: 'ProductVendors' });
+      User.belongsToMany(models.Product, {
+        foreignKey: 'vendorId',
+        through: 'VendorProduct',
+        as: 'ProductVendors'
+      });
       //Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
     }
   }
-  User.init({
-    referal_id: DataTypes.STRING,
-    RoleId: DataTypes.INTEGER,
-    first_name: {
-      type: DataTypes.STRING,
-      set(value) {
-        this.setDataValue("first_name", this.capitalizeFirstLetter(value));
+  User.init(
+    {
+      referal_id: DataTypes.STRING,
+      RoleId: DataTypes.INTEGER,
+      first_name: {
+        type: DataTypes.STRING,
+        set(value) {
+          this.setDataValue('first_name', this.capitalizeFirstLetter(value));
+        }
       },
-    },
-    last_name: {
-      type: DataTypes.STRING,
-      set(value) {
-        this.setDataValue("last_name", this.capitalizeFirstLetter(value));
+      last_name: {
+        type: DataTypes.STRING,
+        set(value) {
+          this.setDataValue('last_name', this.capitalizeFirstLetter(value));
+        }
       },
-    },
-    email: {
-      type: DataTypes.STRING,
-      set(value) {
-        this.setDataValue("email", value.toLowerCase());
+      email: {
+        type: DataTypes.STRING,
+        set(value) {
+          this.setDataValue('email', value.toLowerCase());
+        }
       },
+      username: DataTypes.STRING,
+      password: DataTypes.STRING,
+      phone: DataTypes.STRING,
+      bvn: DataTypes.STRING,
+      nin: DataTypes.STRING,
+      marital_status: DataTypes.STRING,
+      gender: DataTypes.STRING,
+      status: DataTypes.ENUM('suspended', 'activated', 'pending'),
+      location: DataTypes.STRING,
+      country: DataTypes.STRING,
+      currency: DataTypes.STRING,
+      pin: DataTypes.STRING,
+      address: DataTypes.STRING,
+      vendor_id: DataTypes.STRING,
+      device_imei: DataTypes.STRING,
+      is_email_verified: DataTypes.BOOLEAN,
+      is_phone_verified: DataTypes.BOOLEAN,
+      is_bvn_verified: DataTypes.BOOLEAN,
+      is_nin_verified: DataTypes.BOOLEAN,
+      is_self_signup: DataTypes.BOOLEAN,
+      is_public: DataTypes.BOOLEAN,
+      is_tfa_enabled: DataTypes.BOOLEAN,
+      tfa_secret: DataTypes.STRING,
+      last_login: DataTypes.DATE,
+      profile_pic: DataTypes.STRING,
+      nfc: DataTypes.STRING,
+      dob: DataTypes.DATE
     },
-    password: DataTypes.STRING,
-    phone: DataTypes.STRING,
-    bvn: DataTypes.STRING,
-    nin: DataTypes.STRING,
-    marital_status: DataTypes.STRING,
-    gender: DataTypes.STRING,
-    status: DataTypes.ENUM("suspended", "activated", "pending"),
-    location: DataTypes.STRING,
-    country: DataTypes.STRING,
-    currency: DataTypes.STRING,
-    pin: DataTypes.STRING,
-    address: DataTypes.STRING,
-    vendor_id: DataTypes.STRING,
-    device_imei: DataTypes.STRING,
-    is_email_verified: DataTypes.BOOLEAN,
-    is_phone_verified: DataTypes.BOOLEAN,
-    is_bvn_verified: DataTypes.BOOLEAN,
-    is_nin_verified: DataTypes.BOOLEAN,
-    is_self_signup: DataTypes.BOOLEAN,
-    is_public: DataTypes.BOOLEAN,
-    is_tfa_enabled: DataTypes.BOOLEAN,
-    tfa_secret: DataTypes.STRING,
-    last_login: DataTypes.DATE,
-    profile_pic: DataTypes.STRING,
-    nfc: DataTypes.STRING,
-    dob: DataTypes.DATE,
-  }, {
-    sequelize,
-    modelName: "User",
-  });
+    {
+      sequelize,
+      modelName: 'User'
+    }
+  );
 
   User.prototype.toObject = function () {
     const user = this.toJSON();
@@ -161,6 +164,6 @@ module.exports = (sequelize, DataTypes) => {
     delete user.tfa_secret;
     delete user.pin;
     return user;
-  }
+  };
   return User;
 };

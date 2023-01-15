@@ -7,7 +7,7 @@ const {
   Product,
   Transaction,
   Market,
-  sequelize,
+  sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
 const {userConst, walletConst} = require('../constants');
@@ -38,25 +38,25 @@ class BeneficiariesService {
         [Op.or]: [
           {
             nin: {
-              [Op.like]: `%${where.nin}%`,
+              [Op.like]: `%${where.nin}%`
             },
             phone: {
-              [Op.like]: `%${where.phone}%`,
+              [Op.like]: `%${where.phone}%`
             },
             email: {
-              [Op.like]: `%${where.email}%`,
+              [Op.like]: `%${where.email}%`
             },
             first_name: {
-              [Op.like]: `%${where.first_name}%`,
+              [Op.like]: `%${where.first_name}%`
             },
             last_name: {
-              [Op.like]: `%${where.last_name}%`,
-            },
-          },
+              [Op.like]: `%${where.last_name}%`
+            }
+          }
         ],
         [Op.ne]: Sequelize.where(
-          Sequelize.col('Campaigns.OrganisationId', OrganisationId),
-        ),
+          Sequelize.col('Campaigns.OrganisationId', OrganisationId)
+        )
       },
       attributes: userConst.publicAttr,
       include: [
@@ -65,20 +65,20 @@ class BeneficiariesService {
           as: 'Campaigns',
           through: {
             where: {
-              approved: true,
-            },
+              approved: true
+            }
           },
           attributes: [],
-          require: true,
-        },
-      ],
+          require: true
+        }
+      ]
     });
   }
   static async getAllUsers() {
     return User.findAll({
       where: {
-        RoleId: 5,
-      },
+        RoleId: 5
+      }
     });
   }
 
@@ -89,15 +89,15 @@ class BeneficiariesService {
   static async updateUser(id, updateUser) {
     const UserToUpdate = await User.findOne({
       where: {
-        id: id,
-      },
+        id: id
+      }
     });
 
     if (UserToUpdate) {
       await User.update(updateUser, {
         where: {
-          id: id,
-        },
+          id: id
+        }
       });
 
       return updateUser;
@@ -109,31 +109,31 @@ class BeneficiariesService {
     return User.findOne({
       where: {
         id: id,
-        RoleId: AclRoles.Beneficiary,
-      },
+        RoleId: AclRoles.Beneficiary
+      }
     });
   }
 
   static async getUser(id) {
     return User.findOne({
       where: {
-        id: id,
+        id: id
       },
-      include: ['Wallet'],
+      include: ['Wallet']
     });
   }
   static async deleteUser(id) {
     const UserToDelete = await User.findOne({
       where: {
-        id: id,
-      },
+        id: id
+      }
     });
 
     if (UserToDelete) {
       return User.destroy({
         where: {
-          id: id,
-        },
+          id: id
+        }
       });
     }
     return null;
@@ -142,8 +142,8 @@ class BeneficiariesService {
   static async checkBeneficiary(id) {
     return Beneficiary.findOne({
       where: {
-        id: id,
-      },
+        id: id
+      }
     });
   }
 
@@ -156,25 +156,40 @@ class BeneficiariesService {
     const beneficiary = await Beneficiary.findOne({
       where: {
         CampaignId,
-        UserId,
-      },
+        UserId
+      }
     });
     if (!beneficiary) throw new Error('Beneficiary Not Found.');
     beneficiary.update(data);
     return beneficiary;
   }
 
-  static async approveAllCampaignBeneficiaries(CampaignId) {
+  static async approveAllCampaignBeneficiaries(CampaignId, ids) {
     return Beneficiary.update(
       {
         approved: true,
+        rejected: false
       },
       {
         where: {
           CampaignId,
-          rejected: false,
-        },
+          UserId: ids
+        }
+      }
+    );
+  }
+  static async rejectAllCampaignBeneficiaries(CampaignId, ids) {
+    return Beneficiary.update(
+      {
+        approved: false,
+        rejected: true
       },
+      {
+        where: {
+          CampaignId,
+          UserId: ids
+        }
+      }
     );
   }
 
@@ -185,28 +200,28 @@ class BeneficiariesService {
   static async updateComplaint(id) {
     return Complaint.update(
       {
-        status: 'resolved',
+        status: 'resolved'
       },
       {
         where: {
-          id,
-        },
-      },
+          id
+        }
+      }
     );
   }
 
   static async checkComplaint(id) {
     return Complaint.findOne({
       where: {
-        id: id,
-      },
+        id: id
+      }
     });
   }
 
   static async organisationBeneficiaryDetails(id, OrganisationId) {
     return User.findOne({
       where: {
-        id,
+        id
       },
       attributes: userConst.publicAttr,
       include: [
@@ -215,10 +230,10 @@ class BeneficiariesService {
           as: 'Campaigns',
           require: true,
           where: {
-            OrganisationId,
-          },
-        },
-      ],
+            OrganisationId
+          }
+        }
+      ]
     });
   }
 
@@ -227,7 +242,7 @@ class BeneficiariesService {
       where: {
         ...extraClause,
         id,
-        RoleId: AclRoles.Beneficiary,
+        RoleId: AclRoles.Beneficiary
       },
       attributes: userConst.publicAttr,
       include: [
@@ -235,18 +250,18 @@ class BeneficiariesService {
           model: Campaign,
           as: 'Campaigns',
           through: {
-            attributes: [],
-          },
+            attributes: []
+          }
         },
         {
           model: Wallet,
           as: 'Wallets',
           include: [
             // "ReceivedTransactions",
-            'SentTx',
-          ],
-        },
-      ],
+            'SentTx'
+          ]
+        }
+      ]
     });
   }
 
@@ -254,22 +269,22 @@ class BeneficiariesService {
     return User.findOne({
       where: {
         id,
-        RoleId: AclRoles.Beneficiary,
+        RoleId: AclRoles.Beneficiary
       },
       include: [
         {
           model: Campaign,
           as: 'Campaigns',
           through: {
-            attributes: [],
+            attributes: []
           },
-          include: ['Organisation'],
+          include: ['Organisation']
         },
         {
           model: Wallet,
-          as: 'Wallets',
-        },
-      ],
+          as: 'Wallets'
+        }
+      ]
     });
   }
 
@@ -279,45 +294,45 @@ class BeneficiariesService {
         [Op.or]: {
           walletSenderId: Sequelize.where(
             Sequelize.col('SenderWallet.UserId'),
-            UserId,
+            UserId
           ),
           walletRecieverId: Sequelize.where(
             Sequelize.col('ReceiverWallet.UserId'),
-            UserId,
-          ),
-        },
+            UserId
+          )
+        }
       },
       include: [
         {
           model: Wallet,
           as: 'SenderWallet',
           attributes: {
-            exclude: ['privateKey', 'bantuPrivateKey'],
+            exclude: ['privateKey', 'bantuPrivateKey']
           },
           include: [
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr,
-            },
-          ],
+              attributes: userConst.publicAttr
+            }
+          ]
         },
         {
           model: Wallet,
           as: 'ReceiverWallet',
 
           attributes: {
-            exclude: ['privateKey', 'bantuPrivateKey'],
+            exclude: ['privateKey', 'bantuPrivateKey']
           },
           include: [
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr,
-            },
-          ],
-        },
-      ],
+              attributes: userConst.publicAttr
+            }
+          ]
+        }
+      ]
     });
   }
 
@@ -326,8 +341,8 @@ class BeneficiariesService {
       where: {
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
-          OrganisationId,
-        ),
+          OrganisationId
+        )
       },
       attributes: userConst.publicAttr,
       include: [
@@ -336,13 +351,13 @@ class BeneficiariesService {
           as: 'Campaigns',
           through: {
             where: {
-              approved: true,
-            },
+              approved: true
+            }
           },
           attributes: [],
-          require: true,
-        },
-      ],
+          require: true
+        }
+      ]
     });
   }
 
@@ -350,23 +365,23 @@ class BeneficiariesService {
     return Beneficiary.findAll({
       where: {
         ...extraClause,
-        CampaignId,
+        CampaignId
       },
       include: [
         {
           model: User,
           as: 'User',
-          attributes: userConst.publicAttr,
-        },
-      ],
+          attributes: userConst.publicAttr
+        }
+      ]
     });
   }
 
   static async getBeneficiariesAdmin() {
     return User.findAll({
       where: {
-        RoleId: 7,
-      },
+        RoleId: 7
+      }
     });
   }
 
@@ -376,8 +391,8 @@ class BeneficiariesService {
         RoleId: AclRoles.Beneficiary,
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
-          OrganisationId,
-        ),
+          OrganisationId
+        )
       },
       attributes: userConst.publicAttr,
       include: [
@@ -387,13 +402,13 @@ class BeneficiariesService {
           where: {OrganisationId},
           through: {
             where: {
-              approved: true,
-            },
+              approved: true
+            }
           },
           attributes: [],
-          require: true,
-        },
-      ],
+          require: true
+        }
+      ]
     });
   }
 
@@ -403,8 +418,8 @@ class BeneficiariesService {
         RoleId: AclRoles.Beneficiary,
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
-          OrganisationId,
-        ),
+          OrganisationId
+        )
       },
       include: [
         {
@@ -413,17 +428,17 @@ class BeneficiariesService {
           where: {OrganisationId},
           through: {
             where: {
-              approved: true,
+              approved: true
             },
-            attributes: [],
+            attributes: []
           },
-          include: ['Organisation'],
+          include: ['Organisation']
         },
         {
           model: Wallet,
-          as: 'Wallets',
-        },
-      ],
+          as: 'Wallets'
+        }
+      ]
     });
   }
 
@@ -441,31 +456,31 @@ class BeneficiariesService {
               ? moment().subtract(1, 'months').toDate()
               : period === 'yearly'
               ? moment().subtract(1, 'years').toDate()
-              : null,
-        },
+              : null
+        }
       },
       include: [
         {
           model: Wallet,
           as: 'SenderWallet',
           attributes: {
-            exclude: walletConst.walletExcludes,
+            exclude: walletConst.walletExcludes
           },
-          include: ['Campaign'],
+          include: ['Campaign']
         },
         {
           model: Wallet,
           as: 'ReceiverWallet',
           attributes: {
-            exclude: walletConst.walletExcludes,
-          },
+            exclude: walletConst.walletExcludes
+          }
         },
         {
           model: User,
           as: 'Organisations',
-          attributes: userConst.publicAttr,
-        },
-      ],
+          attributes: userConst.publicAttr
+        }
+      ]
     });
   }
 
@@ -478,26 +493,26 @@ class BeneficiariesService {
           model: Wallet,
           as: 'SenderWallet',
           attributes: {
-            exclude: walletConst.walletExcludes,
+            exclude: walletConst.walletExcludes
           },
           where: {
-            OrganisationId,
+            OrganisationId
           },
-          include: ['Campaign'],
+          include: ['Campaign']
         },
         {
           model: Wallet,
           as: 'ReceiverWallet',
           attributes: {
-            exclude: walletConst.walletExcludes,
-          },
+            exclude: walletConst.walletExcludes
+          }
         },
         {
           model: User,
           as: 'Beneficiary',
-          attributes: userConst.publicAttr,
-        },
-      ],
+          attributes: userConst.publicAttr
+        }
+      ]
     });
   }
 
@@ -508,26 +523,26 @@ class BeneficiariesService {
           model: Wallet,
           as: 'SenderWallet',
           attributes: {
-            exclude: walletConst.walletExcludes,
+            exclude: walletConst.walletExcludes
           },
           where: {
-            CampaignId,
+            CampaignId
           },
-          include: ['Campaign'],
+          include: ['Campaign']
         },
         {
           model: Wallet,
           as: 'ReceiverWallet',
           attributes: {
-            exclude: walletConst.walletExcludes,
-          },
+            exclude: walletConst.walletExcludes
+          }
         },
         {
           model: User,
           as: 'Beneficiary',
-          attributes: userConst.publicAttr,
-        },
-      ],
+          attributes: userConst.publicAttr
+        }
+      ]
     });
   }
 
@@ -535,13 +550,13 @@ class BeneficiariesService {
     return Beneficiary.findAll({
       where: {
         CampaignId,
-        approved: true,
+        approved: true
       },
       include: [
         {
           model: User,
           attributes: {
-            exclude: walletConst.walletExcludes,
+            exclude: walletConst.walletExcludes
           },
           as: 'User',
           include: [
@@ -549,12 +564,12 @@ class BeneficiariesService {
               model: Wallet,
               as: 'Wallets',
               where: {
-                CampaignId,
-              },
-            },
-          ],
-        },
-      ],
+                CampaignId
+              }
+            }
+          ]
+        }
+      ]
     });
   }
 
@@ -576,14 +591,14 @@ class BeneficiariesService {
                 'id',
                 'tag',
                 'cost',
-                'type',
+                'type'
               ],
-              group: ['product_ref', 'tag', 'cost', 'type'],
-            },
-          ],
+              group: ['product_ref', 'tag', 'cost', 'type']
+            }
+          ]
         },
-        {model: Wallet, as: 'Wallets'},
-      ],
+        {model: Wallet, as: 'Wallets'}
+      ]
     });
   }
 }

@@ -8,6 +8,7 @@ const {
   VoucherToken,
   Transaction,
   AssociatedCampaign,
+  CampaignForm,
   Organisation,
   Task,
   CampaignVendor
@@ -202,10 +203,10 @@ class CampaignService {
         {
           model: User,
           as: 'Vendor',
-          attributes: ['first_name', 'last_name', ],
+          attributes: ['first_name', 'last_name'],
           where: {
-            vendor_id: VendorId,
-          },
+            vendor_id: VendorId
+          }
         }
       ]
     });
@@ -283,15 +284,15 @@ class CampaignService {
   static beneficiaryCampaingsAdmin(UserId) {
     return Beneficiary.findAll({
       where: {
-        UserId,
+        UserId
       },
       include: [
         {
           model: Campaign,
           as: 'Campaign',
-          include: ['Organisation'],
-        },
-      ],
+          include: ['Organisation']
+        }
+      ]
     });
   }
   static getPublicCampaigns(queryClause = {}) {
@@ -346,7 +347,6 @@ class CampaignService {
   }
 
   static getPrivateCampaignsAdmin(id) {
-
     return Organisation.findOne({
       where: {
         id
@@ -355,16 +355,15 @@ class CampaignService {
       include: {
         model: Campaign,
         where: {
-          is_public: false,
+          is_public: false
         },
         as: 'associatedCampaigns',
-        
-        include: [
-        {model: Task, as: 'Jobs'},
-        {model: User, as: 'Beneficiaries'},
-      ],
-      }
 
+        include: [
+          {model: Task, as: 'Jobs'},
+          {model: User, as: 'Beneficiaries'}
+        ]
+      }
     });
   }
   static getCash4W(OrganisationId) {
@@ -614,6 +613,10 @@ class CampaignService {
         address
       }
     });
+  }
+
+  static async campaignForm(data) {
+    return await CampaignForm.create(data);
   }
 
   // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
