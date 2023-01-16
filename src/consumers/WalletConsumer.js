@@ -32,8 +32,7 @@ RabbitMq['default']
 
         if (confirm) {
           await WalletService.updateOrCreate(content, {
-            address: token.keyPair.address,
-            ...token
+            address: token.keyPair.address
           });
           Logger.info('Account Wallet Created');
           msg.ack();
