@@ -1125,10 +1125,25 @@ class BeneficiariesController {
           CampaignId: data.campaignId
         });
 
+        if (!from_campaign_wallet) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Sender personal wallet not valid'
+          );
+          return Response.send(res);
+        }
+
         const campaign_wallet = await WalletService.findSingleWallet({
           UserId: null,
           CampaignId: data.campaignId
         });
+        if (!campaign_wallet) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Sender campaign wallet not valid'
+          );
+          return Response.send(res);
+        }
         const token = await BlockchainService.balance(
           from_campaign_wallet.address
         );
