@@ -14,7 +14,7 @@ const Validator = require('validatorjs');
 const {Response} = require('../libs');
 
 const moment = require('moment');
-const {HttpStatusCode, BeneficiarySource} = require('../utils');
+const {HttpStatusCode, compareHash, BeneficiarySource} = require('../utils');
 const {type} = require('../libs/Utils');
 class BeneficiariesController {
   static async getAllUsers(req, res) {
@@ -1048,9 +1048,8 @@ class BeneficiariesController {
     try {
       const rules = {
         from_wallet: 'required|string|in:personal,campaign',
-        to_wallet: 'required|string|in:personal,campaign',
         username: 'required|string',
-        pin: 'required|numeric',
+        pin: 'size:4|required',
         campaignId: 'string',
         amount: 'required|numeric'
       };
@@ -1061,15 +1060,17 @@ class BeneficiariesController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+
       const user = await UserService.findByUsername(data.username);
+
       if (!user) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Account not found'
+          'Receiver account not found'
         );
         return Response.send(res);
       }
-      if (!data.pin) {
+      if (!req.user.pin) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'PIN not found. Set PIN first.'
@@ -1077,7 +1078,7 @@ class BeneficiariesController {
         return Response.send(res);
       }
 
-      if (!compareHash(user.pin, data.pin)) {
+      if (!compareHash(data.pin, req.user.pin)) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Invalid or wrong old PIN.'
@@ -1085,11 +1086,18 @@ class BeneficiariesController {
         return Response.send(res);
       }
 
-      if (data.from_wallet === 'personal' && data.to_wallet === 'personal') {
-        const tokenWallet = await BlockchainService.setUserKeypair(
-          `user_${req.user.id}campaign_${data.campaignId}`
+      const to_personal_wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (data.from_wallet === 'personal') {
+        const from_personal_wallet = await WalletService.findSingleWallet({
+          UserId: req.user.id,
+          CampaignId: null
+        });
+        const token = await BlockchainService.balance(
+          from_personal_wallet.address
         );
-        const token = await BlockchainService.balance(tokenWallet.address);
         const balance = Number(token.Balance.split(',').join(''));
         if (balance < data.amount) {
           Response.setError(
@@ -1098,17 +1106,10 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-        const senderWallet = await WalletService.findSingleWallet({
-          UserId: req.user.id,
-          CampaignId: null
-        });
-        const receiveWallet = await WalletService.findSingleWallet({
-          UserId: user.id,
-          CampaignId: null
-        });
+
         await QueueService.BeneficiaryTransfer(
-          senderWallet,
-          receiveWallet,
+          from_personal_wallet,
+          to_personal_wallet,
           data.amount
         );
         Response.setSuccess(
@@ -1118,11 +1119,19 @@ class BeneficiariesController {
         return Response.send(res);
       }
       //Personal to campaign
-      if (data.from_wallet === 'campaign' && data.to_wallet === 'personal') {
-        const tokenWallet = await BlockchainService.setUserKeypair(
-          `user_${req.user.id}campaign_${data.campaignId}`
+      if (data.from_wallet === 'campaign') {
+        const from_campaign_wallet = await WalletService.findSingleWallet({
+          UserId: req.user.id,
+          CampaignId: data.campaignId
+        });
+
+        const campaign_wallet = await WalletService.findSingleWallet({
+          UserId: null,
+          CampaignId: data.campaignId
+        });
+        const token = await BlockchainService.balance(
+          from_campaign_wallet.address
         );
-        const token = await BlockchainService.balance(tokenWallet.address);
         const balance = Number(token.Balance.split(',').join(''));
         if (balance < data.amount) {
           Response.setError(
@@ -1131,18 +1140,12 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-        const senderWallet = await WalletService.findSingleWallet({
-          UserId: req.user.id,
-          CampaignId: data.campaignId
-        });
-        const receiveWallet = await WalletService.findSingleWallet({
-          UserId: user.id,
-          CampaignId: null
-        });
+
         await QueueService.BeneficiaryTransfer(
-          senderWallet,
-          receiveWallet,
-          data.amount
+          from_campaign_wallet,
+          to_personal_wallet,
+          data.amount,
+          campaign_wallet
         );
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
@@ -1150,7 +1153,13 @@ class BeneficiariesController {
         );
         return Response.send(res);
       }
-    } catch (error) {}
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error
+      );
+      return Response.send(res);
+    }
   }
 }
 

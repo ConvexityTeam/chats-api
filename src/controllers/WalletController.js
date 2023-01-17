@@ -60,11 +60,11 @@ class WalletController {
     try {
       const loger = Logger;
 
-      const user = await BlockchainService.setUserKeypair(
-        `organisation_${req.organisation.id}`
-      );
-      const token = await BlockchainService.balance(user.address);
-      const balance = Number(token.Balance.split(',').join(''));
+      // const user = await BlockchainService.setUserKeypair(
+      //   `organisation_${req.organisation.id}`
+      // );
+      // const token = await BlockchainService.balance(user.address);
+      // const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
       const uuid = req.params.wallet_id;
       if (uuid) {
@@ -103,7 +103,7 @@ class WalletController {
       const MainWallet = wallet.toObject();
       total_deposit = total_deposit || 0;
       spend_for_campaign = spend_for_campaign || 0;
-      MainWallet.balance = balance;
+      // MainWallet.balance = balance;
       MainWallet.fiat_balance = balance;
       MainWallet.address = user.address;
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {

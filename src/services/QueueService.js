@@ -230,7 +230,12 @@ class QueueService {
     return transaction;
   }
 
-  static async BeneficiaryTransfer(senderWallet, receiverWallet, amount) {
+  static async BeneficiaryTransfer(
+    senderWallet,
+    receiverWallet,
+    amount,
+    campaignWallet
+  ) {
     const transaction = await Transaction.create({
       amount,
       reference: generateTransactionRef(),
@@ -238,8 +243,8 @@ class QueueService {
       transaction_origin: 'wallet',
       transaction_type: 'transfer',
       ReceiverWalletId: receiverWallet.uuid,
-      SenderWalletId: senderWallet.uuid,
-      BeneficiaryId: beneficiaryWallet.UserId,
+      SenderWalletId: campaignWallet.uuid,
+      BeneficiaryId: senderWallet.UserId,
       narration: 'transfer between beneficiaries'
     });
 
@@ -247,6 +252,7 @@ class QueueService {
       senderWallet,
       receiverWallet,
       amount,
+      campaignWallet,
       transaction
     };
     beneficiaryFundBeneficiary.send(

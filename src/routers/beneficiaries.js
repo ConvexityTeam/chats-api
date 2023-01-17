@@ -125,6 +125,11 @@ router.post(
   AuthController.beneficiaryRegisterSelf
 );
 
+router.post(
+  '/transfer/beneficiary',
+  BeneficiaryAuth,
+  BeneficiaryController.transfer
+);
 router
   .route('/campaigns')
   .get(BeneficiaryAuth, CampaignController.getBeneficiaryCampaigns);
