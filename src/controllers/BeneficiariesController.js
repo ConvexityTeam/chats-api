@@ -1090,14 +1090,17 @@ class BeneficiariesController {
         UserId: user.id,
         CampaignId: null
       });
+      const address = await BlockchainService.setUserKeypair(`user_${user.id}`);
+      to_personal_wallet.address = address.address;
       if (data.from_wallet === 'personal') {
         const from_personal_wallet = await WalletService.findSingleWallet({
           UserId: req.user.id,
           CampaignId: null
         });
-        const token = await BlockchainService.balance(
-          from_personal_wallet.address
+        const address = await BlockchainService.setUserKeypair(
+          `user_${req.user.id}`
         );
+        const token = await BlockchainService.balance(address.address);
         const balance = Number(token.Balance.split(',').join(''));
         if (balance < data.amount) {
           Response.setError(
@@ -1137,6 +1140,7 @@ class BeneficiariesController {
           UserId: null,
           CampaignId: data.campaignId
         });
+
         if (!campaign_wallet) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
@@ -1144,10 +1148,14 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-        const token = await BlockchainService.balance(
-          from_campaign_wallet.address
+        const address = await BlockchainService.setUserKeypair(
+          `user_${req.user.id}campaign_${campaign_wallet.CampaignId}`
         );
+
+        const token = await BlockchainService.balance(address.address);
+
         const balance = Number(token.Balance.split(',').join(''));
+
         if (balance < data.amount) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,

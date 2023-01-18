@@ -738,6 +738,7 @@ RabbitMq['default']
           transaction
         } = msg.getContent();
         let transfer;
+        let confirm;
         if (campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}campaign_${senderWallet.CampaignId}`
@@ -746,15 +747,24 @@ RabbitMq['default']
           const campaign = await BlockchainService.setUserKeypair(
             `campaign_${senderWallet.CampaignId}`
           );
-
+          console.log(
+            campaign.address,
+            receiverWallet.address,
+            beneficiary.privateKey,
+            amount,
+            'campaign.address,receiverWallet.address, beneficiary.privateKey, amount'
+          );
           transfer = await BlockchainService.transferFrom(
             campaign.address,
             receiverWallet.address,
             beneficiary.privateKey,
             amount
           );
+          confirm = await BlockchainService.confirmTransaction(
+            transfer.TransferedFrom
+          );
         }
-
+        Logger.info('Passed');
         if (!campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}`
@@ -764,14 +774,15 @@ RabbitMq['default']
             receiverWallet.address,
             amount
           );
+          confirm = await BlockchainService.confirmTransaction(
+            transfer.Transfered
+          );
         }
 
-        const confirm = await BlockchainService.confirmTransaction(
-          transfer.TransferedFrom
-        );
         if (!confirm) {
           await update_transaction({status: 'failed'}, transaction);
           msg.nack();
+          Logger.error('Not confirmed');
           return null;
         }
         await deductWalletAmount(amount, senderWallet.uuid);
@@ -779,9 +790,14 @@ RabbitMq['default']
           (await deductWalletAmount(amount, campaignWallet.uuid));
         await addWalletAmount(amount, receiverWallet.uuid);
         await update_transaction(
-          {status: 'success', is_approved: true},
+          {
+            status: 'success',
+            is_approved: true,
+            transaction_hash: transfer.Transfered || transfer.TransferedFrom
+          },
           transaction.uuid
         );
+        Logger.info('Transaction successful');
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
