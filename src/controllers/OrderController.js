@@ -87,11 +87,10 @@ class OrderController {
         Logger.error(`Order ${data.order.status}`);
         return Response.send(res);
       }
-      const campaign_token = await BlockchainService.setUserKeypair(
-        `user_${req.user.id}campaign_${data.order.CampaignId}`
-      );
-      const token = await BlockchainService.balance(campaign_token.address);
-      const balance = Number(token.Balance.split(',').join(''));
+      // const campaign_token = await BlockchainService.setUserKeypair(
+      //   `user_${req.user.id}campaign_${data.order.CampaignId}`
+      // );
+
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: data.order.CampaignId,
         UserId: null
@@ -103,6 +102,15 @@ class OrderController {
         id,
         data.order.CampaignId
       );
+
+      const token = await BlockchainService.allowance(
+        campaignWallet.address,
+        beneficiaryWallet.address
+      );
+      Logger.info(`Beneficiary wallet: ${JSON.stringify(beneficiaryWallet)}`);
+      const balance = Number(token.Allowed.split(',').join(''));
+      Logger.info(`Beneficiary Blockchain Balance: ${balance}`);
+      Logger.info(`Product price: ${data.total_cost}`);
 
       if (!beneficiaryWallet) {
         Response.setError(
