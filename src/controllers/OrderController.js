@@ -102,7 +102,12 @@ class OrderController {
         id,
         data.order.CampaignId
       );
-      const token = await BlockchainService.balance(beneficiaryWallet.address);
+
+      const token = await BlockchainService.allowance(
+        campaignWallet.address,
+        beneficiaryWallet.address
+      );
+      Logger.info(`Beneficiary wallet: ${JSON.stringify(token)}`);
       const balance = Number(token.Balance.split(',').join(''));
       Logger.info(`Beneficiary Blockchain Balance: ${balance}`);
       Logger.info(`Product price: ${data.total_cost}`);
