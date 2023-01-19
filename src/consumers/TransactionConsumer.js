@@ -381,10 +381,7 @@ RabbitMq['default']
               beneficiaryKeyPair.address,
               share
             );
-          const confirm = await BlockchainService.confirmTransaction(
-            approve_to_spend.Approved
-          );
-          if (!confirm) {
+          if (!approve_to_spend) {
             await update_transaction({status: 'failed'}, transaction.uuid);
             benefitIndex = index;
             msg.nack();
@@ -583,10 +580,8 @@ RabbitMq['default']
           vendor.privateKey,
           amount
         );
-        const confirm = await BlockchainService.confirmTransaction(
-          redeem.Redeemed
-        );
-        if (!confirm) {
+
+        if (!redeem) {
           msg.nack();
           await update_transaction({status: 'failed'}, transaction.uuid);
         }
@@ -630,10 +625,8 @@ RabbitMq['default']
           beneficiary.address,
           amount_disburse
         );
-        const confirm = await BlockchainService.confirmTransaction(
-          approve_to_spend.Approved
-        );
-        if (!confirm) {
+
+        if (!approve_to_spend) {
           await update_transaction({status: 'failed'}, transaction.uuid);
           msg.nack();
           return;
@@ -679,16 +672,14 @@ RabbitMq['default']
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
+        Logger.info(JSON.stringify(vendor));
         const transfer = await BlockchainService.transferFrom(
           campaign.address,
           vendor.address,
           beneficiary.privateKey,
           amount
         );
-        const confirm = await BlockchainService.confirmTransaction(
-          transfer.TransferedFrom
-        );
-        if (!confirm) {
+        if (!transfer) {
           await update_transaction({status: 'failed'}, transaction);
           await update_order(order.reference, {status: 'failed'});
           msg.nack();
