@@ -12,6 +12,7 @@ const {
   TRANSFER_TO,
   PAY_FOR_PRODUCT,
   PAYSTACK_WITHDRAW,
+  TRANSFER_FROM_TO_BENEFICIARY,
   PAYSTACK_VENDOR_WITHDRAW,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_CAMPAIGN_DEPOSIT,
@@ -80,6 +81,13 @@ const fundBeneficiaryBankAccount = RabbitMq['default'].declareQueue(
 const payForProduct = RabbitMq['default'].declareQueue(PAY_FOR_PRODUCT, {
   durable: true
 });
+
+const beneficiaryFundBeneficiary = RabbitMq['default'].declareQueue(
+  TRANSFER_FROM_TO_BENEFICIARY,
+  {
+    durable: true
+  }
+);
 
 class QueueService {
   static createWallet(ownerId, wallet_type, CampaignId = null) {
@@ -215,6 +223,39 @@ class QueueService {
       realBudget
     };
     approveCampaignAndFund.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+    return transaction;
+  }
+
+  static async BeneficiaryTransfer(
+    senderWallet,
+    receiverWallet,
+    amount,
+    campaignWallet
+  ) {
+    const transaction = await Transaction.create({
+      amount,
+      reference: generateTransactionRef(),
+      status: 'processing',
+      transaction_origin: 'wallet',
+      transaction_type: 'transfer',
+      ReceiverWalletId: receiverWallet.uuid,
+      SenderWalletId: campaignWallet.uuid,
+      BeneficiaryId: senderWallet.UserId,
+      narration: 'transfer between beneficiaries'
+    });
+
+    const payload = {
+      senderWallet,
+      receiverWallet,
+      amount,
+      campaignWallet,
+      transaction
+    };
+    beneficiaryFundBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'
       })

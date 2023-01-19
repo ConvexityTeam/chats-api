@@ -26,9 +26,13 @@ RabbitMq['default']
                 'campaign_' + content.CampaignId
           }`
         );
-        if (token) {
+        const confirm = await BlockchainService.confirmTransaction(
+          token.data.AddedUser
+        );
+
+        if (confirm) {
           await WalletService.updateOrCreate(content, {
-            ...token
+            address: token.keyPair.address
           });
           Logger.info('Account Wallet Created');
           msg.ack();

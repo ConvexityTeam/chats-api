@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+const {Router} = require('express');
 const {
   WalletController,
   OrganisationController,
@@ -367,6 +368,15 @@ router
     CampaignController.cryptoPayment
   );
 router
+  .route('/:organisation_id/campaign-form/:campaign_id')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.campaignForm
+  );
+router
   .route('/:organisation_id/task/:campaign_id/fund_beneficiary')
   .post(
     NgoAdminAuth,
@@ -515,6 +525,16 @@ router
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.approvedAllbeneficiaries
+  );
+router
+  .route('/:organisation_id/campaigns/:campaign_id/beneficiaries/reject')
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    OrganisationController.rejectAllbeneficiaries
   );
 router
   .route('/products/:vendor_id')

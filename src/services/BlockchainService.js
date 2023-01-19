@@ -154,7 +154,7 @@ class BlockchainService {
           `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`
         );
         Logger.info(`User Added`);
-        resolve(data);
+        resolve({data, keyPair});
       } catch (error) {
         Logger.error(
           `Adding User Error: ${JSON.stringify(error.response.data)}`

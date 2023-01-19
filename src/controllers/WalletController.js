@@ -4,12 +4,14 @@ const {
   WalletService,
   QueueService,
   TransactionService,
-  CampaignService,
+  OrderService,
+  BlockchainService,
+  CampaignService
 } = require('../services');
 const {Logger, Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const {Op} = require('sequelize');
-const { logger } = require('../libs/Logger');
+const {logger} = require('../libs/Logger');
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
@@ -17,24 +19,24 @@ class WalletController {
       const reference = req.params.reference;
       if (!reference) {
         const transactions = await TransactionService.findOrgnaisationTransactions(
-          OrganisationId,
+          OrganisationId
         );
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Organisation Transactions',
-          transactions,
+          transactions
         );
         return Response.send(res);
       }
 
       const transaction = await TransactionService.findTransaction({
         OrganisationId,
-        reference,
+        reference
       });
       if (!transaction) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Transaction not found.',
+          'Transaction not found.'
         );
         return Response.send(res);
       }
@@ -42,14 +44,14 @@ class WalletController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Transaction Details',
-        transaction,
+        transaction
       );
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.',
+        'Server Error: Unexpected error occured.'
       );
       return Response.send(res);
     }
@@ -57,36 +59,42 @@ class WalletController {
   static async getOrganisationWallet(req, res) {
     try {
       const loger = Logger;
+
+      const user = await BlockchainService.setUserKeypair(
+        `organisation_${req.organisation.id}`
+      );
+      const token = await BlockchainService.balance(user.address);
+      const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
       const uuid = req.params.wallet_id;
       if (uuid) {
         return WalletController._handleSingleWallet(res, {
           OrganisationId,
-          uuid,
+          uuid
         });
       }
 
       let {
-        total: total_deposit,
+        total: total_deposit
       } = await TransactionService.getTotalTransactionAmount({
         OrganisationId,
         status: 'success',
-        transaction_type: 'deposit',
+        transaction_type: 'deposit'
       });
 
       let {
-        total: spend_for_campaign,
+        total: spend_for_campaign
       } = await TransactionService.getTotalTransactionAmount({
         OrganisationId,
         status: 'success',
         transaction_type: 'transfer',
         CampaignId: {
-          [Op.not]: null,
-        },
+          [Op.not]: null
+        }
       });
 
       const wallet = await WalletService.findMainOrganisationWallet(
-        OrganisationId,
+        OrganisationId
       );
       if (!wallet) {
         QueueService.createWallet(OrganisationId, 'organisation');
@@ -95,18 +103,20 @@ class WalletController {
       const MainWallet = wallet.toObject();
       total_deposit = total_deposit || 0;
       spend_for_campaign = spend_for_campaign || 0;
-
+      MainWallet.balance = balance;
+      MainWallet.fiat_balance = balance;
+      MainWallet.address = user.address;
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
         MainWallet,
         total_deposit,
-        spend_for_campaign,
+        spend_for_campaign
       });
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.',
+        'Server Error: Unexpected error occured.'
       );
       return Response.send(res);
     }
@@ -120,38 +130,38 @@ class WalletController {
       if (CampaignId) {
         const wallet = await WalletService.findCampaignFundWallet(
           OrganisationId,
-          CampaignId,
+          CampaignId
         );
         if (!wallet) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-            'Campaign wallet not found.',
+            'Campaign wallet not found.'
           );
         } else {
           Response.setSuccess(
             HttpStatusCode.STATUS_OK,
             'Campaign Wallet',
-            wallet.toObject(),
+            wallet.toObject()
           );
         }
         return Response.send(res);
       }
 
       const wallets = await WalletService.findOrganisationCampaignWallets(
-        OrganisationId,
+        OrganisationId
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign wallets',
-        wallets,
+        wallets
       );
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.',
+        'Server Error: Unexpected error occured.'
       );
       return Response.send(res);
     }
@@ -165,33 +175,33 @@ class WalletController {
       const organisation = req.organisation;
       organisation.dataValues.email = req.user.email;
       const wallet = await WalletService.findMainOrganisationWallet(
-        organisation_id,
+        organisation_id
       );
       if (!wallet) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Oganisation wallet not found.',
+          'Oganisation wallet not found.'
         );
       }
-      logger.info(`Initiating PayStack Transaction`)
+      logger.info(`Initiating PayStack Transaction`);
       const response = await PaystackService.buildDepositData(
         organisation,
         data.amount,
-        data.currency,
+        data.currency
       );
-        logger.info(`Initiated PayStack Transaction`)
+      logger.info(`Initiated PayStack Transaction`);
       //QueueService.createPayStack(wallet.address, data.amount)
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Deposit data generated.',
-        response,
+        response
       );
       return Response.send(res);
     } catch (error) {
-      logger.error(`Error Initiating PayStack Transaction: ${error}`)
+      logger.error(`Error Initiating PayStack Transaction: ${error}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please retry.',
+        'Request failed. Please retry.'
       );
       return Response.send(res);
     }
@@ -204,22 +214,22 @@ class WalletController {
         'channel',
         'service',
         'status',
-        'approved',
+        'approved'
       ]);
       const records = await DepositService.findOrgDeposits(
         OrganisationId,
-        filter,
+        filter
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Deposit history.',
-        records,
+        records
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Request failed.',
+        'Server Error: Request failed.'
       );
       return Response.send(res);
     }
@@ -231,24 +241,24 @@ class WalletController {
       const reference = req.params.reference;
       const record = await DepositService.findOrgDepositByRef(
         OrganisationId,
-        reference,
+        reference
       );
       !record &&
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Deposit record not found.',
+          'Deposit record not found.'
         );
       !!record &&
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Deposit record found.',
-          record,
+          record
         );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Request failed.',
+        'Server Error: Request failed.'
       );
       return Response.send(res);
     }
@@ -260,26 +270,26 @@ class WalletController {
     try {
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
-        organisation_id,
+        organisation_id
       );
       if (campaign) {
         //const balance = campaign.Wallet.balance
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Balance Retrieved .',
-          campaign,
+          campaign
         );
         return Response.send(res);
       }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `No Campaign with ID: ${campaign_id}`,
+        `No Campaign with ID: ${campaign_id}`
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Request failed.' + error,
+        'Server Error: Request failed.' + error
       );
       return Response.send(res);
     }
@@ -291,26 +301,26 @@ class WalletController {
     try {
       const campaign = await WalletService.findUserWallets(
         campaign_id,
-        organisation_id,
+        organisation_id
       );
       if (campaign) {
         const balance = campaign.Wallet.balance;
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Balance Retrieved .',
-          balance,
+          balance
         );
         return Response.send(res);
       }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `No Campaign with ID: ${campaign_id}`,
+        `No Campaign with ID: ${campaign_id}`
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Request failed.' + error,
+        'Server Error: Request failed.' + error
       );
       return Response.send(res);
     }
@@ -321,13 +331,13 @@ class WalletController {
     if (!wallet) {
       Response.setError(
         HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-        'Wallet not found',
+        'Wallet not found'
       );
     } else {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Wallet details',
-        wallet.toObject(),
+        wallet.toObject()
       );
     }
     return Response.send(res);

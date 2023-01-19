@@ -10,7 +10,7 @@ const {
   TaskService,
   BlockchainService
 } = require('../services');
-
+const Validator = require('validatorjs');
 const db = require('../models');
 const {Op} = require('sequelize');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
@@ -338,6 +338,10 @@ class CampaignController {
     const {token_type} = req.body;
 
     try {
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${campaign_id}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
       const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(
         campaign_id
       );
@@ -367,7 +371,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.amount == 0) {
+      if (token.Balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund campaign wallet.'
@@ -405,6 +409,11 @@ class CampaignController {
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
+      const organisation_token = await BlockchainService.setUserKeypair(
+        `organisation_${organisation_id}`
+      );
+      const token = await BlockchainService.balance(organisation_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
         organisation_id
@@ -431,7 +440,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.budget > OrgWallet.balance || OrgWallet.balance == 0) {
+      if (campaign.budget > balance || balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund organisation wallet.'
@@ -439,7 +448,11 @@ class CampaignController {
         return Response.send(res);
       }
 
-      QueueService.CampaignApproveAndFund(campaign, campaignWallet, OrgWallet);
+      await QueueService.CampaignApproveAndFund(
+        campaign,
+        campaignWallet,
+        OrgWallet
+      );
       Logger.info('Processing Transfer From NGO Wallet to Campaign Wallet');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -850,6 +863,11 @@ class CampaignController {
       let assignmentTask = [];
       const campaignId = req.params.campaign_id;
       const OrganisationId = req.params.organisation_id;
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${campaignId}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
       const campaign = await CampaignService.getCampaignWithBeneficiaries(
         campaignId
       );
@@ -897,7 +915,8 @@ class CampaignController {
           }
         });
       }
-
+      campaign.dataValues.balance = balance;
+      campaign.dataValues.address = campaign_token.address;
       campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length;
       campaign.dataValues.task_count = campaign.Jobs.length;
       campaign.dataValues.beneficiary_share =
@@ -997,6 +1016,38 @@ class CampaignController {
             : 'beneficiary'
         }`,
         onboard
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async campaignForm(req, res) {
+    const id = req.params.campaign_id;
+    const data = req.body;
+    try {
+      const rules = {
+        answers: 'required',
+        question: 'required|string',
+        select: 'required|string'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      data.campaignId = id;
+      const form = await CampaignService.campaignForm(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaign form created',
+        form
       );
       return Response.send(res);
     } catch (error) {

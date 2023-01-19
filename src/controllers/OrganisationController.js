@@ -1262,6 +1262,7 @@ class OrganisationController {
   static async approvedAllbeneficiaries(req, res) {
     try {
       const campaign = req.campaign;
+      const ids = req.body.ids;
 
       if (campaign.is_funded) {
         Response.setError(
@@ -1272,8 +1273,41 @@ class OrganisationController {
       }
       const [
         approvals
-      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(campaign.id);
+      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(
+        campaign.id,
+        ids
+      );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
+        approvals
+      });
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Please retry.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async rejectAllbeneficiaries(req, res) {
+    try {
+      const campaign = req.campaign;
+      const ids = req.body.ids;
+
+      if (campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign Fund Already Disbursed.'
+        );
+        return Response.send(res);
+      }
+      const [
+        approvals
+      ] = await BeneficiaryService.rejectAllCampaignBeneficiaries(
+        campaign.id,
+        ids
+      );
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries rejected!', {
         approvals
       });
       return Response.send(res);

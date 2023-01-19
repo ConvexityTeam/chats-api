@@ -7,7 +7,8 @@ const {
   FUND_BENEFICIARY,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_VENDOR_WITHDRAW,
-  FUND_BENEFICIARIES
+  FUND_BENEFICIARIES,
+  TRANSFER_FROM_TO_BENEFICIARY
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -100,6 +101,14 @@ const processCampaignPaystack = RabbitMq['default'].declareQueue(
   {
     durable: true,
     prefetch: 1
+  }
+);
+
+const beneficiaryFundBeneficiary = RabbitMq['default'].declareQueue(
+  TRANSFER_FROM_TO_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
   }
 );
 
@@ -709,6 +718,84 @@ RabbitMq['default']
 
       .then(_ => {
         Logger.info(`Running Process For Vendor Order Queue`);
+      });
+    beneficiaryFundBeneficiary
+      .activateConsumer(async msg => {
+        const {
+          senderWallet,
+          receiverWallet,
+          amount,
+          campaignWallet,
+          transaction
+        } = msg.getContent();
+        let transfer;
+        let confirm;
+        if (campaignWallet) {
+          const beneficiary = await BlockchainService.setUserKeypair(
+            `user_${senderWallet.UserId}campaign_${senderWallet.CampaignId}`
+          );
+
+          const campaign = await BlockchainService.setUserKeypair(
+            `campaign_${senderWallet.CampaignId}`
+          );
+          console.log(
+            campaign.address,
+            receiverWallet.address,
+            beneficiary.privateKey,
+            amount,
+            'campaign.address,receiverWallet.address, beneficiary.privateKey, amount'
+          );
+          transfer = await BlockchainService.transferFrom(
+            campaign.address,
+            receiverWallet.address,
+            beneficiary.privateKey,
+            amount
+          );
+          confirm = await BlockchainService.confirmTransaction(
+            transfer.TransferedFrom
+          );
+        }
+        Logger.info('Passed');
+        if (!campaignWallet) {
+          const beneficiary = await BlockchainService.setUserKeypair(
+            `user_${senderWallet.UserId}`
+          );
+          transfer = await BlockchainService.transferTo(
+            beneficiary.privateKey,
+            receiverWallet.address,
+            amount
+          );
+          confirm = await BlockchainService.confirmTransaction(
+            transfer.Transfered
+          );
+        }
+
+        if (!confirm) {
+          await update_transaction({status: 'failed'}, transaction);
+          msg.nack();
+          Logger.error('Not confirmed');
+          return null;
+        }
+        await deductWalletAmount(amount, senderWallet.uuid);
+        campaignWallet &&
+          (await deductWalletAmount(amount, campaignWallet.uuid));
+        await addWalletAmount(amount, receiverWallet.uuid);
+        await update_transaction(
+          {
+            status: 'success',
+            is_approved: true,
+            transaction_hash: transfer.Transfered || transfer.TransferedFrom
+          },
+          transaction.uuid
+        );
+        Logger.info('Transaction successful');
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+
+      .then(_ => {
+        Logger.info(`Running Process For Beneficiary to Beneficiary Transfer`);
       });
   })
   .catch(error => {
