@@ -92,6 +92,8 @@ class OrderController {
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
+      Logger.info(`Beneficiary Blockchain Balance: ${balance}`);
+      Logger.info(`Product price: ${data.total_cost}`);
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: data.order.CampaignId,
         UserId: null
