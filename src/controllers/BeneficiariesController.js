@@ -525,7 +525,7 @@ class BeneficiariesController {
       const _beneficiary = await BeneficiaryService.beneficiaryProfile(
         req.user.id
       );
-      const Wallets = _beneficiary.Wallets.map(wallet => {
+      const Wallets = _beneficiary.Wallets.map(async wallet => {
         total_wallet_balance += wallet.balance;
         // total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
         // total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
@@ -534,6 +534,27 @@ class BeneficiariesController {
         // delete w.SentTransactions;
         return w;
       });
+
+      // _beneficiary.Wallets.map(async wallet => {
+      //   if (!wallet.CampaignId) {
+      //     const address = await BlockchainService.setUserKeypair(
+      //       `user_${req.user.id}`
+      //     );
+      //     const token = await BlockchainService.balance(address.address);
+      //     const balance = Number(token.Balance.split(',').join(''));
+      //     total_wallet_balance += balance;
+      //     console.log('Not found campaign id', balance);
+      //   }
+      //   if (wallet.CampaignId) {
+      //     const address = await BlockchainService.setUserKeypair(
+      //       `user_${req.user.id}campaign_${wallet.CampaignId}`
+      //     );
+      //     const token = await BlockchainService.balance(address.address);
+      //     const balance = Number(token.Balance.split(',').join(''));
+      //     total_wallet_balance += balance;
+      //     console.log('found campaign id', balance);
+      //   }
+      // });
 
       const beneficiary = _beneficiary.toObject();
 
