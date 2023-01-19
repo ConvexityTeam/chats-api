@@ -485,18 +485,24 @@ class BeneficiariesController {
   }
   static async getWallets(req, res) {
     try {
+      let total = 0;
       const Wallets = await WalletService.findUserWallets(req.user.id);
-      const total_balance = Wallets.map(async wallet => {
-        let total = 0;
-        if (wallet.CampaignId) {
-          const campaign_token = await BlockchainService.setUserKeypair(
-            `user_${req.user.id}campaign_${wallet.CampaignId}`
-          );
-          const token = await BlockchainService.balance(campaign_token.address);
-          total += Number(token.Balance.split(',').join(''));
-        }
-        return total;
-      });
+      const total_balance = Wallets.map(wallet => wallet.balance).reduce(
+        (a, b) => a + b,
+        0
+      );
+
+      // const total_balance = Wallets.map(wallet => {
+      //   total += wallet.balance;
+      //   const w = wallet.toObject();
+      // const campaign_token = await BlockchainService.setUserKeypair(
+      //   `user_${req.user.id}campaign_${wallet.CampaignId}`
+      // );
+      // const token = await BlockchainService.balance(campaign_token.address);
+      // total += Number(token.Balance.split(',').join(''));
+
+      //   return w;
+      // });
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary wallets', {
         total_balance,
         Wallets
