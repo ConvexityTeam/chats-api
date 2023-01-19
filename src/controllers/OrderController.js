@@ -107,8 +107,8 @@ class OrderController {
         campaignWallet.address,
         beneficiaryWallet.address
       );
-      Logger.info(`Beneficiary wallet: ${JSON.stringify(token)}`);
-      const balance = Number(token.Balance.split(',').join(''));
+      Logger.info(`Beneficiary wallet: ${JSON.stringify(beneficiaryWallet)}`);
+      const balance = Number(token.Allowed.split(',').join(''));
       Logger.info(`Beneficiary Blockchain Balance: ${balance}`);
       Logger.info(`Product price: ${data.total_cost}`);
 
