@@ -738,13 +738,6 @@ RabbitMq['default']
           const campaign = await BlockchainService.setUserKeypair(
             `campaign_${senderWallet.CampaignId}`
           );
-          console.log(
-            campaign.address,
-            receiverWallet.address,
-            beneficiary.privateKey,
-            amount,
-            'campaign.address,receiverWallet.address, beneficiary.privateKey, amount'
-          );
           transfer = await BlockchainService.transferFrom(
             campaign.address,
             receiverWallet.address,
@@ -755,7 +748,6 @@ RabbitMq['default']
             transfer.TransferedFrom
           );
         }
-        Logger.info('Passed');
         if (!campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}`

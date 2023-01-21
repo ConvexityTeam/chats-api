@@ -531,7 +531,7 @@ class BeneficiariesController {
       const _beneficiary = await BeneficiaryService.beneficiaryProfile(
         req.user.id
       );
-      const Wallets = _beneficiary.Wallets.map(async wallet => {
+      const Wallets = _beneficiary.Wallets.map(wallet => {
         total_wallet_balance += wallet.balance;
         // total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
         // total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
