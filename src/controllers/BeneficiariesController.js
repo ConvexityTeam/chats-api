@@ -1117,17 +1117,29 @@ class BeneficiariesController {
         UserId: user.id,
         CampaignId: null
       });
-      const address = await BlockchainService.setUserKeypair(`user_${user.id}`);
-      to_personal_wallet.address = address.address;
+
+      // const address = await BlockchainService.setUserKeypair(`user_${user.id}`);
+      // to_personal_wallet.address = address.address;
       if (data.from_wallet === 'personal') {
         const from_personal_wallet = await WalletService.findSingleWallet({
           UserId: req.user.id,
           CampaignId: null
         });
-        const address = await BlockchainService.setUserKeypair(
-          `user_${req.user.id}`
+
+        if (!from_personal_wallet) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Sender personal wallet not valid'
+          );
+          return Response.send(res);
+        }
+        // const address = await BlockchainService.setUserKeypair(
+        //   `user_${req.user.id}`
+        // );
+
+        const token = await BlockchainService.balance(
+          from_personal_wallet.address
         );
-        const token = await BlockchainService.balance(address.address);
         const balance = Number(token.Balance.split(',').join(''));
         if (balance < data.amount) {
           Response.setError(
@@ -1158,7 +1170,7 @@ class BeneficiariesController {
         if (!from_campaign_wallet) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            'Sender personal wallet not valid'
+            'Beneficiary campaign wallet not valid'
           );
           return Response.send(res);
         }
@@ -1171,15 +1183,18 @@ class BeneficiariesController {
         if (!campaign_wallet) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            'Sender campaign wallet not valid'
+            'Beneficiary campaign wallet not valid'
           );
           return Response.send(res);
         }
-        const address = await BlockchainService.setUserKeypair(
-          `user_${req.user.id}campaign_${campaign_wallet.CampaignId}`
-        );
+        // const address = await BlockchainService.setUserKeypair(
+        //   `user_${req.user.id}campaign_${campaign_wallet.CampaignId}`
+        // );
 
-        const token = await BlockchainService.balance(address.address);
+        const token = await BlockchainService.allowance(
+          campaign_wallet.address,
+          from_campaign_wallet.address
+        );
 
         const balance = Number(token.Balance.split(',').join(''));
 

@@ -50,8 +50,6 @@ class VendorController {
         return wallet.toObject();
       });
 
-      // console.log(aVendor.Wallets[0].Wallet);
-      // aVendor.Wallets[0].balance = balance;
       if (!aVendor) {
         util.setError(404, `Vendor not found.`);
       } else {
