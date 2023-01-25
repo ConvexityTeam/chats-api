@@ -360,30 +360,9 @@ class BeneficiariesService {
       ]
     });
   }
-  static getPagination = (page, size) => {
-    const limit = size ? +size : 3;
-    const offset = page ? page * limit : 0;
 
-    return {limit, offset};
-  };
-  static getPagingData = (data, page, limit) => {
-    const {count: totalItems, rows: tutorials} = data;
-    const currentPage = page ? +page : 0;
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {totalItems, tutorials, totalPages, currentPage};
-  };
-
-  static async findCampaignBeneficiaries(
-    page,
-    size,
-    CampaignId,
-    extraClause = null
-  ) {
-    const {limit, offset} = this.getPagination(page, size);
-    const data = await Beneficiary.findAndCountAll({
-      limit,
-      offset,
+  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
+    return Beneficiary.findAll({
       where: {
         ...extraClause,
         CampaignId
@@ -396,9 +375,6 @@ class BeneficiariesService {
         }
       ]
     });
-
-    const response = this.getPagingData(data, page, limit);
-    return response;
   }
 
   static async getBeneficiariesAdmin() {

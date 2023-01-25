@@ -975,10 +975,7 @@ class OrganisationController {
   static async getCampaignBeneficiaries(req, res) {
     try {
       const CampaignId = req.params.campaign_id;
-      const {page, size} = req.query;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        page,
-        size,
         CampaignId
       );
       Response.setSuccess(
@@ -990,7 +987,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.' + error
+        'Server Error. Unexpected error. Please retry.'
       );
       return Response.send(res);
     }
