@@ -570,8 +570,8 @@ class BeneficiariesService extends Pagination {
               model: Wallet,
               as: 'Wallets',
               where: {
-                CampaignId,
-                was_funded: false
+                CampaignId
+                // was_funded: false
               }
             }
           ]
