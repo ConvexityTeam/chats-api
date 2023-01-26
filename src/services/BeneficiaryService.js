@@ -12,8 +12,8 @@ const {
 const {Op, Sequelize} = require('sequelize');
 const {userConst, walletConst} = require('../constants');
 const moment = require('moment');
-const Pagination = require('../utils/pagination');
-class BeneficiariesService extends Pagination {
+
+class BeneficiariesService {
   static capitalizeFirstLetter(str) {
     let string = str.toLowerCase();
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -362,10 +362,7 @@ class BeneficiariesService extends Pagination {
   }
 
   static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
-    // const {limit, offset} = this.getPagination(page, size);
-    const data = await Beneficiary.findAndCountAll({
-      // limit,
-      // offset,
+    return Beneficiary.findAll({
       where: {
         ...extraClause,
         CampaignId
@@ -378,9 +375,6 @@ class BeneficiariesService extends Pagination {
         }
       ]
     });
-
-    //const response = this.getPagingData(data, page, limit);
-    return data;
   }
 
   static async getBeneficiariesAdmin() {
@@ -552,34 +546,6 @@ class BeneficiariesService extends Pagination {
     });
   }
 
-  static async getApprovedFundedBeneficiaries(CampaignId) {
-    return Beneficiary.findAll({
-      where: {
-        CampaignId,
-        approved: true
-      },
-      include: [
-        {
-          model: User,
-          attributes: {
-            exclude: walletConst.walletExcludes
-          },
-          as: 'User',
-          include: [
-            {
-              model: Wallet,
-              as: 'Wallets',
-              where: {
-                CampaignId,
-                was_funded: false
-              }
-            }
-          ]
-        }
-      ]
-    });
-  }
-
   static async getApprovedBeneficiaries(CampaignId) {
     return Beneficiary.findAll({
       where: {
@@ -599,7 +565,6 @@ class BeneficiariesService extends Pagination {
               as: 'Wallets',
               where: {
                 CampaignId
-                // was_funded: false
               }
             }
           ]
