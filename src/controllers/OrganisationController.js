@@ -1267,7 +1267,7 @@ class OrganisationController {
       if (campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campagin Fund Already Disbursed.'
+          'Campaign Fund Already Disbursed.'
         );
         return Response.send(res);
       }

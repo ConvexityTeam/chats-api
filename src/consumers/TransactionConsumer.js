@@ -391,7 +391,7 @@ RabbitMq['default']
 
           const uuid = wallet.uuid;
           await addWalletAmount(share, uuid);
-          await deductWalletAmount(share, campaignWallet.uuid);
+          // await deductWalletAmount(share, campaignWallet.uuid);
           await update_transaction(
             {status: 'success', is_approved: true},
             transaction.uuid
