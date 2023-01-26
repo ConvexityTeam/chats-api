@@ -362,7 +362,7 @@ RabbitMq['default']
         const parsedAmount =
           parseInt(campaign.budget / beneficiaries.length) *
           beneficiaries.length;
-        for (let [index, beneficiary] of beneficiaries.entries()) {
+        for (let [index, beneficiary] of beneficiaries) {
           let wallet = beneficiary.User.Wallets[0];
           const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
             `user_${wallet.UserId}campaign_${campaign.id}`
