@@ -151,7 +151,6 @@ const addWalletAmount = async (amount, uuid) => {
     balance: Sequelize.literal(`balance + ${amount}`),
     fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
   });
-
   Logger.info(`Wallet amount added with ${amount}`);
   return wallet;
 };

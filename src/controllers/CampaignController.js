@@ -346,6 +346,9 @@ class CampaignController {
       const beneficiaries = await BeneficiaryService.getApprovedFundBeneficiaries(
         campaign_id
       );
+      const realBeneficiaries = beneficiaries
+        .map(exist => exist.User)
+        .filter(x => !!x);
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
         organisation_id
@@ -389,14 +392,14 @@ class CampaignController {
       QueueService.fundBeneficiaries(
         OrgWallet,
         campaignWallet,
-        beneficiaries,
+        realBeneficiaries,
         campaign,
         token_type
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign fund with ${beneficiaries.length} beneficiaries is Processing.`,
-        beneficiaries
+        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`,
+        realBeneficiaries
       );
       return Response.send(res);
     } catch (error) {
