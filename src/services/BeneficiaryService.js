@@ -590,7 +590,7 @@ class BeneficiariesService {
               as: 'Wallets',
               where: {
                 CampaignId,
-                was_funded: true
+                was_funded: false
               }
             }
           ]
