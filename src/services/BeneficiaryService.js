@@ -552,6 +552,34 @@ class BeneficiariesService extends Pagination {
     });
   }
 
+  static async getApprovedFundedBeneficiaries(CampaignId) {
+    return Beneficiary.findAll({
+      where: {
+        CampaignId,
+        approved: true
+      },
+      include: [
+        {
+          model: User,
+          attributes: {
+            exclude: walletConst.walletExcludes
+          },
+          as: 'User',
+          include: [
+            {
+              model: Wallet,
+              as: 'Wallets',
+              where: {
+                CampaignId,
+                was_funded: false
+              }
+            }
+          ]
+        }
+      ]
+    });
+  }
+
   static async getApprovedBeneficiaries(CampaignId) {
     return Beneficiary.findAll({
       where: {
