@@ -338,6 +338,10 @@ RabbitMq['default']
           campaign,
           token_type
         } = msg.getContent();
+        Logger.info(
+          JSON.stringify(beneficiaries),
+          'beneficiaries from consumer'
+        );
         const modulus = campaign.budget % beneficiaries.length;
         const campaignKeyPair = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
