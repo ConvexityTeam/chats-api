@@ -361,12 +361,7 @@ class BeneficiariesService extends Pagination {
     });
   }
 
-  static async findCampaignBeneficiaries(
-    page,
-    size,
-    CampaignId,
-    extraClause = null
-  ) {
+  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
     // const {limit, offset} = this.getPagination(page, size);
     const data = await Beneficiary.findAndCountAll({
       // limit,
