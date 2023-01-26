@@ -381,11 +381,13 @@ RabbitMq['default']
 
           let approve_to_spend;
           if ((benefitIndex && benefitIndex >= index) || !benefitIndex)
-            approve_to_spend = await BlockchainService.approveToSpend(
-              campaignKeyPair.privateKey,
-              beneficiaryKeyPair.address,
-              share
-            );
+            Logger.info('App start');
+          approve_to_spend = await BlockchainService.approveToSpend(
+            campaignKeyPair.privateKey,
+            beneficiaryKeyPair.address,
+            share
+          );
+          Logger.info('App end');
           if (!approve_to_spend) {
             await update_transaction({status: 'failed'}, transaction.uuid);
             benefitIndex = index;
