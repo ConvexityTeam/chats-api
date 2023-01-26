@@ -146,12 +146,12 @@ const deductWalletAmount = async (amount, uuid) => {
 const addWalletAmount = async (amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
-  const funded = await wallet.update({
+  await wallet.update({
     was_funded: true,
     balance: Sequelize.literal(`balance + ${amount}`),
     fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
   });
-  console.log(JSON.stringify(funded));
+
   Logger.info(`Wallet amount added with ${amount}`);
   return wallet;
 };
