@@ -338,10 +338,6 @@ RabbitMq['default']
           campaign,
           token_type
         } = msg.getContent();
-        Logger.info(
-          JSON.stringify(beneficiaries),
-          'beneficiaries from consumer'
-        );
         const modulus = campaign.budget % beneficiaries.length;
         const campaignKeyPair = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
@@ -362,7 +358,7 @@ RabbitMq['default']
         const parsedAmount =
           parseInt(campaign.budget / beneficiaries.length) *
           beneficiaries.length;
-        for (let [index, beneficiary] of beneficiaries) {
+        for (let [index, beneficiary] of beneficiaries.entries()) {
           let wallet = beneficiary.User.Wallets[0];
           const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
             `user_${wallet.UserId}campaign_${campaign.id}`
@@ -381,13 +377,11 @@ RabbitMq['default']
 
           let approve_to_spend;
           if ((benefitIndex && benefitIndex >= index) || !benefitIndex)
-            Logger.info('App start');
-          approve_to_spend = await BlockchainService.approveToSpend(
-            campaignKeyPair.privateKey,
-            beneficiaryKeyPair.address,
-            share
-          );
-          Logger.info('App end');
+            approve_to_spend = await BlockchainService.approveToSpend(
+              campaignKeyPair.privateKey,
+              beneficiaryKeyPair.address,
+              share
+            );
           if (!approve_to_spend) {
             await update_transaction({status: 'failed'}, transaction.uuid);
             benefitIndex = index;

@@ -382,7 +382,7 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (campaign.type === 'campaign' && !realBeneficiaries.length) {
+      if (campaign.type === 'campaign' && !beneficiaries.length) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign has no approved beneficiaries. Please approve beneficiaries.'
@@ -392,14 +392,14 @@ class CampaignController {
       QueueService.fundBeneficiaries(
         OrgWallet,
         campaignWallet,
-        realBeneficiaries,
+        beneficiaries,
         campaign,
         token_type
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`,
-        realBeneficiaries
+        `Campaign fund with ${beneficiaries.length} beneficiaries is Processing.`,
+        beneficiaries
       );
       return Response.send(res);
     } catch (error) {
