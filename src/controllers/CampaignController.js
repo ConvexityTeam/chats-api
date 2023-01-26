@@ -343,7 +343,7 @@ class CampaignController {
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
-      const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(
+      const beneficiaries = await BeneficiaryService.getApprovedFundedBeneficiaries(
         campaign_id
       );
       const campaign = await CampaignService.getCampaignWallet(
