@@ -346,7 +346,6 @@ class OrganisationController {
     try {
       let completed_task = 0;
       const assignmentTask = [];
-      const {page, size} = req.query;
       const OrganisationId = req.params.organisation_id;
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getCampaigns({
@@ -392,7 +391,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error
+        'Request failed. Please try again.'
       );
       return Response.send(res);
     }
