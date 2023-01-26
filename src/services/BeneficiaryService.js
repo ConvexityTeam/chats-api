@@ -12,8 +12,8 @@ const {
 const {Op, Sequelize} = require('sequelize');
 const {userConst, walletConst} = require('../constants');
 const moment = require('moment');
-
-class BeneficiariesService {
+const Pagination = require('../utils/pagination');
+class BeneficiariesService extends Pagination {
   static capitalizeFirstLetter(str) {
     let string = str.toLowerCase();
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -360,19 +360,6 @@ class BeneficiariesService {
       ]
     });
   }
-  static getPagination = (page, size) => {
-    const limit = size ? +size : 3;
-    const offset = page ? page * limit : 0;
-
-    return {limit, offset};
-  };
-  static getPagingData = (data, page, limit) => {
-    const {count: totalItems, rows: tutorials} = data;
-    const currentPage = page ? +page : 0;
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {totalItems, tutorials, totalPages, currentPage};
-  };
 
   static async findCampaignBeneficiaries(
     page,
@@ -380,10 +367,10 @@ class BeneficiariesService {
     CampaignId,
     extraClause = null
   ) {
-    const {limit, offset} = this.getPagination(page, size);
+    // const {limit, offset} = this.getPagination(page, size);
     const data = await Beneficiary.findAndCountAll({
-      limit,
-      offset,
+      // limit,
+      // offset,
       where: {
         ...extraClause,
         CampaignId
@@ -397,8 +384,8 @@ class BeneficiariesService {
       ]
     });
 
-    const response = this.getPagingData(data, page, limit);
-    return response;
+    //const response = this.getPagingData(data, page, limit);
+    return data;
   }
 
   static async getBeneficiariesAdmin() {
@@ -588,7 +575,8 @@ class BeneficiariesService {
               model: Wallet,
               as: 'Wallets',
               where: {
-                CampaignId
+                CampaignId,
+                was_funded: false
               }
             }
           ]

@@ -147,6 +147,7 @@ const addWalletAmount = async (amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
+    was_funded: true,
     balance: Sequelize.literal(`balance + ${amount}`),
     fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
   });

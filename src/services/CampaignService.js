@@ -17,8 +17,9 @@ const {userConst, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
+const Pagination = require('../utils/pagination');
 
-class CampaignService {
+class CampaignService extends Pagination {
   static getACampaignWithBeneficiaries(CampaignId, type) {
     return Campaign.findAll({
       where: {
@@ -387,10 +388,19 @@ class CampaignService {
       // ],
     });
   }
-  static getCampaigns(queryClause = {}) {
+  static async getCampaigns(queryClause = {}) {
     const where = queryClause;
-    return Campaign.findAll({
+
+    // const {limit, offset} = this.getPagination(
+    //   queryClause.page,
+    //   queryClause.size
+    // );
+    delete where.page;
+    delete where.size;
+    const data = await Campaign.findAll({
       order: [['updatedAt', 'ASC']],
+      // limit,
+      // offset,
       where: {
         ...where
       },
@@ -408,6 +418,9 @@ class CampaignService {
       //   "Campaign.id"
       // ],
     });
+
+    //const response = this.getPagingData(data, queryClause.page, limit);
+    return data;
   }
   static getCash4W(OrganisationId) {
     return Campaign.findAll({
