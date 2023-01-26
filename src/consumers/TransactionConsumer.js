@@ -346,14 +346,14 @@ RabbitMq['default']
           `organisation_${campaign.OrganisationId}`
         );
 
-        if (modulus > 0 && !transfer_once) {
-          await BlockchainService.transferTo(
-            campaignKeyPair.privateKey,
-            organisationKeyPair.address,
-            modulus
-          );
-          transfer_once = true;
-        }
+        // if (modulus > 0 && !transfer_once) {
+        //   await BlockchainService.transferTo(
+        //     campaignKeyPair.privateKey,
+        //     organisationKeyPair.address,
+        //     modulus
+        //   );
+        //   transfer_once = true;
+        // }
         const realBudget = campaign.budget;
         const parsedAmount =
           parseInt(campaign.budget / beneficiaries.length) *
@@ -391,6 +391,7 @@ RabbitMq['default']
 
           const uuid = wallet.uuid;
           await addWalletAmount(share, uuid);
+          await deductWalletAmount(share, campaignWallet.uuid);
           await update_transaction(
             {status: 'success', is_approved: true},
             transaction.uuid
