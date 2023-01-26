@@ -976,7 +976,7 @@ class OrganisationController {
   static async getCampaignBeneficiaries(req, res) {
     try {
       const CampaignId = req.params.campaign_id;
-      const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+      const beneficiaries = await BeneficiaryService.getApprovedFundedBeneficiaries(
         CampaignId
       );
       Response.setSuccess(
