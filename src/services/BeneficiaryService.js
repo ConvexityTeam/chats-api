@@ -363,7 +363,7 @@ class BeneficiariesService extends Pagination {
 
   static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
     // const {limit, offset} = this.getPagination(page, size);
-    const data = await Beneficiary.findAndCountAll({
+    return await Beneficiary.findAndCountAll({
       // limit,
       // offset,
       where: {
@@ -380,7 +380,7 @@ class BeneficiariesService extends Pagination {
     });
 
     //const response = this.getPagingData(data, page, limit);
-    return data;
+    // return data;
   }
 
   static async getBeneficiariesAdmin() {
