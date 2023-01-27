@@ -545,7 +545,6 @@ class BeneficiariesService {
       ]
     });
   }
-
   static async getApprovedBeneficiaries(CampaignId) {
     return Beneficiary.findAll({
       where: {
@@ -565,6 +564,33 @@ class BeneficiariesService {
               as: 'Wallets',
               where: {
                 CampaignId
+              }
+            }
+          ]
+        }
+      ]
+    });
+  }
+  static async getApprovedFundBeneficiaries(CampaignId) {
+    return Beneficiary.findAll({
+      where: {
+        CampaignId,
+        approved: true
+      },
+      include: [
+        {
+          model: User,
+          attributes: {
+            exclude: walletConst.walletExcludes
+          },
+          as: 'User',
+          include: [
+            {
+              model: Wallet,
+              as: 'Wallets',
+              where: {
+                CampaignId,
+                was_funded: false
               }
             }
           ]

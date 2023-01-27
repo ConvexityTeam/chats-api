@@ -342,9 +342,13 @@ class CampaignController {
         `campaign_${campaign_id}`
       );
       const token = await BlockchainService.balance(campaign_token.address);
-      const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(
+      const balance = Number(token.Balance.split(',').join(''));
+      const beneficiaries = await BeneficiaryService.getApprovedFundBeneficiaries(
         campaign_id
       );
+      const realBeneficiaries = beneficiaries
+        .map(exist => exist.User && exist)
+        .filter(x => !!x);
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
         organisation_id
@@ -371,14 +375,14 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (token.Balance == 0) {
+      if (balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund campaign wallet.'
         );
         return Response.send(res);
       }
-      if (campaign.type === 'campaign' && !beneficiaries.length) {
+      if (campaign.type === 'campaign' && !realBeneficiaries.length) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign has no approved beneficiaries. Please approve beneficiaries.'
@@ -388,14 +392,14 @@ class CampaignController {
       QueueService.fundBeneficiaries(
         OrgWallet,
         campaignWallet,
-        beneficiaries,
+        realBeneficiaries,
         campaign,
         token_type
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign fund with ${beneficiaries.length} beneficiaries is Processing.`,
-        beneficiaries
+        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`,
+        realBeneficiaries
       );
       return Response.send(res);
     } catch (error) {

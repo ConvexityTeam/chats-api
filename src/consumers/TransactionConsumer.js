@@ -147,6 +147,7 @@ const addWalletAmount = async (amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
+    was_funded: true,
     balance: Sequelize.literal(`balance + ${amount}`),
     fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
   });
@@ -345,14 +346,14 @@ RabbitMq['default']
           `organisation_${campaign.OrganisationId}`
         );
 
-        if (modulus > 0 && !transfer_once) {
-          await BlockchainService.transferTo(
-            campaignKeyPair.privateKey,
-            organisationKeyPair.address,
-            modulus
-          );
-          transfer_once = true;
-        }
+        // if (modulus > 0 && !transfer_once) {
+        //   await BlockchainService.transferTo(
+        //     campaignKeyPair.privateKey,
+        //     organisationKeyPair.address,
+        //     modulus
+        //   );
+        //   transfer_once = true;
+        // }
         const realBudget = campaign.budget;
         const parsedAmount =
           parseInt(campaign.budget / beneficiaries.length) *
@@ -390,6 +391,7 @@ RabbitMq['default']
 
           const uuid = wallet.uuid;
           await addWalletAmount(share, uuid);
+          // await deductWalletAmount(share, campaignWallet.uuid);
           await update_transaction(
             {status: 'success', is_approved: true},
             transaction.uuid
@@ -738,13 +740,6 @@ RabbitMq['default']
           const campaign = await BlockchainService.setUserKeypair(
             `campaign_${senderWallet.CampaignId}`
           );
-          console.log(
-            campaign.address,
-            receiverWallet.address,
-            beneficiary.privateKey,
-            amount,
-            'campaign.address,receiverWallet.address, beneficiary.privateKey, amount'
-          );
           transfer = await BlockchainService.transferFrom(
             campaign.address,
             receiverWallet.address,
@@ -755,7 +750,6 @@ RabbitMq['default']
             transfer.TransferedFrom
           );
         }
-        Logger.info('Passed');
         if (!campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}`
