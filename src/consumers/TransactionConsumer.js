@@ -155,6 +155,18 @@ const addWalletAmount = async (amount, uuid) => {
   return wallet;
 };
 
+const blockchainBalance = async (balance, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    was_funded: true,
+    balance,
+    fiat_balance: balance
+  });
+  Logger.info(`Blockchain Wallet balance is ${balance}`);
+  return wallet;
+};
+
 const create_transaction = async (amount, sender, receiver, args) => {
   const transaction = await Transaction.create({
     amount,
@@ -690,7 +702,10 @@ RabbitMq['default']
         await update_order(order.reference, {status: 'confirmed'});
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
-        await addWalletAmount(amount, vendorWallet.uuid);
+        const token = await BlockchainService.balance(vendorWallet.address);
+        const balance = Number(token.Balance.split(',').join(''));
+        // await addWalletAmount(amount, vendorWallet.uuid);
+        await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
           {status: 'success', is_approved: true},
           transaction
