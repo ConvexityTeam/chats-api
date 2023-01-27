@@ -605,7 +605,7 @@ RabbitMq['default']
           bankAccount.recipient_code,
           'spending'
         );
-        await deductWalletAmount(amount, userWallet.uuid);
+        // await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
         msg.ack();
         return;
