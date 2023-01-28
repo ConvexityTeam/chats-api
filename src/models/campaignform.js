@@ -9,14 +9,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      CampaignForm.hasMany(models.Campaign, {
+        foreignKey: 'formId',
+        as: 'campaigns'
+      });
     }
   }
   CampaignForm.init(
     {
-      question: DataTypes.STRING,
-      select: DataTypes.STRING,
-      answers: DataTypes.JSON,
-      campaignId: DataTypes.INTEGER
+      organisationId: DataTypes.INTEGER,
+      title: DataTypes.STRING,
+      questions: DataTypes.JSON
     },
     {
       sequelize,

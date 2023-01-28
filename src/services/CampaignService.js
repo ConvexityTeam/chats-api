@@ -615,8 +615,21 @@ class CampaignService {
     });
   }
 
+  static async findCampaignForm(id) {
+    return await CampaignForm.findOne({
+      where: {id},
+      include: ['campaigns']
+    });
+  }
   static async campaignForm(data) {
     return await CampaignForm.create(data);
+  }
+  static async getCampaignForm(organisationId) {
+    return await CampaignForm.findAll({
+      order: [['updatedAt', 'ASC']],
+      where: {organisationId},
+      include: ['campaigns']
+    });
   }
 
   // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {

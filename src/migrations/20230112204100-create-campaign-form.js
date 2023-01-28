@@ -8,24 +8,20 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      question: {
+      title: {
         type: Sequelize.STRING,
         allowNull: false
       },
-      answers: {
+      questions: {
         type: Sequelize.JSON,
         allowNull: false
       },
-      select: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      campaignId: {
+      organisationId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Campaigns'
+            tableName: 'Organisations'
           },
           key: 'id'
         }
@@ -40,6 +36,7 @@ module.exports = {
       }
     });
   },
+
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('CampaignForms');
   }

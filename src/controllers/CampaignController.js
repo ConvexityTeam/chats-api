@@ -1030,14 +1030,19 @@ class CampaignController {
       return Response.send(res);
     }
   }
+
   static async campaignForm(req, res) {
-    const id = req.params.campaign_id;
+    const id = req.params.organisation_id;
     const data = req.body;
+    data.organisationId = id;
     try {
       const rules = {
-        answers: 'required',
-        question: 'required|string',
-        select: 'required|string'
+        title: 'required|string',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.value': 'required|numeric',
+        'questions.*.required': 'required|boolean',
+        'questions.*.question.title': 'required|string',
+        'questions.*.question.options': 'array'
       };
 
       const validation = new Validator(data, rules);
@@ -1046,11 +1051,113 @@ class CampaignController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      data.campaignId = id;
+
       const form = await CampaignService.campaignForm(data);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Campaign form created',
+        form
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async updateCampaignForm(req, res) {
+    const data = req.body;
+    try {
+      const rules = {
+        id: 'required|numeric',
+        title: 'required|string',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.value': 'required|numeric',
+        'questions.*.required': 'required|boolean',
+        'questions.*.question.title': 'required|string',
+        'questions.*.question.options': 'array'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const isForm = await CampaignService.findCampaignForm(req.body.id);
+      if (!isForm) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Campaign form not found'
+        );
+        return Response.send(res);
+      }
+
+      await isForm.update(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaign form updated',
+        isForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async destroyCampaignForm(req, res) {
+    try {
+      const rules = {
+        formId: 'required:numeric'
+      };
+      const validation = new Validator(req.body, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const isForm = await CampaignService.findCampaignForm(req.body.formId);
+      if (!isForm) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Campaign form not found'
+        );
+        return Response.send(res);
+      }
+      if (isForm.campaigns.length) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Form already assigned to a campaign'
+        );
+        return Response.send(res);
+      }
+      await isForm.destroy();
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaign form successfully deleted',
+        isForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async getCampaignForm(req, res) {
+    const id = req.params.organisation_id;
+    try {
+      const form = await CampaignService.getCampaignForm(id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign form received',
         form
       );
       return Response.send(res);

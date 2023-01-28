@@ -648,6 +648,16 @@ class OrganisationController {
 
   static async createCampaign(req, res) {
     try {
+      const rules = {
+        formId: 'required|numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
       const data = SanitizeObject(req.body);
       const spending = data.type == 'campaign' ? 'vendor' : 'all';
       const OrganisationId = req.organisation.id;
@@ -688,7 +698,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Campaign creation failed. Please retry.'
+        'Campaign creation failed. Please retry.' + error
       );
       return Response.send(res);
     }
