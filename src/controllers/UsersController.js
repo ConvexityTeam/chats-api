@@ -1491,13 +1491,13 @@ class UsersController {
         );
         return Response.send(res);
       }
-      if (userWallet.balance < amount) {
-        Response.setSuccess(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient Wallet Balance'
-        );
-        return Response.send(res);
-      }
+      // if (userWallet.balance < amount) {
+      //   Response.setSuccess(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Insufficient Wallet Balance'
+      //   );
+      //   return Response.send(res);
+      // }
       await QueueService.fundVendorBankAccount(
         bankAccount,
         userWallet,
