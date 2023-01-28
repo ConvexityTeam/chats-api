@@ -699,6 +699,8 @@ RabbitMq['default']
           msg.nack();
           return null;
         }
+        await BlockchainService.confirmTransaction(transfer.TransferedFrom);
+
         await update_order(order.reference, {status: 'confirmed'});
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
