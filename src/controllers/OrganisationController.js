@@ -649,7 +649,7 @@ class OrganisationController {
   static async createCampaign(req, res) {
     try {
       const rules = {
-        formId: 'required|numeric'
+        formId: 'numeric'
       };
 
       const validation = new Validator(req.body, rules);

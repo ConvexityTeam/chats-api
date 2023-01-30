@@ -1039,7 +1039,7 @@ class CampaignController {
       const rules = {
         title: 'required|string',
         'questions.*.type': 'required|in:multiple,optional,short',
-        'questions.*.value': 'required|numeric',
+        'questions.*.value': 'numeric',
         'questions.*.required': 'required|boolean',
         'questions.*.question.title': 'required|string',
         'questions.*.question.options': 'array'
@@ -1051,7 +1051,16 @@ class CampaignController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-
+      const formExist = await CampaignService.findCampaignFormByTitle(
+        data.title
+      );
+      if (formExist) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Form with similar title exists.'
+        );
+        return Response.send(res);
+      }
       const form = await CampaignService.campaignForm(data);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -1074,7 +1083,7 @@ class CampaignController {
         id: 'required|numeric',
         title: 'required|string',
         'questions.*.type': 'required|in:multiple,optional,short',
-        'questions.*.value': 'required|numeric',
+        'questions.*.value': 'numeric',
         'questions.*.required': 'required|boolean',
         'questions.*.question.title': 'required|string',
         'questions.*.question.options': 'array'
@@ -1086,6 +1095,7 @@ class CampaignController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+
       const isForm = await CampaignService.findCampaignForm(req.body.id);
       if (!isForm) {
         Response.setError(
@@ -1094,7 +1104,16 @@ class CampaignController {
         );
         return Response.send(res);
       }
-
+      const formExist = await CampaignService.findCampaignFormByTitle(
+        data.title
+      );
+      if (formExist && formExist.id !== data.id) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Form with similar title exists.'
+        );
+        return Response.send(res);
+      }
       await isForm.update(data);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
