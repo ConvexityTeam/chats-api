@@ -1170,6 +1170,24 @@ class CampaignController {
       return Response.send(res);
     }
   }
+  static async getSingleCampaignForm(req, res) {
+    const id = req.params.form_id;
+    try {
+      const form = await CampaignService.findCampaignForm(id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign form received',
+        form
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
   static async getCampaignForm(req, res) {
     const id = req.params.organisation_id;
     try {

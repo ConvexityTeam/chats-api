@@ -394,6 +394,14 @@ router
     CampaignController.destroyCampaignForm
   );
 router
+  .route('/:organisation_id/campaign_form/:form_id')
+  .get(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.getSingleCampaignForm
+  );
+router
   .route('/:organisation_id/task/:campaign_id/fund_beneficiary')
   .post(
     NgoAdminAuth,
