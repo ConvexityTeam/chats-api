@@ -1105,13 +1105,13 @@ class CampaignController {
       const formExist = await CampaignService.findCampaignFormByTitle(
         data.title
       );
-      if (formExist && formExist.id !== data.id) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Form with similar title exists.'
-        );
-        return Response.send(res);
-      }
+      // if (formExist && formExist.id !== data.id) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Form with similar title exists.'
+      //   );
+      //   return Response.send(res);
+      // }
       await isForm.update(data);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
