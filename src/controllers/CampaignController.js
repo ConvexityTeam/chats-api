@@ -626,8 +626,6 @@ class CampaignController {
       offset = limit * (page - 1);
       const tokens = await db.VoucherToken.findAll({
         where,
-        limit,
-        offset,
         order: [['updatedAt', 'ASC']]
       });
       tokens.forEach(data => {
