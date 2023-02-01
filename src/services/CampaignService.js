@@ -7,6 +7,7 @@ const {
   Beneficiary,
   VoucherToken,
   Transaction,
+  FormAnswer,
   AssociatedCampaign,
   CampaignForm,
   Organisation,
@@ -615,8 +616,39 @@ class CampaignService {
     });
   }
 
+  static async formAnswer(data) {
+    return await FormAnswer.create(data);
+  }
+  static async findCampaignForm(id) {
+    return await CampaignForm.findOne({
+      where: {id},
+      include: ['campaigns']
+    });
+  }
+  static async findCampaignFormBeneficiary(id) {
+    return await CampaignForm.findOne({
+      where: {id},
+      include: {
+        model: Campaign,
+        as: 'campaigns',
+        where: {id}
+      }
+    });
+  }
+  static async findCampaignFormByTitle(title) {
+    return await CampaignForm.findOne({
+      where: {title}
+    });
+  }
   static async campaignForm(data) {
     return await CampaignForm.create(data);
+  }
+  static async getCampaignForm(organisationId) {
+    return await CampaignForm.findAll({
+      order: [['updatedAt', 'ASC']],
+      where: {organisationId},
+      include: ['campaigns']
+    });
   }
 
   // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {

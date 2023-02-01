@@ -368,13 +368,38 @@ router
     CampaignController.cryptoPayment
   );
 router
-  .route('/:organisation_id/campaign-form/:campaign_id')
+  .route('/:organisation_id/campaign_form')
   .post(
     NgoAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.campaignForm
+  )
+  .get(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.getCampaignForm
+  )
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.updateCampaignForm
+  )
+  .delete(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.destroyCampaignForm
+  );
+router
+  .route('/:organisation_id/campaign_form/:form_id')
+  .get(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.getSingleCampaignForm
   );
 router
   .route('/:organisation_id/task/:campaign_id/fund_beneficiary')

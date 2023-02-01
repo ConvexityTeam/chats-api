@@ -1,8 +1,6 @@
-"use strict";
-const {
-  Model
-} = require("sequelize");
-const { userConst } = require("../constants");
+'use strict';
+const {Model} = require('sequelize');
+const {userConst} = require('../constants');
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**
@@ -15,69 +13,82 @@ module.exports = (sequelize, DataTypes) => {
 
       Campaign.belongsToMany(models.User, {
         as: 'Beneficiaries',
-        foreignKey: "CampaignId",
+        foreignKey: 'CampaignId',
         through: models.Beneficiary,
-        constraints: false,
+        constraints: false
       });
 
       Campaign.hasMany(models.Wallet, {
         as: 'BeneficiariesWallets',
-        foreignKey: "CampaignId",
+        foreignKey: 'CampaignId',
         scope: {
           wallet_type: 'user'
         }
       });
       Campaign.hasOne(models.Wallet, {
         as: 'Wallet',
-        foreignKey: "CampaignId",
+        foreignKey: 'CampaignId',
         scope: {
           wallet_type: 'organisation'
-        },
+        }
       });
       Campaign.hasMany(models.Task, {
-        as: "Jobs"
+        as: 'Jobs'
       });
       Campaign.hasMany(models.Complaint, {
         as: 'Complaints',
-        foreignKey: "CampaignId"
-      })
+        foreignKey: 'CampaignId'
+      });
       Campaign.belongsTo(models.Organisation, {
-        foreignKey: "OrganisationId",
-        as: "Organisation",
+        foreignKey: 'OrganisationId',
+        as: 'Organisation'
       });
 
-      Campaign.hasMany(models.Product,{
+      Campaign.hasMany(models.Product, {
         as: 'CampaignProducts'
-      })
-        
+      });
+
       Campaign.hasMany(models.User, {
         as: 'CampaignVendors',
         foreignKey: 'vendor_id'
-      })
-      
-      Campaign.hasMany(models.VoucherToken,{foreignKey: 'beneficiaryId', as: "CampaignTokens"})
+      });
+
+      Campaign.hasMany(models.VoucherToken, {
+        foreignKey: 'beneficiaryId',
+        as: 'CampaignTokens'
+      });
     }
   }
 
-  Campaign.init({
-    OrganisationId: DataTypes.INTEGER,
-    title: DataTypes.STRING,
-    type: DataTypes.ENUM("campaign", "cash-for-work"),
-    spending: DataTypes.STRING,
-    description: DataTypes.TEXT,
-    status: DataTypes.ENUM('pending', 'ongoing', 'active', 'paused', 'completed'),
-    is_funded: DataTypes.BOOLEAN,
-    is_public: DataTypes.BOOLEAN,
-    funded_with: DataTypes.STRING,
-    budget: DataTypes.FLOAT,
-    amount_disbursed: DataTypes.FLOAT,
-    location: DataTypes.STRING,
-    start_date: DataTypes.DATE,
-    paused_date: DataTypes.DATE,
-    end_date: DataTypes.DATE,
-  }, {
-    sequelize,
-    modelName: "Campaign",
-  });
+  Campaign.init(
+    {
+      OrganisationId: DataTypes.INTEGER,
+      formId: DataTypes.INTEGER,
+      title: DataTypes.STRING,
+      type: DataTypes.ENUM('campaign', 'cash-for-work'),
+      spending: DataTypes.STRING,
+      description: DataTypes.TEXT,
+      status: DataTypes.ENUM(
+        'pending',
+        'ongoing',
+        'active',
+        'paused',
+        'completed'
+      ),
+      is_funded: DataTypes.BOOLEAN,
+      is_public: DataTypes.BOOLEAN,
+      funded_with: DataTypes.STRING,
+      budget: DataTypes.FLOAT,
+      amount_disbursed: DataTypes.FLOAT,
+      location: DataTypes.STRING,
+      start_date: DataTypes.DATE,
+      paused_date: DataTypes.DATE,
+      end_date: DataTypes.DATE
+    },
+    {
+      sequelize,
+      modelName: 'Campaign'
+    }
+  );
   return Campaign;
 };
