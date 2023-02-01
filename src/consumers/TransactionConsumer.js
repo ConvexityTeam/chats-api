@@ -7,7 +7,8 @@ const {
   FUND_BENEFICIARY,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_VENDOR_WITHDRAW,
-  FUND_BENEFICIARIES
+  FUND_BENEFICIARIES,
+  TRANSFER_FROM_TO_BENEFICIARY
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -103,6 +104,14 @@ const processCampaignPaystack = RabbitMq['default'].declareQueue(
   }
 );
 
+const beneficiaryFundBeneficiary = RabbitMq['default'].declareQueue(
+  TRANSFER_FROM_TO_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
 const update_campaign = async (id, args) => {
   const campaign = await Campaign.findOne({where: {id}});
   if (!campaign) return null;
@@ -138,10 +147,23 @@ const addWalletAmount = async (amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
+    was_funded: true,
     balance: Sequelize.literal(`balance + ${amount}`),
     fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
   });
   Logger.info(`Wallet amount added with ${amount}`);
+  return wallet;
+};
+
+const blockchainBalance = async (balance, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    was_funded: true,
+    balance,
+    fiat_balance: balance
+  });
+  Logger.info(`Blockchain Wallet balance is ${balance}`);
   return wallet;
 };
 
@@ -195,20 +217,24 @@ RabbitMq['default']
               organisation.address,
               amount
             );
+
             Logger.info(`Hash: ${mint.Minted}`);
-            if (mint.Minted) minted = true;
+            if (mint.Minted) {
+              minted = true;
+            }
           }
 
-          if (!confirm && minted) {
+          if (!confirmed && minted) {
             confirm = await BlockchainService.confirmTransaction(mint.Minted);
             await update_transaction(
               {status: 'failed', is_approved: false},
               transactionId
             );
 
-            if (confirm) confirmed = true;
+            if (confirm) {
+              confirmed = true;
+            }
           }
-
           Logger.info(JSON.stringify(confirm));
 
           if (confirm && minted) {
@@ -227,6 +253,7 @@ RabbitMq['default']
             confirmed = false;
             minted = false;
             msg.ack();
+            return;
           }
         }
       })
@@ -331,14 +358,14 @@ RabbitMq['default']
           `organisation_${campaign.OrganisationId}`
         );
 
-        if (modulus > 0 && !transfer_once) {
-          await BlockchainService.transferTo(
-            campaignKeyPair.privateKey,
-            organisationKeyPair.address,
-            modulus
-          );
-          transfer_once = true;
-        }
+        // if (modulus > 0 && !transfer_once) {
+        //   await BlockchainService.transferTo(
+        //     campaignKeyPair.privateKey,
+        //     organisationKeyPair.address,
+        //     modulus
+        //   );
+        //   transfer_once = true;
+        // }
         const realBudget = campaign.budget;
         const parsedAmount =
           parseInt(campaign.budget / beneficiaries.length) *
@@ -367,10 +394,7 @@ RabbitMq['default']
               beneficiaryKeyPair.address,
               share
             );
-          const confirm = await BlockchainService.confirmTransaction(
-            approve_to_spend.Approved
-          );
-          if (!confirm) {
+          if (!approve_to_spend) {
             await update_transaction({status: 'failed'}, transaction.uuid);
             benefitIndex = index;
             msg.nack();
@@ -379,6 +403,7 @@ RabbitMq['default']
 
           const uuid = wallet.uuid;
           await addWalletAmount(share, uuid);
+          // await deductWalletAmount(share, campaignWallet.uuid);
           await update_transaction(
             {status: 'success', is_approved: true},
             transaction.uuid
@@ -428,11 +453,11 @@ RabbitMq['default']
             istoken = false;
           }
         }
-        // await update_campaign(campaign.id, {
-        //   status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
-        //   is_funded: true,
-        //   amount_disbursed: beneficiaries.length > 0 ? parsedAmount : realBudget
-        // });
+        await update_campaign(campaign.id, {
+          status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+          is_funded: true,
+          amount_disbursed: beneficiaries.length > 0 ? parsedAmount : realBudget
+        });
         benefitIndex = null;
         transfer_once = false;
         msg.ack();
@@ -569,10 +594,8 @@ RabbitMq['default']
           vendor.privateKey,
           amount
         );
-        const confirm = await BlockchainService.confirmTransaction(
-          redeem.Redeemed
-        );
-        if (!confirm) {
+
+        if (!redeem) {
           msg.nack();
           await update_transaction({status: 'failed'}, transaction.uuid);
         }
@@ -582,7 +605,7 @@ RabbitMq['default']
           bankAccount.recipient_code,
           'spending'
         );
-        await deductWalletAmount(amount, userWallet.uuid);
+        // await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({status: 'success'}, transaction.uuid);
         msg.ack();
         return;
@@ -616,10 +639,8 @@ RabbitMq['default']
           beneficiary.address,
           amount_disburse
         );
-        const confirm = await BlockchainService.confirmTransaction(
-          approve_to_spend.Approved
-        );
-        if (!confirm) {
+
+        if (!approve_to_spend) {
           await update_transaction({status: 'failed'}, transaction.uuid);
           msg.nack();
           return;
@@ -665,25 +686,28 @@ RabbitMq['default']
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
+        Logger.info(JSON.stringify(vendor));
         const transfer = await BlockchainService.transferFrom(
           campaign.address,
           vendor.address,
           beneficiary.privateKey,
           amount
         );
-        const confirm = await BlockchainService.confirmTransaction(
-          transfer.TransferedFrom
-        );
-        if (!confirm) {
+        if (!transfer) {
           await update_transaction({status: 'failed'}, transaction);
           await update_order(order.reference, {status: 'failed'});
           msg.nack();
           return null;
         }
+        await BlockchainService.confirmTransaction(transfer.TransferedFrom);
+
         await update_order(order.reference, {status: 'confirmed'});
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
-        await addWalletAmount(amount, vendorWallet.uuid);
+        const token = await BlockchainService.balance(vendorWallet.address);
+        const balance = Number(token.Balance.split(',').join(''));
+        // await addWalletAmount(amount, vendorWallet.uuid);
+        await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
           {status: 'success', is_approved: true},
           transaction
@@ -713,6 +737,76 @@ RabbitMq['default']
 
       .then(_ => {
         Logger.info(`Running Process For Vendor Order Queue`);
+      });
+    beneficiaryFundBeneficiary
+      .activateConsumer(async msg => {
+        const {
+          senderWallet,
+          receiverWallet,
+          amount,
+          campaignWallet,
+          transaction
+        } = msg.getContent();
+        let transfer;
+        let confirm;
+        if (campaignWallet) {
+          const beneficiary = await BlockchainService.setUserKeypair(
+            `user_${senderWallet.UserId}campaign_${senderWallet.CampaignId}`
+          );
+
+          const campaign = await BlockchainService.setUserKeypair(
+            `campaign_${senderWallet.CampaignId}`
+          );
+          transfer = await BlockchainService.transferFrom(
+            campaign.address,
+            receiverWallet.address,
+            beneficiary.privateKey,
+            amount
+          );
+          confirm = await BlockchainService.confirmTransaction(
+            transfer.TransferedFrom
+          );
+        }
+        if (!campaignWallet) {
+          const beneficiary = await BlockchainService.setUserKeypair(
+            `user_${senderWallet.UserId}`
+          );
+          transfer = await BlockchainService.transferTo(
+            beneficiary.privateKey,
+            receiverWallet.address,
+            amount
+          );
+          confirm = await BlockchainService.confirmTransaction(
+            transfer.Transfered
+          );
+        }
+
+        if (!confirm) {
+          await update_transaction({status: 'failed'}, transaction);
+          msg.nack();
+          Logger.error('Not confirmed');
+          return null;
+        }
+        await deductWalletAmount(amount, senderWallet.uuid);
+        campaignWallet &&
+          (await deductWalletAmount(amount, campaignWallet.uuid));
+        await addWalletAmount(amount, receiverWallet.uuid);
+        await update_transaction(
+          {
+            status: 'success',
+            is_approved: true,
+            transaction_hash: transfer.Transfered || transfer.TransferedFrom
+          },
+          transaction.uuid
+        );
+        Logger.info('Transaction successful');
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+
+      .then(_ => {
+        Logger.info(`Running Process For Beneficiary to Beneficiary Transfer`);
       });
   })
   .catch(error => {

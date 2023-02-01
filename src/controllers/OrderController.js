@@ -10,6 +10,7 @@ const {
   UserService,
   OrderService,
   CampaignService,
+  BlockchainService,
   OrganisationService
 } = require('../services');
 const db = require('../models');
@@ -39,10 +40,11 @@ class OrderController {
     }
   }
   static async comfirmsmsTOKEN(req, res) {
-    const pin = req.body.pin.trim();
+    const pin = req.body.pin;
     const id = req.body.beneficiaryId;
     const {reference} = req.params;
     try {
+      Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
       const data = await VendorService.getOrder({reference});
       const user = await UserService.findSingleUser({id});
 
@@ -85,6 +87,9 @@ class OrderController {
         Logger.error(`Order ${data.order.status}`);
         return Response.send(res);
       }
+      // const campaign_token = await BlockchainService.setUserKeypair(
+      //   `user_${req.user.id}campaign_${data.order.CampaignId}`
+      // );
 
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: data.order.CampaignId,
@@ -97,6 +102,15 @@ class OrderController {
         id,
         data.order.CampaignId
       );
+
+      const token = await BlockchainService.allowance(
+        campaignWallet.address,
+        beneficiaryWallet.address
+      );
+      Logger.info(`Beneficiary wallet: ${JSON.stringify(beneficiaryWallet)}`);
+      const balance = Number(token.Allowed.split(',').join(''));
+      Logger.info(`Beneficiary Blockchain Balance: ${balance}`);
+      Logger.info(`Product price: ${data.total_cost}`);
 
       if (!beneficiaryWallet) {
         Response.setError(
@@ -131,7 +145,7 @@ class OrderController {
       //   Logger.error(`Insufficient wallet balance.`);
       //   return Response.send(res);
       // }
-      if (beneficiaryWallet.balance < data.total_cost) {
+      if (balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
@@ -179,7 +193,10 @@ class OrderController {
         );
         return Response.send(res);
       }
-
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `user_${req.user.id}campaign_${data.order.CampaignId}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
       const [
         campaignWallet,
         vendorWallet,
@@ -215,15 +232,15 @@ class OrderController {
         return Response.send(res);
       }
 
-      if (campaignWallet.balance < data.total_cost) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance.'
-        );
-        return Response.send(res);
-      }
+      // if (token.Balance < data.total_cost) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Insufficient wallet balance.'
+      //   );
+      //   return Response.send(res);
+      // }
 
-      if (beneficiaryWallet.balance < data.total_cost) {
+      if (token.Balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'

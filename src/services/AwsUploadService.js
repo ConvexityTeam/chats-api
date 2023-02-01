@@ -9,12 +9,12 @@ const {accessKeyId, secretAccessKey} = require('../config/aws');
 const client = new SecretsManager({
   region: awsConfig.region,
   secretAccessKey: awsConfig.secretAccessKey,
-  accessKeyId: awsConfig.accessKeyId,
+  accessKeyId: awsConfig.accessKeyId
 });
 
 const AwsS3 = new S3({
   accessKeyId,
-  secretAccessKey,
+  secretAccessKey
 });
 class AwsUploadService {
   static async uploadFile(file, fileKey, awsBucket, acl = 'public-read') {
@@ -25,7 +25,7 @@ class AwsUploadService {
           Key: fileKey,
           ACL: acl,
           Body: fs.createReadStream(file.path),
-          ContentType: file.type,
+          ContentType: file.type
         },
         (err, data) => {
           err && reject(err);
@@ -33,7 +33,7 @@ class AwsUploadService {
             fs.unlinkSync(file.path);
             resolve(data.Location);
           }
-        },
+        }
       );
     });
   }
@@ -65,7 +65,7 @@ class AwsUploadService {
     } catch (err) {
       if (err.code === 'DecryptionFailureException') {
         Logger.error(
-          `Secrets Manager can't decrypt the protected secret text using the provided KMS key.`,
+          `Secrets Manager can't decrypt the protected secret text using the provided KMS key.`
         );
         throw err;
       } else if (err.code === 'InternalServiceErrorException') {
@@ -76,7 +76,7 @@ class AwsUploadService {
         throw err;
       } else if (err.code === 'InvalidRequestException') {
         Logger.error(
-          `You provided a parameter value that is not valid for the current state of the resource`,
+          `You provided a parameter value that is not valid for the current state of the resource`
         );
         throw err;
       } else if (err.code === 'ResourceNotFoundException') {

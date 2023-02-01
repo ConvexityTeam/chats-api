@@ -15,4 +15,5 @@ module.exports = {
   PAYSTACK_CAMPAIGN_DEPOSIT: 'paystackcampaigndeposit',
   PAYSTACK_BENEFICIARY_WITHDRAW: 'paystackBeneficiaryWithdraw',
   PAY_FOR_PRODUCT: 'payForProduct',
+  TRANSFER_FROM_TO_BENEFICIARY: 'beneficiaryfundbeneficiary'
 };

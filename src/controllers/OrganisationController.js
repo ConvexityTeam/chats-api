@@ -648,6 +648,16 @@ class OrganisationController {
 
   static async createCampaign(req, res) {
     try {
+      const rules = {
+        formId: 'numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
       const data = SanitizeObject(req.body);
       const spending = data.type == 'campaign' ? 'vendor' : 'all';
       const OrganisationId = req.organisation.id;
@@ -688,7 +698,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Campaign creation failed. Please retry.'
+        'Campaign creation failed. Please retry.' + error
       );
       return Response.send(res);
     }
@@ -978,6 +988,9 @@ class OrganisationController {
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId
       );
+      // const form = await CampaignService.findCampaignFormBeneficiary(
+      //   CampaignId
+      // );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
@@ -1262,18 +1275,52 @@ class OrganisationController {
   static async approvedAllbeneficiaries(req, res) {
     try {
       const campaign = req.campaign;
+      const ids = req.body.ids;
 
       if (campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campagin Fund Already Disbursed.'
+          'Campaign Fund Already Disbursed.'
         );
         return Response.send(res);
       }
       const [
         approvals
-      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(campaign.id);
+      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(
+        campaign.id,
+        ids
+      );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
+        approvals
+      });
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Please retry.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async rejectAllbeneficiaries(req, res) {
+    try {
+      const campaign = req.campaign;
+      const ids = req.body.ids;
+
+      if (campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign Fund Already Disbursed.'
+        );
+        return Response.send(res);
+      }
+      const [
+        approvals
+      ] = await BeneficiaryService.rejectAllCampaignBeneficiaries(
+        campaign.id,
+        ids
+      );
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries rejected!', {
         approvals
       });
       return Response.send(res);

@@ -10,7 +10,7 @@ const {
   TaskService,
   BlockchainService
 } = require('../services');
-
+const Validator = require('validatorjs');
 const db = require('../models');
 const {Op} = require('sequelize');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
@@ -338,9 +338,17 @@ class CampaignController {
     const {token_type} = req.body;
 
     try {
-      const beneficiaries = await BeneficiaryService.getApprovedBeneficiaries(
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${campaign_id}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
+      const beneficiaries = await BeneficiaryService.getApprovedFundBeneficiaries(
         campaign_id
       );
+      const realBeneficiaries = beneficiaries
+        .map(exist => exist.User && exist)
+        .filter(x => !!x);
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
         organisation_id
@@ -367,14 +375,14 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.amount == 0) {
+      if (balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund campaign wallet.'
         );
         return Response.send(res);
       }
-      if (campaign.type === 'campaign' && !beneficiaries.length) {
+      if (campaign.type === 'campaign' && !realBeneficiaries.length) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign has no approved beneficiaries. Please approve beneficiaries.'
@@ -384,14 +392,14 @@ class CampaignController {
       QueueService.fundBeneficiaries(
         OrgWallet,
         campaignWallet,
-        beneficiaries,
+        realBeneficiaries,
         campaign,
         token_type
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign fund with ${beneficiaries.length} beneficiaries is Processing.`,
-        beneficiaries
+        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`,
+        realBeneficiaries
       );
       return Response.send(res);
     } catch (error) {
@@ -405,6 +413,11 @@ class CampaignController {
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
+      const organisation_token = await BlockchainService.setUserKeypair(
+        `organisation_${organisation_id}`
+      );
+      const token = await BlockchainService.balance(organisation_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
       const campaign = await CampaignService.getCampaignWallet(
         campaign_id,
         organisation_id
@@ -431,7 +444,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.budget > OrgWallet.balance || OrgWallet.balance == 0) {
+      if (campaign.budget > balance || balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund organisation wallet.'
@@ -439,7 +452,11 @@ class CampaignController {
         return Response.send(res);
       }
 
-      QueueService.CampaignApproveAndFund(campaign, campaignWallet, OrgWallet);
+      await QueueService.CampaignApproveAndFund(
+        campaign,
+        campaignWallet,
+        OrgWallet
+      );
       Logger.info('Processing Transfer From NGO Wallet to Campaign Wallet');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -609,8 +626,6 @@ class CampaignController {
       offset = limit * (page - 1);
       const tokens = await db.VoucherToken.findAll({
         where,
-        limit,
-        offset,
         order: [['updatedAt', 'ASC']]
       });
       tokens.forEach(data => {
@@ -850,6 +865,11 @@ class CampaignController {
       let assignmentTask = [];
       const campaignId = req.params.campaign_id;
       const OrganisationId = req.params.organisation_id;
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${campaignId}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
       const campaign = await CampaignService.getCampaignWithBeneficiaries(
         campaignId
       );
@@ -897,7 +917,8 @@ class CampaignController {
           }
         });
       }
-
+      campaign.dataValues.balance = balance;
+      campaign.dataValues.address = campaign_token.address;
       campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length;
       campaign.dataValues.task_count = campaign.Jobs.length;
       campaign.dataValues.beneficiary_share =
@@ -997,6 +1018,222 @@ class CampaignController {
             : 'beneficiary'
         }`,
         onboard
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async campaignForm(req, res) {
+    const id = req.params.organisation_id;
+    const data = req.body;
+    data.organisationId = id;
+    try {
+      const rules = {
+        title: 'required|string',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.value': 'numeric',
+        'questions.*.required': 'required|boolean',
+        'questions.*.question.title': 'required|string',
+        'questions.*.question.options': 'array'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const formExist = await CampaignService.findCampaignFormByTitle(
+        data.title
+      );
+      if (formExist) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Form with similar title exists.'
+        );
+        return Response.send(res);
+      }
+      const form = await CampaignService.campaignForm(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaign form created',
+        form
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async submitCampaignForm(req, res) {
+    const data = req.body;
+    data.beneficiaryId = req.user.id;
+    try {
+      const rules = {
+        formId: 'required|numeric',
+        'questions.*.question': 'required|string',
+        'questions.*.answer': 'required|string'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
+      const isForm = await CampaignService.findCampaignForm(data.formId);
+      if (!isForm) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Campaign form not found'
+        );
+        return Response.send(res);
+      }
+      const createdForm = await CampaignService.formAnswer(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Answer submitted',
+        createdForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async updateCampaignForm(req, res) {
+    const data = req.body;
+    try {
+      const rules = {
+        id: 'required|numeric',
+        title: 'required|string',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.value': 'numeric',
+        'questions.*.required': 'required|boolean',
+        'questions.*.question.title': 'required|string',
+        'questions.*.question.options': 'array'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
+      const isForm = await CampaignService.findCampaignForm(req.body.id);
+      if (!isForm) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Campaign form not found'
+        );
+        return Response.send(res);
+      }
+      const formExist = await CampaignService.findCampaignFormByTitle(
+        data.title
+      );
+      if (formExist && formExist.id === data.id) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Form with similar title exists.'
+        );
+        return Response.send(res);
+      }
+      await isForm.update(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaign form updated',
+        isForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async destroyCampaignForm(req, res) {
+    try {
+      const rules = {
+        formId: 'required:numeric'
+      };
+      const validation = new Validator(req.body, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const isForm = await CampaignService.findCampaignForm(req.body.formId);
+      if (!isForm) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Campaign form not found'
+        );
+        return Response.send(res);
+      }
+      if (isForm.campaigns.length) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Form already assigned to a campaign'
+        );
+        return Response.send(res);
+      }
+      await isForm.destroy();
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaign form successfully deleted',
+        isForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async getSingleCampaignForm(req, res) {
+    const id = req.params.form_id;
+    try {
+      const form = await CampaignService.findCampaignForm(id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign form received',
+        form
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async getCampaignForm(req, res) {
+    const id = req.params.organisation_id;
+    try {
+      const form = await CampaignService.getCampaignForm(id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign form received',
+        form
       );
       return Response.send(res);
     } catch (error) {

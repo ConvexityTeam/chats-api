@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+const {Router} = require('express');
 const {
   WalletController,
   OrganisationController,
@@ -367,6 +368,40 @@ router
     CampaignController.cryptoPayment
   );
 router
+  .route('/:organisation_id/campaign_form')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.campaignForm
+  )
+  .get(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.getCampaignForm
+  )
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.updateCampaignForm
+  )
+  .delete(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.destroyCampaignForm
+  );
+router
+  .route('/:organisation_id/campaign_form/:form_id')
+  .get(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.getSingleCampaignForm
+  );
+router
   .route('/:organisation_id/task/:campaign_id/fund_beneficiary')
   .post(
     NgoAdminAuth,
@@ -515,6 +550,16 @@ router
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.approvedAllbeneficiaries
+  );
+router
+  .route('/:organisation_id/campaigns/:campaign_id/beneficiaries/reject')
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    OrganisationController.rejectAllbeneficiaries
   );
 router
   .route('/products/:vendor_id')
