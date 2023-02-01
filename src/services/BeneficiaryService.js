@@ -371,7 +371,8 @@ class BeneficiariesService {
         {
           model: User,
           as: 'User',
-          attributes: userConst.publicAttr
+          attributes: userConst.publicAttr,
+          include: ['Answers']
         }
       ]
     });

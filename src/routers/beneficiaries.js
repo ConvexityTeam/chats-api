@@ -74,6 +74,9 @@ router.get(
   BeneficiaryController.beneficiariesByLocation
 );
 
+router
+  .route('/campaign/forms')
+  .post(BeneficiaryAuth, CampaignController.submitCampaignForm);
 router.get(
   '/marital_status',
   NgoSubAdminAuth,

@@ -35,6 +35,10 @@ module.exports = (sequelize, DataTypes) => {
         as: 'Complaints',
         foreignKey: 'UserId'
       });
+      User.hasMany(models.FormAnswer, {
+        as: 'Answers',
+        foreignKey: 'beneficiaryId'
+      });
 
       User.hasMany(models.Wallet, {
         as: 'Wallet',

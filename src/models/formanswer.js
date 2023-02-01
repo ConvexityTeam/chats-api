@@ -1,7 +1,7 @@
 'use strict';
 const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class CampaignForm extends Model {
+  class FormAnswer extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -9,23 +9,18 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      CampaignForm.hasMany(models.Campaign, {
-        foreignKey: 'formId',
-        as: 'campaigns'
-      });
     }
   }
-  CampaignForm.init(
+  FormAnswer.init(
     {
+      formId: DataTypes.INTEGER,
       beneficiaryId: DataTypes.INTEGER,
-      organisationId: DataTypes.INTEGER,
-      title: DataTypes.STRING,
       questions: DataTypes.JSON
     },
     {
       sequelize,
-      modelName: 'CampaignForm'
+      modelName: 'FormAnswer'
     }
   );
-  return CampaignForm;
+  return FormAnswer;
 };

@@ -1074,6 +1074,46 @@ class CampaignController {
       return Response.send(res);
     }
   }
+  static async submitCampaignForm(req, res) {
+    const data = req.body;
+    data.beneficiaryId = req.user.id;
+    try {
+      const rules = {
+        formId: 'required|numeric',
+        'questions.*.question': 'required|string',
+        'questions.*.answer': 'required|string'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
+      const isForm = await CampaignService.findCampaignForm(data.formId);
+      if (!isForm) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Campaign form not found'
+        );
+        return Response.send(res);
+      }
+      const createdForm = await CampaignService.formAnswer(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Answer submitted',
+        createdForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
   static async updateCampaignForm(req, res) {
     const data = req.body;
     try {
