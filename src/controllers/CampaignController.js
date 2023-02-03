@@ -413,10 +413,21 @@ class CampaignController {
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
-      const organisation_token = await BlockchainService.setUserKeypair(
-        `campaign_${campaign_id}`
+      // const organisation_token = await BlockchainService.setUserKeypair(
+      //   `campaign_${campaign_id}`
+      // );
+      // console.log(organisation_token.privateKey, 'privateKey');
+
+      await BlockchainService.transferTo(
+        '0x72f3917a98edc890ebfd18be414944a79e87177f4c96523080846becb95fa4ec',
+        '0x5b66cbec3a257a0cfb3e8f0bd56269a82ab28961',
+        75000
       );
-      console.log(organisation_token.privateKey, 'privateKey');
+      await CampaignService.updateCampaign(115, {
+        status: 'active',
+        is_funded: true,
+        amount_disbursed: 75000
+      });
       // const token = await BlockchainService.balance(organisation_token.address);
       // const balance = Number(token.Balance.split(',').join(''));
       // const campaign = await CampaignService.getCampaignWallet(
