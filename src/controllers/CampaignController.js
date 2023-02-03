@@ -417,6 +417,17 @@ class CampaignController {
         `campaign_${campaign_id}`
       );
       console.log(organisation_token.privateKey, 'privateKey');
+
+      await BlockchainService.transferTo(
+        organisation_token.privateKey,
+        '0x5b66cbec3a257a0cfb3e8f0bd56269a82ab28961',
+        75000
+      );
+      await CampaignService.updateCampaign(115, {
+        status: 'active',
+        is_funded: true,
+        amount_disbursed: 75000
+      });
       // const token = await BlockchainService.balance(organisation_token.address);
       // const balance = Number(token.Balance.split(',').join(''));
       // const campaign = await CampaignService.getCampaignWallet(
