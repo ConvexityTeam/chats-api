@@ -414,49 +414,50 @@ class CampaignController {
     const {organisation_id, campaign_id} = req.params;
     try {
       const organisation_token = await BlockchainService.setUserKeypair(
-        `organisation_${organisation_id}`
+        `campaign_${campaign_id}`
       );
-      const token = await BlockchainService.balance(organisation_token.address);
-      const balance = Number(token.Balance.split(',').join(''));
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        organisation_id
-      );
-      const campaignWallet = campaign.Wallet;
-      const organisation = await OrganisationService.getOrganisationWallet(
-        organisation_id
-      );
+      console.log(organisation_token.privateKey, 'privateKey');
+      // const token = await BlockchainService.balance(organisation_token.address);
+      // const balance = Number(token.Balance.split(',').join(''));
+      // const campaign = await CampaignService.getCampaignWallet(
+      //   campaign_id,
+      //   organisation_id
+      // );
+      // const campaignWallet = campaign.Wallet;
+      // const organisation = await OrganisationService.getOrganisationWallet(
+      //   organisation_id
+      // );
 
-      const OrgWallet = organisation.Wallet;
+      // const OrgWallet = organisation.Wallet;
 
-      if (campaign.status == 'completed') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already completed'
-        );
-        return Response.send(res);
-      }
-      if (campaign.status == 'ongoing') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already ongoing'
-        );
-        return Response.send(res);
-      }
+      // if (campaign.status == 'completed') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign already completed'
+      //   );
+      //   return Response.send(res);
+      // }
+      // if (campaign.status == 'ongoing') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign already ongoing'
+      //   );
+      //   return Response.send(res);
+      // }
 
-      if (campaign.budget > balance || balance == 0) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance. Please fund organisation wallet.'
-        );
-        return Response.send(res);
-      }
+      // if (campaign.budget > balance || balance == 0) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Insufficient wallet balance. Please fund organisation wallet.'
+      //   );
+      //   return Response.send(res);
+      // }
 
-      await QueueService.CampaignApproveAndFund(
-        campaign,
-        campaignWallet,
-        OrgWallet
-      );
+      // await QueueService.CampaignApproveAndFund(
+      //   campaign,
+      //   campaignWallet,
+      //   OrgWallet
+      // );
       Logger.info('Processing Transfer From NGO Wallet to Campaign Wallet');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
