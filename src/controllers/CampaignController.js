@@ -444,13 +444,13 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.budget > balance || balance == 0) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance. Please fund organisation wallet.'
-        );
-        return Response.send(res);
-      }
+      // if (campaign.budget > balance || balance == 0) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Insufficient wallet balance. Please fund organisation wallet.'
+      //   );
+      //   return Response.send(res);
+      // }
 
       await QueueService.CampaignApproveAndFund(
         campaign,
