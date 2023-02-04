@@ -167,16 +167,16 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
-        // const payload = {mintTo, amount};
-        // const checksum = Encryption.encryptTokenPayload(payload);
+        const payload = {mintTo, amount};
+        const checksum = Encryption.encryptTokenPayload(payload);
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`
-          // null,
-          // {
-          //   headers: {
-          //     'X-CHECKSUM': checksum
-          //   }
-          // }
+          `${tokenConfig.baseURL}/txn/mint/${amount}/${mintTo}`,
+          null,
+          {
+            headers: {
+              'X-CHECKSUM': checksum
+            }
+          }
         );
         Logger.info('Token minted', data);
         resolve(data);
