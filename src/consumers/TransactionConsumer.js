@@ -282,25 +282,19 @@ RabbitMq['default']
         );
 
         let transfer;
-        let mint;
         Logger.info(
           'Sending Transfer Parameter from Consumer to Blockchain Service'
         );
         if (!has_run_once) {
-          // transfer = await BlockchainService.transferTo(
-          //   organisationAddress.privateKey,
-          //   campaignAddress.address,
-          //   realBudget
-          // );
-          // has_run_once = true;
-          mint = await BlockchainService.mintToken(
+          transfer = await BlockchainService.transferTo(
+            organisationAddress.privateKey,
             campaignAddress.address,
             realBudget
           );
           has_run_once = true;
         }
 
-        if (!mint) {
+        if (!transfer) {
           await update_transaction({status: 'failed'}, transactionId);
           msg.nack();
           has_run_once = false;
@@ -308,7 +302,7 @@ RabbitMq['default']
         }
 
         const confirm = await BlockchainService.confirmTransaction(
-          mint.Minted
+          transfer.Transfered
         );
         if (!confirm) {
           await update_transaction({status: 'processing'}, transactionId);
@@ -330,7 +324,7 @@ RabbitMq['default']
         await update_transaction(
           {
             status: 'success',
-            transaction_hash: mint.Minted,
+            transaction_hash: transfer.Transfered,
             is_approved: true
           },
           transactionId
