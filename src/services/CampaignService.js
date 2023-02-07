@@ -640,6 +640,12 @@ class CampaignService {
       where: {title}
     });
   }
+  static async findCampaignFormByCampaignId(id) {
+    return await Campaign.findOne({
+      where: {id},
+      include: ['campaign_form']
+    });
+  }
   static async campaignForm(data) {
     return await CampaignForm.create(data);
   }

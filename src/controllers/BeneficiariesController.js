@@ -1023,13 +1023,13 @@ class BeneficiariesController {
         productId
       );
       if (!beneficiary) {
-        Response.setSuccess(
+        Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Beneficiary Not Found'
         );
         return Response.send(res);
       } else if (!vendor) {
-        Response.setSuccess(
+        Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Vendor or Product Not Found'
         );
@@ -1070,6 +1070,25 @@ class BeneficiariesController {
       return Response.send(res);
     }
   }
+  static async getCampaignQuestion(req, res) {
+    const id = req.params.campaign_id;
+    try {
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Survey questions',
+        question
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.'
+      );
+      return Response.send(res);
+    }
+  }
+
   static async transfer(req, res) {
     const data = req.body;
     try {
