@@ -1056,11 +1056,15 @@ class BeneficiariesController {
         BenWallet,
         product
       );
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction Succes', {
-        vendor,
-        beneficiary,
-        campaignWallet
-      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Transaction Success',
+        {
+          vendor,
+          beneficiary,
+          campaignWallet
+        }
+      );
       return Response.send(res);
     } catch (error) {
       Response.setError(
@@ -1078,6 +1082,48 @@ class BeneficiariesController {
         HttpStatusCode.STATUS_OK,
         'Survey questions',
         question
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async submitQuestion(req, res) {
+    const id = req.params.campaign_id;
+    const data = req.body;
+
+    try {
+      const rules = {
+        formId: 'required|numeric',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.question': 'required|string',
+        'questions.*.answer': 'required|string',
+        'questions.*.reward': 'required|numeric'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      if (!question && question.campaign_form) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+      }
+      req.body.beneficiaryId = req.user.id;
+      const createdForm = await CampaignService.formAnswer(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Questionnaire submitted',
+        createdForm
       );
       return Response.send(res);
     } catch (error) {

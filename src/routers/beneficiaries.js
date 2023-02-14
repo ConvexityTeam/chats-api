@@ -134,6 +134,11 @@ router
     BeneficiaryAuth,
     CampaignValidator.campaignExists,
     BeneficiaryController.getCampaignQuestion
+  )
+  .post(
+    BeneficiaryAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.submitQuestion
   );
 router.post(
   '/transfer/beneficiary',
