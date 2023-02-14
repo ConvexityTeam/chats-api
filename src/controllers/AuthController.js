@@ -171,8 +171,15 @@ class AuthController {
             profile_pic,
             location: JSON.stringify({country, state, coordinates})
           });
+          const data = await encryptData(
+            JSON.stringify({
+              id: user.id,
+              email: user.email,
+              phone: user.phone
+            })
+          );
           if (user) QueueService.createWallet(user.id, 'user');
-          Response.setSuccess(201, 'Account Onboarded Successfully', user);
+          Response.setSuccess(201, 'Account Onboarded Successfully', data);
           return Response.send(res);
         }
       }
@@ -312,11 +319,11 @@ class AuthController {
                     QueueService.createWallet(user.id, 'user', fields.campaign);
                   });
                 }
-                const data = encryptData(
+                const data = await encryptData(
                   JSON.stringify({
                     id: user.id,
-                    email: fields.email,
-                    phone: fields.phone
+                    email: user.email,
+                    phone: user.phone
                   })
                 );
 
@@ -490,11 +497,11 @@ class AuthController {
                           );
                         });
                       }
-                      const data = encryptData(
+                      const data = await encryptData(
                         JSON.stringify({
                           id: user.id,
-                          email: fields.email,
-                          phone: fields.phone
+                          email: user.email,
+                          phone: user.phone
                         })
                       );
                       Response.setSuccess(

@@ -15,7 +15,7 @@ const key = crypto
   .digest('hex')
   .substring(0, 32);
 
-exports.encryptData = data => {
+exports.encryptData = async data => {
   try {
     const encryptionIV = crypto
       .createHash('sha512')
