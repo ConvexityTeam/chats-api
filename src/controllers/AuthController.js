@@ -4,7 +4,8 @@ const {
   OrgRoles,
   createHash,
   HttpStatusCode,
-  generateOrganisationId
+  generateOrganisationId,
+  encryptData
 } = require('../utils');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
@@ -283,7 +284,6 @@ class AuthController {
             })
               .then(async user => {
                 QueueService.createWallet(user.id, 'user');
-
                 const extension = files.profile_pic.name.substring(
                   files.profile_pic.name.lastIndexOf('.') + 1
                 );
@@ -312,10 +312,18 @@ class AuthController {
                     QueueService.createWallet(user.id, 'user', fields.campaign);
                   });
                 }
+                const data = encryptData(
+                  JSON.stringify({
+                    id: user.id,
+                    email: fields.email,
+                    phone: fields.phone
+                  })
+                );
+
                 Response.setSuccess(
                   201,
                   'Account Onboarded Successfully',
-                  user.id
+                  data
                 );
                 return Response.send(res);
               })
@@ -482,10 +490,17 @@ class AuthController {
                           );
                         });
                       }
+                      const data = encryptData(
+                        JSON.stringify({
+                          id: user.id,
+                          email: fields.email,
+                          phone: fields.phone
+                        })
+                      );
                       Response.setSuccess(
                         201,
                         'Account Onboarded Successfully',
-                        user.id
+                        data
                       );
                       return Response.send(res);
                     })

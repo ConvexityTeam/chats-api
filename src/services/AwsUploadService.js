@@ -16,6 +16,7 @@ const AwsS3 = new S3({
   accessKeyId,
   secretAccessKey
 });
+
 class AwsUploadService {
   static async uploadFile(file, fileKey, awsBucket, acl = 'public-read') {
     return new Promise(async (resolve, reject) => {
@@ -36,6 +37,11 @@ class AwsUploadService {
         }
       );
     });
+  }
+  static async createSecret() {
+    try {
+      const secret = client.createSecret('', (error, data) => {});
+    } catch (error) {}
   }
   static async getMnemonic() {
     // const { SecretsManager } = AWS;
