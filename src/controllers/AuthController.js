@@ -476,13 +476,6 @@ class AuthController {
                           profile_pic: url
                         });
                       });
-                      const data = await encryptData(
-                        JSON.stringify({
-                          id: user.id,
-                          email: user.email,
-                          phone: user.phone
-                        })
-                      );
                       Promise.all(uploadFilePromises).then(responses => {
                         responses.forEach(async url => {
                           await user.createPrint({
@@ -504,7 +497,13 @@ class AuthController {
                           );
                         });
                       }
-
+                      const data = await encryptData(
+                        JSON.stringify({
+                          id: user.id,
+                          email: fields.email,
+                          phone: fields.phone
+                        })
+                      );
                       Response.setSuccess(
                         201,
                         'Account Onboarded Successfully',
