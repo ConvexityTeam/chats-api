@@ -497,17 +497,17 @@ class AuthController {
                           );
                         });
                       }
-                      const data = await encryptData(
-                        JSON.stringify({
-                          id: user.id,
-                          email: fields.email,
-                          phone: fields.phone
-                        })
-                      );
+                      // const data = await encryptData(
+                      //   JSON.stringify({
+                      //     id: user.id,
+                      //     email: fields.email,
+                      //     phone: fields.phone
+                      //   })
+                      // );
                       Response.setSuccess(
                         201,
                         'Account Onboarded Successfully',
-                        data
+                        user.id
                       );
                       return Response.send(res);
                     })
