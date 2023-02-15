@@ -17,6 +17,9 @@ const key = crypto
 
 exports.encryptData = async data => {
   try {
+    Logger.info(
+      `ECNRYPTION_METHOD: ${ECNRYPTION_METHOD}, SECRET_KEY: ${SECRET_KEY}, SECRET_IV: ${SECRET_IV} `
+    );
     const encryptionIV = crypto
       .createHash('sha512')
       .update(SECRET_IV)
