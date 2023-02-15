@@ -9,16 +9,14 @@ exports.compareHash = (value, hash) => bcryptjs.compareSync(value, hash);
 
 const {ECNRYPTION_METHOD, SECRET_KEY, SECRET_IV} = process.env;
 
+const key = crypto
+  .createHash('sha512')
+  .update(SECRET_KEY)
+  .digest('hex')
+  .substring(0, 32);
+
 exports.encryptData = async data => {
   try {
-    const key = crypto
-      .createHash('sha512')
-      .update(SECRET_KEY)
-      .digest('hex')
-      .substring(0, 32);
-    Logger.info(
-      `ECNRYPTION_METHOD: ${ECNRYPTION_METHOD}, SECRET_KEY: ${SECRET_KEY}, SECRET_IV: ${SECRET_IV} `
-    );
     const encryptionIV = crypto
       .createHash('sha512')
       .update(SECRET_IV)
@@ -36,11 +34,6 @@ exports.encryptData = async data => {
 
 exports.decryptData = encryptedData => {
   try {
-    const key = crypto
-      .createHash('sha512')
-      .update(SECRET_KEY)
-      .digest('hex')
-      .substring(0, 32);
     const buff = Buffer.from(encryptedData, 'base64');
     const decipher = crypto.createDecipheriv(ECNRYPTION_METHOD, key, SECRET_IV);
     return (

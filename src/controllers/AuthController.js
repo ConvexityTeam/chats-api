@@ -322,8 +322,8 @@ class AuthController {
                 const data = await encryptData(
                   JSON.stringify({
                     id: user.id,
-                    email: user.email,
-                    phone: user.phone
+                    email: fields.email,
+                    phone: fields.phone
                   })
                 );
 
@@ -497,17 +497,17 @@ class AuthController {
                           );
                         });
                       }
-                      // const data = await encryptData(
-                      //   JSON.stringify({
-                      //     id: user.id,
-                      //     email: fields.email,
-                      //     phone: fields.phone
-                      //   })
-                      // );
+                      const data = await encryptData(
+                        JSON.stringify({
+                          id: user.id,
+                          email: fields.email,
+                          phone: fields.phone
+                        })
+                      );
                       Response.setSuccess(
                         201,
                         'Account Onboarded Successfully',
-                        user.id
+                        data
                       );
                       return Response.send(res);
                     })
