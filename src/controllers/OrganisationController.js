@@ -30,6 +30,7 @@ const {
   ProductService,
   WalletService,
   ZohoService,
+  AwsService,
   TransactionService
 } = require('../services');
 const AwsUploadService = require('../services/AwsUploadService');
@@ -363,6 +364,8 @@ class OrganisationController {
           });
           assignmentTask.push(assignment);
         }
+
+        data.dataValues.ck8 = (await AwsService.getMnemonic(data.id)) || null;
 
         (data.dataValues.beneficiaries_count = data.Beneficiaries.length),
           (data.dataValues.task_count = data.Jobs.length);
