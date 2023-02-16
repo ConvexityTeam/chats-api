@@ -2193,6 +2193,7 @@ class OrganisationController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       }
+      data.departmentId = '661286000000006907';
       const createdTicket = await ZohoService.createTicket(data);
       //const generate = await ZohoService.generatingToken()
       Response.setSuccess(201, 'Ticket Created Successfully', createdTicket);
