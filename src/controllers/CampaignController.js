@@ -8,7 +8,8 @@ const {
   UserService,
   WalletService,
   TaskService,
-  BlockchainService
+  BlockchainService,
+  AwsService
 } = require('../services');
 const Validator = require('validatorjs');
 const db = require('../models');
@@ -937,6 +938,8 @@ class CampaignController {
       campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(
         campaignId
       );
+      campaign.dataValues.ck8 =
+        (await AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Details',

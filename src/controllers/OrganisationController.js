@@ -196,7 +196,8 @@ class OrganisationController {
           createdAt: campaign.createdAt,
           updatedAt: campaign.updatedAt,
           beneficiaries_count: beneficiaries_count,
-          Jobs: campaign.Jobs
+          Jobs: campaign.Jobs,
+          ck8: (await AwsUploadService.getMnemonic(campaign.id)) || null
         });
       }
       Response.setSuccess(
@@ -685,6 +686,7 @@ class OrganisationController {
             'organisation',
             campaign.id
           );
+          AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',
