@@ -116,6 +116,14 @@ class CampaignController {
         ...query,
         status: 'active'
       });
+
+      await Promise.all(
+        allCampaign.map(async campaign => {
+          campaign.dataValues.ck8 =
+            (await AwsService.getMnemonic(campaign.id)) || null;
+        })
+      );
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign retrieved',
