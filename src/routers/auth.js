@@ -7,9 +7,6 @@ const {
   IsRecaptchaVerified
 } = require('../middleware'); //Auhorization middleware
 const {AuthController, BeneficiaryController} = require('../controllers');
-
-const multer = require('../middleware/multer-config'); //for uploading of profile picture and fingerprint
-const e2e = require('../middleware/e2e'); //End2End Encryption middleware
 const {
   AuthValidator,
   CampaignValidator,

@@ -1136,6 +1136,50 @@ class BeneficiariesController {
     }
   }
 
+  static async submitQuestionFieldAgent(req, res) {
+    const id = req.params.campaign_id;
+    const data = req.body;
+
+    try {
+      const rules = {
+        formId: 'required|numeric',
+        beneficiaryId: 'required|numeric',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.question': 'required|string',
+        'questions.*.answer': 'required|string',
+        'questions.*.reward': 'required|numeric'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      if (!question && question.campaign_form) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+      }
+      req.body.campaignId = id;
+      const createdForm = await CampaignService.formAnswer(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Questionnaire submitted',
+        createdForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.'
+      );
+      return Response.send(res);
+    }
+  }
+
   static async transfer(req, res) {
     const data = req.body;
     try {

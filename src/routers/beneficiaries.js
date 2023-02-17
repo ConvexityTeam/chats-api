@@ -131,7 +131,7 @@ router.post(
 router
   .route('/survey/:campaign_id')
   .get(
-    BeneficiaryAuth,
+    FieldAgentBeneficiaryAuth,
     CampaignValidator.campaignExists,
     BeneficiaryController.getCampaignQuestion
   )
@@ -139,6 +139,14 @@ router
     BeneficiaryAuth,
     CampaignValidator.campaignExists,
     BeneficiaryController.submitQuestion
+  );
+
+router
+  .route('/field/survey/:campaign_id')
+  .post(
+    FieldAgentAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.submitQuestionFieldAgent
   );
 router.post(
   '/transfer/beneficiary',
