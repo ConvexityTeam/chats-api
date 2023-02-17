@@ -1119,6 +1119,7 @@ class BeneficiariesController {
         );
       }
       req.body.beneficiaryId = req.user.id;
+      req.body.campaignId = id;
       const createdForm = await CampaignService.formAnswer(req.body);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,

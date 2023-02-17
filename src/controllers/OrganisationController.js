@@ -993,9 +993,24 @@ class OrganisationController {
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId
       );
-      // const form = await CampaignService.findCampaignFormBeneficiary(
-      //   CampaignId
-      // );
+
+      const filterArray = [];
+
+      beneficiaries.forEach(beneficiary => {
+        beneficiary.User.Answers.forEach((answer, i) => {
+          if (answer.campaignId == CampaignId) {
+            beneficiary.dataValues.User.dataValues.Answers = [answer];
+            console.log(beneficiary);
+          }
+        });
+      });
+
+      // beneficiaries.filter(beneficiary => {
+      //   beneficiary.User.Answers.some(
+      //     (answer, i) => answer.dataValues !== null
+      //   );
+      // });
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
@@ -1005,7 +1020,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.' + error
       );
       return Response.send(res);
     }
