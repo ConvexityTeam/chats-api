@@ -994,22 +994,13 @@ class OrganisationController {
         CampaignId
       );
 
-      const filterArray = [];
-
       beneficiaries.forEach(beneficiary => {
-        beneficiary.User.Answers.forEach((answer, i) => {
+        beneficiary.User.Answers.forEach(answer => {
           if (answer.campaignId == CampaignId) {
             beneficiary.dataValues.User.dataValues.Answers = [answer];
-            console.log(beneficiary);
           }
         });
       });
-
-      // beneficiaries.filter(beneficiary => {
-      //   beneficiary.User.Answers.some(
-      //     (answer, i) => answer.dataValues !== null
-      //   );
-      // });
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
