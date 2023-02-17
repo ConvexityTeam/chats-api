@@ -1047,10 +1047,12 @@ class AuthController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+      let user_exist = false;
+      const campaign = await CampaignService.getCampaignById(campaign_id);
       for (let email of inviteeEmail) {
-        const [ngo, campaign, donor] = await Promise.all([
+        const [ngo, donor] = await Promise.all([
           OrganisationService.checkExist(organisation_id),
-          CampaignService.getCampaignById(campaign_id),
+
           OrganisationService.checkExistEmail(email)
         ]);
         const token = await AuthService.inviteDonor(
@@ -1058,7 +1060,9 @@ class AuthController {
           organisation_id,
           campaign_id
         );
+
         if (!donor) {
+          user_exist = false;
           await MailerService.sendInvite(
             email,
             token,
@@ -1069,12 +1073,13 @@ class AuthController {
             link
           );
         } else {
+          user_exist = true;
           await MailerService.sendInvite(
             email,
             token,
             campaign,
             ngo.name,
-            false,
+            true,
             message,
             link
           );
@@ -1083,7 +1088,8 @@ class AuthController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        'Invite sent to donor.'
+        'Invite sent to donor.',
+        {campaignId: campaign.id, is_public: campaign.is_public, user_exist}
       );
       return Response.send(res);
     } catch (error) {
