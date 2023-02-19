@@ -173,7 +173,7 @@ class AuthController {
           });
 
           if (user) QueueService.createWallet(user.id, 'user');
-          Response.setSuccess(201, 'Account Onboarded Successfully', data);
+          Response.setSuccess(201, 'Account Onboarded Successfully', user);
           return Response.send(res);
         }
       }
