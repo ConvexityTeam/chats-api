@@ -60,14 +60,12 @@ router.post('/2fa/state2fa', Auth, AuthController.state2fa);
 router
   .route('/password/reset')
   .post(
-    Auth,
     AuthValidator.requestPasswordResetRules(),
     AuthValidator.validate,
     AuthValidator.canResetPassword,
     AuthController.requestPasswordReset
   )
   .put(
-    Auth,
     AuthValidator.resetPasswordRules(),
     AuthValidator.validate,
     AuthValidator.checkResetPasswordToken,

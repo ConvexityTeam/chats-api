@@ -1014,19 +1014,19 @@ class AuthController {
     }
   }
 
-  static async resetPassword(req, res) {
-    try {
-      await AuthService.updatedPassord(req.user, req.body.password);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Reset password request failed. Please try again.'
-      );
-      return Response.send(res);
-    }
-  }
+  // static async resetPassword(req, res) {
+  //   try {
+  //     await AuthService.updatedPassord(req.user, req.body.password);
+  //     Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+  //     return Response.send(res);
+  //   } catch (error) {
+  //     Response.setError(
+  //       HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+  //       'Reset password request failed. Please try again.'
+  //     );
+  //     return Response.send(res);
+  //   }
+  // }
 
   static async sendInvite(req, res) {
     const {inviteeEmail, message, link} = req.body;
