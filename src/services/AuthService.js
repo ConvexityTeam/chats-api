@@ -200,10 +200,10 @@ class AuthService {
       request_ip
     });
     await MailerService.sendOTP(otp, reset.ref, user.email, name);
-    await SmsService.sendOtp(
-      user.phone,
-      `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`
-    );
+    // await SmsService.sendOtp(
+    //   user.phone,
+    //   `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`
+    // );
     return reset;
   }
 

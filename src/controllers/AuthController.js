@@ -1008,7 +1008,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed please try again.'
+        'Request failed please try again.' + error
       );
       return Response.send(res);
     }
@@ -1103,7 +1103,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Reset password request failed. Please try again.'
+        'Reset password request failed. Please try again.' + error
       );
       return Response.send(res);
     }
