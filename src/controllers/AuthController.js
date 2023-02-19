@@ -171,13 +171,7 @@ class AuthController {
             profile_pic,
             location: JSON.stringify({country, state, coordinates})
           });
-          const data = await encryptData(
-            JSON.stringify({
-              id: user.id,
-              email: user.email,
-              phone: user.phone
-            })
-          );
+
           if (user) QueueService.createWallet(user.id, 'user');
           Response.setSuccess(201, 'Account Onboarded Successfully', data);
           return Response.send(res);
