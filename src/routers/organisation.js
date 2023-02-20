@@ -375,7 +375,7 @@ router
     CampaignController.campaignForm
   )
   .get(
-    NgoAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignController.getCampaignForm
