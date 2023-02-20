@@ -369,7 +369,7 @@ router
 router
   .route('/:organisation_id/campaign_form')
   .post(
-    NgoAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignController.campaignForm
