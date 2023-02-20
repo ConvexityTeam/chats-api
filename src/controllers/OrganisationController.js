@@ -650,6 +650,11 @@ class OrganisationController {
     } catch (error) {}
   }
 
+  static createItemCampaign(req, res) {
+    try {
+    } catch (error) {}
+  }
+
   static async createCampaign(req, res) {
     try {
       const rules = {
