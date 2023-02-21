@@ -1141,12 +1141,23 @@ class AuthController {
           );
           return Response.send(res);
         }
+        const ngo = await OrganisationService.checkExist(token_exist.inviterId);
         const donor = await OrganisationService.checkExistEmail(
           token_exist.email
         );
+
         const isAdded = await db.Invites.findOne({
           where: {CampaignId: campaignId, token, isAdded: false}
         });
+
+        if (!ngo) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            "You don't have access to view this campaign"
+          );
+          return Response.send(res);
+        }
+
         if (!isAdded) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
@@ -1154,31 +1165,27 @@ class AuthController {
           );
           return Response.send(res);
         }
-        if (!donor) {
-          Response.setError(
-            HttpStatusCode.STATUS_UNAUTHORIZED,
-            "Confirmation failed. it seems you don't have an account with us"
-          );
-          return Response.send(res);
-        }
-        const associate = await db.AssociatedCampaign.findOne({
-          where: {
+        if (donor) {
+          const associate = await db.AssociatedCampaign.findOne({
+            where: {
+              DonorId: donor.id,
+              CampaignId: campaignId
+            }
+          });
+
+          if (associate) {
+            Response.setSuccess(
+              HttpStatusCode.STATUS_OK,
+              'You already have access to this campaign'
+            );
+            return Response.send(res);
+          }
+          await db.AssociatedCampaign.create({
             DonorId: donor.id,
             CampaignId: campaignId
-          }
-        });
-
-        if (associate) {
-          Response.setSuccess(
-            HttpStatusCode.STATUS_OK,
-            'You already have access to this campaign'
-          );
-          return Response.send(res);
+          });
         }
-        await db.AssociatedCampaign.create({
-          DonorId: donor.id,
-          CampaignId: campaignId
-        });
+
         await isAdded.update({isAdded: true});
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
@@ -1201,7 +1208,6 @@ class AuthController {
         organisation_name: 'required|string',
         password: 'required',
         website_url: 'required|url',
-        token: 'required|string',
         campaignId: 'integer|required',
         email: 'email|required'
       };
@@ -1212,10 +1218,13 @@ class AuthController {
         Response.setError(400, validation.errors);
         return Response.send(res);
       }
-      const [campaign, token_exist] = await Promise.all([
+      const [campaign, exist] = await Promise.all([
         CampaignService.getCampaignById(data.campaignId),
-        db.Invites.findOne({where: {token: data.token}})
+        db.Invites.findOne({
+          where: {email: data.email, isAdded: true, CampaignId: data.campaignId}
+        })
       ]);
+
       const url_string = data.website_url;
       const domain = extractDomain(url_string);
 
@@ -1236,23 +1245,20 @@ class AuthController {
         );
         return Response.send(res);
       }
+
       if (userExist) {
         Response.setError(400, 'Email Already Exists, Recover Your Account');
         return Response.send(res);
       }
-      if (userExist) {
-        Response.setError(400, 'Email Already Exists, Recover Your Account');
-        return Response.send(res);
-      }
-      const isAdded = await db.Invites.findOne({
-        where: {
-          CampaignId: data.campaignId,
-          token: data.token,
-          email: data.email,
-          isAdded: false
-        }
-      });
-      if (!isAdded) {
+      // const isAdded = await db.Invites.findOne({
+      //   where: {
+      //     CampaignId: data.campaignId,
+      //     email: data.email,
+      //     isAdded: true
+      //   }
+      // });
+
+      if (!exist) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           "You don't have access to view this campaign"
@@ -1279,47 +1285,38 @@ class AuthController {
         return Response.send(res);
       }
 
-      jwt.verify(data.token, process.env.SECRET_KEY, async (err, payload) => {
-        if (err) {
-          Response.setError(
-            HttpStatusCode.STATUS_UNAUTHORIZED,
-            'Unauthorised. Token Invalid'
-          );
-          return Response.send(res);
-        }
-        const password = createHash(req.body.password);
-        const user = await UserService.addUser({
-          RoleId: AclRoles.Donor,
-          email: data.email,
-          password
-        });
-
-        const createdOrganisation = await db.Organisation.create({
-          name: data.organisation_name,
-          email: data.email,
-          website_url: data.website_url,
-          registration_id: generateOrganisationId()
-        });
-
-        await db.OrganisationMembers.create({
-          UserId: user.id,
-          role: 'donor',
-          OrganisationId: token_exist.inviterId
-        });
-        await db.AssociatedCampaign.create({
-          DonorId: createdOrganisation.id,
-          CampaignId: data.campaignId
-        });
-
-        QueueService.createWallet(createdOrganisation.id, 'organisation');
-
-        Response.setSuccess(
-          HttpStatusCode.STATUS_CREATED,
-          'Donor and User registered successfully',
-          createdOrganisation
-        );
-        return Response.send(res);
+      const password = createHash(req.body.password);
+      const user = await UserService.addUser({
+        RoleId: AclRoles.Donor,
+        email: data.email,
+        password
       });
+
+      const createdOrganisation = await db.Organisation.create({
+        name: data.organisation_name,
+        email: data.email,
+        website_url: data.website_url,
+        registration_id: generateOrganisationId()
+      });
+
+      await db.OrganisationMembers.create({
+        UserId: user.id,
+        role: 'donor',
+        OrganisationId: exist.inviterId
+      });
+      await db.AssociatedCampaign.create({
+        DonorId: createdOrganisation.id,
+        CampaignId: data.campaignId
+      });
+
+      QueueService.createWallet(createdOrganisation.id, 'organisation');
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Donor and User registered successfully',
+        createdOrganisation
+      );
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
