@@ -1199,8 +1199,13 @@ class AuthController {
         await isAdded.update({isAdded: true});
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
-          'campaign has been confirmed',
-          {campaignId, is_public: campaign.is_public, user_exist}
+          'campaign invitation has been confirmed',
+          {
+            campaignId,
+            is_public: campaign.is_public,
+            user_exist,
+            email: token_exist.email
+          }
         );
         return Response.send(res);
       });
