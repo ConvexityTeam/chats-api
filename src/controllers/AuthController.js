@@ -172,7 +172,7 @@ class AuthController {
             location: JSON.stringify({country, state, coordinates})
           });
 
-          if (user) QueueService.createWallet(user.id, 'user');
+          if (user) await QueueService.createWallet(user.id, 'user');
           Response.setSuccess(201, 'Account Onboarded Successfully', user);
           return Response.send(res);
         }
@@ -284,7 +284,7 @@ class AuthController {
               pin: encryptedPin
             })
               .then(async user => {
-                QueueService.createWallet(user.id, 'user');
+                await QueueService.createWallet(user.id, 'user');
                 const extension = files.profile_pic.name.substring(
                   files.profile_pic.name.lastIndexOf('.') + 1
                 );
@@ -309,8 +309,12 @@ class AuthController {
                     CampaignId: campaignExist.id,
                     approved: true,
                     source: 'field app'
-                  }).then(() => {
-                    QueueService.createWallet(user.id, 'user', fields.campaign);
+                  }).then(async () => {
+                    await QueueService.createWallet(
+                      user.id,
+                      'user',
+                      fields.campaign
+                    );
                   });
                 }
                 // const data = await encryptData(
@@ -436,7 +440,7 @@ class AuthController {
                     pin: encryptedPin
                   })
                     .then(async user => {
-                      QueueService.createWallet(user.id, 'user');
+                      await QueueService.createWallet(user.id, 'user');
 
                       var i = 0;
                       files.fingerprints.forEach(async fingerprint => {
@@ -483,8 +487,8 @@ class AuthController {
                           CampaignId: campaignExist.id,
                           approved: true,
                           source: 'field app'
-                        }).then(() => {
-                          QueueService.createWallet(
+                        }).then(async () => {
+                          await QueueService.createWallet(
                             user.id,
                             'user',
                             fields.campaign
@@ -584,7 +588,7 @@ class AuthController {
                       website_url: data.website_url,
                       registration_id: generateOrganisationId()
                     }).then(async organisation => {
-                      QueueService.createWallet(
+                      await QueueService.createWallet(
                         organisation.id,
                         'organisation'
                       );
@@ -1212,9 +1216,9 @@ class AuthController {
     const data = req.body;
     try {
       const rules = {
-        organisation_name: 'required|string',
+        organisation_name: 'string',
         password: 'required',
-        website_url: 'required|url',
+        website_url: 'url',
         campaignId: 'integer|required',
         email: 'email|required'
       };
@@ -1272,25 +1276,25 @@ class AuthController {
         );
         return Response.send(res);
       }
-      const organisationExist = await db.Organisation.findOne({
-        where: {
-          [Op.or]: [
-            {
-              name: data.organisation_name
-            },
-            {
-              website_url: data.website_url
-            }
-          ]
-        }
-      });
-      if (organisationExist) {
-        Response.setError(
-          400,
-          'An Organisation with such name or website url already exist'
-        );
-        return Response.send(res);
-      }
+      // const organisationExist = await db.Organisation.findOne({
+      //   where: {
+      //     [Op.or]: [
+      //       {
+      //         name: data.organisation_name
+      //       },
+      //       {
+      //         website_url: data.website_url
+      //       }
+      //     ]
+      //   }
+      // });
+      // if (organisationExist) {
+      //   Response.setError(
+      //     400,
+      //     'An Organisation with such name or website url already exist'
+      //   );
+      //   return Response.send(res);
+      // }
 
       const password = createHash(req.body.password);
       const user = await UserService.addUser({
@@ -1300,9 +1304,9 @@ class AuthController {
       });
 
       const createdOrganisation = await db.Organisation.create({
-        name: data.organisation_name,
+        name: data.organisation_name || 'no org',
         email: data.email,
-        website_url: data.website_url,
+        website_url: data.website_url || null,
         registration_id: generateOrganisationId()
       });
 
@@ -1316,7 +1320,7 @@ class AuthController {
         CampaignId: data.campaignId
       });
 
-      QueueService.createWallet(createdOrganisation.id, 'organisation');
+      await QueueService.createWallet(createdOrganisation.id, 'organisation');
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
