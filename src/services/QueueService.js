@@ -9,9 +9,8 @@ const {
   FUND_BENEFICIARY,
   FROM_NGO_TO_CAMPAIGN,
   PAYSTACK_DEPOSIT,
-  TRANSFER_TO,
   PAY_FOR_PRODUCT,
-  PAYSTACK_WITHDRAW,
+  DEPLOY_NFT_COLLECTION,
   TRANSFER_FROM_TO_BENEFICIARY,
   PAYSTACK_VENDOR_WITHDRAW,
   PAYSTACK_BENEFICIARY_WITHDRAW,
@@ -88,8 +87,22 @@ const beneficiaryFundBeneficiary = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+const deployNewCollection = RabbitMq['default'].declareQueue(
+  DEPLOY_NFT_COLLECTION,
+  {
+    durable: true
+  }
+);
 
 class QueueService {
+  static createCollection(collection) {
+    const payload = {...collection};
+    deployNewCollection.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static createWallet(ownerId, wallet_type, CampaignId = null) {
     const payload = {wallet_type, ownerId, CampaignId};
     createWalletQueue.send(

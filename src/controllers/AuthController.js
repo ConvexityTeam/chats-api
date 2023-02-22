@@ -1125,7 +1125,13 @@ class AuthController {
         CampaignService.getCampaignById(campaignId),
         db.Invites.findOne({where: {token}})
       ]);
-
+      const userExist = await UserService.findSingleUser({
+        email: token_exist.email
+      });
+      let user_exist = false;
+      if (userExist) {
+        user_exist = true;
+      }
       if (!campaign) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -1189,7 +1195,8 @@ class AuthController {
         await isAdded.update({isAdded: true});
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
-          'campaign has been confirmed'
+          'campaign has been confirmed',
+          {campaignId, is_public: campaign.is_public, user_exist}
         );
         return Response.send(res);
       });

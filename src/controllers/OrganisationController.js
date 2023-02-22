@@ -395,7 +395,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -694,6 +694,9 @@ class OrganisationController {
             'organisation',
             campaign.id
           );
+          campaign.type === 'item'
+            ? QueueService.createCollection(campaign)
+            : null;
           AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,

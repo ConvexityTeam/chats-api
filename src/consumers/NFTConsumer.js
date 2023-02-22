@@ -22,10 +22,11 @@ RabbitMq['default']
   .completeConfiguration()
   .then(() => {
     deployNFTCollection
-      .activateConsumer(msg => {
-        const {} = msg.getContent();
+      .activateConsumer(asyn msg => {
+        const campaign = msg.getContent();
+        console.log(campaign);
 
-        nftMintingLimit.activateConsumer(() => {});
+        // nftMintingLimit.activateConsumer(() => {});
       })
       .then(() => {
         Logger.info('Running Process For Deploying New NFT Collection');

@@ -15,6 +15,25 @@ const provider = new ethers.providers.getDefaultProvider(
 const Axios = axios.create();
 
 class BlockchainService {
+  static async createNFTCollection(name) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info(`CREATING NFT COLLECTION`);
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/deploy-collection/${name}/${name}/${name}`
+        );
+        Logger.info(`CREATED NFT COLLECTION`);
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `ERROR CREATING NFT COLLECTION: ${JSON.stringify(
+            error.response.data
+          )}`
+        );
+        reject(error);
+      }
+    });
+  }
   static async signInSwitchWallet() {
     return new Promise(async (resolve, reject) => {
       try {

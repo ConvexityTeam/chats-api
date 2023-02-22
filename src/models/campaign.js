@@ -1,6 +1,7 @@
 'use strict';
 const {Model} = require('sequelize');
 const {userConst} = require('../constants');
+const {INTEGER} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**
@@ -69,7 +70,8 @@ module.exports = (sequelize, DataTypes) => {
       OrganisationId: DataTypes.INTEGER,
       formId: DataTypes.INTEGER,
       title: DataTypes.STRING,
-      type: DataTypes.ENUM('campaign', 'cash-for-work'),
+      minting_limit: DataTypes.INTEGER,
+      type: DataTypes.ENUM('campaign', 'cash-for-work', 'item'),
       spending: DataTypes.STRING,
       description: DataTypes.TEXT,
       status: DataTypes.ENUM(
