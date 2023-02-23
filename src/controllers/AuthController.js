@@ -1284,6 +1284,20 @@ class AuthController {
         );
         return Response.send(res);
       }
+      const ass = await db.AssociatedCampaign.findOne({
+        where: {
+          DonorId: createdOrganisation.id,
+          CampaignId: data.campaignId
+        }
+      });
+
+      if(ass){
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          "Already on campaign"
+        );
+        return Response.send(res);
+      }
       // const organisationExist = await db.Organisation.findOne({
       //   where: {
       //     [Op.or]: [
@@ -1339,7 +1353,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support' + error
+        'Internal Server Error, Contact Support'
       );
       return Response.send(res);
     }
