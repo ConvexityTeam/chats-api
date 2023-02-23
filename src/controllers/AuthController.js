@@ -773,13 +773,13 @@ class AuthController {
         return Response.send(res);
       }
 
-      const data = await AuthService.login(user, req.body.password.trim());
+      await AuthService.login(user, req.body.password.trim());
 
       const donorMainOrg = await OrganisationService.checkExistEmail(
         req.body.email
       );
-      data.mainOrganisation = donorMainOrg;
-      Response.setSuccess(200, 'Login Successful.', data);
+      user.dataValues.mainOrganisation = donorMainOrg;
+      Response.setSuccess(200, 'Login Successful.', user);
       return Response.send(res);
     } catch (error) {
       const message =
@@ -1291,10 +1291,10 @@ class AuthController {
         }
       });
 
-      if(ass){
+      if (ass) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          "Already on campaign"
+          'Already on campaign'
         );
         return Response.send(res);
       }
