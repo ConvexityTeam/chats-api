@@ -778,7 +778,7 @@ class AuthController {
       const donorMainOrg = await OrganisationService.checkExistEmail(
         req.body.email
       );
-      user.dataValues.mainOrganisation = donorMainOrg;
+      data.mainOrganisation = donorMainOrg;
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -1314,7 +1314,7 @@ class AuthController {
       const createdOrganisation = await db.Organisation.create({
         name: data.organisation_name || 'no org',
         email: data.email,
-        website_url: data.website_url || null,
+        website_url: data.website_url || 'null',
         registration_id: generateOrganisationId()
       });
 
