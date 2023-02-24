@@ -773,13 +773,14 @@ class AuthController {
         return Response.send(res);
       }
 
-      await AuthService.login(user, req.body.password.trim());
-
       const donorMainOrg = await OrganisationService.checkExistEmail(
         req.body.email
       );
       user.dataValues.mainOrganisation = donorMainOrg;
-      Response.setSuccess(200, 'Login Successful.', user);
+
+      const data = await AuthService.login(user, req.body.password.trim());
+
+      Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
       const message =
