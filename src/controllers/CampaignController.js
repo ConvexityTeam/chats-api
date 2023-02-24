@@ -963,6 +963,100 @@ class CampaignController {
       return Response.send(res);
     }
   }
+  static async getPrivateCampaign(req, res) {
+    try {
+      let assignmentTask = [];
+      const campaignId = req.params.campaign_id;
+      const OrganisationId = req.params.organisation_id;
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${campaignId}`
+      );
+      const token = await BlockchainService.balance(campaign_token.address);
+      const balance = Number(token.Balance.split(',').join(''));
+      const campaign = await CampaignService.getPrivateCampaignWithBeneficiaries(
+        campaignId
+      );
+      const campaignWallet = await WalletService.findOrganisationCampaignWallet(
+        OrganisationId,
+        campaignId
+      );
+      if (!campaignWallet) {
+        await QueueService.createWallet(
+          OrganisationId,
+          'organisation',
+          campaignId
+        );
+      }
+      if (campaign.Beneficiaries) {
+        campaign.Beneficiaries.forEach(async data => {
+          const userWallet = await WalletService.findUserCampaignWallet(
+            data.id,
+            campaignId
+          );
+          if (!userWallet) {
+            await QueueService.createWallet(data.id, 'user', campaignId);
+          }
+        });
+      }
+      campaign.dataValues.completed_task = 0;
+      for (let task of campaign.Jobs) {
+        const assignment = await db.TaskAssignment.findOne({
+          where: {TaskId: task.id, status: 'completed'}
+        });
+        assignmentTask.push(assignment);
+      }
+
+      function isExist(id) {
+        let find = assignmentTask.find(a => a && a.TaskId === id);
+        if (find) {
+          return true;
+        }
+        return false;
+      }
+      if (campaign.Jobs) {
+        campaign.Jobs.forEach(async task => {
+          if (isExist(task.id)) {
+            campaign.dataValues.completed_task++;
+          }
+        });
+      }
+      campaign.dataValues.balance = balance;
+      campaign.dataValues.address = campaign_token.address;
+      campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length;
+      campaign.dataValues.task_count = campaign.Jobs.length;
+      campaign.dataValues.beneficiary_share =
+        campaign.dataValues.beneficiaries_count > 0
+          ? (campaign.budget / campaign.dataValues.beneficiaries_count).toFixed(
+              2
+            )
+          : 0;
+      campaign.dataValues.amount_spent = (
+        campaign.amount_disbursed -
+        campaign.BeneficiariesWallets.map(balance => balance).reduce(
+          (a, b) => a + b,
+          0
+        )
+      ).toFixed(2);
+      campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(
+        campaignId
+      );
+      campaign.dataValues.ck8 =
+        (await AwsService.getMnemonic(campaign.id)) || null;
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign Details',
+        campaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
 
   static async campaignsWithOnboardedBeneficiary(req, res) {
     const {campaign_id} = req.params;
@@ -1156,7 +1250,7 @@ class CampaignController {
       const formExist = await CampaignService.findCampaignFormByTitle(
         data.title
       );
-      if (formExist && formExist.id === data.id) {
+      if (formExist && formExist.id !== data.id) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Form with similar title exists.'

@@ -97,7 +97,7 @@ class WalletController {
         OrganisationId
       );
       if (!wallet) {
-        QueueService.createWallet(OrganisationId, 'organisation');
+        await QueueService.createWallet(OrganisationId, 'organisation');
       }
 
       const MainWallet = wallet.toObject();

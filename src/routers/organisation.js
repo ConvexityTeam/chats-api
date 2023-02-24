@@ -309,6 +309,15 @@ router
   );
 
 router
+  .route('/:organisation_id/private/campaigns/:campaign_id')
+  .get(
+    DonorAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.getPrivateCampaign
+  );
+router
   .route('/:organisation_id/campaigns/:campaign_id')
   .get(
     FieldAgentAuth,

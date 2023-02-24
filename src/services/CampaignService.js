@@ -110,8 +110,8 @@ class CampaignService {
         CampaignId,
         UserId,
         source
-      }).then(newBeneficiary => {
-        QueueService.createWallet(UserId, 'user', CampaignId);
+      }).then(async newBeneficiary => {
+        await QueueService.createWallet(UserId, 'user', CampaignId);
         return newBeneficiary;
       });
     });
@@ -212,7 +212,42 @@ class CampaignService {
       ]
     });
   }
-
+  static getPrivateCampaignWithBeneficiaries(id) {
+    return Campaign.findOne({
+      order: [['updatedAt', 'ASC']],
+      where: {
+        id,
+        is_public: false
+      },
+      // attributes: {
+      //   include: [
+      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
+      //   ]
+      // },
+      include: [
+        {
+          model: User,
+          as: 'Beneficiaries',
+          attributes: userConst.publicAttr,
+          through: {
+            attributes: []
+          }
+        },
+        {model: Task, as: 'Jobs'},
+        {
+          model: Wallet,
+          as: 'BeneficiariesWallets',
+          attributes: walletConst.walletExcludes
+        }
+      ],
+      group: [
+        'Campaign.id',
+        'Beneficiaries.id',
+        'Jobs.id',
+        'BeneficiariesWallets.uuid'
+      ]
+    });
+  }
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
       order: [['updatedAt', 'ASC']],
@@ -314,7 +349,8 @@ class CampaignService {
       ]
     });
   }
-  static getPrivateCampaigns(query, id) {
+  static getPrivateCampaigns(queryClause = {}, id) {
+    let where = queryClause;
     return Organisation.findOne({
       where: {
         id
@@ -323,7 +359,7 @@ class CampaignService {
       include: {
         model: Campaign,
         where: {
-          ...query,
+          ...where,
           is_public: false
         },
         as: 'associatedCampaigns',

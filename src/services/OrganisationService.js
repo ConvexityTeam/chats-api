@@ -167,9 +167,9 @@ class OrganisationService {
             UserId: account.id
           });
         })
-        .then(_store => {
+        .then(async _store => {
           store = _store;
-          QueueService.createWallet(account.id, 'user');
+          await QueueService.createWallet(account.id, 'user');
           MailerService.verify(
             data.email,
             data.first_name + ' ' + data.last_name,
