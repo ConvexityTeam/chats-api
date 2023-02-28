@@ -165,7 +165,7 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {collection, hash} = msg.getContent();
 
-        const confirmTransaction = await BlockchainService.confirmTransaction(
+        const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           hash
         );
 
@@ -228,7 +228,7 @@ RabbitMq['default']
           `campaign_${collection.id}`
         );
 
-        const confirmTransaction = await BlockchainService.confirmTransaction(
+        const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           hash
         );
 
@@ -277,7 +277,7 @@ RabbitMq['default']
     confirmAndMintNFT
       .activateConsumer(async msg => {
         const {hash, transaction} = msg.getContent();
-        const confirmTransaction = await BlockchainService.confirmTransaction(
+        const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           hash
         );
 
