@@ -201,8 +201,8 @@ class QueueService {
     );
   }
 
-  static async confirmAndMintNFT(hash, transaction) {
-    const payload = {hash, transaction};
+  static async confirmAndMintNFT(collection, hash, transaction) {
+    const payload = {collection, hash, transaction};
     confirmAndMintToken.send(
       new Message(payload, {
         contentType: 'application/json'
@@ -219,7 +219,14 @@ class QueueService {
     );
   }
 
-  static async mintNFTFunc(wallet, amount, receiver, contractIndex, tokenURI) {
+  static async mintNFTFunc(
+    collection,
+    wallet,
+    amount,
+    receiver,
+    contractIndex,
+    tokenURI
+  ) {
     const transaction = await Transaction.create({
       narration: 'Minting Limit',
       ReceiverWalletId: wallet.uuid,
@@ -232,7 +239,13 @@ class QueueService {
       amount
     });
 
-    const payload = {transaction, receiver, contractIndex, tokenURI};
+    const payload = {
+      collection,
+      transaction,
+      receiver,
+      contractIndex,
+      tokenURI
+    };
     mintNFT.send(
       new Message(payload, {
         contentType: 'application/json'

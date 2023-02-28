@@ -71,6 +71,7 @@ module.exports = (sequelize, DataTypes) => {
       formId: DataTypes.INTEGER,
       title: DataTypes.STRING,
       minting_limit: DataTypes.INTEGER,
+      is_processing: DataTypes.BOOLEAN,
       type: DataTypes.ENUM('campaign', 'cash-for-work', 'item'),
       spending: DataTypes.STRING,
       collection_hash: DataTypes.STRING,

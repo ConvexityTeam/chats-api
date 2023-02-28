@@ -254,6 +254,7 @@ RabbitMq['default']
           {title: collection.title, description: collection.description}
         ]);
         await QueueService.mintNFTFunc(
+          collection,
           wallet.Wallet,
           collection.minting_limit,
           campaignKeyPair.address,
@@ -276,7 +277,7 @@ RabbitMq['default']
 
     confirmAndMintNFT
       .activateConsumer(async msg => {
-        const {hash, transaction} = msg.getContent();
+        const {collection, hash, transaction} = msg.getContent();
         const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           hash
         );
@@ -289,7 +290,10 @@ RabbitMq['default']
           {status: 'success', transaction_hash: hash, is_approved: true},
           transaction.uuid
         );
-
+        await update_campaign(collection.id, {
+          is_funded: true,
+          is_processing: false
+        });
         Logger.info('CONSUMER: NFT MINTED');
         msg.ack();
       })
@@ -302,6 +306,7 @@ RabbitMq['default']
     mintNFT
       .activateConsumer(async msg => {
         const {
+          collection,
           transaction,
           receiver,
           contractIndex,
@@ -318,6 +323,7 @@ RabbitMq['default']
           return;
         }
         await QueueService.confirmAndMintNFT(
+          collection,
           createdMintingLimit.nft,
           transaction
         );
@@ -347,7 +353,7 @@ RabbitMq['default']
           const uuid = beneficiary.User.Wallets[0].uuid;
           console.log(campaign.privateKey);
           for (let i = 1; i < tokenIds; i++) {
-            const approveNFT = await BlockchainService.createNFTApproveToSpend(
+            const approveNFT = await BlockchainService.nftTransfer(
               campaign.privateKey,
               beneficial.address,
               i,

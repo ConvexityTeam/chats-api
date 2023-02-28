@@ -314,11 +314,13 @@ RabbitMq['default']
           await update_campaign(campaign.id, {
             status: 'active',
             is_funded: true,
+            is_processing: false,
             amount_disbursed: realBudget
           });
         } else
           await update_campaign(campaign.id, {
-            is_funded: true
+            is_funded: true,
+            is_processing: false
           });
 
         await update_transaction(

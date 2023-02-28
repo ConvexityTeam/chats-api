@@ -19,12 +19,18 @@ const Interface = new ethers.utils.Interface([
 const Axios = axios.create();
 
 class BlockchainService {
-  static async nftTransfer(sender, receiver, tokenId, contractIndex) {
+  static async nftTransfer(
+    senderPrivateKey,
+    sender,
+    receiver,
+    tokenId,
+    contractIndex
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info(`TRANSFERRING NFT`);
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/txn/transfer-nft/${sender}/${receiver}/${tokenId}/${contractIndex}`
+          `${tokenConfig.baseURL}/txn/transfer-nft/:senderPrivateKey/:sender/:receiver/:tokenId/:collectionAddress`
         );
         Logger.info(`TRANSFERRED NFT`);
         resolve(data);
