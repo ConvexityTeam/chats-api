@@ -4,6 +4,7 @@ const {RabbitMq, Logger} = require('../libs');
 const {generateTransactionRef, AclRoles} = require('../utils');
 const {
   CREATE_WALLET,
+  NFT_MINTING_LIMIT,
   VERIFY_FIAT_DEPOSIT,
   PROCESS_VENDOR_ORDER,
   FUND_BENEFICIARY,
@@ -15,13 +16,32 @@ const {
   PAYSTACK_VENDOR_WITHDRAW,
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_CAMPAIGN_DEPOSIT,
-  FUND_BENEFICIARIES
+  FUND_BENEFICIARIES,
+  MINT_NFT,
+  CONFIRM_AND_CREATE_MINTING_LIMIT,
+  CONFIRM_AND_SEND_MINT_NFT,
+  CONFIRM_AND_MINT_NFT,
+  FUN_NFT_CAMPAIGN,
+  CONFIRM_AND_UPDATE_CAMPAIGN,
+  CONFIRM_AND_CREATE_WALLET,
+  DISBURSE_ITEM,
+  CONFIRM_AND_DISBURSE_ITEM
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
 const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
   durable: true
 });
+
+const disburseItem = RabbitMq['default'].declareQueue(DISBURSE_ITEM, {
+  durable: true
+});
+const confirmDisburseItem = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_DISBURSE_ITEM,
+  {
+    durable: true
+  }
+);
 const fundBeneficiary = RabbitMq['default'].declareQueue(FUND_BENEFICIARY, {
   durable: true
 });
@@ -55,6 +75,10 @@ const processOrderQueue = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const funNFTCampaign = RabbitMq['default'].declareQueue(FUN_NFT_CAMPAIGN, {
+  durable: true
+});
 
 const approveCampaignAndFund = RabbitMq['default'].declareQueue(
   FROM_NGO_TO_CAMPAIGN,
@@ -94,18 +118,139 @@ const deployNewCollection = RabbitMq['default'].declareQueue(
   }
 );
 
+const nftMintingLimit = RabbitMq['default'].declareQueue(NFT_MINTING_LIMIT, {
+  durable: true
+});
+
+const confirmAndSetMLimit = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_CREATE_MINTING_LIMIT,
+  {
+    durable: true
+  }
+);
+const mintNFT = RabbitMq['default'].declareQueue(MINT_NFT, {
+  durable: true
+});
+
+const confirmAndSendMintToken = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_SEND_MINT_NFT,
+  {
+    durable: true
+  }
+);
+
+const confirmAndMintToken = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_MINT_NFT,
+  {
+    durable: true
+  }
+);
+
+const confirmAndUpdateCampaign = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_UPDATE_CAMPAIGN,
+  {
+    durable: true
+  }
+);
+
+const confirmAndCreateWalletQueue = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_CREATE_WALLET,
+  {
+    durable: true
+  }
+);
+
 class QueueService {
-  static createCollection(collection) {
-    const payload = {...collection};
+  static async createCollection(collection) {
+    const payload = {collection};
     deployNewCollection.send(
       new Message(payload, {
         contentType: 'application/json'
       })
     );
   }
-  static createWallet(ownerId, wallet_type, CampaignId = null) {
+
+  static async confirmAndSetMintingLimit(collection, hash) {
+    const payload = {collection, hash};
+    confirmAndSetMLimit.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async confirmAndSendMintNFT(hash, collection, contractIndex) {
+    const payload = {hash, collection, contractIndex};
+    confirmAndSendMintToken.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmAndUpdateCampaign(
+    OrgWallet,
+    hash,
+    campaign,
+    transactionId
+  ) {
+    const payload = {OrgWallet, hash, campaign, transactionId};
+    confirmAndUpdateCampaign.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async confirmAndMintNFT(hash, transaction) {
+    const payload = {hash, transaction};
+    confirmAndMintToken.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async createMintingLimit(collection, contractIndex) {
+    const payload = {collection, contractIndex};
+    nftMintingLimit.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async mintNFTFunc(wallet, amount, receiver, contractIndex, tokenURI) {
+    const transaction = await Transaction.create({
+      narration: 'Minting Limit',
+      ReceiverWalletId: wallet.uuid,
+      transaction_origin: 'wallet',
+      transaction_type: 'deposit',
+      status: 'processing',
+      is_approved: false,
+      OrganisationId: wallet.OrganisationId,
+      reference: generateTransactionRef(),
+      amount
+    });
+
+    const payload = {transaction, receiver, contractIndex, tokenURI};
+    mintNFT.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async createWallet(ownerId, wallet_type, CampaignId = null) {
     const payload = {wallet_type, ownerId, CampaignId};
     createWalletQueue.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async confirmAndCreateWallet(content, hash) {
+    const payload = {content, hash};
+    confirmAndCreateWalletQueue.send(
       new Message(payload, {
         contentType: 'application/json'
       })
@@ -140,7 +285,7 @@ class QueueService {
       OrganisationId
     );
     if (!wallet) {
-      QueueService.createWallet(OrganisationId, 'organisation');
+      await QueueService.createWallet(OrganisationId, 'organisation');
       return;
     }
     const transaction = await Transaction.create({
@@ -215,6 +360,37 @@ class QueueService {
       })
     );
   }
+  static async fundNFTBeneficiaries(
+    campaign,
+    beneficiaries,
+    token_type,
+    tokenId
+  ) {
+    const payload = {
+      campaign,
+      beneficiaries,
+      token_type,
+      tokenId
+    };
+    disburseItem.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async confirmFundNFTBeneficiaries(uuid, hash, tokenId) {
+    const payload = {
+      uuid,
+      hash,
+      tokenId
+    };
+    confirmDisburseItem.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async CampaignApproveAndFund(campaign, campaignWallet, OrgWallet) {
     const realBudget = campaign.budget;
     const transaction = await Transaction.create({
@@ -236,6 +412,31 @@ class QueueService {
       realBudget
     };
     approveCampaignAndFund.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+    return transaction;
+  }
+  static async fundNFTCampaign(campaign, campaignWallet, OrgWallet) {
+    const transaction = await Transaction.create({
+      amount: campaign.minting_limit,
+      reference: generateTransactionRef(),
+      status: 'processing',
+      transaction_origin: 'wallet',
+      transaction_type: 'transfer',
+      SenderWalletId: OrgWallet.uuid,
+      ReceiverWalletId: campaignWallet.uuid,
+      OrganisationId: campaign.OrganisationId,
+      narration: 'Approve Campaign Funding'
+    });
+    const payload = {
+      OrgWallet,
+      campaignWallet,
+      campaign,
+      transactionId: transaction.uuid
+    };
+    funNFTCampaign.send(
       new Message(payload, {
         contentType: 'application/json'
       })

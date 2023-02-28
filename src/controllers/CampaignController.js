@@ -384,7 +384,7 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (balance == 0) {
+      if (campaign.type !== 'item' && balance == 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund campaign wallet.'
@@ -394,17 +394,28 @@ class CampaignController {
       if (campaign.type === 'campaign' && !realBeneficiaries.length) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign has no approved beneficiaries. Please approve beneficiaries.'
+          'Campaign has no approved beneficiaries.'
         );
         return Response.send(res);
       }
-      QueueService.fundBeneficiaries(
-        OrgWallet,
-        campaignWallet,
-        realBeneficiaries,
-        campaign,
-        token_type
-      );
+
+      if (campaign.type === 'item') {
+        await QueueService.fundNFTBeneficiaries(
+          campaign,
+          realBeneficiaries,
+          token_type,
+          campaign.minting_limit
+        );
+      } else {
+        QueueService.fundBeneficiaries(
+          OrgWallet,
+          campaignWallet,
+          realBeneficiaries,
+          campaign,
+          token_type
+        );
+      }
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`,
@@ -453,7 +464,10 @@ class CampaignController {
         return Response.send(res);
       }
 
-      if (campaign.budget > balance || balance == 0) {
+      if (
+        (campaign.type !== 'item' && campaign.budget > balance) ||
+        (campaign.type !== 'item' && balance == 0)
+      ) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance. Please fund organisation wallet.'
@@ -461,12 +475,25 @@ class CampaignController {
         return Response.send(res);
       }
 
-      await QueueService.CampaignApproveAndFund(
-        campaign,
-        campaignWallet,
-        OrgWallet
-      );
-      Logger.info('Processing Transfer From NGO Wallet to Campaign Wallet');
+      if (campaign.type === 'item' && campaign.minting_limit == 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Kindly set number of item to mint'
+        );
+        return Response.send(res);
+      }
+      if (campaign.type === 'item') {
+        await QueueService.confirmAndSetMintingLimit(
+          campaign,
+          campaign.collection_hash
+        );
+      } else {
+        await QueueService.CampaignApproveAndFund(
+          campaign,
+          campaignWallet,
+          OrgWallet
+        );
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`

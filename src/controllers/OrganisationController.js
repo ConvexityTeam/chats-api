@@ -682,14 +682,15 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+
       CampaignService.addCampaign({
         ...data,
         spending,
         OrganisationId,
         status: 'pending'
       })
-        .then(campaign => {
-          QueueService.createWallet(
+        .then(async campaign => {
+          await QueueService.createWallet(
             OrganisationId,
             'organisation',
             campaign.id
@@ -1316,7 +1317,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.'
+        'Server Error. Please retry.' + error
       );
       return Response.send(res);
     }

@@ -1,5 +1,6 @@
 module.exports = {
   CREATE_WALLET: 'createWallet',
+  CONFIRM_AND_CREATE_WALLET: 'confirmAndCreateWallet',
   MINT_TOKEN: 'mintToken',
   APPROVE_TO_SPEND: 'approveToSpend',
   TRANSFER_FROM: 'transferFrom',
@@ -18,5 +19,13 @@ module.exports = {
   TRANSFER_FROM_TO_BENEFICIARY: 'beneficiaryfundbeneficiary',
   DEPLOY_NFT_COLLECTION: 'deployNFTCollection',
   NFT_MINTING_LIMIT: 'nftMintingLimit',
-  APPROVE_NFT: 'approveNFT'
+  APPROVE_NFT: 'approveNFT',
+  MINT_NFT: 'mintNFT',
+  CONFIRM_AND_CREATE_MINTING_LIMIT: 'confirmAndMintingLimit',
+  CONFIRM_AND_SEND_MINT_NFT: 'confirmAndSendMintNFT',
+  CONFIRM_AND_MINT_NFT: 'confirmAndMintNFT',
+  FUN_NFT_CAMPAIGN: 'fundNFTcampaign',
+  CONFIRM_AND_UPDATE_CAMPAIGN: 'confirmAndUpdateCampaign',
+  DISBURSE_ITEM: 'disburseItem',
+  CONFIRM_AND_DISBURSE_ITEM: 'confirmAndDisburseItem'
 };

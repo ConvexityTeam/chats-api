@@ -73,6 +73,7 @@ module.exports = (sequelize, DataTypes) => {
       minting_limit: DataTypes.INTEGER,
       type: DataTypes.ENUM('campaign', 'cash-for-work', 'item'),
       spending: DataTypes.STRING,
+      collection_hash: DataTypes.STRING,
       description: DataTypes.TEXT,
       status: DataTypes.ENUM(
         'pending',
@@ -85,6 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       is_public: DataTypes.BOOLEAN,
       funded_with: DataTypes.STRING,
       budget: DataTypes.FLOAT,
+      contractIndex: DataTypes.INTEGER,
       amount_disbursed: DataTypes.FLOAT,
       location: DataTypes.STRING,
       start_date: DataTypes.DATE,

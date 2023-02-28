@@ -10,11 +10,33 @@ const {Encryption, Logger} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
 
 const provider = new ethers.providers.getDefaultProvider(
-  process.env.BLOCKCHAINSERV_TEST
+  process.env.BLOCKCHAINSERV
 );
+const Interface = new ethers.utils.Interface([
+  'event initializeContract(uint256 indexed contractIndex,address indexed contractAddress, string indexed _name)'
+]);
+
 const Axios = axios.create();
 
 class BlockchainService {
+  static async nftTransfer(sender, receiver, tokenId, contractIndex) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info(`TRANSFERRING NFT`);
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/transfer-nft/${sender}/${receiver}/${tokenId}/${contractIndex}`
+        );
+        Logger.info(`TRANSFERRED NFT`);
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `ERROR TRANSFERRING NFT: ${JSON.stringify(error?.response?.data)}`
+        );
+        reject(error);
+      }
+    });
+  }
+
   static async createNFTCollection(name) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -27,6 +49,51 @@ class BlockchainService {
       } catch (error) {
         Logger.error(
           `ERROR CREATING NFT COLLECTION: ${JSON.stringify(
+            error?.response?.data
+          )}`
+        );
+        reject(error);
+      }
+    });
+  }
+
+  static async createMintingLimit(limit, index) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info(`CREATING NFT MINTING LIMIT`);
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/set-nft-limit/${limit}/${index}`
+        );
+        Logger.info(`CREATED NFT MINTING LIMIT`);
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `ERROR CREATING NFT MINTING LIMIT: ${JSON.stringify(
+            error?.response?.data
+          )}`
+        );
+        reject(error);
+      }
+    });
+  }
+
+  static async createNFTApproveToSpend(
+    tokenOwnerPass,
+    operator,
+    tokenId,
+    index
+  ) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info(`CREATING NFT APPROVE TO SPEND`);
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/approve-nft/${tokenOwnerPass}/${operator}/${tokenId}/${index}`
+        );
+        Logger.info(`CREATED NFT APPROVE TO SPEND`);
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `ERROR CREATING NFT APPROVE TO SPEND: ${JSON.stringify(
             error.response.data
           )}`
         );
@@ -133,7 +200,7 @@ class BlockchainService {
         Logger.info('Withdrawal success');
         resolve(data);
       } catch (error) {
-        Logger.error('Error Withdrawing from my account', error.response);
+        Logger.error('Error Withdrawing from my account: ' + error.response);
         reject(error);
       }
     });
@@ -143,13 +210,31 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Confirming transaction');
-        // const txReceipt = await provider.getTransactionReceipt(hash);
-        const {data} = await Axios.get(
-          `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-        );
+        const data = await provider.getTransactionReceipt(hash);
+        // const {data} = await Axios.get(
+        //   `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
+        // );
+        Logger.info('Transaction confirmed');
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
+        reject(error);
+      }
+    });
+  }
+  static async getContractIndex(txReceipt) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Fetching Contract Index');
+        const topics = txReceipt.logs[1].topics;
+        const data = txReceipt.logs[1].data;
+        const log = Interface.parseLog({data, topics});
+        const contractIndex =
+          ethers.utils.formatUnits(log.args[0]) * Math.pow(10, 18);
+        Logger.info('Contract Index Found: ' + contractIndex);
+        resolve(contractIndex);
+      } catch (error) {
+        Logger.error(`Error Contract Index: ${error}`);
         reject(error);
       }
     });
@@ -165,6 +250,7 @@ class BlockchainService {
       return false;
     }
   }
+
   static async addUser(arg) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -176,7 +262,24 @@ class BlockchainService {
         resolve({data, keyPair});
       } catch (error) {
         Logger.error(
-          `Adding User Error: ${JSON.stringify(error.response.data)}`
+          `Adding User Error: ${JSON.stringify(error?.response?.data)}`
+        );
+        reject(error);
+      }
+    });
+  }
+  static async mintNFT(receiver, contractIndex, tokenURI) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Minting NFT');
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/mint-nft/${receiver}/${contractIndex}/${tokenURI}`
+        );
+        Logger.info('NFT minted');
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `Error minting NFT: ${JSON.stringify(error.response.data)}`
         );
         reject(error);
       }
@@ -323,7 +426,21 @@ class BlockchainService {
       }
     });
   }
-
+  static async nftBalance(address, contractIndex) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {data} = await Axios.get(
+          `${tokenConfig.baseURL}/account/nft-balance/16/0x6E8EeAe86934Ed319a666B65eB338319a2F67893`
+        );
+        const bigNumber = ethers.utils.formatEther(data.balance.hex);
+        const b = ethers.utils.formatUnits(data.balance.hex) * Math.pow(10, 18);
+        console.log(b, 'bigNumber');
+        resolve(data);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
   static async balance(address) {
     return new Promise(async (resolve, reject) => {
       try {
