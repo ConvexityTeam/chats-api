@@ -24,13 +24,13 @@ class BlockchainService {
     sender,
     receiver,
     tokenId,
-    contractIndex
+    collectionAdd
   ) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info(`TRANSFERRING NFT`);
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/txn/transfer-nft/:senderPrivateKey/:sender/:receiver/:tokenId/:collectionAddress`
+          `${tokenConfig.baseURL}/txn/transfer-nft/${senderPrivateKey}/${sender}/${receiver}/${tokenId}/${collectionAdd}`
         );
         Logger.info(`TRANSFERRED NFT`);
         resolve(data);
@@ -245,6 +245,23 @@ class BlockchainService {
       }
     });
   }
+
+  static async getCollectionAddress(txReceipt) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Fetching Collection Address');
+        const topics = txReceipt.logs[1].topics;
+        const data = txReceipt.logs[1].data;
+        const log = Interface.parseLog({data, topics});
+        const address = log.args[1];
+        Logger.info('Collection Address Found');
+        resolve(address);
+      } catch (error) {
+        Logger.error(`Error Collection Address: ${error}`);
+        reject(error);
+      }
+    });
+  }
   static async getContractIndex(txReceipt) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -252,8 +269,9 @@ class BlockchainService {
         const topics = txReceipt.logs[1].topics;
         const data = txReceipt.logs[1].data;
         const log = Interface.parseLog({data, topics});
-        const contractIndex =
-          ethers.utils.formatUnits(log.args[0]) * Math.pow(10, 18);
+        const contractIndex = Math.round(
+          ethers.utils.formatUnits(log.args[0]) * Math.pow(10, 18)
+        );
         Logger.info('Contract Index Found: ' + contractIndex);
         resolve(contractIndex);
       } catch (error) {

@@ -17,6 +17,7 @@ const {
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_CAMPAIGN_DEPOSIT,
   FUND_BENEFICIARIES,
+  LOOP_ITEM_BENEFICIARY,
   MINT_NFT,
   CONFIRM_AND_CREATE_MINTING_LIMIT,
   CONFIRM_AND_SEND_MINT_NFT,
@@ -160,7 +161,22 @@ const confirmAndCreateWalletQueue = RabbitMq['default'].declareQueue(
   }
 );
 
+const loopItemBeneficiary = RabbitMq['default'].declareQueue(
+  LOOP_ITEM_BENEFICIARY,
+  {
+    durable: true
+  }
+);
+
 class QueueService {
+  static async loopBeneficiaryItem(beneficiary, tokenIds, collectionAddress) {
+    const payload = {beneficiary, tokenIds, collectionAddress};
+    loopItemBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async createCollection(collection) {
     const payload = {collection};
     deployNewCollection.send(

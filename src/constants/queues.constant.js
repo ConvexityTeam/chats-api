@@ -27,5 +27,7 @@ module.exports = {
   FUN_NFT_CAMPAIGN: 'fundNFTcampaign',
   CONFIRM_AND_UPDATE_CAMPAIGN: 'confirmAndUpdateCampaign',
   DISBURSE_ITEM: 'disburseItem',
-  CONFIRM_AND_DISBURSE_ITEM: 'confirmAndDisburseItem'
+  CONFIRM_AND_DISBURSE_ITEM: 'confirmAndDisburseItem',
+  CONFIRM_AND_GENERATE_TOKEN: 'confirmAndGenerateToken,',
+  LOOP_ITEM_BENEFICIARY: 'loopItemBeneficiary'
 };

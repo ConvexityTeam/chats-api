@@ -1,4 +1,9 @@
 const {
+  GenearteSMSToken,
+  generateQrcodeURL,
+  generateTransactionRef
+} = require('../utils');
+const {
   NFT_MINTING_LIMIT,
   DEPLOY_NFT_COLLECTION,
   CONFIRM_AND_CREATE_MINTING_LIMIT,
@@ -6,6 +11,8 @@ const {
   CONFIRM_AND_MINT_NFT,
   MINT_NFT,
   APPROVE_NFT,
+  CONFIRM_AND_GENERATE_TOKEN,
+  LOOP_ITEM_BENEFICIARY,
   FUN_NFT_CAMPAIGN,
   CONFIRM_AND_UPDATE_CAMPAIGN,
   DISBURSE_ITEM,
@@ -89,6 +96,21 @@ const confirmAndDisburseItem = RabbitMq['default'].declareQueue(
   }
 );
 
+const confirmAndGenerateToken = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_GENERATE_TOKEN,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
+
+const loopItemBeneficiary = RabbitMq['default'].declareQueue(
+  LOOP_ITEM_BENEFICIARY,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
 //########################...UPDATING TRANSACTIONS...##########################
 
 const update_transaction = async (args, uuid) => {
@@ -128,6 +150,37 @@ const addTokenIds = async (tokenId, uuid) => {
   return wallet;
 };
 
+function divideNArray(a, n, balanced) {
+  if (n < 2) return [a];
+
+  var len = a.length,
+    out = [],
+    i = 0,
+    size;
+
+  if (len % n === 0) {
+    size = Math.floor(len / n);
+    while (i < len) {
+      out.push(a.slice(i, (i += size)));
+    }
+  } else if (balanced) {
+    while (i < len) {
+      size = Math.ceil((len - i) / n--);
+      out.push(a.slice(i, (i += size)));
+    }
+  } else {
+    n--;
+    size = Math.floor(len / n);
+    if (len % size === 0) size--;
+    while (i < size * n) {
+      out.push(a.slice(i, (i += size)));
+    }
+    out.push(a.slice(size * n));
+  }
+
+  return out;
+}
+
 RabbitMq['default']
   .completeConfiguration()
   .then(() => {
@@ -143,10 +196,6 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        // await QueueService.confirmAndSetMintingLimit(
-        //   collection,
-        //   newCollection.ncollection
-        // );
         await update_campaign(collection.id, {
           collection_hash: newCollection.ncollection
         });
@@ -223,7 +272,8 @@ RabbitMq['default']
     confirmAndSendMintNFT
       .activateConsumer(async msg => {
         const {hash, collection, contractIndex} = msg.getContent();
-
+        let length = collection.minting_limit;
+        let tokenURI = [];
         const campaignKeyPair = await BlockchainService.setUserKeypair(
           `campaign_${collection.id}`
         );
@@ -250,9 +300,9 @@ RabbitMq['default']
           return;
         }
 
-        const tokenURI = JSON.stringify([
-          {title: collection.title, description: collection.description}
-        ]);
+        for (let i = 0; i < length; i++) {
+          tokenURI.push(collection.title);
+        }
         await QueueService.mintNFTFunc(
           collection,
           wallet.Wallet,
@@ -281,7 +331,6 @@ RabbitMq['default']
         const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           hash
         );
-
         if (!confirmTransaction) {
           msg.nack();
           return;
@@ -337,37 +386,46 @@ RabbitMq['default']
       .catch(error => {
         Logger.error(`Minting Limit Consumer Error: ${JSON.stringify(error)}`);
       });
-    //############################........BENEFICIARY............##################################
+    //############### DISBURSE I  ############################
     disburseItem
       .activateConsumer(async msg => {
         const {campaign, beneficiaries, token_type, tokenId} = msg.getContent();
         let tokenIds = tokenId;
-        for (let beneficiary of beneficiaries) {
-          const beneficial = await BlockchainService.setUserKeypair(
-            `user_${beneficiary.UserId}campaign_${beneficiary.CampaignId}`
-          );
-          const campaign = await BlockchainService.setUserKeypair(
-            `campaign_${beneficiary.CampaignId}`
-          );
+        let data = [];
 
-          const uuid = beneficiary.User.Wallets[0].uuid;
-          console.log(campaign.privateKey);
-          for (let i = 1; i < tokenIds; i++) {
-            const approveNFT = await BlockchainService.nftTransfer(
-              campaign.privateKey,
-              beneficial.address,
-              i,
-              campaign.contractIndex
-            );
-
-            await QueueService.confirmFundNFTBeneficiaries(
-              uuid,
-              approveNFT.approval,
-              i
-            );
-          }
-          Logger.info('HASH FOR FUNDING BENEFICIARY SENT FOR CONFIRMATION');
+        for (let i = 1; i <= tokenIds; i++) {
+          data.push(i);
         }
+        for (let [index, beneficiary] of beneficiaries.entries()) {
+          const confirmTransaction = await BlockchainService.confirmNFTTransaction(
+            campaign.collection_hash
+          );
+
+          if (!confirmTransaction) {
+            msg.nack();
+            return;
+          }
+          const collectionAddress = await BlockchainService.getCollectionAddress(
+            confirmTransaction
+          );
+
+          if (!collectionAddress) {
+            msg.nack();
+            return;
+          }
+          const length = beneficiaries.length;
+          const array = divideNArray(data, length, true);
+          let split = array[index];
+          Logger.info(`ArrayType: ${Array.isArray(split)}`);
+          setTimeout(async () => {
+            await QueueService.loopBeneficiaryItem(
+              beneficiary,
+              split,
+              collectionAddress
+            );
+          }, index * 2000);
+        }
+        Logger.info('HASH FOR FUNDING BENEFICIARY SENT FOR CONFIRMATION');
         msg.ack();
       })
       .then(() => {
@@ -377,19 +435,57 @@ RabbitMq['default']
         Logger.error(`Disburse Item Consumer Error: ${JSON.stringify(error)}`);
       });
 
+    loopItemBeneficiary
+      .activateConsumer(async msg => {
+        const {beneficiary, tokenIds, collectionAddress} = msg.getContent();
+        const beneficiaryAddress = await BlockchainService.setUserKeypair(
+          `user_${beneficiary.UserId}campaign_${beneficiary.CampaignId}`
+        );
+        const campaignAddress = await BlockchainService.setUserKeypair(
+          `campaign_${beneficiary.CampaignId}`
+        );
+        let wallet = beneficiary.User.Wallets[0];
+        let uuid = wallet.uuid;
+        let array = Object.values(tokenIds);
+        for (let i = 0; i < array.length; i++) {
+          const approveNFT = await BlockchainService.nftTransfer(
+            campaignAddress.privateKey,
+            campaignAddress.address,
+            beneficiaryAddress.address,
+            array[i],
+            collectionAddress
+          );
+
+          await QueueService.confirmFundNFTBeneficiaries(
+            uuid,
+            approveNFT.transfer,
+            array[i]
+          );
+        }
+      })
+      .then(() => {
+        Logger.info('Running Process For Looping Item Beneficiary');
+      })
+      .catch(error => {
+        Logger.error(
+          `Looping Item Beneficiary Consumer Error: ${JSON.stringify(error)}`
+        );
+      });
+    //############### CONFIRM TRANSACTION AND UPDATE DB  ############################
+
     confirmAndDisburseItem
       .activateConsumer(async msg => {
         const {uuid, hash, tokenId} = msg.getContent();
-        // const confirmTransaction = await BlockchainService.confirmTransaction(
-        //   hash
-        // );
-        // if (!confirmTransaction) {
-        //   msg.nack();
-        //   return;
-        // }
+        const confirmTransaction = await BlockchainService.confirmNFTTransaction(
+          hash
+        );
+        if (!confirmTransaction) {
+          msg.nack();
+          return;
+        }
         console.log(uuid, tokenId, 'uuid, tokenId');
         Logger.info('ITEM DISBURSED CONFIRMED');
-        //await addTokenIds(tokenId, uuid);
+        await addTokenIds(tokenId, uuid);
       })
       .then(() => {
         Logger.info('Running Process For Confirm Disbursing Item');
