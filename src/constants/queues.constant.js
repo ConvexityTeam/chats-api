@@ -29,5 +29,6 @@ module.exports = {
   DISBURSE_ITEM: 'disburseItem',
   CONFIRM_AND_DISBURSE_ITEM: 'confirmAndDisburseItem',
   CONFIRM_AND_GENERATE_TOKEN: 'confirmAndGenerateToken,',
-  LOOP_ITEM_BENEFICIARY: 'loopItemBeneficiary'
+  LOOP_ITEM_BENEFICIARY: 'loopItemBeneficiary',
+  TRANSFER_MINT_TO_VENDOR: 'transferMintToVendor'
 };
