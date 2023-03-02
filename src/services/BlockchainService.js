@@ -42,6 +42,23 @@ class BlockchainService {
       }
     });
   }
+  static async nftBurn(burnerPrivateKey, collectionAddress, tokenID) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info(`BURNING NFT`);
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/burn-nft/${burnerPrivateKey}/${collectionAddress}/${tokenID}`
+        );
+        Logger.info(`NFT BURNED`);
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `ERROR BURNING NFT: ${JSON.stringify(error?.response?.data)}`
+        );
+        reject(error);
+      }
+    });
+  }
 
   static async createNFTCollection(name) {
     return new Promise(async (resolve, reject) => {

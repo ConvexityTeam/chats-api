@@ -14,6 +14,7 @@ const {
   CONFIRM_AND_GENERATE_TOKEN,
   LOOP_ITEM_BENEFICIARY,
   TRANSFER_MINT_TO_VENDOR,
+  CONFIRM_AND_PAY_VENDOR,
   FUN_NFT_CAMPAIGN,
   CONFIRM_AND_UPDATE_CAMPAIGN,
   DISBURSE_ITEM,
@@ -121,6 +122,11 @@ const transferMintToVendor = RabbitMq['default'].declareQueue(
     prefetch: 1
   }
 );
+
+const payVendor = RabbitMq['default'].declareQueue(CONFIRM_AND_PAY_VENDOR, {
+  durable: true,
+  prefetch: 1
+});
 //########################...UPDATING TRANSACTIONS...##########################
 
 const update_transaction = async (args, uuid) => {
@@ -609,9 +615,7 @@ RabbitMq['default']
         const beneficiaryAddress = await BlockchainService.setUserKeypair(
           `user_${beneficiaryWallet.UserId}campaign_${campaignWallet.CampaignId}`
         );
-        const vendorAddress = await BlockchainService.setUserKeypair(
-          `user_${vendorWallet.UserId}`
-        );
+
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -626,8 +630,12 @@ RabbitMq['default']
         const collectionAddress = await BlockchainService.getCollectionAddress(
           confirmTransaction
         );
+
+        if (!collectionAddress) {
+          msg.nack();
+          return;
+        }
         const spend = beneficiaryWallet.tokenIds[0];
-        const remain = beneficiaryWallet.tokenIds.shift();
         const approveNFT = await BlockchainService.nftTransfer(
           beneficiaryAddress.privateKey,
           beneficiaryAddress.address,
@@ -639,6 +647,50 @@ RabbitMq['default']
           approveNFT.transfer
         );
         if (!confirmTransfer) {
+          msg.nack();
+          return;
+        }
+
+        await QueueService.VendorBurn(
+          transaction,
+          order,
+          beneficiaryWallet,
+          vendorWallet,
+          campaignWallet,
+          collectionAddress
+        );
+        Logger.info('NFT SENT FOR BURNING');
+      })
+      .then(() => {
+        Logger.info('Running Process For Collection of Item');
+      })
+      .catch(error => {
+        Logger.error(
+          `Collection of Item Consumer Error: ${JSON.stringify(error)}`
+        );
+      });
+
+    payVendor
+      .activateConsumer(async msg => {
+        const {
+          transaction,
+          order,
+          beneficiaryWallet,
+          vendorWallet,
+          campaignWallet,
+          collectionAddress
+        } = msg.getContent();
+        const spend = beneficiaryWallet.tokenIds[0];
+        const remain = beneficiaryWallet.tokenIds.shift();
+        const vendorAddress = await BlockchainService.setUserKeypair(
+          `user_${vendorWallet.UserId}`
+        );
+        const burn = await BlockchainService.nftBurn(
+          vendorAddress.privateKey,
+          collectionAddress,
+          spend
+        );
+        if (!burn) {
           msg.nack();
           return;
         }
@@ -669,11 +721,13 @@ RabbitMq['default']
         );
       })
       .then(() => {
-        Logger.info('Running Process For Collection of Item');
+        Logger.info('Running Process For NFT Confirmation to Pay Vendor');
       })
       .catch(error => {
         Logger.error(
-          `Collection of Item Consumer Error: ${JSON.stringify(error)}`
+          `NFT Confirmation to Pay Vendor Consumer Error: ${JSON.stringify(
+            error
+          )}`
         );
       });
   })

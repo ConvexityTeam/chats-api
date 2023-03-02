@@ -27,7 +27,8 @@ const {
   CONFIRM_AND_CREATE_WALLET,
   DISBURSE_ITEM,
   CONFIRM_AND_DISBURSE_ITEM,
-  TRANSFER_MINT_TO_VENDOR
+  TRANSFER_MINT_TO_VENDOR,
+  CONFIRM_AND_PAY_VENDOR
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -175,7 +176,36 @@ const processNFTOrderQueue = RabbitMq['default'].declareQueue(
   }
 );
 
+const confirmAndPayVendor = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_PAY_VENDOR,
+  {
+    durable: true
+  }
+);
+
 class QueueService {
+  static async VendorBurn(
+    transaction,
+    order,
+    beneficiaryWallet,
+    vendorWallet,
+    campaignWallet,
+    collectionAddress
+  ) {
+    const payload = {
+      transaction,
+      order,
+      beneficiaryWallet,
+      vendorWallet,
+      campaignWallet,
+      collectionAddress
+    };
+    confirmAndPayVendor.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async loopBeneficiaryItem(
     campaign,
     OrgWallet,
