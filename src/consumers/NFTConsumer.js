@@ -169,10 +169,12 @@ const addTokenIds = async (tokenId, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
 
   if (!wallet) return null;
-  // const ids = [...wallet.tokenIds]
+  const ids = [...wallet.tokenIds, tokenId];
+  let balance = ids.length;
   await wallet.update({
     was_funded: true,
-    tokenIds: [...wallet.tokenIds, tokenId]
+    tokenIds: [...wallet.tokenIds, tokenId],
+    balance
   });
   Logger.info(`NFT added with ${tokenId}`);
   return wallet;
@@ -191,13 +193,32 @@ const removeTokenIds = async (tokenId, uuid) => {
   return wallet;
 };
 
+const deductWalletAmount = async (amount, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    balance: Sequelize.literal(`balance - ${amount}`)
+  });
+  Logger.info(`Wallet amount deducted with ${amount}`);
+  return wallet;
+};
+
+const addWalletAmount = async (amount, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    was_funded: true,
+    balance: amount
+  });
+  Logger.info(`Wallet amount added with ${amount}`);
+  return wallet;
+};
 function divideNArray(arr, chunk) {
   const data = [];
   for (i = 0; i < arr.length; i += chunk) {
     let tempArray;
     tempArray = arr.slice(i, i + chunk);
     data.push(tempArray);
-    console.log(tempArray);
   }
   return data;
 }
@@ -356,6 +377,9 @@ RabbitMq['default']
           msg.nack();
           return;
         }
+        const campaignWallet = await WalletService.findCampainSingleWallet(
+          collection.id
+        );
         await update_transaction(
           {status: 'success', transaction_hash: hash, is_approved: true},
           transaction.uuid
@@ -364,6 +388,7 @@ RabbitMq['default']
           is_funded: true,
           is_processing: false
         });
+        await addWalletAmount(collection.minting_limit, campaignWallet.uuid);
         Logger.info('CONSUMER: NFT MINTED');
         msg.ack();
       })
@@ -439,10 +464,6 @@ RabbitMq['default']
           const array = divideNArray(data, length);
 
           let split = array[index];
-          console.log(`SPLIT: ${split}`);
-          console.log(`Array: ${array}`);
-          console.log(`data: ${data}`);
-          Logger.info(`ArrayType: ${Array.isArray(split)}`);
           const OrgWallet = await WalletService.findMainOrganisationWallet(
             campaign.OrganisationId
           );
