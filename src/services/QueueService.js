@@ -17,6 +17,7 @@ const {
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_CAMPAIGN_DEPOSIT,
   FUND_BENEFICIARIES,
+  LOOP_ITEM_BENEFICIARY,
   MINT_NFT,
   CONFIRM_AND_CREATE_MINTING_LIMIT,
   CONFIRM_AND_SEND_MINT_NFT,
@@ -25,7 +26,9 @@ const {
   CONFIRM_AND_UPDATE_CAMPAIGN,
   CONFIRM_AND_CREATE_WALLET,
   DISBURSE_ITEM,
-  CONFIRM_AND_DISBURSE_ITEM
+  CONFIRM_AND_DISBURSE_ITEM,
+  TRANSFER_MINT_TO_VENDOR,
+  CONFIRM_AND_PAY_VENDOR
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -159,8 +162,72 @@ const confirmAndCreateWalletQueue = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+const loopItemBeneficiary = RabbitMq['default'].declareQueue(
+  LOOP_ITEM_BENEFICIARY,
+  {
+    durable: true
+  }
+);
+
+const processNFTOrderQueue = RabbitMq['default'].declareQueue(
+  TRANSFER_MINT_TO_VENDOR,
+  {
+    durable: true
+  }
+);
+
+const confirmAndPayVendor = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_PAY_VENDOR,
+  {
+    durable: true
+  }
+);
 
 class QueueService {
+  static async VendorBurn(
+    transaction,
+    order,
+    beneficiaryWallet,
+    vendorWallet,
+    campaignWallet,
+    collectionAddress
+  ) {
+    const payload = {
+      transaction,
+      order,
+      beneficiaryWallet,
+      vendorWallet,
+      campaignWallet,
+      collectionAddress
+    };
+    confirmAndPayVendor.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async loopBeneficiaryItem(
+    campaign,
+    OrgWallet,
+    token_type,
+    beneficiary,
+    tokenIds,
+    collectionAddress
+  ) {
+    const payload = {
+      campaign,
+      OrgWallet,
+      token_type,
+      beneficiary,
+      tokenIds,
+      collectionAddress
+    };
+    loopItemBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async createCollection(collection) {
     const payload = {collection};
     deployNewCollection.send(
@@ -353,6 +420,31 @@ class QueueService {
       })
     );
   }
+
+  static processNFTOrder(
+    beneficiaryWallet,
+    vendorWallet,
+    campaignWallet,
+    order,
+    vendor,
+    amount,
+    transaction
+  ) {
+    const payload = {
+      beneficiaryWallet,
+      vendorWallet,
+      campaignWallet,
+      order,
+      vendor,
+      amount,
+      transaction
+    };
+    processNFTOrderQueue.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async fundBeneficiaries(
     OrgWallet,
     campaignWallet,
@@ -392,8 +484,20 @@ class QueueService {
     );
   }
 
-  static async confirmFundNFTBeneficiaries(uuid, hash, tokenId) {
+  static async confirmFundNFTBeneficiaries(
+    beneficiary,
+    token_type,
+    campaign,
+    OrgWallet,
+    uuid,
+    hash,
+    tokenId
+  ) {
     const payload = {
+      beneficiary,
+      token_type,
+      campaign,
+      OrgWallet,
       uuid,
       hash,
       tokenId
