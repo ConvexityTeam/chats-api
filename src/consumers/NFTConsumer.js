@@ -637,8 +637,8 @@ RabbitMq['default']
           `user_${beneficiaryWallet.UserId}campaign_${campaignWallet.CampaignId}`
         );
 
-        const campaign = await BlockchainService.setUserKeypair(
-          `campaign_${campaignWallet.CampaignId}`
+        const campaign = await CampaignService.getCampaignById(
+          campaignWallet.CampaignId
         );
         const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           campaign.collection_hash
@@ -656,7 +656,7 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        const spend = beneficiaryWallet.tokenIds[0];
+        const spend = beneficiaryWallet.tokenIds[1];
         const approveNFT = await BlockchainService.nftTransfer(
           beneficiaryAddress.privateKey,
           beneficiaryAddress.address,
@@ -671,7 +671,8 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-
+        const remain = beneficiaryWallet.tokenIds.shift();
+        await removeTokenIds(remain, beneficiaryWallet.uuid);
         await QueueService.VendorBurn(
           transaction,
           order,
@@ -702,7 +703,6 @@ RabbitMq['default']
           collectionAddress
         } = msg.getContent();
         const spend = beneficiaryWallet.tokenIds[0];
-        const remain = beneficiaryWallet.tokenIds.shift();
         const vendorAddress = await BlockchainService.setUserKeypair(
           `user_${vendorWallet.UserId}`
         );
@@ -720,7 +720,6 @@ RabbitMq['default']
           transaction
         );
         await update_order(order.reference, {status: 'confirmed'});
-        await removeTokenIds(remain, beneficiaryWallet.uuid);
         await deductMintingLimit(amount, campaignWallet.uuid);
         order.Cart.forEach(async prod => {
           await ProductBeneficiary.create({
