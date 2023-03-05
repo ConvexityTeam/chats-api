@@ -90,12 +90,10 @@ class BlockchainService {
             error?.response?.data
           )}`
         );
-        reject(error);
-        const id = setTimeout(async () => {
+        setTimeout(async () => {
           await this.requeueMessage(bind, message);
         }, REQUEUE_TIME);
-
-        clearTimeout(id);
+        reject(error);
       }
     });
   }
@@ -278,12 +276,10 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
-        reject(error);
-        const id = setTimeout(async () => {
+        setTimeout(async () => {
           await this.requeueMessage(bind, message);
         }, REQUEUE_TIME);
-
-        clearTimeout(id);
+        reject(error);
       }
     });
   }
