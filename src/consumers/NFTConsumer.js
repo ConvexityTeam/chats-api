@@ -506,25 +506,25 @@ RabbitMq['default']
         let wallet = beneficiary.User.Wallets[0];
         let uuid = wallet.uuid;
         let array = Object.values(tokenIds);
+        let approveNFT;
         for (let i = 0; i < array.length; i++) {
-          const approveNFT = await BlockchainService.nftTransfer(
+          approveNFT = await BlockchainService.nftTransfer(
             campaignAddress.privateKey,
             campaignAddress.address,
             beneficiaryAddress.address,
             array[i],
             collectionAddress
           );
-
-          await QueueService.confirmFundNFTBeneficiaries(
-            beneficiary,
-            token_type,
-            campaign,
-            OrgWallet,
-            uuid,
-            approveNFT.transfer,
-            array[i]
-          );
         }
+        await QueueService.confirmFundNFTBeneficiaries(
+          beneficiary,
+          token_type,
+          campaign,
+          OrgWallet,
+          uuid,
+          approveNFT.transfer,
+          array
+        );
       })
       .then(() => {
         Logger.info('Running Process For Looping Item Beneficiary');
@@ -582,7 +582,7 @@ RabbitMq['default']
                 ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
                 : ''
           },
-          amount: tokenId
+          amount: tokenId.length
         };
         if (token_type === 'papertoken') {
           QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
@@ -594,7 +594,9 @@ RabbitMq['default']
               beneficiary.User.first_name || beneficiary.User.last_name
                 ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
                 : ''
-            } your convexity token is ${smsToken}, you are approved to spend ${tokenId}.`
+            } your convexity token is ${smsToken}, you are approved to spend ${
+              tokenId.length
+            }.`
           );
           is_token = true;
         }
@@ -605,7 +607,7 @@ RabbitMq['default']
             campaignId: campaign.id,
             tokenType: token_type,
             token: token_type === 'papertoken' ? QrCode : smsToken,
-            amount: tokenId
+            amount: tokenId.length
           });
           is_token = false;
         }
