@@ -1228,9 +1228,10 @@ class BeneficiariesController {
       });
 
       if (!to_personal_wallet) {
+        await QueueService.createWallet(user.id, 'user');
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          "Receiver doesn't have a personal wallet"
+          'Creating Receiver personal wallet. Please try again'
         );
         return Response.send(res);
       }
