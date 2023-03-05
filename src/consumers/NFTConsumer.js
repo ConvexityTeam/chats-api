@@ -470,16 +470,15 @@ RabbitMq['default']
           const OrgWallet = await WalletService.findMainOrganisationWallet(
             campaign.OrganisationId
           );
-          const id = setTimeout(async () => {
-            await QueueService.loopBeneficiaryItem(
-              campaign,
-              OrgWallet,
-              token_type,
-              beneficiary,
-              split,
-              collectionAddress
-            );
-          }, 5000);
+
+          await QueueService.loopBeneficiaryItem(
+            campaign,
+            OrgWallet,
+            token_type,
+            beneficiary,
+            split,
+            collectionAddress
+          );
         }
         Logger.info('HASH FOR FUNDING BENEFICIARY SENT FOR CONFIRMATION');
         msg.ack();
@@ -511,18 +510,18 @@ RabbitMq['default']
         let uuid = wallet.uuid;
         let array = Object.values(tokenIds);
         let approveNFT;
-        await Promise.all(
-          array.map(async arr => {
-            approveNFT = await BlockchainService.nftTransfer(
+        for (let i = 0; i < array.length; i++) {
+          approveNFT = await Promise.all([
+            BlockchainService.nftTransfer(
               campaignAddress.privateKey,
               campaignAddress.address,
               beneficiaryAddress.address,
-              arr,
+              array[i],
               collectionAddress
-            );
-          })
-        );
-
+            )
+          ]);
+        }
+        await Promise.all(approveNFT);
         await QueueService.confirmFundNFTBeneficiaries(
           beneficiary,
           token_type,
