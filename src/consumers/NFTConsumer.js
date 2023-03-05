@@ -470,14 +470,16 @@ RabbitMq['default']
           const OrgWallet = await WalletService.findMainOrganisationWallet(
             campaign.OrganisationId
           );
-          await QueueService.loopBeneficiaryItem(
-            campaign,
-            OrgWallet,
-            token_type,
-            beneficiary,
-            split,
-            collectionAddress
-          );
+          setTimeout(async () => {
+            await QueueService.loopBeneficiaryItem(
+              campaign,
+              OrgWallet,
+              token_type,
+              beneficiary,
+              split,
+              collectionAddress
+            );
+          }, 5000);
         }
         Logger.info('HASH FOR FUNDING BENEFICIARY SENT FOR CONFIRMATION');
         msg.ack();
@@ -518,6 +520,7 @@ RabbitMq['default']
             collectionAddress
           );
         }
+
         await QueueService.confirmFundNFTBeneficiaries(
           beneficiary,
           token_type,
