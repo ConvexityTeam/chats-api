@@ -955,23 +955,46 @@ class BeneficiariesController {
           const ngo = await OrganisationService.checkExist(
             transaction.OrganisationId
           );
-          transaction.dataValues.narration = `Payment from ${
+          transaction.dataValues.narration = `Payment from (${
             ngo.name || ngo.email
-          }`;
+          })`;
           transaction.dataValues.transaction_type = 'credit';
         }
         if (transaction.narration === 'Vendor Order') {
           const vendor = await UserService.getAUser(transaction.VendorId);
-          transaction.dataValues.narration = `Payment to ${
+          transaction.dataValues.narration = `Payment to (${
             vendor.first_name + ' ' + vendor.last_name
-          }`;
+          })`;
           transaction.dataValues.transaction_type = 'debit';
+        }
+        if (
+          transaction.transaction_type === 'transfer' &&
+          transaction.SenderWallet.UserId === req.user.id
+        ) {
+          const beneficiary = await UserService.getAUser(
+            transaction.ReceiverWallet.UserId
+          );
+          transaction.dataValues.narration = `Payment to (${
+            beneficiary.first_name + ' ' + beneficiary.last_name
+          })`;
+          transaction.dataValues.transaction_type = 'debit';
+        }
+        if (
+          transaction.transaction_type === 'transfer' &&
+          transaction.SenderWallet.UserId !== req.user.id
+        ) {
+          const beneficiary = await UserService.getAUser(
+            transaction.SenderWallet.UserId
+          );
+          transaction.dataValues.narration = `Payment from (${
+            beneficiary.first_name + ' ' + beneficiary.last_name
+          })`;
+          transaction.dataValues.transaction_type = 'credit';
         }
         if (transaction.dataValues.ReceiverWallet === null)
           delete transaction.dataValues.ReceiverWallet;
         if (transaction.dataValues.SenderWallet === null)
           delete transaction.dataValues.SenderWallet;
-        //console.log(transaction)
       }
 
       transactions.rows.forEach(transaction => {
@@ -994,7 +1017,6 @@ class BeneficiariesController {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal server error. Please try again later.',
