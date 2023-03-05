@@ -521,7 +521,6 @@ RabbitMq['default']
             )
           ]);
         }
-        await Promise.all(approveNFT);
         await QueueService.confirmFundNFTBeneficiaries(
           beneficiary,
           token_type,
@@ -555,11 +554,12 @@ RabbitMq['default']
         } = msg.getContent();
         let is_token = false;
         let QrCode;
-        const confirmTransaction = await BlockchainService.confirmNFTTransaction(
-          hash,
-          {beneficiary, token_type, campaign, OrgWallet, uuid, hash, tokenId},
-          CONFIRM_AND_DISBURSE_ITEM
+        const confirmTransaction = await BlockchainService.confirmTransaction(
+          hash
         );
+
+        // {beneficiary, token_type, campaign, OrgWallet, uuid, hash, tokenId},
+        // CONFIRM_AND_DISBURSE_ITEM
         if (!confirmTransaction) {
           msg.nack();
           return;
