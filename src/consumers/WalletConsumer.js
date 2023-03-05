@@ -37,6 +37,7 @@ RabbitMq['default']
                 content.wallet_type == 'organisation' &&
                 'campaign_' + content.CampaignId
           }`,
+          CREATE_WALLET,
           content
         );
 
