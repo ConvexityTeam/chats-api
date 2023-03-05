@@ -470,7 +470,7 @@ RabbitMq['default']
           const OrgWallet = await WalletService.findMainOrganisationWallet(
             campaign.OrganisationId
           );
-          setTimeout(async () => {
+          const id = setTimeout(async () => {
             await QueueService.loopBeneficiaryItem(
               campaign,
               OrgWallet,
@@ -512,13 +512,15 @@ RabbitMq['default']
         let array = Object.values(tokenIds);
         let approveNFT;
         for (let i = 0; i < array.length; i++) {
-          approveNFT = await BlockchainService.nftTransfer(
-            campaignAddress.privateKey,
-            campaignAddress.address,
-            beneficiaryAddress.address,
-            array[i],
-            collectionAddress
-          );
+          setTimeout(async () => {
+            approveNFT = await BlockchainService.nftTransfer(
+              campaignAddress.privateKey,
+              campaignAddress.address,
+              beneficiaryAddress.address,
+              array[i],
+              collectionAddress
+            );
+          }, 5000);
         }
 
         await QueueService.confirmFundNFTBeneficiaries(
