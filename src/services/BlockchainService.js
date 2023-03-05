@@ -329,7 +329,7 @@ class BlockchainService {
     }
   }
 
-  static async addUser(arg, message) {
+  static async addUser(arg, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);
@@ -344,7 +344,7 @@ class BlockchainService {
         );
         reject(error);
         setTimeout(async () => {
-          await QueueService.createWallet(...message);
+          await this.requeueMessage(bind, message);
         }, REQUEUE_TIME);
       }
     });
