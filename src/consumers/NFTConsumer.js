@@ -509,17 +509,17 @@ RabbitMq['default']
         let uuid = wallet.uuid;
         let array = Object.values(tokenIds);
         let approveNFT;
-        for (let i = 0; i < array.length; i++) {
-          setTimeout(async () => {
+        await Promise.all(
+          array.map(async arr => {
             approveNFT = await BlockchainService.nftTransfer(
               campaignAddress.privateKey,
               campaignAddress.address,
               beneficiaryAddress.address,
-              array[i],
+              arr,
               collectionAddress
             );
-          }, 5000);
-        }
+          })
+        );
 
         await QueueService.confirmFundNFTBeneficiaries(
           beneficiary,
