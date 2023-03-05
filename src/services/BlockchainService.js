@@ -91,7 +91,11 @@ class BlockchainService {
           )}`
         );
         reject(error);
-        await this.requeueMessage(bind, message);
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
+
+        clearTimeout(id);
       }
     });
   }
@@ -275,9 +279,11 @@ class BlockchainService {
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
         reject(error);
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           await this.requeueMessage(bind, message);
         }, REQUEUE_TIME);
+
+        clearTimeout(id);
       }
     });
   }
@@ -342,7 +348,11 @@ class BlockchainService {
           `Adding User Error: ${JSON.stringify(error?.response?.data)}`
         );
         reject(error);
-        await this.requeueMessage(bind, message);
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
+
+        clearTimeout(id);
       }
     });
   }
