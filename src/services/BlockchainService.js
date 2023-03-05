@@ -91,9 +91,7 @@ class BlockchainService {
           )}`
         );
         reject(error);
-        setTimeout(async () => {
-          await this.requeueMessage(bind, message);
-        }, REQUEUE_TIME);
+        await this.requeueMessage(bind, message);
       }
     });
   }
@@ -344,9 +342,7 @@ class BlockchainService {
           `Adding User Error: ${JSON.stringify(error?.response?.data)}`
         );
         reject(error);
-        setTimeout(async () => {
-          await this.requeueMessage(bind, message);
-        }, REQUEUE_TIME);
+        await this.requeueMessage(bind, message);
       }
     });
   }
