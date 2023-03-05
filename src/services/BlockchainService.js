@@ -8,6 +8,7 @@ const {tokenConfig, switchWallet} = require('../config');
 const {SwitchToken} = require('../models');
 const {Encryption, Logger, RabbitMq} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
+const {Message} = require('@droidsolutions-oss/amqp-ts');
 const QueueService = require('./QueueService');
 
 const provider = new ethers.providers.getDefaultProvider(
