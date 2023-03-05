@@ -29,7 +29,7 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info(`TRANSFERRING NFT`);
-        const {data} = await Axios.post(
+        const {data} = await Axios.all Axios.post(
           `${tokenConfig.baseURL}/txn/transfer-nft/${senderPrivateKey}/${sender}/${receiver}/${tokenId}/${collectionAdd}`
         );
         Logger.info(`TRANSFERRED NFT`);
