@@ -440,6 +440,7 @@ RabbitMq['default']
     disburseItem
       .activateConsumer(async msg => {
         const {campaign, beneficiaries, token_type, tokenId} = msg.getContent();
+
         let tokenIds = tokenId;
         let data = [];
 
@@ -463,6 +464,13 @@ RabbitMq['default']
             msg.nack();
             return;
           }
+
+          const beneficiaryAddress = await BlockchainService.setUserKeypair(
+            `user_${beneficiary.UserId}campaign_${beneficiary.CampaignId}`
+          );
+          const campaignAddress = await BlockchainService.setUserKeypair(
+            `campaign_${beneficiary.CampaignId}`
+          );
           const length = campaign.minting_limit / beneficiaries.length;
           const array = divideNArray(data, length);
 
@@ -470,15 +478,92 @@ RabbitMq['default']
           const OrgWallet = await WalletService.findMainOrganisationWallet(
             campaign.OrganisationId
           );
-
-          await QueueService.loopBeneficiaryItem(
-            campaign,
-            OrgWallet,
-            token_type,
-            beneficiary,
-            split,
-            collectionAddress
+          let wallet = beneficiary.User.Wallets[0];
+          let uuid = wallet.uuid;
+          let arr = Object.values(split);
+          for (let i = 0; i < arr.length; i++) {
+            approveNFT = await Promise.all([
+              BlockchainService.nftTransfer(
+                campaignAddress.privateKey,
+                campaignAddress.address,
+                beneficiaryAddress.address,
+                arr[i],
+                collectionAddress
+              )
+            ]);
+          }
+          const transaction = await create_transaction(
+            campaign.minting_limit,
+            OrgWallet.uuid,
+            uuid,
+            {
+              BeneficiaryId: beneficiary.User.id,
+              OrganisationId: campaign.OrganisationId
+            }
           );
+          await update_transaction(
+            {status: 'success', is_approved: true},
+            transaction.uuid
+          );
+          const smsToken = GenearteSMSToken();
+          const qrCodeData = {
+            OrganisationId: campaign.OrganisationId,
+            Campaign: {id: campaign.id, title: campaign.title},
+            Beneficiary: {
+              id: beneficiary.UserId,
+              name:
+                beneficiary.User.first_name || beneficiary.User.last_name
+                  ? beneficiary.User.first_name +
+                    ' ' +
+                    beneficiary.User.last_name
+                  : ''
+            },
+            amount: arr.length
+          };
+          if (token_type === 'papertoken') {
+            QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
+            is_token = true;
+          } else if (token_type === 'smstoken') {
+            SmsService.sendOtp(
+              beneficiary.User.phone,
+              `Hello ${
+                beneficiary.User.first_name || beneficiary.User.last_name
+                  ? beneficiary.User.first_name +
+                    ' ' +
+                    beneficiary.User.last_name
+                  : ''
+              } your convexity token is ${smsToken}, you are approved to spend ${
+                arr.length
+              }.`
+            );
+            is_token = true;
+          }
+          if (is_token) {
+            await VoucherToken.create({
+              organisationId: campaign.OrganisationId,
+              beneficiaryId: beneficiary.User.id,
+              campaignId: campaign.id,
+              tokenType: token_type,
+              token: token_type === 'papertoken' ? QrCode : smsToken,
+              amount: tokenId.length
+            });
+            is_token = false;
+          }
+
+          await update_campaign(campaign.id, {
+            status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+            is_funded: true,
+            amount_disbursed: campaign.minting_limit
+          });
+          await addTokenIds(arr, uuid);
+          // await QueueService.loopBeneficiaryItem(
+          //   campaign,
+          //   OrgWallet,
+          //   token_type,
+          //   beneficiary,
+          //   split,
+          //   collectionAddress
+          // );
         }
         Logger.info('HASH FOR FUNDING BENEFICIARY SENT FOR CONFIRMATION');
         msg.ack();
