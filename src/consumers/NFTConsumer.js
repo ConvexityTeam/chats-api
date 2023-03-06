@@ -482,15 +482,13 @@ RabbitMq['default']
           let uuid = wallet.uuid;
           let arr = Object.values(split);
           for (let i = 0; i < arr.length; i++) {
-            approveNFT = await Promise.all([
-              BlockchainService.nftTransfer(
-                campaignAddress.privateKey,
-                campaignAddress.address,
-                beneficiaryAddress.address,
-                arr[i],
-                collectionAddress
-              )
-            ]);
+            approveNFT = await BlockchainService.nftTransfer(
+              campaignAddress.privateKey,
+              campaignAddress.address,
+              beneficiaryAddress.address,
+              arr[i],
+              collectionAddress
+            );
           }
           const transaction = await create_transaction(
             campaign.minting_limit,
@@ -545,7 +543,7 @@ RabbitMq['default']
               campaignId: campaign.id,
               tokenType: token_type,
               token: token_type === 'papertoken' ? QrCode : smsToken,
-              amount: tokenId.length
+              amount: arr.length
             });
             is_token = false;
           }
