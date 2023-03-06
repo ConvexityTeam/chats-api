@@ -483,7 +483,7 @@ RabbitMq['default']
           let arr = Object.values(split);
           Logger.info(`arr: ${arr}`);
           for (let i = 0; i < arr.length; i++) {
-            approveNFT = await BlockchainService.nftTransfer(
+            await BlockchainService.nftTransfer(
               campaignAddress.privateKey,
               campaignAddress.address,
               beneficiaryAddress.address,
