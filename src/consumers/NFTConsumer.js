@@ -464,7 +464,6 @@ RabbitMq['default']
             msg.nack();
             return;
           }
-
           const beneficiaryAddress = await BlockchainService.setUserKeypair(
             `user_${beneficiary.UserId}campaign_${beneficiary.CampaignId}`
           );
@@ -473,14 +472,16 @@ RabbitMq['default']
           );
           const length = campaign.minting_limit / beneficiaries.length;
           const array = divideNArray(data, length);
-
+          Logger.info(`Array: ${array}`);
           let split = array[index];
+          Logger.info(`Split: ${split}`);
           const OrgWallet = await WalletService.findMainOrganisationWallet(
             campaign.OrganisationId
           );
           let wallet = beneficiary.User.Wallets[0];
           let uuid = wallet.uuid;
           let arr = Object.values(split);
+          Logger.info(`arr: ${arr}`);
           for (let i = 0; i < arr.length; i++) {
             approveNFT = await BlockchainService.nftTransfer(
               campaignAddress.privateKey,
