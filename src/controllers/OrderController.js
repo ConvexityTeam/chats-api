@@ -11,7 +11,8 @@ const {
   OrderService,
   CampaignService,
   BlockchainService,
-  OrganisationService
+  OrganisationService,
+  QueueService
 } = require('../services');
 const db = require('../models');
 const Utils = require('../libs/Utils');
@@ -186,13 +187,13 @@ class OrderController {
         return Response.send(res);
       }
 
-      if (data.order.status !== 'pending') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Order ${data.order.status}`
-        );
-        return Response.send(res);
-      }
+      // if (data.order.status !== 'pending') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Order ${data.order.status}`
+      //   );
+      //   return Response.send(res);
+      // }
       const campaign_token = await BlockchainService.setUserKeypair(
         `user_${req.user.id}campaign_${data.order.CampaignId}`
       );
@@ -213,16 +214,22 @@ class OrderController {
       ]);
 
       if (!beneficiaryWallet) {
+        await QueueService.createWallet(
+          req.user.id,
+          'user',
+          data.order.CampaignId
+        );
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Account not eligible to pay for order'
+          'Beneficiary Wallet not found, Please Try Later'
         );
         return Response.send(res);
       }
       if (!vendorWallet) {
+        await QueueService.createWallet(data.order.Vendor.id, 'user');
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Vendor Wallet Not Found..'
+          'Vendor Wallet not found. Please try later'
         );
         return Response.send(res);
       }
@@ -234,6 +241,10 @@ class OrderController {
         return Response.send(res);
       }
 
+      const campaign = await CampaignService.getCampaignById(
+        data.order.CampaignId
+      );
+
       // if (token.Balance < data.total_cost) {
       //   Response.setError(
       //     HttpStatusCode.STATUS_BAD_REQUEST,
@@ -242,8 +253,19 @@ class OrderController {
       //   return Response.send(res);
       // }
 
-      if (balance < data.total_cost) {
-        Logger.info(`Balance: ${balance}`);
+      if (campaign.type !== 'item' && balance < data.total_cost) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Insufficient wallet balance.'
+        );
+        Logger.error('Insufficient wallet balance.');
+        return Response.send(res);
+      }
+
+      if (
+        campaign.type === 'item' &&
+        beneficiaryWallet.balance < data.total_cost
+      ) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
@@ -258,7 +280,8 @@ class OrderController {
         campaignWallet,
         data.order,
         data.order.Vendor,
-        data.total_cost
+        data.total_cost,
+        campaign.type
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);

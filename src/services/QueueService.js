@@ -574,8 +574,7 @@ class QueueService {
       transaction_origin: 'wallet',
       transaction_type: 'transfer',
       ReceiverWalletId: receiverWallet.uuid,
-      SenderWalletId: campaignWallet.uuid,
-      BeneficiaryId: senderWallet.UserId,
+      SenderWalletId: senderWallet.uuid,
       narration: 'transfer between beneficiaries'
     });
 
