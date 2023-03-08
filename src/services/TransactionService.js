@@ -20,11 +20,9 @@ class TransactionService {
         'createdAt',
         'updatedAt'
       ],
-      include: [
-        {
-          model: Wallet,
-          as: 'ReceiverWallet',
+
           attributes: [],
+
           include: [
             {
               model: User,
@@ -50,7 +48,7 @@ class TransactionService {
       ],
       order: [['createdAt', 'DESC']]
     });
-  }
+  
 
   static async findTransaction(where) {
     return Transaction.findOne({
