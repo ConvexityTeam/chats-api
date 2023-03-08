@@ -181,14 +181,15 @@ const addTokenIds = async (tokenId, uuid) => {
   return wallet;
 };
 
-const removeTokenIds = async (tokenId, uuid) => {
+const removeTokenIds = async (tokenId, amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
 
   if (!wallet) return null;
-  // const ids = [...wallet.tokenIds]
+  const ids = [...tokenId];
   await wallet.update({
     was_funded: true,
-    tokenIds: tokenId
+    tokenIds: ids,
+    balance: Sequelize.literal(`balance - ${amount}`)
   });
   Logger.info(`NFT added with ${tokenId}`);
   return wallet;
@@ -731,9 +732,12 @@ RabbitMq['default']
         const beneficiaryAddress = await BlockchainService.setUserKeypair(
           `user_${beneficiaryWallet.UserId}campaign_${campaignWallet.CampaignId}`
         );
+        const vendorAddress = await BlockchainService.setUserKeypair(
+          `user_${vendorWallet.UserId}`
+        );
 
-        const campaign = await BlockchainService.setUserKeypair(
-          `campaign_${campaignWallet.CampaignId}`
+        const campaign = await CampaignService.getCampaignById(
+          campaignWallet.CampaignId
         );
         const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           campaign.collection_hash
@@ -751,36 +755,61 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        const spend = beneficiaryWallet.tokenIds[0];
-        const approveNFT = await BlockchainService.nftTransfer(
-          beneficiaryAddress.privateKey,
-          beneficiaryAddress.address,
-          vendorWallet.address,
-          spend,
-          collectionAddress
-        );
+        let approveNFT;
+        let spend;
+        let remain;
+        for (let i = 0; i < amount; i++) {
+          spend = beneficiaryWallet.tokenIds[i];
+          remain = beneficiaryWallet.tokenIds.slice(amount[i] + 1);
+          console.log(spend, 'spend');
+          console.log(remain, 'remain');
+          Logger.info(`key: ${beneficiaryAddress.privateKey},address: ${beneficiaryAddress.address},
+            vendorAddress: ${vendorWallet.address}`);
+          approveNFT = await BlockchainService.nftTransfer(
+            beneficiaryAddress.privateKey,
+            beneficiaryAddress.address,
+            vendorWallet.address,
+            spend,
+            collectionAddress
+          );
+
+          const burn = await BlockchainService.nftBurn(
+            vendorAddress.privateKey,
+            collectionAddress,
+            spend
+          );
+        }
+
         if (!approveNFT) {
           msg.nack();
           return;
         }
-        const confirmTransfer = await BlockchainService.confirmNFTTransaction(
-          approveNFT.transfer
+
+        order.Cart.forEach(async prod => {
+          await ProductBeneficiary.create({
+            productId: prod.ProductId,
+            UserId: beneficiaryWallet.UserId,
+            OrganisationId: campaignWallet.OrganisationId
+          });
+        });
+        await VoucherToken.update(
+          {
+            amount: Sequelize.literal(`balance - ${amount}`)
+          },
+          {
+            where: {
+              campaignId: campaignWallet.CampaignId,
+              beneficiaryId: beneficiaryWallet.UserId
+            }
+          }
         );
-        if (!confirmTransfer) {
-          msg.nack();
-          return;
-        }
-        const remain = beneficiaryWallet.tokenIds.shift();
-        await removeTokenIds(remain, beneficiaryWallet.uuid);
-        await QueueService.VendorBurn(
-          transaction,
-          order,
-          beneficiaryWallet,
-          vendorWallet,
-          campaignWallet,
-          collectionAddress
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transaction
         );
-        Logger.info('NFT SENT FOR BURNING');
+        await deductMintingLimit(amount, campaignWallet.uuid);
+        await update_order(order.reference, {status: 'confirmed'});
+        Logger.info('NFT  BURNING');
       })
       .then(() => {
         Logger.info('Running Process For Collection of Item');
@@ -806,40 +835,14 @@ RabbitMq['default']
         const vendorAddress = await BlockchainService.setUserKeypair(
           `user_${vendorWallet.UserId}`
         );
-        const burn = await BlockchainService.nftBurn(
-          vendorAddress.privateKey,
-          collectionAddress,
-          spend
-        );
+
         if (!burn) {
           msg.nack();
           return;
         }
-        await update_transaction(
-          {status: 'success', is_approved: true},
-          transaction
-        );
-        await update_order(order.reference, {status: 'confirmed'});
+
         await removeTokenIds(remain, beneficiaryWallet.uuid);
         await deductMintingLimit(amount, campaignWallet.uuid);
-        order.Cart.forEach(async prod => {
-          await ProductBeneficiary.create({
-            productId: prod.ProductId,
-            UserId: beneficiaryWallet.UserId,
-            OrganisationId: campaignWallet.OrganisationId
-          });
-        });
-        await VoucherToken.update(
-          {
-            amount: Sequelize.literal(`balance - ${amount}`)
-          },
-          {
-            where: {
-              campaignId: campaignWallet.CampaignId,
-              beneficiaryId: beneficiaryWallet.UserId
-            }
-          }
-        );
       })
       .then(() => {
         Logger.info('Running Process For NFT Confirmation to Pay Vendor');
