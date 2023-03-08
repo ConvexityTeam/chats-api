@@ -15,17 +15,12 @@ class TransactionService {
       attributes: [
         'reference',
         'amount',
-        'CampaignId',
         'status',
         'transaction_type',
         'createdAt',
         'updatedAt'
       ],
-      include: ['Campaign'],
-      include: [
-        {
-          model: Wallet,
-          as: 'ReceiverWallet',
+
           attributes: [],
 
           include: [
@@ -53,7 +48,7 @@ class TransactionService {
       ],
       order: [['createdAt', 'DESC']]
     });
-  }
+  
 
   static async findTransaction(where) {
     return Transaction.findOne({
