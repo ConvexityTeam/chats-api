@@ -53,7 +53,6 @@ module.exports = (sequelize, DataTypes) => {
       OrderId: DataTypes.INTEGER,
       VendorId: DataTypes.INTEGER,
       BeneficiaryId: DataTypes.INTEGER,
-      CampaignId: DataTypes.INTEGER,
       OrganisationId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER,
       transaction_type: DataTypes.ENUM(

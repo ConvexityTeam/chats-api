@@ -16,12 +16,10 @@ class TransactionService {
         'reference',
         'amount',
         'status',
-        'CampaignId',
         'transaction_type',
         'createdAt',
         'updatedAt'
       ],
-      include: ['TransactionCampaign'],
       include: [
         {
           model: Wallet,
