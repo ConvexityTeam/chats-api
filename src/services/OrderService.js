@@ -39,7 +39,6 @@ class OrderService {
       BeneficiaryId: beneficiaryWallet.UserId,
       narration: 'Vendor Order'
     });
-    console.log(`type: ${type}`);
     if (type === 'item') {
       QueueService.processNFTOrder(
         beneficiaryWallet,

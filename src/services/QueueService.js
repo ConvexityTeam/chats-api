@@ -517,6 +517,7 @@ class QueueService {
       transaction_origin: 'wallet',
       transaction_type: 'transfer',
       SenderWalletId: OrgWallet.uuid,
+      CampaignId: campaign.id,
       ReceiverWalletId: campaignWallet.uuid,
       OrganisationId: campaign.OrganisationId,
       narration: 'Approve Campaign Funding'
