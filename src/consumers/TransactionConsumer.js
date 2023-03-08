@@ -635,14 +635,9 @@ RabbitMq['default']
         const beneficiary = await BlockchainService.setUserKeypair(
           `user_${beneficiaryWallet.UserId}campaign_${campaignWallet.CampaignId}`
         );
-        Logger.info(
-          beneficiaryWallet,
-          campaignWallet,
-          task_assignment,
-          amount_disburse,
-          transaction,
-          'beneficiaryWallet,campaignWallet,task_assignment,amount_disburse, transaction'
-        );
+        Logger.info('Campaign PrivateKey: ' + campaign.privateKey);
+        Logger.info('Beneficiary Address: ' + beneficiary.address);
+        Logger.info('Amount: ' + amount_disburse);
 
         const approve_to_spend = await BlockchainService.approveToSpend(
           campaign.privateKey,

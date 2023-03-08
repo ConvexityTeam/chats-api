@@ -422,7 +422,6 @@ class BlockchainService {
   }
 
   static async approveToSpend(ownerPassword, spenderAdd, amount) {
-    Logger.info(ownerPassword, spenderAdd, amount, 'uuuuuuudxd');
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
