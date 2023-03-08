@@ -187,17 +187,28 @@ class OrderController {
         return Response.send(res);
       }
 
-      // if (data.order.status !== 'pending') {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     `Order ${data.order.status}`
-      //   );
-      //   return Response.send(res);
-      // }
+      if (data.order.status !== 'pending') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Order ${data.order.status}`
+        );
+        return Response.send(res);
+      }
       const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${data.order.CampaignId}`
+      );
+
+      const beneficiary_token = await BlockchainService.setUserKeypair(
         `user_${req.user.id}campaign_${data.order.CampaignId}`
       );
-      const token = await BlockchainService.balance(campaign_token.address);
+
+      const token = await BlockchainService.allowance(
+        campaign_token.address,
+        beneficiary_token.address
+      );
+
+      const balance = Number(token.Allowed.split(',').join(''));
+
       const [
         campaignWallet,
         vendorWallet,
@@ -251,7 +262,7 @@ class OrderController {
       //   return Response.send(res);
       // }
 
-      if (campaign.type !== 'item' && token.Balance < data.total_cost) {
+      if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
@@ -286,7 +297,7 @@ class OrderController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry.' + error
       );
       return Response.send(res);
     }
