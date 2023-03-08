@@ -54,10 +54,7 @@ module.exports = (sequelize, DataTypes) => {
       VendorId: DataTypes.INTEGER,
       BeneficiaryId: DataTypes.INTEGER,
       OrganisationId: DataTypes.INTEGER,
-<<<<<<< HEAD
-=======
       CampaignId: DataTypes.INTEGER,
->>>>>>> 9caf91fef6e0566cc94b2a2109bb77cc7bd8ded8
       transaction_type: DataTypes.ENUM(
         'deposit',
         'withdrawal',
