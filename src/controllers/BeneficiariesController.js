@@ -531,35 +531,42 @@ class BeneficiariesController {
       const _beneficiary = await BeneficiaryService.beneficiaryProfile(
         req.user.id
       );
-      const Wallets = _beneficiary.Wallets.map(wallet => {
-        total_wallet_balance += wallet.balance;
-        // total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-        // total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-        const w = wallet.toObject();
-        // delete w.ReceivedTransactions;
-        // delete w.SentTransactions;
-        return w;
-      });
-      // _beneficiary.Wallets.map(async wallet => {
-      //   if (!wallet.CampaignId) {
-      //     const address = await BlockchainService.setUserKeypair(
-      //       `user_${req.user.id}`
-      //     );
-      //     const token = await BlockchainService.balance(address.address);
-      //     const balance = Number(token.Balance.split(',').join(''));
-      //     total_wallet_balance += balance;
-      //     console.log('Not found campaign id', balance);
-      //   }
-      //   if (wallet.CampaignId) {
-      //     const address = await BlockchainService.setUserKeypair(
-      //       `user_${req.user.id}campaign_${wallet.CampaignId}`
-      //     );
-      //     const token = await BlockchainService.balance(address.address);
-      //     const balance = Number(token.Balance.split(',').join(''));
-      //     total_wallet_balance += balance;
-      //     console.log('found campaign id', balance);
-      //   }
+
+      // const Wallets = _beneficiary.Wallets.map(wallet => {
+      //   total_wallet_balance += wallet.balance;
+      //   // total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+      //   // total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+      //   const w = wallet.toObject();
+      //   // delete w.ReceivedTransactions;
+      //   // delete w.SentTransactions;
+      //   return w;
       // });
+
+      for (let wallet of _beneficiary.Wallets) {
+        if (!wallet.CampaignId) {
+          const address = await BlockchainService.setUserKeypair(
+            `user_${req.user.id}`
+          );
+          const token = await BlockchainService.balance(address.address);
+          const balance = Number(token.Balance.split(',').join(''));
+          total_wallet_balance += balance;
+        }
+        if (wallet.CampaignId) {
+          const campaignAddress = await BlockchainService.setUserKeypair(
+            `campaign_${wallet.CampaignId}`
+          );
+
+          const beneficiaryAddress = await BlockchainService.setUserKeypair(
+            `user_${req.user.id}campaign_${wallet.CampaignId}`
+          );
+          const token = await BlockchainService.allowance(
+            campaignAddress.address,
+            beneficiaryAddress.address
+          );
+          const balance = Number(token.Allowed.split(',').join(''));
+          total_wallet_balance += balance;
+        }
+      }
 
       const beneficiary = _beneficiary.toObject();
 
@@ -567,14 +574,13 @@ class BeneficiariesController {
         total_wallet_balance,
         total_wallet_received,
         total_wallet_spent,
-        ...beneficiary,
-        Wallets
+        ...beneficiary
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.'
+        'Internal server error. Please try again later.' + error
       );
       return Response.send(res);
     }
