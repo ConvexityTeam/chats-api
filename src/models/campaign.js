@@ -81,7 +81,8 @@ module.exports = (sequelize, DataTypes) => {
         'ongoing',
         'active',
         'paused',
-        'completed'
+        'completed',
+        'ended'
       ),
       is_funded: DataTypes.BOOLEAN,
       is_public: DataTypes.BOOLEAN,
