@@ -6,8 +6,10 @@ const crypto = require('crypto');
 const sha256 = require('simple-sha256');
 const {tokenConfig, switchWallet} = require('../config');
 const {SwitchToken} = require('../models');
-const {Encryption, Logger} = require('../libs');
+const {Encryption, Logger, RabbitMq} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
+const {Message} = require('@droidsolutions-oss/amqp-ts');
+const QueueService = require('./QueueService');
 
 const provider = new ethers.providers.getDefaultProvider(
   process.env.BLOCKCHAINSERV
@@ -18,19 +20,32 @@ const Interface = new ethers.utils.Interface([
 
 const Axios = axios.create();
 
+const REQUEUE_TIME = 5000;
+
 class BlockchainService {
+  static async requeueMessage(bind, args) {
+    const confirmTransaction = RabbitMq['default'].declareQueue(bind, {
+      durable: true
+    });
+    const payload = {...args};
+    confirmTransaction.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async nftTransfer(
     senderPrivateKey,
     sender,
     receiver,
     tokenId,
-    contractIndex
+    collectionAdd
   ) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info(`TRANSFERRING NFT`);
         const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/txn/transfer-nft/:senderPrivateKey/:sender/:receiver/:tokenId/:collectionAddress`
+          `${tokenConfig.baseURL}/txn/transfer-nft/${senderPrivateKey}/${sender}/${receiver}/${tokenId}/${collectionAdd}`
         );
         Logger.info(`TRANSFERRED NFT`);
         resolve(data);
@@ -42,8 +57,25 @@ class BlockchainService {
       }
     });
   }
+  static async nftBurn(burnerPrivateKey, collectionAddress, tokenID) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info(`BURNING NFT`);
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/burn-nft/${burnerPrivateKey}/${collectionAddress}/${tokenID}`
+        );
+        Logger.info(`NFT BURNED`);
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `ERROR BURNING NFT: ${JSON.stringify(error?.response?.data)}`
+        );
+        reject(error);
+      }
+    });
+  }
 
-  static async createNFTCollection(name) {
+  static async createNFTCollection(name, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info(`CREATING NFT COLLECTION`);
@@ -58,6 +90,9 @@ class BlockchainService {
             error?.response?.data
           )}`
         );
+        setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
         reject(error);
       }
     });
@@ -229,7 +264,7 @@ class BlockchainService {
     });
   }
 
-  static async confirmNFTTransaction(hash) {
+  static async confirmNFTTransaction(hash, message, bind) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Confirming transaction');
@@ -237,10 +272,30 @@ class BlockchainService {
         // const {data} = await Axios.get(
         //   `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
         // );
-        Logger.info('Transaction confirmed');
+        Logger.info('Transaction confirmed..');
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
+        setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
+        reject(error);
+      }
+    });
+  }
+
+  static async getCollectionAddress(txReceipt) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Fetching Collection Address');
+        const topics = txReceipt.logs[1].topics;
+        const data = txReceipt.logs[1].data;
+        const log = Interface.parseLog({data, topics});
+        const address = log.args[1];
+        Logger.info('Collection Address Found');
+        resolve(address);
+      } catch (error) {
+        Logger.error(`Error Collection Address: ${error}`);
         reject(error);
       }
     });
@@ -252,8 +307,9 @@ class BlockchainService {
         const topics = txReceipt.logs[1].topics;
         const data = txReceipt.logs[1].data;
         const log = Interface.parseLog({data, topics});
-        const contractIndex =
-          ethers.utils.formatUnits(log.args[0]) * Math.pow(10, 18);
+        const contractIndex = Math.round(
+          ethers.utils.formatUnits(log.args[0]) * Math.pow(10, 18)
+        );
         Logger.info('Contract Index Found: ' + contractIndex);
         resolve(contractIndex);
       } catch (error) {
@@ -274,7 +330,7 @@ class BlockchainService {
     }
   }
 
-  static async addUser(arg) {
+  static async addUser(arg, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);
@@ -288,6 +344,11 @@ class BlockchainService {
           `Adding User Error: ${JSON.stringify(error?.response?.data)}`
         );
         reject(error);
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
+
+        clearTimeout(id);
       }
     });
   }

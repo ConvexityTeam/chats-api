@@ -1,4 +1,9 @@
 const {
+  GenearteSMSToken,
+  generateQrcodeURL,
+  generateTransactionRef
+} = require('../utils');
+const {
   NFT_MINTING_LIMIT,
   DEPLOY_NFT_COLLECTION,
   CONFIRM_AND_CREATE_MINTING_LIMIT,
@@ -6,6 +11,10 @@ const {
   CONFIRM_AND_MINT_NFT,
   MINT_NFT,
   APPROVE_NFT,
+  CONFIRM_AND_GENERATE_TOKEN,
+  LOOP_ITEM_BENEFICIARY,
+  TRANSFER_MINT_TO_VENDOR,
+  CONFIRM_AND_PAY_VENDOR,
   FUN_NFT_CAMPAIGN,
   CONFIRM_AND_UPDATE_CAMPAIGN,
   DISBURSE_ITEM,
@@ -16,7 +25,9 @@ const {
   BlockchainService,
   QueueService,
   CampaignService,
-  WalletService
+  WalletService,
+  SmsService,
+  OrganisationService
 } = require('../services');
 const {
   Sequelize,
@@ -89,6 +100,34 @@ const confirmAndDisburseItem = RabbitMq['default'].declareQueue(
   }
 );
 
+const confirmAndGenerateToken = RabbitMq['default'].declareQueue(
+  CONFIRM_AND_GENERATE_TOKEN,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
+
+const loopItemBeneficiary = RabbitMq['default'].declareQueue(
+  LOOP_ITEM_BENEFICIARY,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
+
+const transferMintToVendor = RabbitMq['default'].declareQueue(
+  TRANSFER_MINT_TO_VENDOR,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
+
+const payVendor = RabbitMq['default'].declareQueue(CONFIRM_AND_PAY_VENDOR, {
+  durable: true,
+  prefetch: 1
+});
 //########################...UPDATING TRANSACTIONS...##########################
 
 const update_transaction = async (args, uuid) => {
@@ -103,15 +142,27 @@ const update_campaign = async (id, args) => {
   await campaign.update(args);
   return campaign;
 };
-
-const deductWalletAmount = async (amount, uuid) => {
+const create_transaction = async (amount, sender, receiver, args) => {
+  const transaction = await Transaction.create({
+    amount,
+    reference: generateTransactionRef(),
+    status: 'processing',
+    transaction_origin: 'wallet',
+    transaction_type: 'transfer',
+    SenderWalletId: sender,
+    ReceiverWalletId: receiver,
+    narration: 'Approve Beneficiary Funding',
+    ...args
+  });
+  return transaction;
+};
+const deductMintingLimit = async (limit, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
-    balance: Sequelize.literal(`balance - ${amount}`),
-    fiat_balance: Sequelize.literal(`fiat_balance - ${amount}`)
+    minting_limit: Sequelize.literal(`minting_limit - ${limit}`)
   });
-  Logger.info(`Wallet amount deducted with ${amount}`);
+  Logger.info(`Minting Limit deducted with ${limit}`);
   return wallet;
 };
 
@@ -119,14 +170,60 @@ const addTokenIds = async (tokenId, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
 
   if (!wallet) return null;
-  // const ids = [...wallet.tokenIds]
+  const ids = [...wallet.tokenIds, tokenId];
+  let balance = ids.length;
   await wallet.update({
     was_funded: true,
-    tokenIds: [...wallet.tokenIds, tokenId]
+    tokenIds: [...wallet.tokenIds, tokenId],
+    balance
   });
   Logger.info(`NFT added with ${tokenId}`);
   return wallet;
 };
+
+const removeTokenIds = async (tokenId, amount, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+
+  if (!wallet) return null;
+  const ids = [...tokenId];
+  await wallet.update({
+    was_funded: true,
+    tokenIds: ids,
+    balance: Sequelize.literal(`balance - ${amount}`)
+  });
+  Logger.info(`NFT added with ${tokenId}`);
+  return wallet;
+};
+
+const deductWalletAmount = async (amount, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    balance: Sequelize.literal(`balance - ${amount}`)
+  });
+  Logger.info(`Wallet amount deducted with ${amount}`);
+  return wallet;
+};
+
+const addWalletAmount = async (amount, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    was_funded: true,
+    balance: amount
+  });
+  Logger.info(`Wallet amount added with ${amount}`);
+  return wallet;
+};
+function divideNArray(arr, chunk) {
+  const data = [];
+  for (i = 0; i < arr.length; i += chunk) {
+    let tempArray;
+    tempArray = arr.slice(i, i + chunk);
+    data.push(tempArray);
+  }
+  return data;
+}
 
 RabbitMq['default']
   .completeConfiguration()
@@ -136,17 +233,15 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {collection} = msg.getContent();
         const newCollection = await BlockchainService.createNFTCollection(
-          collection.title
+          collection.title,
+          DEPLOY_NFT_COLLECTION,
+          collection
         );
 
         if (!newCollection) {
           msg.nack();
           return;
         }
-        // await QueueService.confirmAndSetMintingLimit(
-        //   collection,
-        //   newCollection.ncollection
-        // );
         await update_campaign(collection.id, {
           collection_hash: newCollection.ncollection
         });
@@ -223,7 +318,8 @@ RabbitMq['default']
     confirmAndSendMintNFT
       .activateConsumer(async msg => {
         const {hash, collection, contractIndex} = msg.getContent();
-
+        let length = collection.minting_limit;
+        let tokenURI = [];
         const campaignKeyPair = await BlockchainService.setUserKeypair(
           `campaign_${collection.id}`
         );
@@ -250,9 +346,9 @@ RabbitMq['default']
           return;
         }
 
-        const tokenURI = JSON.stringify([
-          {title: collection.title, description: collection.description}
-        ]);
+        for (let i = 0; i < length; i++) {
+          tokenURI.push(collection.title);
+        }
         await QueueService.mintNFTFunc(
           collection,
           wallet.Wallet,
@@ -281,11 +377,13 @@ RabbitMq['default']
         const confirmTransaction = await BlockchainService.confirmNFTTransaction(
           hash
         );
-
         if (!confirmTransaction) {
           msg.nack();
           return;
         }
+        const campaignWallet = await WalletService.findCampainSingleWallet(
+          collection.id
+        );
         await update_transaction(
           {status: 'success', transaction_hash: hash, is_approved: true},
           transaction.uuid
@@ -294,6 +392,7 @@ RabbitMq['default']
           is_funded: true,
           is_processing: false
         });
+        await addWalletAmount(collection.minting_limit, campaignWallet.uuid);
         Logger.info('CONSUMER: NFT MINTED');
         msg.ack();
       })
@@ -337,37 +436,136 @@ RabbitMq['default']
       .catch(error => {
         Logger.error(`Minting Limit Consumer Error: ${JSON.stringify(error)}`);
       });
-    //############################........BENEFICIARY............##################################
+    //############### DISBURSE I  ############################
+
     disburseItem
       .activateConsumer(async msg => {
         const {campaign, beneficiaries, token_type, tokenId} = msg.getContent();
+
         let tokenIds = tokenId;
-        for (let beneficiary of beneficiaries) {
-          const beneficial = await BlockchainService.setUserKeypair(
+        let data = [];
+
+        for (let i = 1; i <= tokenIds; i++) {
+          data.push(i);
+        }
+        for (let [index, beneficiary] of beneficiaries.entries()) {
+          const confirmTransaction = await BlockchainService.confirmNFTTransaction(
+            campaign.collection_hash
+          );
+
+          if (!confirmTransaction) {
+            msg.nack();
+            return;
+          }
+          const collectionAddress = await BlockchainService.getCollectionAddress(
+            confirmTransaction
+          );
+
+          if (!collectionAddress) {
+            msg.nack();
+            return;
+          }
+          const beneficiaryAddress = await BlockchainService.setUserKeypair(
             `user_${beneficiary.UserId}campaign_${beneficiary.CampaignId}`
           );
-          const campaign = await BlockchainService.setUserKeypair(
+          const campaignAddress = await BlockchainService.setUserKeypair(
             `campaign_${beneficiary.CampaignId}`
           );
-
-          const uuid = beneficiary.User.Wallets[0].uuid;
-          console.log(campaign.privateKey);
-          for (let i = 1; i < tokenIds; i++) {
-            const approveNFT = await BlockchainService.nftTransfer(
-              campaign.privateKey,
-              beneficial.address,
-              i,
-              campaign.contractIndex
-            );
-
-            await QueueService.confirmFundNFTBeneficiaries(
-              uuid,
-              approveNFT.approval,
-              i
+          const length = campaign.minting_limit / beneficiaries.length;
+          const array = divideNArray(data, length);
+          Logger.info(`Array: ${array}`);
+          let split = array[index];
+          Logger.info(`Split: ${split}`);
+          const OrgWallet = await WalletService.findMainOrganisationWallet(
+            campaign.OrganisationId
+          );
+          let wallet = beneficiary.User.Wallets[0];
+          let uuid = wallet.uuid;
+          let arr = Object.values(split);
+          Logger.info(`arr: ${arr}`);
+          for (let i = 0; i < arr.length; i++) {
+            await BlockchainService.nftTransfer(
+              campaignAddress.privateKey,
+              campaignAddress.address,
+              beneficiaryAddress.address,
+              arr[i],
+              collectionAddress
             );
           }
-          Logger.info('HASH FOR FUNDING BENEFICIARY SENT FOR CONFIRMATION');
+          const transaction = await create_transaction(
+            campaign.minting_limit,
+            OrgWallet.uuid,
+            uuid,
+            {
+              BeneficiaryId: beneficiary.User.id,
+              OrganisationId: campaign.OrganisationId
+            }
+          );
+          await update_transaction(
+            {status: 'success', is_approved: true},
+            transaction.uuid
+          );
+          const smsToken = GenearteSMSToken();
+          const qrCodeData = {
+            OrganisationId: campaign.OrganisationId,
+            Campaign: {id: campaign.id, title: campaign.title},
+            Beneficiary: {
+              id: beneficiary.UserId,
+              name:
+                beneficiary.User.first_name || beneficiary.User.last_name
+                  ? beneficiary.User.first_name +
+                    ' ' +
+                    beneficiary.User.last_name
+                  : ''
+            },
+            amount: arr.length
+          };
+          if (token_type === 'papertoken') {
+            QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
+            is_token = true;
+          } else if (token_type === 'smstoken') {
+            SmsService.sendOtp(
+              beneficiary.User.phone,
+              `Hello ${
+                beneficiary.User.first_name || beneficiary.User.last_name
+                  ? beneficiary.User.first_name +
+                    ' ' +
+                    beneficiary.User.last_name
+                  : ''
+              } your convexity token is ${smsToken}, you are approved to spend ${
+                arr.length
+              }.`
+            );
+            is_token = true;
+          }
+          if (is_token) {
+            await VoucherToken.create({
+              organisationId: campaign.OrganisationId,
+              beneficiaryId: beneficiary.User.id,
+              campaignId: campaign.id,
+              tokenType: token_type,
+              token: token_type === 'papertoken' ? QrCode : smsToken,
+              amount: arr.length
+            });
+            is_token = false;
+          }
+
+          await update_campaign(campaign.id, {
+            status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+            is_funded: true,
+            amount_disbursed: campaign.minting_limit
+          });
+          await addTokenIds(arr, uuid);
+          // await QueueService.loopBeneficiaryItem(
+          //   campaign,
+          //   OrgWallet,
+          //   token_type,
+          //   beneficiary,
+          //   split,
+          //   collectionAddress
+          // );
         }
+        Logger.info('HASH FOR FUNDING BENEFICIARY SENT FOR CONFIRMATION');
         msg.ack();
       })
       .then(() => {
@@ -377,19 +575,141 @@ RabbitMq['default']
         Logger.error(`Disburse Item Consumer Error: ${JSON.stringify(error)}`);
       });
 
+    loopItemBeneficiary
+      .activateConsumer(async msg => {
+        const {
+          campaign,
+          OrgWallet,
+          token_type,
+          beneficiary,
+          tokenIds,
+          collectionAddress
+        } = msg.getContent();
+        const beneficiaryAddress = await BlockchainService.setUserKeypair(
+          `user_${beneficiary.UserId}campaign_${beneficiary.CampaignId}`
+        );
+        const campaignAddress = await BlockchainService.setUserKeypair(
+          `campaign_${beneficiary.CampaignId}`
+        );
+        let wallet = beneficiary.User.Wallets[0];
+        let uuid = wallet.uuid;
+        let array = Object.values(tokenIds);
+        let approveNFT;
+        for (let i = 0; i < array.length; i++) {
+          approveNFT = await Promise.all([
+            BlockchainService.nftTransfer(
+              campaignAddress.privateKey,
+              campaignAddress.address,
+              beneficiaryAddress.address,
+              array[i],
+              collectionAddress
+            )
+          ]);
+        }
+        await QueueService.confirmFundNFTBeneficiaries(
+          beneficiary,
+          token_type,
+          campaign,
+          OrgWallet,
+          uuid,
+          approveNFT.transfer,
+          array
+        );
+      })
+      .then(() => {
+        Logger.info('Running Process For Looping Item Beneficiary');
+      })
+      .catch(error => {
+        Logger.error(
+          `Looping Item Beneficiary Consumer Error: ${JSON.stringify(error)}`
+        );
+      });
+    //############### CONFIRM TRANSACTION AND UPDATE DB  ############################
+
     confirmAndDisburseItem
       .activateConsumer(async msg => {
-        const {uuid, hash, tokenId} = msg.getContent();
-        // const confirmTransaction = await BlockchainService.confirmTransaction(
-        //   hash
-        // );
-        // if (!confirmTransaction) {
-        //   msg.nack();
-        //   return;
-        // }
-        console.log(uuid, tokenId, 'uuid, tokenId');
+        const {
+          beneficiary,
+          token_type,
+          campaign,
+          OrgWallet,
+          uuid,
+          hash,
+          tokenId
+        } = msg.getContent();
+        let is_token = false;
+        let QrCode;
+        const confirmTransaction = await BlockchainService.confirmTransaction(
+          hash
+        );
+
+        // {beneficiary, token_type, campaign, OrgWallet, uuid, hash, tokenId},
+        // CONFIRM_AND_DISBURSE_ITEM
+        if (!confirmTransaction) {
+          msg.nack();
+          return;
+        }
+        const transaction = await create_transaction(
+          campaign.minting_limit,
+          OrgWallet.uuid,
+          uuid,
+          {
+            BeneficiaryId: beneficiary.User.id,
+            OrganisationId: campaign.OrganisationId
+          }
+        );
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transaction.uuid
+        );
+        const smsToken = GenearteSMSToken();
+        const qrCodeData = {
+          OrganisationId: campaign.OrganisationId,
+          Campaign: {id: campaign.id, title: campaign.title},
+          Beneficiary: {
+            id: beneficiary.UserId,
+            name:
+              beneficiary.User.first_name || beneficiary.User.last_name
+                ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
+                : ''
+          },
+          amount: tokenId.length
+        };
+        if (token_type === 'papertoken') {
+          QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
+          is_token = true;
+        } else if (token_type === 'smstoken') {
+          SmsService.sendOtp(
+            beneficiary.User.phone,
+            `Hello ${
+              beneficiary.User.first_name || beneficiary.User.last_name
+                ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
+                : ''
+            } your convexity token is ${smsToken}, you are approved to spend ${
+              tokenId.length
+            }.`
+          );
+          is_token = true;
+        }
+        if (is_token) {
+          await VoucherToken.create({
+            organisationId: campaign.OrganisationId,
+            beneficiaryId: beneficiary.User.id,
+            campaignId: campaign.id,
+            tokenType: token_type,
+            token: token_type === 'papertoken' ? QrCode : smsToken,
+            amount: tokenId.length
+          });
+          is_token = false;
+        }
+
+        await update_campaign(campaign.id, {
+          status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
+          is_funded: true,
+          amount_disbursed: campaign.minting_limit
+        });
+        await addTokenIds(tokenId, uuid);
         Logger.info('ITEM DISBURSED CONFIRMED');
-        //await addTokenIds(tokenId, uuid);
       })
       .then(() => {
         Logger.info('Running Process For Confirm Disbursing Item');
@@ -399,7 +719,143 @@ RabbitMq['default']
           `Confirm Disburse Item Consumer Error: ${JSON.stringify(error)}`
         );
       });
+    transferMintToVendor
+      .activateConsumer(async msg => {
+        const {
+          beneficiaryWallet,
+          vendorWallet,
+          campaignWallet,
+          order,
+          amount,
+          transaction
+        } = msg.getContent();
+        const beneficiaryAddress = await BlockchainService.setUserKeypair(
+          `user_${beneficiaryWallet.UserId}campaign_${campaignWallet.CampaignId}`
+        );
+        const vendorAddress = await BlockchainService.setUserKeypair(
+          `user_${vendorWallet.UserId}`
+        );
+
+        const campaign = await CampaignService.getCampaignById(
+          campaignWallet.CampaignId
+        );
+        const confirmTransaction = await BlockchainService.confirmNFTTransaction(
+          campaign.collection_hash
+        );
+
+        if (!confirmTransaction) {
+          msg.nack();
+          return;
+        }
+        const collectionAddress = await BlockchainService.getCollectionAddress(
+          confirmTransaction
+        );
+
+        if (!collectionAddress) {
+          msg.nack();
+          return;
+        }
+        let approveNFT;
+        let spend;
+        let remain;
+        for (let i = 0; i < amount; i++) {
+          spend = beneficiaryWallet.tokenIds[i];
+          remain = beneficiaryWallet.tokenIds.slice(amount[i] + 1);
+          console.log(spend, 'spend');
+          console.log(remain, 'remain');
+          Logger.info(`key: ${beneficiaryAddress.privateKey},address: ${beneficiaryAddress.address},
+            vendorAddress: ${vendorWallet.address}`);
+          approveNFT = await BlockchainService.nftTransfer(
+            beneficiaryAddress.privateKey,
+            beneficiaryAddress.address,
+            vendorWallet.address,
+            spend,
+            collectionAddress
+          );
+
+          const burn = await BlockchainService.nftBurn(
+            vendorAddress.privateKey,
+            collectionAddress,
+            spend
+          );
+        }
+
+        if (!approveNFT) {
+          msg.nack();
+          return;
+        }
+
+        order.Cart.forEach(async prod => {
+          await ProductBeneficiary.create({
+            productId: prod.ProductId,
+            UserId: beneficiaryWallet.UserId,
+            OrganisationId: campaignWallet.OrganisationId
+          });
+        });
+        await VoucherToken.update(
+          {
+            amount: Sequelize.literal(`balance - ${amount}`)
+          },
+          {
+            where: {
+              campaignId: campaignWallet.CampaignId,
+              beneficiaryId: beneficiaryWallet.UserId
+            }
+          }
+        );
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transaction
+        );
+        await deductMintingLimit(amount, campaignWallet.uuid);
+        await update_order(order.reference, {status: 'confirmed'});
+        Logger.info('NFT  BURNING');
+      })
+      .then(() => {
+        Logger.info('Running Process For Collection of Item');
+      })
+      .catch(error => {
+        Logger.error(
+          `Collection of Item Consumer Error: ${JSON.stringify(error)}`
+        );
+      });
+
+    payVendor
+      .activateConsumer(async msg => {
+        const {
+          transaction,
+          order,
+          beneficiaryWallet,
+          vendorWallet,
+          campaignWallet,
+          collectionAddress
+        } = msg.getContent();
+        const spend = beneficiaryWallet.tokenIds[0];
+        const remain = beneficiaryWallet.tokenIds.shift();
+        const vendorAddress = await BlockchainService.setUserKeypair(
+          `user_${vendorWallet.UserId}`
+        );
+
+        if (!burn) {
+          msg.nack();
+          return;
+        }
+
+        await removeTokenIds(remain, beneficiaryWallet.uuid);
+        await deductMintingLimit(amount, campaignWallet.uuid);
+      })
+      .then(() => {
+        Logger.info('Running Process For NFT Confirmation to Pay Vendor');
+      })
+      .catch(error => {
+        Logger.error(
+          `NFT Confirmation to Pay Vendor Consumer Error: ${JSON.stringify(
+            error
+          )}`
+        );
+      });
   })
+
   .catch(error => {
     Logger.error(`RabbitMq Error: ${JSON.stringify(error)}`);
   });

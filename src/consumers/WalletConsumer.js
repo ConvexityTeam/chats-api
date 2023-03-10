@@ -1,4 +1,5 @@
 const {BlockchainService, WalletService, QueueService} = require('../services');
+const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {RabbitMq, Logger} = require('../libs');
 const {
   CREATE_WALLET,
@@ -35,7 +36,9 @@ RabbitMq['default']
               : content.CampaignId &&
                 content.wallet_type == 'organisation' &&
                 'campaign_' + content.CampaignId
-          }`
+          }`,
+          CREATE_WALLET,
+          content
         );
 
         if (!token) {
@@ -58,10 +61,11 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {content, hash} = msg.getContent();
 
-        const confirm = await BlockchainService.confirmTransaction(
-          hash.data.AddedUser
+        const confirm = await BlockchainService.confirmNFTTransaction(
+          hash.data.AddedUser,
+          content,
+          CONFIRM_AND_CREATE_WALLET
         );
-
         if (!confirm) {
           msg.nack();
           return;

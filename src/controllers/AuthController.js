@@ -24,7 +24,8 @@ const {
   QueueService,
   MailerService,
   OrganisationService,
-  CampaignService
+  CampaignService,
+  WalletService
 } = require('../services');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
@@ -699,7 +700,12 @@ class AuthController {
         );
         return Response.send(res);
       }
-
+      const wallet = await WalletService.findSingleWallet({
+        OrganisationId: user.id
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'organisation');
+      }
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -736,7 +742,13 @@ class AuthController {
         );
         return Response.send(res);
       }
-
+      const wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'user');
+      }
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -777,7 +789,12 @@ class AuthController {
         req.body.email
       );
       user.dataValues.mainOrganisation = donorMainOrg;
-
+      const wallet = await WalletService.findSingleWallet({
+        OrganisationId: user.id
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'organisation');
+      }
       const data = await AuthService.login(user, req.body.password.trim());
 
       Response.setSuccess(200, 'Login Successful.', data);
@@ -849,8 +866,14 @@ class AuthController {
         );
         return Response.send(res);
       }
+      const wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'user');
+      }
       const data = await AuthService.login(user, req.body.password);
-
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -890,7 +913,13 @@ class AuthController {
         req.body.password.trim(),
         AclRoles.Vendor
       );
-
+      const wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'user');
+      }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
