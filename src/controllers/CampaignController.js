@@ -376,6 +376,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
+        );
+        return Response.send(res);
+      }
       if (campaign.status == 'ongoing') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -453,6 +460,13 @@ class CampaignController {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign already completed'
+        );
+        return Response.send(res);
+      }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
         );
         return Response.send(res);
       }

@@ -357,7 +357,7 @@ class OrganisationController {
 
       for (let data of campaigns) {
         if (new Date(data.end_date) < new Date())
-          data.update({status: 'completed'});
+          data.update({status: 'ended'});
         for (let task of data.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'}
