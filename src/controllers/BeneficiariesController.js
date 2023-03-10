@@ -428,6 +428,13 @@ class BeneficiariesController {
         );
         return Response.send(res);
       }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign is already ended.'
+        );
+        return Response.send(res);
+      }
       await CampaignService.removeBeneficiary(campaign.id, beneficiaryId);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
