@@ -116,7 +116,7 @@ router.get(
 router
   .route('/:organisation_id/wallets/transactions/:reference?')
   .get(
-    NgoSubAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.ReferenceOptional,
