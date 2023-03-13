@@ -637,7 +637,7 @@ RabbitMq['default']
         const approve_to_spend = await BlockchainService.approveToSpend(
           campaign.privateKey,
           beneficiary.address,
-          amount_disbursewsl
+          amount_disburse
         );
 
         if (!approve_to_spend) {
