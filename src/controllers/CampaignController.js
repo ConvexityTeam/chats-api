@@ -1146,34 +1146,19 @@ class CampaignController {
         type
       );
       const onboard = [];
-      Promise.delay = (time, value) => {
-        return new Promise(resolve => {
-          setTimeout(resolve.bind(null, value), time);
-        });
-      };
-      Promise.raceAll = () => {
-        return Promise.all(
-          replicaCampaign.Beneficiaries.map.map(async beneficiary => {
+
+      await Promise.all(
+        replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
+          setTimeout(async () => {
             const res = await CampaignService.addBeneficiary(
               campaign_id,
               beneficiary.id,
               source
             );
             onboard.push(res);
-            return Promise.race([p, Promise.delay(10000, null)]);
-          })
-        );
-      };
-      // await Promise.all(
-      //   replicaCampaign.Beneficiaries.map(async beneficiary => {
-      //     const res = await CampaignService.addBeneficiary(
-      //       campaign_id,
-      //       beneficiary.id,
-      //       source
-      //     );
-      //     onboard.push(res);
-      //   })
-      // );
+          }, index * 5000);
+        })
+      );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
