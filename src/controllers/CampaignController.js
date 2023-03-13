@@ -1147,11 +1147,11 @@ class CampaignController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign onboarded with  ${replicaCampaign.Beneficiaries.length}${
+        `Onboarding  ${replicaCampaign.Beneficiaries.length}${
           replicaCampaign.Beneficiaries.length > 1
             ? ' beneficiaries'
             : 'beneficiary'
-        }`,
+        } to campaign is processing`,
         onboard
       );
       return Response.send(res);
