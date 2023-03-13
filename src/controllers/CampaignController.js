@@ -560,6 +560,7 @@ class CampaignController {
         beneficiaryId,
         campaign_id
       );
+
       const task_assignment = await db.TaskAssignment.findByPk(
         taskAssignmentId
       );

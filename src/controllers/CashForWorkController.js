@@ -11,7 +11,12 @@ const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {Response, Logger} = require('../libs');
 const {AclRoles} = require('../utils');
 const {async} = require('regenerator-runtime');
-const {BlockchainService, ZohoService} = require('../services');
+const {
+  BlockchainService,
+  ZohoService,
+  WalletService,
+  QueueService
+} = require('../services');
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
   durable: true
 });
@@ -1152,6 +1157,7 @@ class CashForWorkController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       }
+
       const user = await db.User.findByPk(user_id, {
         attributes: userConst.publicAttr
       });
@@ -1162,6 +1168,13 @@ class CashForWorkController {
       const submittedEvidence = await db.TaskAssignmentEvidence.findOne({
         where: {TaskAssignmentId: assignment.id}
       });
+      const beneficiaryWallet = await WalletService.findUserCampaignWallet(
+        user_id,
+        task_exist.CampaignId
+      );
+      if (!beneficiaryWallet) {
+        await QueueService.createWallet(user_id, 'user', task_exist.CampaignId);
+      }
       if (!assignment) {
         Response.setSuccess(404, 'No Task Found', []);
         return Response.send(res);
