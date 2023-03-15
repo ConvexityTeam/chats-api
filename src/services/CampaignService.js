@@ -250,7 +250,7 @@ class CampaignService {
   }
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
-      order: [['updatedAt', 'ASC']],
+      order: [['updatedAt', 'DESC']],
       where: {
         id
       },
@@ -334,7 +334,7 @@ class CampaignService {
   static getPublicCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
-      order: [['updatedAt', 'ASC']],
+      order: [['updatedAt', 'DESC']],
       where: {
         ...where
       },
@@ -355,7 +355,7 @@ class CampaignService {
       where: {
         id
       },
-      order: [['updatedAt', 'ASC']],
+      order: [['updatedAt', 'DESC']],
       include: {
         model: Campaign,
         where: {
@@ -388,7 +388,7 @@ class CampaignService {
       where: {
         id
       },
-      order: [['updatedAt', 'ASC']],
+      order: [['updatedAt', 'DESC']],
       include: {
         model: Campaign,
         where: {
@@ -427,7 +427,7 @@ class CampaignService {
   static getCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
-      order: [['updatedAt', 'ASC']],
+      order: [['updatedAt', 'DESC']],
       where: {
         ...where
       },
