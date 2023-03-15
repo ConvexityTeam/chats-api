@@ -731,9 +731,13 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+
       const products = await Promise.all(
         body.map(async _body => {
-          const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
+          const data = SanitizeObject(
+            _body,
+            ['type', 'tag', 'cost'] || ['type', 'tag']
+          );
           data.product_ref = generateProductRef();
 
           const createdProduct = await db.Product.create({
