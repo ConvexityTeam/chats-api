@@ -721,7 +721,7 @@ RabbitMq['default']
         });
         await VoucherToken.update(
           {
-            amount: Sequelize.literal(`balance - ${amount}`)
+            amount: Sequelize.literal(`amount - ${amount}`)
           },
           {
             where: {

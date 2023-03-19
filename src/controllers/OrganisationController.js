@@ -739,7 +739,7 @@ class OrganisationController {
             ['type', 'tag', 'cost'] || ['type', 'tag']
           );
           data.product_ref = generateProductRef();
-
+          data.cost = data.type === 'item' ? 1 : data.cost;
           const createdProduct = await db.Product.create({
             ...data,
             CampaignId: campaign.id
