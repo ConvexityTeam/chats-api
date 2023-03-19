@@ -187,13 +187,13 @@ class OrderController {
         return Response.send(res);
       }
 
-      if (data.order.status !== 'pending') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Order ${data.order.status}`
-        );
-        return Response.send(res);
-      }
+      // if (data.order.status !== 'pending') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Order ${data.order.status}`
+      //   );
+      //   return Response.send(res);
+      // }
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
@@ -253,15 +253,6 @@ class OrderController {
       const campaign = await CampaignService.getCampaignById(
         data.order.CampaignId
       );
-
-      // if (token.Balance < data.total_cost) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Insufficient wallet balance.'
-      //   );
-      //   return Response.send(res);
-      // }
-
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
