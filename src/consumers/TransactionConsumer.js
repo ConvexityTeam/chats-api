@@ -744,8 +744,8 @@ RabbitMq['default']
           senderWallet,
           receiverWallet,
           amount,
-          campaignWallet,
-          transaction
+          transaction,
+          campaignWallet
         } = msg.getContent();
         let transfer;
         let confirm;

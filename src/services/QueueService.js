@@ -582,8 +582,8 @@ class QueueService {
       senderWallet,
       receiverWallet,
       amount,
-      campaignWallet,
-      transaction
+      transaction,
+      campaignWallet
     };
     beneficiaryFundBeneficiary.send(
       new Message(payload, {
