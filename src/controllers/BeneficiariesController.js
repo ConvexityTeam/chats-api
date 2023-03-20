@@ -1226,12 +1226,10 @@ class BeneficiariesController {
         UserId: user.id,
         CampaignId: null
       });
-
       if (!to_personal_wallet) {
-        await QueueService.createWallet(user.id, 'user');
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Creating Receiver personal wallet. Please try again'
+          "Receiver don't a personal wallet."
         );
         return Response.send(res);
       }
@@ -1259,7 +1257,6 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-
         await QueueService.BeneficiaryTransfer(
           from_personal_wallet,
           to_personal_wallet,
