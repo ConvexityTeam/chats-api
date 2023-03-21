@@ -9,7 +9,8 @@ const {
   PAYSTACK_VENDOR_WITHDRAW,
   FUND_BENEFICIARIES,
   TRANSFER_FROM_TO_BENEFICIARY,
-  CONFIRM_NGO_FUNDING
+  CONFIRM_NGO_FUNDING,
+  CONFIRM_CAMPAIGN_FUNDING
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -115,6 +116,14 @@ const beneficiaryFundBeneficiary = RabbitMq['default'].declareQueue(
 
 const confirmNgoFunding = RabbitMq['default'].declareQueue(
   CONFIRM_NGO_FUNDING,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const confirmCampaignFunding = RabbitMq['default'].declareQueue(
+  CONFIRM_CAMPAIGN_FUNDING,
   {
     prefetch: 1,
     durable: true
@@ -272,6 +281,7 @@ RabbitMq['default']
           status: 'successful'
         });
         Logger.info('NGO funded');
+        msg.ack();
       })
       .catch(error => {
         Logger.error(`Consumer Error: ${error.message}`);
@@ -296,39 +306,54 @@ RabbitMq['default']
           `organisation_${OrgWallet.OrganisationId}`
         );
 
-        let transfer;
-
-        if (!has_run_once) {
-          transfer = await BlockchainService.transferTo(
-            organisationAddress.privateKey,
-            campaignAddress.address,
-            realBudget
-          );
-          has_run_once = true;
-        }
+        const transfer = await BlockchainService.transferTo(
+          organisationAddress.privateKey,
+          campaignAddress.address,
+          realBudget
+        );
 
         if (!transfer) {
-          await update_transaction({status: 'failed'}, transactionId);
           msg.nack();
-          has_run_once = false;
           return;
         }
 
-        const confirm = await BlockchainService.confirmTransaction(
-          transfer.Transfered
+        await QueueService.confirmCampaign_FUNDING(
+          transfer.Transfered,
+          transactionId,
+          campaign,
+          OrgWallet,
+          realBudget
         );
+        Logger.info('CAMPAIGN HASH SENT FOR CONFIRMATION');
+        msg.ack();
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error.message}`);
+      })
+      .then(() => {
+        Logger.info('Running Process For Campaign Funding');
+      });
+
+    confirmCampaignFunding
+      .activateConsumer(async msg => {
+        const {
+          hash,
+          transactionId,
+          campaign,
+          OrgWallet,
+          amount
+        } = msg.getContent();
+        const confirm = await BlockchainService.confirmTransaction(hash);
         if (!confirm) {
-          await update_transaction({status: 'processing'}, transactionId);
           msg.nack();
           return;
         }
-
         if (campaign.type === 'cash-for-work') {
           await update_campaign(campaign.id, {
             status: 'active',
             is_funded: true,
             is_processing: false,
-            amount_disbursed: realBudget
+            amount_disbursed: amount
           });
         } else
           await update_campaign(campaign.id, {
@@ -339,22 +364,22 @@ RabbitMq['default']
         await update_transaction(
           {
             status: 'success',
-            transaction_hash: transfer.Transfered,
+            transaction_hash: hash,
             is_approved: true
           },
           transactionId
         );
 
-        await deductWalletAmount(realBudget, OrgWallet.uuid);
-        await addWalletAmount(realBudget, campaign.Wallet.uuid);
-        has_run_once = false;
+        await deductWalletAmount(amount, OrgWallet.uuid);
+        await addWalletAmount(amount, campaign.Wallet.uuid);
+        Logger.info('CAMPAIGN FUNDED');
         msg.ack();
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error.message}`);
       })
       .then(() => {
-        Logger.info('Running Process For Campaign Funding');
+        Logger.info('Running Process For Confirm Campaign Funding');
       });
     processFundBeneficiaries
       .activateConsumer(async msg => {

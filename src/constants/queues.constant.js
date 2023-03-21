@@ -32,5 +32,6 @@ module.exports = {
   LOOP_ITEM_BENEFICIARY: 'loopItemBeneficiary',
   TRANSFER_MINT_TO_VENDOR: 'transferMintToVendor',
   CONFIRM_AND_PAY_VENDOR: 'confirmAndPayVendor',
-  CONFIRM_NGO_FUNDING: 'confirmNGOfunding'
+  CONFIRM_NGO_FUNDING: 'confirmNGOfunding',
+  CONFIRM_CAMPAIGN_FUNDING: 'confirmCampaignFunding'
 };

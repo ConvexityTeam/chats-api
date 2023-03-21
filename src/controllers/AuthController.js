@@ -700,11 +700,17 @@ class AuthController {
         );
         return Response.send(res);
       }
+      const orgId = user.AssociatedOrganisations[0].OrganisationId;
+      const orgWallet = await WalletService.findMainOrganisationWallet(orgId);
+      if (!orgWallet) {
+        await QueueService.createWallet(orgId, 'organisation');
+      }
       const wallet = await WalletService.findSingleWallet({
-        OrganisationId: user.id
+        UserId: user.id,
+        CampaignId: null
       });
       if (!wallet) {
-        await QueueService.createWallet(user.id, 'organisation');
+        await QueueService.createWallet(user.id, 'user');
       }
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
