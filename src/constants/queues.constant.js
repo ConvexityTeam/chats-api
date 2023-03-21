@@ -32,6 +32,16 @@ module.exports = {
   LOOP_ITEM_BENEFICIARY: 'loopItemBeneficiary',
   TRANSFER_MINT_TO_VENDOR: 'transferMintToVendor',
   CONFIRM_AND_PAY_VENDOR: 'confirmAndPayVendor',
+  REDEEM_BENEFICIARY_ONCE: 'redeemBeneficiaryOnce',
   CONFIRM_NGO_FUNDING: 'confirmNGOfunding',
-  CONFIRM_CAMPAIGN_FUNDING: 'confirmCampaignFunding'
+  CONFIRM_CAMPAIGN_FUNDING: 'confirmCampaignFunding',
+  CONFIRM_VENDOR_ORDER_QUEUE: 'confirmVendorOrderQueue',
+  CONFIRM_FUND_SINGLE_BENEFICIARY: 'confirmFundSingleBeneficiary',
+  CONFIRM_VENDOR_REDEEM: 'confirmVendorRedeem',
+  CONFIRM_BENEFICIARY_TRANSFER_REDEEM: 'confirmBTransferRedeem',
+  CONFIRM_BENEFICIARY_REDEEM: 'confirmBeneficiaryRedeem',
+  CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY:
+    'confirmBeneficiaryFundingBeneficiary',
+  SEND_EACH_BENEFICIARY_FOR_REDEEMING: 'sendEachBeneficiaryForRedeeming',
+  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION: 'sendEachBeneficiaryForConfirmation'
 };

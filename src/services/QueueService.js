@@ -30,7 +30,16 @@ const {
   TRANSFER_MINT_TO_VENDOR,
   CONFIRM_AND_PAY_VENDOR,
   CONFIRM_NGO_FUNDING,
-  CONFIRM_CAMPAIGN_FUNDING
+  CONFIRM_CAMPAIGN_FUNDING,
+  CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
+  CONFIRM_FUND_SINGLE_BENEFICIARY,
+  CONFIRM_VENDOR_REDEEM,
+  CONFIRM_VENDOR_ORDER_QUEUE,
+  CONFIRM_BENEFICIARY_TRANSFER_REDEEM,
+  CONFIRM_BENEFICIARY_REDEEM,
+  REDEEM_BENEFICIARY_ONCE,
+  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
+  SEND_EACH_BENEFICIARY_FOR_REDEEMING
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -198,7 +207,217 @@ const confirmCampaignFunding = RabbitMq['default'].declareQueue(
   }
 );
 
+const confirmBFundingBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
+  {
+    durable: true
+  }
+);
+
+const confirmOrderQueue = RabbitMq['default'].declareQueue(
+  CONFIRM_VENDOR_ORDER_QUEUE,
+  {
+    durable: true
+  }
+);
+
+const confirmFundSingleBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_FUND_SINGLE_BENEFICIARY,
+  {
+    durable: true
+  }
+);
+
+const confirmVRedeem = RabbitMq['default'].declareQueue(CONFIRM_VENDOR_REDEEM, {
+  durable: true
+});
+
+const confirmBRedeem = RabbitMq['default'].declareQueue(
+  CONFIRM_BENEFICIARY_REDEEM,
+  {
+    durable: true
+  }
+);
+
+const confirmBTransferRedeem = RabbitMq['default'].declareQueue(
+  CONFIRM_BENEFICIARY_TRANSFER_REDEEM,
+  {
+    durable: true
+  }
+);
+const redeemBeneficiaryOnce = RabbitMq['default'].declareQueue(
+  REDEEM_BENEFICIARY_ONCE,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const sendBForConfirmation = RabbitMq['default'].declareQueue(
+  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
+  {
+    durable: true
+  }
+);
+
+const sendBForRedeem = RabbitMq['default'].declareQueue(
+  SEND_EACH_BENEFICIARY_FOR_REDEEMING,
+  {
+    durable: true
+  }
+);
 class QueueService {
+  static async sendBForRedeem() {
+    const payload = {};
+    sendBForRedeem.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async sendBForConfirmation() {
+    const payload = {};
+    sendBForConfirmation.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async redeemBeneficiaryOnce(
+    hash,
+    amount,
+    transactionId,
+    campaignWallet,
+    userWallet,
+    recipient_code
+  ) {
+    const payload = {
+      hash,
+      amount,
+      transactionId,
+      campaignWallet,
+      userWallet,
+      recipient_code
+    };
+    redeemBeneficiaryOnce.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmBTransferRedeem() {
+    const payload = {};
+    confirmBTransferRedeem.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmBRedeem(
+    privateKey,
+    transactionId,
+    amount,
+    recipient_code,
+    userWallet,
+    campaignWallet
+  ) {
+    const payload = {
+      privateKey,
+      transactionId,
+      amount,
+      recipient_code,
+      userWallet,
+      campaignWallet
+    };
+    confirmBRedeem.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmVRedeem(
+    hash,
+    amount,
+    recipient_code,
+    transactionId,
+    uuid
+  ) {
+    const payload = {hash, amount, recipient_code, transactionId, uuid};
+    confirmVRedeem.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmFundSingleB(
+    hash,
+    transactionId,
+    task_assignmentId,
+    beneficiaryWallet,
+    campaignWallet,
+    amount
+  ) {
+    const payload = {
+      hash,
+      transactionId,
+      task_assignmentId,
+      beneficiaryWallet,
+      campaignWallet,
+      amount
+    };
+    confirmFundSingleBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmVendorOrder(
+    hash,
+    amount,
+    transactionId,
+    order,
+    beneficiaryWallet,
+    campaignWallet,
+    vendorWallet
+  ) {
+    const payload = {
+      hash,
+      amount,
+      transactionId,
+      order,
+      beneficiaryWallet,
+      campaignWallet,
+      vendorWallet
+    };
+    confirmOrderQueue.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmBFundingB(
+    hash,
+    amount,
+    senderWallet,
+    receiverWallet,
+    transactionId,
+    campaignWallet
+  ) {
+    const payload = {
+      hash,
+      amount,
+      senderWallet,
+      receiverWallet,
+      transactionId,
+      campaignWallet
+    };
+    confirmBFundingBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async confirmCampaign_FUNDING(
     hash,
     transactionId,

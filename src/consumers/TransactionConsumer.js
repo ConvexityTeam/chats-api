@@ -10,7 +10,16 @@ const {
   FUND_BENEFICIARIES,
   TRANSFER_FROM_TO_BENEFICIARY,
   CONFIRM_NGO_FUNDING,
-  CONFIRM_CAMPAIGN_FUNDING
+  CONFIRM_CAMPAIGN_FUNDING,
+  CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
+  CONFIRM_VENDOR_ORDER_QUEUE,
+  CONFIRM_FUND_SINGLE_BENEFICIARY,
+  CONFIRM_BENEFICIARY_REDEEM,
+  CONFIRM_VENDOR_REDEEM,
+  CONFIRM_BENEFICIARY_TRANSFER_REDEEM,
+  REDEEM_BENEFICIARY_ONCE,
+  SEND_EACH_BENEFICIARY_FOR_REDEEMING,
+  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -124,6 +133,75 @@ const confirmNgoFunding = RabbitMq['default'].declareQueue(
 
 const confirmCampaignFunding = RabbitMq['default'].declareQueue(
   CONFIRM_CAMPAIGN_FUNDING,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const confirmBFundingBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const confirmOrderQueue = RabbitMq['default'].declareQueue(
+  CONFIRM_VENDOR_ORDER_QUEUE,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const confirmFundSingleB = RabbitMq['default'].declareQueue(
+  CONFIRM_FUND_SINGLE_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const confirmVRedeem = RabbitMq['default'].declareQueue(CONFIRM_VENDOR_REDEEM, {
+  prefetch: 1,
+  durable: true
+});
+
+const confirmBRedeem = RabbitMq['default'].declareQueue(
+  CONFIRM_BENEFICIARY_REDEEM,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const confirmBTransferRedeem = RabbitMq['default'].declareQueue(
+  CONFIRM_BENEFICIARY_TRANSFER_REDEEM,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const redeemBeneficiaryOnce = RabbitMq['default'].declareQueue(
+  REDEEM_BENEFICIARY_ONCE,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const sendBForConfirmation = RabbitMq['default'].declareQueue(
+  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const sendBForRedeem = RabbitMq['default'].declareQueue(
+  SEND_EACH_BENEFICIARY_FOR_REDEEMING,
   {
     prefetch: 1,
     durable: true
@@ -398,20 +476,13 @@ RabbitMq['default']
           `organisation_${campaign.OrganisationId}`
         );
 
-        // if (modulus > 0 && !transfer_once) {
-        //   await BlockchainService.transferTo(
-        //     campaignKeyPair.privateKey,
-        //     organisationKeyPair.address,
-        //     modulus
-        //   );
-        //   transfer_once = true;
-        // }
         const realBudget = campaign.budget;
         const parsedAmount =
           parseInt(campaign.budget / beneficiaries.length) *
           beneficiaries.length;
         for (let [index, beneficiary] of beneficiaries.entries()) {
           let wallet = beneficiary.User.Wallets[0];
+
           const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
             `user_${wallet.UserId}campaign_${campaign.id}`
           );
@@ -427,6 +498,13 @@ RabbitMq['default']
             }
           );
 
+          await QueueService.sendBForRedeem(
+            wallet,
+            campaign,
+            campaignKeyPair.privateKey,
+            beneficiaryKeyPair.address,
+            share
+          );
           let approve_to_spend;
           if ((benefitIndex && benefitIndex >= index) || !benefitIndex)
             approve_to_spend = await BlockchainService.approveToSpend(
@@ -508,7 +586,36 @@ RabbitMq['default']
       .then(() => {
         Logger.info(`Running Process For Funding Beneficiaries`);
       });
+    sendBForRedeem
+      .activateConsumer(async msg => {
+        const {campaignKeyPair, beneficiaryKeyPair, amount} = msg.getContent();
+        const approve_to_spend = await BlockchainService.approveToSpend(
+          campaignKeyPair.privateKey,
+          beneficiaryKeyPair.address,
+          amount
+        );
 
+        if (!approve_to_spend) {
+          msg.nack();
+          return;
+        }
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+      .then(() => {
+        Logger.info(`Running Process For Sending Beneficiary For Redeem`);
+      });
+    sendBForConfirmation
+      .activateConsumer(async msg => {
+        const {} = msg.getContent();
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+      .then(() => {
+        Logger.info(`Running Process For Sending Beneficiary For Confirmation`);
+      });
     processCampaignPaystack
       .activateConsumer(async msg => {
         const {camp_id, camp_uuid, org_uuid, org_id, amount} = msg.getContent();
@@ -564,55 +671,28 @@ RabbitMq['default']
         const beneficiary = await BlockchainService.setUserKeypair(
           `user_${userWallet.UserId}campaign_${campaignWallet.CampaignId}`
         );
-        let transfer;
-        if (!run_ben_to_bank_once) {
-          transfer = await BlockchainService.transferFrom(
-            campaignAddress.address,
-            beneficiary.address,
-            beneficiary.privateKey,
-            amount
-          );
-          run_ben_to_bank_once = true;
-        }
+
+        const transfer = await BlockchainService.transferFrom(
+          campaignAddress.address,
+          beneficiary.address,
+          beneficiary.privateKey,
+          amount
+        );
+
         if (!transfer) {
           msg.nack();
           return;
         }
 
-        const confirm = await BlockchainService.confirmTransaction(
-          transfer.TransferedFrom
-        );
-        if (!confirm) {
-          msg.nack();
-          return;
-        }
-        let redeem;
-        if (!redeem_ben_once) {
-          redeem = await BlockchainService.redeem(
-            beneficiary.privateKey,
-            amount
-          );
-          redeem_ben_once = true;
-        }
-        if (!redeem) {
-          msg.nack;
-          return;
-        }
-        await PaystackService.withdraw(
-          'balance',
+        await QueueService.confirmBTransferRedeem(
+          transfer.TransferedFrom,
+          beneficiary.privateKey,
+          transaction.uuid,
           amount,
           bankAccount.recipient_code,
-          'spending'
+          userWallet,
+          campaignWallet
         );
-        await deductWalletAmount(amount, campaignWallet.uuid);
-        await deductWalletAmount(amount, userWallet.uuid);
-        await update_transaction(
-          {status: 'success', is_approved: true},
-          transaction.uuid
-        );
-        redeem_ben_once = false;
-
-        run_ben_to_bank_once = false;
         msg.ack();
       })
       .catch(error => {
@@ -623,7 +703,97 @@ RabbitMq['default']
           'Running Process For Beneficiary Liquidation to Bank Account'
         );
       });
+    confirmBTransferRedeem.activateConsumer(async msg => {
+      const {
+        hash,
+        privateKey,
+        transactionId,
+        amount,
+        recipient_code,
+        userWallet,
+        campaignWallet
+      } = msg.getContent();
 
+      const confirm = await BlockchainService.confirmTransaction(hash);
+      if (!confirm) {
+        msg.nack();
+        return;
+      }
+      await QueueService.confirmBRedeem(
+        privateKey,
+        transactionId,
+        amount,
+        recipient_code,
+        userWallet,
+        campaignWallet
+      );
+    });
+    confirmBRedeem
+      .activateConsumer(async msg => {
+        const {
+          privateKey,
+          transactionId,
+          amount,
+          recipient_code,
+          userWallet,
+          campaignWallet
+        } = msg.getContent();
+        const redeem = await BlockchainService.redeem(privateKey, amount);
+        if (!redeem) {
+          msg.nack();
+          return;
+        }
+        await QueueService.redeemBeneficiaryOnce(
+          redeem.Redeemed,
+          amount,
+          transactionId,
+          campaignWallet,
+          userWallet,
+          recipient_code
+        );
+      })
+      .catch(error => {
+        Logger.error(`RABBITMQ ERROR: ${error}`);
+      })
+      .then(() => {
+        Logger.info('Running Process For Redeem confirmation');
+      });
+    redeemBeneficiaryOnce
+      .activateConsumer(async msg => {
+        const {
+          hash,
+          amount,
+          transactionId,
+          campaignWallet,
+          userWallet,
+          recipient_code
+        } = msg.getContent();
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        await PaystackService.withdraw(
+          'balance',
+          amount,
+          recipient_code,
+          'spending'
+        );
+        await deductWalletAmount(amount, campaignWallet.uuid);
+        await deductWalletAmount(amount, userWallet.uuid);
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transactionId
+        );
+      })
+      .catch(error => {
+        Logger.error(`RABBITMQ ERROR: ${error}`);
+      })
+      .then(() => {
+        Logger.info(
+          'Running Process For Confirming Liquidation to Bank Account'
+        );
+      });
     processVendorPaystackWithdrawal
       .activateConsumer(async msg => {
         const {bankAccount, userWallet, amount, transaction} = msg.getContent();
@@ -637,18 +807,17 @@ RabbitMq['default']
 
         if (!redeem) {
           msg.nack();
-          await update_transaction({status: 'failed'}, transaction.uuid);
+          return;
         }
-        await PaystackService.withdraw(
-          'balance',
+        await QueueService.confirmVRedeem(
+          redeem.Redeemed,
           amount,
           bankAccount.recipient_code,
-          'spending'
+          transaction.uuid,
+          userWallet.uuid
         );
-        // await deductWalletAmount(amount, userWallet.uuid);
-        await update_transaction({status: 'success'}, transaction.uuid);
+        Logger.info('VENDOR REDEEM HASH SENT FOR CONFIRMATION');
         msg.ack();
-        return;
       })
       .catch(error => {
         Logger.error(`RABBITMQ ERROR: ${error}`);
@@ -656,7 +825,42 @@ RabbitMq['default']
       .then(() => {
         Logger.info('Running Process For Vendor Liquidation to Bank Account');
       });
+    confirmVRedeem
+      .activateConsumer(async msg => {
+        const {
+          hash,
+          amount,
+          recipient_code,
+          transactionId,
+          uuid
+        } = msg.getContent();
 
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        await PaystackService.withdraw(
+          'balance',
+          amount,
+          recipient_code,
+          'spending'
+        );
+        await deductWalletAmount(amount, uuid);
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transactionId
+        );
+        msg.ack();
+      })
+      .catch(error => {
+        Logger.error(`RABBITMQ ERROR: ${error}`);
+      })
+      .then(() => {
+        Logger.info(
+          'Running Process For Confirming Vendor Liquidation to Bank Account'
+        );
+      });
     processFundBeneficiary
       .activateConsumer(async msg => {
         const {
@@ -679,19 +883,20 @@ RabbitMq['default']
         );
 
         if (!approve_to_spend) {
-          await update_transaction({status: 'failed'}, transaction.uuid);
           msg.nack();
           return;
         }
-        await addWalletAmount(amount_disburse, beneficiaryWallet.uuid);
-        await deductWalletAmount(amount_disburse, campaignWallet.uuid);
-        await update_transaction(
-          {status: 'success', is_approved: true},
-          transaction.uuid
+
+        await QueueService.confirmFundSingleB(
+          approve_to_spend.Approved,
+          transaction.uuid,
+          task_assignment.id,
+          beneficiaryWallet,
+          campaignWallet,
+          amount_disburse
         );
-        await TaskAssignment.update(
-          {status: 'disbursed'},
-          {where: {id: task_assignment.id}}
+        Logger.info(
+          'HASH FOR FUNDING BENEFICIARY FOR COMPLETION OF TASK SENT FOR CONFIRMATION'
         );
 
         msg.ack();
@@ -704,7 +909,43 @@ RabbitMq['default']
           'Running Process For Funding Beneficiary For Completing Task'
         );
       });
+    confirmFundSingleB
+      .activateConsumer(async msg => {
+        const {
+          hash,
+          transactionId,
+          task_assignmentId,
+          beneficiaryWallet,
+          campaignWallet,
+          amount
+        } = msg.getContent();
 
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        await addWalletAmount(amount, beneficiaryWallet.uuid);
+        await deductWalletAmount(amount, campaignWallet.uuid);
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transactionId
+        );
+        await TaskAssignment.update(
+          {status: 'disbursed'},
+          {where: {id: task_assignmentId}}
+        );
+        Logger.info('BENEFICIARY PAID FOR COMPLETION OF TASK');
+        msg.ack();
+      })
+      .catch(error => {
+        Logger.error(`RABBITMQ TRANSFER ERROR: ${error}`);
+      })
+      .then(() => {
+        Logger.info(
+          'Running Process For Confirming Funding Beneficiary For Completing Task'
+        );
+      });
     processVendorOrderQueue
       .activateConsumer(async msg => {
         const {
@@ -724,7 +965,6 @@ RabbitMq['default']
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
-        Logger.info(JSON.stringify(vendor));
         const transfer = await BlockchainService.transferFrom(
           campaign.address,
           vendor.address,
@@ -732,13 +972,46 @@ RabbitMq['default']
           amount
         );
         if (!transfer) {
-          await update_transaction({status: 'failed'}, transaction);
-          await update_order(order.reference, {status: 'failed'});
           msg.nack();
           return null;
         }
-        await BlockchainService.confirmTransaction(transfer.TransferedFrom);
 
+        await QueueService.confirmVendorOrder(
+          transfer.TransferedFrom,
+          amount,
+          transaction,
+          order,
+          beneficiaryWallet,
+          campaignWallet,
+          vendorWallet
+        );
+        Logger.info('BENEFICIARY ORDER SENT FOR CONFIRMATION');
+        msg.ack();
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+
+      .then(_ => {
+        Logger.info(`Running Process For Vendor Order Queue`);
+      });
+    confirmOrderQueue
+      .activateConsumer(async msg => {
+        const {
+          hash,
+          amount,
+          transactionId,
+          order,
+          beneficiaryWallet,
+          campaignWallet,
+          vendorWallet
+        } = msg.getContent();
+
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
         await update_order(order.reference, {status: 'confirmed'});
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
@@ -748,7 +1021,7 @@ RabbitMq['default']
         await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
           {status: 'success', is_approved: true},
-          transaction
+          transactionId
         );
         order.Cart.forEach(async prod => {
           await ProductBeneficiary.create({
@@ -768,13 +1041,14 @@ RabbitMq['default']
             }
           }
         );
+        Logger.info('ORDER CONFIRMED');
+        msg.ack();
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
       })
-
       .then(_ => {
-        Logger.info(`Running Process For Vendor Order Queue`);
+        Logger.info(`Running Process For Confirming Vendor Order Queue`);
       });
     beneficiaryFundBeneficiary
       .activateConsumer(async msg => {
@@ -785,8 +1059,8 @@ RabbitMq['default']
           transaction,
           campaignWallet
         } = msg.getContent();
-        let transfer;
-        let confirm;
+
+        let hash;
         if (campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}campaign_${senderWallet.CampaignId}`
@@ -795,49 +1069,48 @@ RabbitMq['default']
           const campaign = await BlockchainService.setUserKeypair(
             `campaign_${senderWallet.CampaignId}`
           );
-          transfer = await BlockchainService.transferFrom(
+          const transferFrom = await BlockchainService.transferFrom(
             campaign.address,
             receiverWallet.address,
             beneficiary.privateKey,
             amount
           );
-          confirm = await BlockchainService.confirmTransaction(
-            transfer.TransferedFrom
-          );
+
+          if (!transferFrom) {
+            msg.nack();
+            return;
+          }
+          hash = transferFrom.TransferedFrom;
         }
         if (!campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}`
           );
-          transfer = await BlockchainService.transferTo(
+          const transferTo = await BlockchainService.transferTo(
             beneficiary.privateKey,
             receiverWallet.address,
             amount
           );
-          confirm = await BlockchainService.confirmTransaction(
-            transfer.Transfered
-          );
+          if (!transferTo) {
+            msg.nack();
+            return;
+          }
+          hash = transferTo.Transfered;
         }
 
-        if (!confirm) {
-          await update_transaction({status: 'failed'}, transaction);
-          msg.nack();
-          Logger.error('Not confirmed');
-          return null;
-        }
-        await deductWalletAmount(amount, senderWallet.uuid);
-        campaignWallet &&
-          (await deductWalletAmount(amount, campaignWallet.uuid));
-        await addWalletAmount(amount, receiverWallet.uuid);
-        await update_transaction(
-          {
-            status: 'success',
-            is_approved: true,
-            transaction_hash: transfer.Transfered || transfer.TransferedFrom
-          },
-          transaction.uuid
+        await QueueService.confirmBFundingB(
+          hash,
+          amount,
+          senderWallet,
+          receiverWallet,
+          transaction.uuid,
+          campaignWallet
         );
-        Logger.info('Transaction successful');
+
+        Logger.info(
+          'BENEFICIARY TO BENEFICIARY TRANSFER SENT FOR CONFIRMATION'
+        );
+        msg.ack();
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
@@ -845,6 +1118,44 @@ RabbitMq['default']
 
       .then(_ => {
         Logger.info(`Running Process For Beneficiary to Beneficiary Transfer`);
+      });
+    confirmBFundingBeneficiary
+      .activateConsumer(async msg => {
+        const {
+          hash,
+          amount,
+          senderWallet,
+          receiverWallet,
+          transactionId,
+          campaignWallet
+        } = msg.getContent();
+
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        await deductWalletAmount(amount, senderWallet.uuid);
+        await addWalletAmount(amount, receiverWallet.uuid);
+        campaignWallet &&
+          (await deductWalletAmount(amount, campaignWallet.uuid));
+        await update_transaction(
+          {
+            status: 'success',
+            is_approved: true,
+            transaction_hash: hash
+          },
+          transactionId
+        );
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+
+      .then(_ => {
+        Logger.info(
+          `Running Process For Confirming Beneficiary to Beneficiary Transfer`
+        );
       });
   })
   .catch(error => {
