@@ -671,7 +671,7 @@ class AuthController {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.' + error;
+          : 'Login failed. Please try again later.';
       Response.setError(401, message);
       return Response.send(res);
     }

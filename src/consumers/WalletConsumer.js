@@ -61,10 +61,8 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {content, hash} = msg.getContent();
 
-        const confirm = await BlockchainService.confirmNFTTransaction(
-          hash.data.AddedUser,
-          content,
-          CONFIRM_AND_CREATE_WALLET
+        const confirm = await BlockchainService.confirmTransaction(
+          hash.data.AddedUser
         );
         if (!confirm) {
           msg.nack();
