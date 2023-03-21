@@ -576,6 +576,13 @@ class VendorController {
         );
         return Response.send(res);
       }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
+        );
+        return Response.send(res);
+      }
       const beneficiary = await UserService.findBeneficiary(
         isVerify.beneficiaryId
       );

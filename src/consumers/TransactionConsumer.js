@@ -625,14 +625,12 @@ RabbitMq['default']
           amount_disburse,
           transaction
         } = msg.getContent();
-        const campaign = BlockchainService.setUserKeypair(
+        const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
-
         const beneficiary = await BlockchainService.setUserKeypair(
-          `user_${beneficiaryWallet.UserId}campaign_${campaignWallet.CampaignId}`
+          `user_${beneficiaryWallet.UserId}campaign_${beneficiaryWallet.CampaignId}`
         );
-
         const approve_to_spend = await BlockchainService.approveToSpend(
           campaign.privateKey,
           beneficiary.address,
@@ -720,7 +718,7 @@ RabbitMq['default']
         });
         await VoucherToken.update(
           {
-            amount: Sequelize.literal(`balance - ${amount}`)
+            amount: Sequelize.literal(`amount - ${amount}`)
           },
           {
             where: {

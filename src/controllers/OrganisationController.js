@@ -357,7 +357,7 @@ class OrganisationController {
 
       for (let data of campaigns) {
         if (new Date(data.end_date) < new Date())
-          data.update({status: 'completed'});
+          data.update({status: 'ended'});
         for (let task of data.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'}
@@ -731,11 +731,15 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+
       const products = await Promise.all(
         body.map(async _body => {
-          const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
+          const data = SanitizeObject(
+            _body,
+            ['type', 'tag', 'cost'] || ['type', 'tag']
+          );
           data.product_ref = generateProductRef();
-
+          data.cost = data.type === 'item' ? 1 : data.cost;
           const createdProduct = await db.Product.create({
             ...data,
             CampaignId: campaign.id

@@ -282,6 +282,7 @@ class BeneficiariesService {
           include: ['Organisation']
         },
         {
+          order: [['updatedAt', 'ASC']],
           model: Wallet,
           as: 'Wallets'
         }

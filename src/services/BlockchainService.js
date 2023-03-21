@@ -6,8 +6,10 @@ const crypto = require('crypto');
 const sha256 = require('simple-sha256');
 const {tokenConfig, switchWallet} = require('../config');
 const {SwitchToken} = require('../models');
-const {Encryption, Logger} = require('../libs');
+const {Encryption, Logger, RabbitMq} = require('../libs');
 const AwsUploadService = require('./AwsUploadService');
+const {Message} = require('@droidsolutions-oss/amqp-ts');
+const QueueService = require('./QueueService');
 
 const provider = new ethers.providers.getDefaultProvider(
   process.env.BLOCKCHAINSERV
@@ -18,7 +20,20 @@ const Interface = new ethers.utils.Interface([
 
 const Axios = axios.create();
 
+const REQUEUE_TIME = 5000;
+
 class BlockchainService {
+  static async requeueMessage(bind, args) {
+    const confirmTransaction = RabbitMq['default'].declareQueue(bind, {
+      durable: true
+    });
+    const payload = {...args};
+    confirmTransaction.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async nftTransfer(
     senderPrivateKey,
     sender,
@@ -60,7 +75,7 @@ class BlockchainService {
     });
   }
 
-  static async createNFTCollection(name) {
+  static async createNFTCollection(name, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info(`CREATING NFT COLLECTION`);
@@ -75,6 +90,9 @@ class BlockchainService {
             error?.response?.data
           )}`
         );
+        setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
         reject(error);
       }
     });
@@ -254,10 +272,13 @@ class BlockchainService {
         // const {data} = await Axios.get(
         //   `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
         // );
-        Logger.info('Transaction confirmed');
+        Logger.info('Transaction confirmed..');
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
+        setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
         reject(error);
       }
     });
@@ -309,7 +330,7 @@ class BlockchainService {
     }
   }
 
-  static async addUser(arg) {
+  static async addUser(arg, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);
@@ -323,6 +344,11 @@ class BlockchainService {
           `Adding User Error: ${JSON.stringify(error?.response?.data)}`
         );
         reject(error);
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, REQUEUE_TIME);
+
+        clearTimeout(id);
       }
     });
   }

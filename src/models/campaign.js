@@ -44,6 +44,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'OrganisationId',
         as: 'Organisation'
       });
+      // Campaign.belongsTo(models.Transaction, {
+      //   foreignKey: 'CampaignId',
+      //   as: 'TransactionCampaign'
+      // });
       Campaign.belongsTo(models.CampaignForm, {
         foreignKey: 'formId',
         as: 'campaign_form'
@@ -81,7 +85,8 @@ module.exports = (sequelize, DataTypes) => {
         'ongoing',
         'active',
         'paused',
-        'completed'
+        'completed',
+        'ended'
       ),
       is_funded: DataTypes.BOOLEAN,
       is_public: DataTypes.BOOLEAN,

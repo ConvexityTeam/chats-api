@@ -376,6 +376,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
+        );
+        return Response.send(res);
+      }
       if (campaign.status == 'ongoing') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -453,6 +460,13 @@ class CampaignController {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign already completed'
+        );
+        return Response.send(res);
+      }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
         );
         return Response.send(res);
       }
@@ -560,6 +574,7 @@ class CampaignController {
         beneficiaryId,
         campaign_id
       );
+
       const task_assignment = await db.TaskAssignment.findByPk(
         taskAssignmentId
       );
@@ -1131,24 +1146,27 @@ class CampaignController {
         type
       );
       const onboard = [];
+
       await Promise.all(
-        replicaCampaign.Beneficiaries.map(async beneficiary => {
-          const res = await CampaignService.addBeneficiary(
-            campaign_id,
-            beneficiary.id,
-            source
-          );
-          onboard.push(res);
+        replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
+          setTimeout(async () => {
+            const res = await CampaignService.addBeneficiary(
+              campaign_id,
+              beneficiary.id,
+              source
+            );
+            onboard.push(res);
+          }, index * 5000);
         })
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign onboarded with  ${replicaCampaign.Beneficiaries.length}${
+        `Onboarding  ${replicaCampaign.Beneficiaries.length}${
           replicaCampaign.Beneficiaries.length > 1
             ? ' beneficiaries'
             : 'beneficiary'
-        }`,
+        } to campaign is processing`,
         onboard
       );
       return Response.send(res);

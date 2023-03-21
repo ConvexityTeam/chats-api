@@ -214,7 +214,7 @@ class CampaignService {
   }
   static getPrivateCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
-      order: [['updatedAt', 'ASC']],
+      order: [['createdAt', 'ASC']],
       where: {
         id,
         is_public: false
@@ -250,7 +250,7 @@ class CampaignService {
   }
   static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
-      order: [['updatedAt', 'ASC']],
+      order: [['createdAt', 'DESC']],
       where: {
         id
       },
@@ -334,7 +334,7 @@ class CampaignService {
   static getPublicCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
-      order: [['updatedAt', 'ASC']],
+      order: [['createdAt', 'DESC']],
       where: {
         ...where
       },
@@ -355,7 +355,7 @@ class CampaignService {
       where: {
         id
       },
-      order: [['updatedAt', 'ASC']],
+      order: [['createdAt', 'DESC']],
       include: {
         model: Campaign,
         where: {
@@ -388,7 +388,7 @@ class CampaignService {
       where: {
         id
       },
-      order: [['updatedAt', 'ASC']],
+      order: [['updatedAt', 'DESC']],
       include: {
         model: Campaign,
         where: {
@@ -427,7 +427,7 @@ class CampaignService {
   static getCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
-      order: [['updatedAt', 'ASC']],
+      order: [['createdAt', 'DESC']],
       where: {
         ...where
       },
@@ -478,6 +478,7 @@ class CampaignService {
 
   static async getAllCampaigns(queryClause = null) {
     return Campaign.findAll({
+      order: [['createdAt', 'DESC']],
       where: {
         ...queryClause
       },
@@ -571,6 +572,7 @@ class CampaignService {
 
   static cashForWorkCampaignByApprovedBeneficiary() {
     return Campaign.findAll({
+      order: [['createdAt', 'DESC']],
       where: {
         type: 'cash-for-work'
       },
@@ -687,7 +689,7 @@ class CampaignService {
   }
   static async getCampaignForm(organisationId) {
     return await CampaignForm.findAll({
-      order: [['updatedAt', 'ASC']],
+      order: [['createdAt', 'DESC']],
       where: {organisationId},
       include: ['campaigns']
     });
