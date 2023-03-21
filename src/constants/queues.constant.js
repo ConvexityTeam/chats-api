@@ -31,5 +31,6 @@ module.exports = {
   CONFIRM_AND_GENERATE_TOKEN: 'confirmAndGenerateToken,',
   LOOP_ITEM_BENEFICIARY: 'loopItemBeneficiary',
   TRANSFER_MINT_TO_VENDOR: 'transferMintToVendor',
-  CONFIRM_AND_PAY_VENDOR: 'confirmAndPayVendor'
+  CONFIRM_AND_PAY_VENDOR: 'confirmAndPayVendor',
+  CONFIRM_NGO_FUNDING: 'confirmNGOfunding'
 };

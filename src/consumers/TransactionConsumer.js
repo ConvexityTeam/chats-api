@@ -8,7 +8,8 @@ const {
   PAYSTACK_BENEFICIARY_WITHDRAW,
   PAYSTACK_VENDOR_WITHDRAW,
   FUND_BENEFICIARIES,
-  TRANSFER_FROM_TO_BENEFICIARY
+  TRANSFER_FROM_TO_BENEFICIARY,
+  CONFIRM_NGO_FUNDING
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -112,6 +113,14 @@ const beneficiaryFundBeneficiary = RabbitMq['default'].declareQueue(
   }
 );
 
+const confirmNgoFunding = RabbitMq['default'].declareQueue(
+  CONFIRM_NGO_FUNDING,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
 const update_campaign = async (id, args) => {
   const campaign = await Campaign.findOne({where: {id}});
   if (!campaign) return null;
@@ -203,57 +212,27 @@ RabbitMq['default']
           amount
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
-          const wallet = await WalletService.findMainOrganisationWallet(
-            OrganisationId
-          );
-
-          let mint, confirm;
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`
           );
 
-          if (!minted) {
-            mint = await BlockchainService.mintToken(
-              organisation.address,
-              amount
-            );
+          const mint = await BlockchainService.mintToken(
+            organisation.address,
+            amount
+          );
 
-            Logger.info(`Hash: ${mint.Minted}`);
-            if (mint.Minted) {
-              minted = true;
-            }
-          }
-
-          if (!confirmed && minted) {
-            confirm = await BlockchainService.confirmTransaction(mint.Minted);
-            await update_transaction(
-              {status: 'failed', is_approved: false},
-              transactionId
-            );
-
-            if (confirm) {
-              confirmed = true;
-            }
-          }
-
-          if (confirm && minted) {
-            await update_transaction(
-              {status: 'success', is_approved: true},
-              transactionId
-            );
-            await wallet.update({
-              balance: Sequelize.literal(`balance + ${amount}`),
-              fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-            });
-            await DepositService.updateFiatDeposit(transactionReference, {
-              status: 'successful'
-            });
-            Logger.info('Transaction confirmed');
-            confirmed = false;
-            minted = false;
-            msg.ack();
+          if (!mint) {
+            msg.nack();
             return;
           }
+
+          await QueueService.confirmNGO_FUNDING(
+            OrganisationId,
+            mint.Minted,
+            transactionId,
+            transactionReference,
+            amount
+          );
         }
       })
       .catch(error => {
@@ -263,7 +242,44 @@ RabbitMq['default']
       .then(_ => {
         Logger.info(`Running Process For Verify Fiat Deposit.`);
       });
+    confirmNgoFunding
+      .activateConsumer(async msg => {
+        const {
+          OrganisationId,
+          hash,
+          transactionId,
+          transactionReference,
+          amount
+        } = msg.getContent();
+        const wallet = await WalletService.findMainOrganisationWallet(
+          OrganisationId
+        );
 
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        await update_transaction(
+          {status: 'success', is_approved: true},
+          transactionId
+        );
+        await wallet.update({
+          balance: Sequelize.literal(`balance + ${amount}`),
+          fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+        });
+        await DepositService.updateFiatDeposit(transactionReference, {
+          status: 'successful'
+        });
+        Logger.info('NGO funded');
+      })
+      .catch(error => {
+        Logger.error(`Consumer Error: ${error.message}`);
+        // msg.nack();
+      })
+      .then(_ => {
+        Logger.info(`Running Process For Confirming NGO funding.`);
+      });
     processCampaignFund
       .activateConsumer(async msg => {
         const {
