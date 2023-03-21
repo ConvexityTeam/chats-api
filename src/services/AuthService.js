@@ -5,18 +5,49 @@ const {v4: uuidv4} = require('uuid');
 const {createHash, GenerateOtp} = require('../utils');
 const bcrypt = require('bcryptjs');
 const moment = require('moment');
+const redis = require('redis');
 const jwt = require('jsonwebtoken');
 const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
 
+const {RateLimiterRedis} = require('rate-limiter-flexible');
+const {RedisClient} = require('../services/RedisService');
+
+const redisClient = redis.createClient(process.env.REDIS_URL, {
+  enable_offline_queue: false
+});
+const maxWrongAttemptsByIPperDay = 100;
+const maxConsecutiveFailsByEmailAndIP = 10;
+
+// the rate limiter instance counts and limits the number of failed logins by key
+const limiterSlowBruteByIP = new RateLimiterRedis({
+  storeClient: redisClient,
+  keyPrefix: 'login_fail_ip_per_day',
+  // maximum number of failed logins allowed. 1 fail = 1 point
+  // each failed login consumes a point
+  points: maxWrongAttemptsByIPperDay,
+  // delete key after 24 hours
+  duration: 60 * 60 * 24,
+  // number of seconds to block route if consumed points > points
+  blockDuration: 60 * 60 * 24 // Block for 1 day, if 100 wrong attempts per day
+});
+
+const limiterConsecutiveFailsByEmailAndIP = new RateLimiterRedis({
+  storeClient: redisClient,
+  keyPrefix: 'login_fail_consecutive_email_and_ip',
+  points: maxConsecutiveFailsByEmailAndIP,
+  duration: 60 * 60, // Delete key after 1 hour
+  blockDuration: 60 * 60 // Block for 1 hour
+});
 class AuthService {
   static async login(data, _password, roleId = null) {
     const error = new Error();
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
       if (data) {
         const {password, tfa_secret, ...user} = data.toJSON();
+
         if (bcrypt.compareSync(_password, password)) {
           if (user.status == 'suspended') {
             error.status = 401;
@@ -50,7 +81,6 @@ class AuthService {
             token
           });
         }
-
         error.status = 401;
         error.message = 'Invalid login credentials';
         reject(error);
