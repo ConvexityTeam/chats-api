@@ -276,9 +276,9 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
-        setTimeout(async () => {
-          await this.requeueMessage(bind, message);
-        }, REQUEUE_TIME);
+        // setTimeout(async () => {
+        //   await this.requeueMessage(bind, message);
+        // }, REQUEUE_TIME);
         reject(error);
       }
     });
