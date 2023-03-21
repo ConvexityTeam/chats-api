@@ -28,7 +28,8 @@ const {
   DISBURSE_ITEM,
   CONFIRM_AND_DISBURSE_ITEM,
   TRANSFER_MINT_TO_VENDOR,
-  CONFIRM_AND_PAY_VENDOR
+  CONFIRM_AND_PAY_VENDOR,
+  CONFIRM_NGO_FUNDING
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -182,8 +183,34 @@ const confirmAndPayVendor = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+const confirmNgoFunding = RabbitMq['default'].declareQueue(
+  CONFIRM_NGO_FUNDING,
+  {
+    durable: true
+  }
+);
 
 class QueueService {
+  static async confirmNGO_FUNDING(
+    OrganisationId,
+    hash,
+    transactionId,
+    transactionReference,
+    amount
+  ) {
+    const payload = {
+      OrganisationId,
+      hash,
+      transactionId,
+      transactionReference,
+      amount
+    };
+    confirmNgoFunding.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async VendorBurn(
     transaction,
     order,
