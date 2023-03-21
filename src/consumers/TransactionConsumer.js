@@ -235,7 +235,6 @@ RabbitMq['default']
               confirmed = true;
             }
           }
-          Logger.info(JSON.stringify(confirm));
 
           if (confirm && minted) {
             await update_transaction(
@@ -282,9 +281,7 @@ RabbitMq['default']
         );
 
         let transfer;
-        Logger.info(
-          'Sending Transfer Parameter from Consumer to Blockchain Service'
-        );
+
         if (!has_run_once) {
           transfer = await BlockchainService.transferTo(
             organisationAddress.privateKey,
