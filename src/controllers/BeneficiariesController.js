@@ -1298,9 +1298,10 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-        const token = await BlockchainService.balance(
-          from_personal_wallet.address
+        const {address} = await BlockchainService.setUserKeypair(
+          `user_${from_personal_wallet.UserId}`
         );
+        const token = await BlockchainService.balance(address);
         const balance = Number(token.Balance.split(',').join(''));
         if (balance < data.amount) {
           Response.setError(
@@ -1362,9 +1363,7 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-        console.log(
-          `to_personal_wallet.uuid: ${to_personal_wallet},  campaign_wallet.uuid: ${campaign_wallet}`
-        );
+
         await QueueService.BeneficiaryTransfer(
           from_campaign_wallet,
           to_personal_wallet,

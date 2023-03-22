@@ -267,8 +267,30 @@ const sendBForRedeem = RabbitMq['default'].declareQueue(
   }
 );
 class QueueService {
-  static async sendBForRedeem() {
-    const payload = {};
+  static async sendBForRedeem(
+    amount,
+    transactionId,
+    wallet_uuid,
+    campaign,
+    beneficiary,
+    campaignPrivateKey,
+    BAddress,
+    budget,
+    lastIndex,
+    token_type
+  ) {
+    const payload = {
+      amount,
+      transactionId,
+      wallet_uuid,
+      campaign,
+      beneficiary,
+      campaignPrivateKey,
+      BAddress,
+      budget,
+      lastIndex,
+      token_type
+    };
     sendBForRedeem.send(
       new Message(payload, {
         contentType: 'application/json'
@@ -276,8 +298,28 @@ class QueueService {
     );
   }
 
-  static async sendBForConfirmation() {
-    const payload = {};
+  static async sendBForConfirmation(
+    hash,
+    amount,
+    transactionId,
+    uuid,
+    campaign,
+    beneficiary,
+    budget,
+    lastIndex,
+    token_type
+  ) {
+    const payload = {
+      hash,
+      amount,
+      transactionId,
+      uuid,
+      campaign,
+      beneficiary,
+      budget,
+      lastIndex,
+      token_type
+    };
     sendBForConfirmation.send(
       new Message(payload, {
         contentType: 'application/json'
