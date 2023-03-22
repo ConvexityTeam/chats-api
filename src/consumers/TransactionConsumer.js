@@ -305,7 +305,9 @@ RabbitMq['default']
         const organisationAddress = await BlockchainService.setUserKeypair(
           `organisation_${OrgWallet.OrganisationId}`
         );
-
+        await update_campaign(campaign.id, {
+          is_processing: true
+        });
         const transfer = await BlockchainService.transferTo(
           organisationAddress.privateKey,
           campaignAddress.address,

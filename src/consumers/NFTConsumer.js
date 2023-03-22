@@ -360,7 +360,10 @@ RabbitMq['default']
           contractIndex,
           tokenURI
         );
-        await update_campaign(collection.id, {contractIndex});
+        await update_campaign(collection.id, {
+          contractIndex,
+          is_processing: true
+        });
 
         Logger.info('CONSUMER: MINTING LIMIT SENT');
         msg.ack();
