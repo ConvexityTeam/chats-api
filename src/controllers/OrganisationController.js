@@ -682,7 +682,7 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-
+      data.is_processing = false;
       CampaignService.addCampaign({
         ...data,
         spending,
