@@ -88,9 +88,6 @@ class OrderController {
         Logger.error(`Order ${data.order.status}`);
         return Response.send(res);
       }
-      // const campaign_token = await BlockchainService.setUserKeypair(
-      //   `user_${req.user.id}campaign_${data.order.CampaignId}`
-      // );
 
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: data.order.CampaignId,
@@ -138,20 +135,28 @@ class OrderController {
         return Response.send(res);
       }
 
-      // if (campaignWallet.balance < data.total_cost) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Insufficient wallet balance.'
-      //   );
-      //   Logger.error(`Insufficient wallet balance.`);
-      //   return Response.send(res);
-      // }
-      if (balance < data.total_cost) {
+      const campaign = await CampaignService.getCampaignById(
+        data.order.CampaignId
+      );
+
+      if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Insufficient wallet balance.'
         );
-        Logger.error(`Insufficient wallet balance.`);
+        Logger.error('Insufficient wallet balance.');
+        return Response.send(res);
+      }
+
+      if (
+        campaign.type === 'item' &&
+        beneficiaryWallet.balance < data.total_cost
+      ) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Insufficient wallet balance.'
+        );
+        Logger.error('Insufficient wallet balance.');
         return Response.send(res);
       }
       await OrderService.processOrder(
@@ -187,13 +192,13 @@ class OrderController {
         return Response.send(res);
       }
 
-      // if (data.order.status !== 'pending') {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     `Order ${data.order.status}`
-      //   );
-      //   return Response.send(res);
-      // }
+      if (data.order.status !== 'pending') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Order ${data.order.status}`
+        );
+        return Response.send(res);
+      }
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
