@@ -501,7 +501,8 @@ RabbitMq['default']
             uuid,
             {
               BeneficiaryId: beneficiary.User.id,
-              OrganisationId: campaign.OrganisationId
+              OrganisationId: campaign.OrganisationId,
+              CampaignId: campaign.id
             }
           );
           await update_transaction(

@@ -227,12 +227,16 @@ class BeneficiariesService {
       attributes: userConst.publicAttr,
       include: [
         {
+          order: [['createdAt', 'ASC']],
           model: Campaign,
           as: 'Campaigns',
           require: true,
           where: {
             OrganisationId
-          }
+          },
+          include: [
+            {where: {UserId: id}, model: Wallet, as: 'BeneficiariesWallets'}
+          ]
         }
       ]
     });
@@ -282,7 +286,7 @@ class BeneficiariesService {
           include: ['Organisation']
         },
         {
-          order: [['updatedAt', 'ASC']],
+          order: [['createdAt', 'ASC']],
           model: Wallet,
           as: 'Wallets'
         }

@@ -425,7 +425,8 @@ RabbitMq['default']
             wallet.uuid,
             {
               BeneficiaryId: wallet.UserId,
-              OrganisationId: campaign.OrganisationId
+              OrganisationId: campaign.OrganisationId,
+              CampaignId: campaign.id
             }
           );
 
@@ -726,7 +727,6 @@ RabbitMq['default']
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
-        Logger.info(JSON.stringify(vendor));
         const transfer = await BlockchainService.transferFrom(
           campaign.address,
           vendor.address,

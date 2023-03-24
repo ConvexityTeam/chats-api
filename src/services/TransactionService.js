@@ -53,6 +53,38 @@ class TransactionService {
     });
   }
 
+  static async findTransactions(where) {
+    return Transaction.findAll({
+      where,
+      include: [
+        {
+          model: Wallet,
+          as: 'ReceiverWallet',
+          attributes: [],
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: userConst.publicAttr
+            }
+          ]
+        },
+        {
+          model: Wallet,
+          as: 'SenderWallet',
+          attributes: [],
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: userConst.publicAttr
+            }
+          ]
+        }
+      ]
+    });
+  }
+
   static async findTransaction(where) {
     return Transaction.findOne({
       where,
