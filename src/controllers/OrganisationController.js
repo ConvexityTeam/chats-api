@@ -27,6 +27,7 @@ const {
   OrganisationService,
   BeneficiaryService,
   VendorService,
+  BlockchainService,
   ProductService,
   WalletService,
   ZohoService,
@@ -1277,10 +1278,55 @@ class OrganisationController {
   static async getOrganisationBeneficiaryDetails(req, res) {
     try {
       const id = req.params.beneficiary_id;
-      const beneficiary = await BeneficiaryService.organisationBeneficiaryDetails(
-        id,
-        req.organisation.id
-      );
+      let total_wallet_spent = 0;
+      let total_wallet_balance = 0;
+      let total_wallet_received = 0;
+
+      const [beneficiary, transaction] = await Promise.all([
+        BeneficiaryService.organisationBeneficiaryDetails(
+          id,
+          req.organisation.id
+        ),
+        TransactionService.findTransactions({
+          BeneficiaryId: id,
+          is_approved: true
+        })
+      ]);
+
+      for (let tran of transaction) {
+        if (
+          tran.narration === 'Vendor Order' ||
+          tran.transaction_type === 'withdrawal'
+        ) {
+          total_wallet_spent += tran.amount;
+        }
+        if (
+          tran.BeneficiaryId == id &&
+          tran.OrganisationId == req.organisation.id
+        ) {
+          total_wallet_received += tran.amount;
+        }
+      }
+      for (let campaign of beneficiary.Campaigns) {
+        for (let wallet of campaign.BeneficiariesWallets) {
+          if (wallet.CampaignId && wallet.address) {
+            const campaignWallet = await WalletService.findUserCampaignWallet(
+              wallet.UserId,
+              wallet.CampaignId
+            );
+            const token = await BlockchainService.allowance(
+              campaignWallet.address,
+              wallet.address
+            );
+            const balance = Number(token.Allowed.split(',').join(''));
+            total_wallet_balance += balance;
+          }
+        }
+      }
+      beneficiary.dataValues.total_wallet_spent = total_wallet_spent;
+      beneficiary.dataValues.total_wallet_balance = total_wallet_balance;
+      beneficiary.dataValues.total_wallet_received = total_wallet_received;
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiary Details.',
@@ -1290,7 +1336,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.'
+        'Server Error: Unexpected error occured.' + error
       );
       return Response.send(res);
     }
