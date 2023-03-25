@@ -505,6 +505,8 @@ RabbitMq['default']
             {status: 'success', is_approved: true},
             transaction.uuid
           );
+          let is_token = false;
+          let QrCode;
           const smsToken = GenearteSMSToken();
           const qrCodeData = {
             OrganisationId: campaign.OrganisationId,
