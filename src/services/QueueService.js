@@ -348,8 +348,24 @@ class QueueService {
       })
     );
   }
-  static async confirmBTransferRedeem() {
-    const payload = {};
+  static async confirmBTransferRedeem(
+    hash,
+    privateKey,
+    transactionId,
+    amount,
+    recipient_code,
+    userWallet,
+    campaignWallet
+  ) {
+    const payload = {
+      hash,
+      privateKey,
+      transactionId,
+      amount,
+      recipient_code,
+      userWallet,
+      campaignWallet
+    };
     confirmBTransferRedeem.send(
       new Message(payload, {
         contentType: 'application/json'

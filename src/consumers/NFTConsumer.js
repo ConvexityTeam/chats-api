@@ -566,7 +566,14 @@ RabbitMq['default']
       .catch(error => {
         Logger.error(`Disburse Item Consumer Error: ${JSON.stringify(error)}`);
       });
-
+    confirmAndDisburseItem
+      .activateConsumer(async msg => {})
+      .then(() => {
+        Logger.info('Running Process For Confirming Disbursing Item');
+      })
+      .catch(error => {
+        Logger.error(`Disburse Item Consumer Error: ${JSON.stringify(error)}`);
+      });
     transferMintToVendor
       .activateConsumer(async msg => {
         const {

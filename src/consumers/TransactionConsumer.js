@@ -714,7 +714,6 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-
         await QueueService.confirmBTransferRedeem(
           transfer.TransferedFrom,
           beneficiary.privateKey,
