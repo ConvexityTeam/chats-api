@@ -157,8 +157,8 @@ class MailerService {
       } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
       <p>${
         exist
-          ? `If you want to login to confirm access, please click on the following link: ${link}&token=${token}&first_timer=false&is_public=${campaign.is_public}`
-          : `If you want to create an account, please click on the following link: ${link}&token=${token}&first_timer=false&is_public=${campaign.is_public}`
+          ? `If you want to login to confirm access, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
+          : `If you want to create an account, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
       }</p>
       <p>${message}</p>
       <p>Enjoy!</p>
@@ -195,7 +195,7 @@ class MailerService {
     `;
     const options = {
       from: this.config.from,
-      to: [to, "charles@withconvexity.com"],
+      to: [to, 'charles@withconvexity.com'],
       subject: 'Recharge Your Wallet Balance',
       html: body
     };
@@ -222,7 +222,7 @@ class MailerService {
     `;
     const options = {
       from: this.config.from,
-      to: [to, "charles@withconvexity.com"],
+      to: [to, 'charles@withconvexity.com'],
       subject: 'Recharge Your Wallet Balance',
       html: body
     };

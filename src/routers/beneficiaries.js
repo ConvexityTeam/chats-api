@@ -15,7 +15,8 @@ const {
 const {
   CommonValidator,
   BeneficiaryValidator,
-  ComplaintValidator
+  ComplaintValidator,
+  CampaignValidator
 } = require('../validators');
 const router = require('express').Router();
 
@@ -127,10 +128,30 @@ router.post(
   CommonValidator.checkPhoneNotTaken,
   AuthController.beneficiaryRegisterSelf
 );
+router
+  .route('/survey/:campaign_id')
+  .get(
+    FieldAgentBeneficiaryAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.getCampaignQuestion
+  )
+  .post(
+    BeneficiaryAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.submitQuestion
+  );
 
+router
+  .route('/field/survey/:campaign_id')
+  .post(
+    FieldAgentAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.submitQuestionFieldAgent
+  );
 router.post(
   '/transfer/beneficiary',
   BeneficiaryAuth,
+
   BeneficiaryController.transfer
 );
 router

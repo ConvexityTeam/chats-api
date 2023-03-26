@@ -6,7 +6,7 @@ const {HttpStatusCode, formInputToDate} = require('../utils');
 const BaseValidator = require('./BaseValidator');
 
 class CampaignValidator extends BaseValidator {
-  static campaignTypes = ['campaign', 'cash-for-work'];
+  static campaignTypes = ['campaign', 'cash-for-work', 'item'];
   static campaignStatuses = ['pending', 'active', 'paused', 'completed'];
 
   static createCampaignRules() {
@@ -25,11 +25,19 @@ class CampaignValidator extends BaseValidator {
         .isEmpty()
         .withMessage(`Campaign description is required.`),
       body('budget')
-        .not()
-        .isEmpty()
-        .withMessage(`Campaign budget is required.`)
+        .optional({
+          nullable: true,
+          checkFalsy: true
+        })
         .isDecimal()
-        .withMessage(`Campaign buget must be a valid decimal`),
+        .withMessage(`Campaign budget must be a valid decimal`),
+      body('minting_limit')
+        .optional({
+          nullable: true,
+          checkFalsy: true
+        })
+        .isNumeric()
+        .withMessage(`Campaign budget must be a valid number`),
       body('location').optional({
         nullable: true,
         checkFalsy: true

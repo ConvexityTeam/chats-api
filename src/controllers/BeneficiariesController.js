@@ -428,6 +428,13 @@ class BeneficiariesController {
         );
         return Response.send(res);
       }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign is already ended.'
+        );
+        return Response.send(res);
+      }
       await CampaignService.removeBeneficiary(campaign.id, beneficiaryId);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -531,36 +538,42 @@ class BeneficiariesController {
       const _beneficiary = await BeneficiaryService.beneficiaryProfile(
         req.user.id
       );
-      const Wallets = _beneficiary.Wallets.map(wallet => {
-        total_wallet_balance += wallet.balance;
-        // total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-        // total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
-        const w = wallet.toObject();
-        // delete w.ReceivedTransactions;
-        // delete w.SentTransactions;
-        return w;
-      });
 
-      // _beneficiary.Wallets.map(async wallet => {
-      //   if (!wallet.CampaignId) {
-      //     const address = await BlockchainService.setUserKeypair(
-      //       `user_${req.user.id}`
-      //     );
-      //     const token = await BlockchainService.balance(address.address);
-      //     const balance = Number(token.Balance.split(',').join(''));
-      //     total_wallet_balance += balance;
-      //     console.log('Not found campaign id', balance);
-      //   }
-      //   if (wallet.CampaignId) {
-      //     const address = await BlockchainService.setUserKeypair(
-      //       `user_${req.user.id}campaign_${wallet.CampaignId}`
-      //     );
-      //     const token = await BlockchainService.balance(address.address);
-      //     const balance = Number(token.Balance.split(',').join(''));
-      //     total_wallet_balance += balance;
-      //     console.log('found campaign id', balance);
-      //   }
+      // const Wallets = _beneficiary.Wallets.map(wallet => {
+      //   total_wallet_balance += wallet.balance;
+      //   // total_wallet_spent += wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+      //   // total_wallet_received += wallet.ReceivedTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0);
+      //   const w = wallet.toObject();
+      //   // delete w.ReceivedTransactions;
+      //   // delete w.SentTransactions;
+      //   return w;
       // });
+
+      for (let wallet of _beneficiary.Wallets) {
+        if (!wallet.CampaignId) {
+          const address = await BlockchainService.setUserKeypair(
+            `user_${req.user.id}`
+          );
+          const token = await BlockchainService.balance(address.address);
+          const balance = Number(token.Balance.split(',').join(''));
+          total_wallet_balance += balance;
+        }
+        if (wallet.CampaignId) {
+          const campaignAddress = await BlockchainService.setUserKeypair(
+            `campaign_${wallet.CampaignId}`
+          );
+
+          const beneficiaryAddress = await BlockchainService.setUserKeypair(
+            `user_${req.user.id}campaign_${wallet.CampaignId}`
+          );
+          const token = await BlockchainService.allowance(
+            campaignAddress.address,
+            beneficiaryAddress.address
+          );
+          const balance = Number(token.Allowed.split(',').join(''));
+          total_wallet_balance += balance;
+        }
+      }
 
       const beneficiary = _beneficiary.toObject();
 
@@ -568,14 +581,13 @@ class BeneficiariesController {
         total_wallet_balance,
         total_wallet_received,
         total_wallet_spent,
-        ...beneficiary,
-        Wallets
+        ...beneficiary
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.'
+        'Internal server error. Please try again later.' + error
       );
       return Response.send(res);
     }
@@ -950,13 +962,53 @@ class BeneficiariesController {
         return Response.send(res);
       }
 
-      transactions.rows.forEach(transaction => {
+      for (let transaction of transactions.rows) {
+        if (transaction.narration === 'Approve Beneficiary Funding') {
+          const ngo = await OrganisationService.checkExist(
+            transaction.OrganisationId
+          );
+          transaction.dataValues.narration = `Payment from (${
+            ngo.name || ngo.email
+          })`;
+          transaction.dataValues.transaction_type = 'credit';
+        }
+        if (transaction.narration === 'Vendor Order') {
+          const vendor = await UserService.getAUser(transaction.VendorId);
+          transaction.dataValues.narration = `Payment to (${
+            vendor.first_name + ' ' + vendor.last_name
+          })`;
+          transaction.dataValues.transaction_type = 'debit';
+        }
+        if (
+          transaction.transaction_type === 'transfer' &&
+          transaction.SenderWallet.UserId === req.user.id
+        ) {
+          const beneficiary = await UserService.getAUser(
+            transaction.ReceiverWallet.UserId
+          );
+          transaction.dataValues.narration = `Payment to (${
+            beneficiary.first_name + ' ' + beneficiary.last_name
+          })`;
+          transaction.dataValues.transaction_type = 'debit';
+        }
+        if (
+          transaction.transaction_type === 'transfer' &&
+          transaction.SenderWallet.UserId !== req.user.id
+        ) {
+          const beneficiary = await UserService.getAUser(
+            transaction.SenderWallet.UserId
+          );
+          transaction.dataValues.narration = `Payment from (${
+            beneficiary.first_name + ' ' + beneficiary.last_name
+          })`;
+          transaction.dataValues.transaction_type = 'credit';
+        }
         if (transaction.dataValues.ReceiverWallet === null)
           delete transaction.dataValues.ReceiverWallet;
         if (transaction.dataValues.SenderWallet === null)
           delete transaction.dataValues.SenderWallet;
-        //console.log(transaction)
-      });
+      }
+
       transactions.rows.forEach(transaction => {
         if (typeof transaction.dataValues.ReceiverWallet !== 'undefined') {
           transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=
@@ -977,7 +1029,6 @@ class BeneficiariesController {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal server error. Please try again later.',
@@ -1023,13 +1074,13 @@ class BeneficiariesController {
         productId
       );
       if (!beneficiary) {
-        Response.setSuccess(
+        Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Beneficiary Not Found'
         );
         return Response.send(res);
       } else if (!vendor) {
-        Response.setSuccess(
+        Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Vendor or Product Not Found'
         );
@@ -1056,11 +1107,15 @@ class BeneficiariesController {
         BenWallet,
         product
       );
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Transaction Succes', {
-        vendor,
-        beneficiary,
-        campaignWallet
-      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Transaction Success',
+        {
+          vendor,
+          beneficiary,
+          campaignWallet
+        }
+      );
       return Response.send(res);
     } catch (error) {
       Response.setError(
@@ -1070,6 +1125,112 @@ class BeneficiariesController {
       return Response.send(res);
     }
   }
+  static async getCampaignQuestion(req, res) {
+    const id = req.params.campaign_id;
+    try {
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Survey questions',
+        question
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async submitQuestion(req, res) {
+    const id = req.params.campaign_id;
+    const data = req.body;
+
+    try {
+      const rules = {
+        formId: 'required|numeric',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.question': 'required|string',
+        'questions.*.answer': 'required|string',
+        'questions.*.reward': 'required|numeric'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      if (!question && question.campaign_form) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+      }
+      req.body.beneficiaryId = req.user.id;
+      req.body.campaignId = id;
+      const createdForm = await CampaignService.formAnswer(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Questionnaire submitted',
+        createdForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async submitQuestionFieldAgent(req, res) {
+    const id = req.params.campaign_id;
+    const data = req.body;
+
+    try {
+      const rules = {
+        formId: 'required|numeric',
+        beneficiaryId: 'required|numeric',
+        'questions.*.type': 'required|in:multiple,optional,short',
+        'questions.*.question': 'required|string',
+        'questions.*.answer': 'required|string',
+        'questions.*.reward': 'required|numeric'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      if (!question && question.campaign_form) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+      }
+      req.body.campaignId = id;
+      const createdForm = await CampaignService.formAnswer(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Questionnaire submitted',
+        createdForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
   static async transfer(req, res) {
     const data = req.body;
     try {
@@ -1117,9 +1278,13 @@ class BeneficiariesController {
         UserId: user.id,
         CampaignId: null
       });
-
-      // const address = await BlockchainService.setUserKeypair(`user_${user.id}`);
-      // to_personal_wallet.address = address.address;
+      if (!to_personal_wallet) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          "Receiver don't a personal wallet."
+        );
+        return Response.send(res);
+      }
       if (data.from_wallet === 'personal') {
         const from_personal_wallet = await WalletService.findSingleWallet({
           UserId: req.user.id,
@@ -1133,13 +1298,10 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-        // const address = await BlockchainService.setUserKeypair(
-        //   `user_${req.user.id}`
-        // );
-
-        const token = await BlockchainService.balance(
-          from_personal_wallet.address
+        const {address} = await BlockchainService.setUserKeypair(
+          `user_${from_personal_wallet.UserId}`
         );
+        const token = await BlockchainService.balance(address);
         const balance = Number(token.Balance.split(',').join(''));
         if (balance < data.amount) {
           Response.setError(
@@ -1148,7 +1310,6 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-
         await QueueService.BeneficiaryTransfer(
           from_personal_wallet,
           to_personal_wallet,
@@ -1187,16 +1348,13 @@ class BeneficiariesController {
           );
           return Response.send(res);
         }
-        // const address = await BlockchainService.setUserKeypair(
-        //   `user_${req.user.id}campaign_${campaign_wallet.CampaignId}`
-        // );
 
         const token = await BlockchainService.allowance(
           campaign_wallet.address,
           from_campaign_wallet.address
         );
 
-        const balance = Number(token.Balance.split(',').join(''));
+        const balance = Number(token.Allowed.split(',').join(''));
 
         if (balance < data.amount) {
           Response.setError(

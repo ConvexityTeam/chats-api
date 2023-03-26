@@ -4,7 +4,8 @@ const {
   OrgRoles,
   createHash,
   HttpStatusCode,
-  generateOrganisationId
+  generateOrganisationId,
+  encryptData
 } = require('../utils');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
@@ -23,7 +24,8 @@ const {
   QueueService,
   MailerService,
   OrganisationService,
-  CampaignService
+  CampaignService,
+  WalletService
 } = require('../services');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
@@ -170,7 +172,8 @@ class AuthController {
             profile_pic,
             location: JSON.stringify({country, state, coordinates})
           });
-          if (user) QueueService.createWallet(user.id, 'user');
+
+          if (user) await QueueService.createWallet(user.id, 'user');
           Response.setSuccess(201, 'Account Onboarded Successfully', user);
           return Response.send(res);
         }
@@ -282,8 +285,7 @@ class AuthController {
               pin: encryptedPin
             })
               .then(async user => {
-                QueueService.createWallet(user.id, 'user');
-
+                await QueueService.createWallet(user.id, 'user');
                 const extension = files.profile_pic.name.substring(
                   files.profile_pic.name.lastIndexOf('.') + 1
                 );
@@ -308,10 +310,22 @@ class AuthController {
                     CampaignId: campaignExist.id,
                     approved: true,
                     source: 'field app'
-                  }).then(() => {
-                    QueueService.createWallet(user.id, 'user', fields.campaign);
+                  }).then(async () => {
+                    await QueueService.createWallet(
+                      user.id,
+                      'user',
+                      fields.campaign
+                    );
                   });
                 }
+                // const data = await encryptData(
+                //   JSON.stringify({
+                //     id: user.id,
+                //     email: fields.email,
+                //     phone: fields.phone
+                //   })
+                // );
+
                 Response.setSuccess(
                   201,
                   'Account Onboarded Successfully',
@@ -427,7 +441,7 @@ class AuthController {
                     pin: encryptedPin
                   })
                     .then(async user => {
-                      QueueService.createWallet(user.id, 'user');
+                      await QueueService.createWallet(user.id, 'user');
 
                       var i = 0;
                       files.fingerprints.forEach(async fingerprint => {
@@ -474,14 +488,21 @@ class AuthController {
                           CampaignId: campaignExist.id,
                           approved: true,
                           source: 'field app'
-                        }).then(() => {
-                          QueueService.createWallet(
+                        }).then(async () => {
+                          await QueueService.createWallet(
                             user.id,
                             'user',
                             fields.campaign
                           );
                         });
                       }
+                      // const data = await encryptData(
+                      //   JSON.stringify({
+                      //     id: user.id,
+                      //     email: fields.email,
+                      //     phone: fields.phone
+                      //   })
+                      // );
                       Response.setSuccess(
                         201,
                         'Account Onboarded Successfully',
@@ -568,7 +589,7 @@ class AuthController {
                       website_url: data.website_url,
                       registration_id: generateOrganisationId()
                     }).then(async organisation => {
-                      QueueService.createWallet(
+                      await QueueService.createWallet(
                         organisation.id,
                         'organisation'
                       );
@@ -650,7 +671,7 @@ class AuthController {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.' + error;
+          : 'Login failed. Please try again later.';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -679,7 +700,18 @@ class AuthController {
         );
         return Response.send(res);
       }
-
+      const orgId = user.AssociatedOrganisations[0].OrganisationId;
+      const orgWallet = await WalletService.findMainOrganisationWallet(orgId);
+      if (!orgWallet) {
+        await QueueService.createWallet(orgId, 'organisation');
+      }
+      const wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'user');
+      }
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -716,7 +748,13 @@ class AuthController {
         );
         return Response.send(res);
       }
-
+      const wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'user');
+      }
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -753,12 +791,18 @@ class AuthController {
         return Response.send(res);
       }
 
-      const data = await AuthService.login(user, req.body.password.trim());
-
       const donorMainOrg = await OrganisationService.checkExistEmail(
         req.body.email
       );
       user.dataValues.mainOrganisation = donorMainOrg;
+      const wallet = await WalletService.findSingleWallet({
+        OrganisationId: user.id
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'organisation');
+      }
+      const data = await AuthService.login(user, req.body.password.trim());
+
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -828,8 +872,14 @@ class AuthController {
         );
         return Response.send(res);
       }
+      const wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'user');
+      }
       const data = await AuthService.login(user, req.body.password);
-
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -869,7 +919,13 @@ class AuthController {
         req.body.password.trim(),
         AclRoles.Vendor
       );
-
+      const wallet = await WalletService.findSingleWallet({
+        UserId: user.id,
+        CampaignId: null
+      });
+      if (!wallet) {
+        await QueueService.createWallet(user.id, 'user');
+      }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -992,25 +1048,25 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed please try again.'
+        'Request failed please try again.' + error
       );
       return Response.send(res);
     }
   }
 
-  static async resetPassword(req, res) {
-    try {
-      await AuthService.updatedPassord(req.user, req.body.password);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Reset password request failed. Please try again.'
-      );
-      return Response.send(res);
-    }
-  }
+  // static async resetPassword(req, res) {
+  //   try {
+  //     await AuthService.updatedPassord(req.user, req.body.password);
+  //     Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+  //     return Response.send(res);
+  //   } catch (error) {
+  //     Response.setError(
+  //       HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+  //       'Reset password request failed. Please try again.'
+  //     );
+  //     return Response.send(res);
+  //   }
+  // }
 
   static async sendInvite(req, res) {
     const {inviteeEmail, message, link} = req.body;
@@ -1025,10 +1081,12 @@ class AuthController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+      let user_exist = false;
+      const campaign = await CampaignService.getCampaignById(campaign_id);
       for (let email of inviteeEmail) {
-        const [ngo, campaign, donor] = await Promise.all([
+        const [ngo, donor] = await Promise.all([
           OrganisationService.checkExist(organisation_id),
-          CampaignService.getCampaignById(campaign_id),
+
           OrganisationService.checkExistEmail(email)
         ]);
         const token = await AuthService.inviteDonor(
@@ -1036,7 +1094,9 @@ class AuthController {
           organisation_id,
           campaign_id
         );
+
         if (!donor) {
+          user_exist = false;
           await MailerService.sendInvite(
             email,
             token,
@@ -1047,12 +1107,13 @@ class AuthController {
             link
           );
         } else {
+          user_exist = true;
           await MailerService.sendInvite(
             email,
             token,
             campaign,
             ngo.name,
-            false,
+            true,
             message,
             link
           );
@@ -1061,7 +1122,8 @@ class AuthController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        'Invite sent to donor.'
+        'Invite sent to donor.',
+        {campaignId: campaign.id, is_public: campaign.is_public, user_exist}
       );
       return Response.send(res);
     } catch (error) {
@@ -1081,7 +1143,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Reset password request failed. Please try again.'
+        'Reset password request failed. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -1103,7 +1165,13 @@ class AuthController {
         CampaignService.getCampaignById(campaignId),
         db.Invites.findOne({where: {token}})
       ]);
-
+      const userExist = await UserService.findSingleUser({
+        email: token_exist.email
+      });
+      let user_exist = false;
+      if (userExist) {
+        user_exist = true;
+      }
       if (!campaign) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -1119,12 +1187,23 @@ class AuthController {
           );
           return Response.send(res);
         }
+        const ngo = await OrganisationService.checkExist(token_exist.inviterId);
         const donor = await OrganisationService.checkExistEmail(
           token_exist.email
         );
+
         const isAdded = await db.Invites.findOne({
           where: {CampaignId: campaignId, token, isAdded: false}
         });
+
+        if (!ngo) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            "You don't have access to view this campaign"
+          );
+          return Response.send(res);
+        }
+
         if (!isAdded) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
@@ -1132,35 +1211,37 @@ class AuthController {
           );
           return Response.send(res);
         }
-        if (!donor) {
-          Response.setError(
-            HttpStatusCode.STATUS_UNAUTHORIZED,
-            "Confirmation failed. it seems you don't have an account with us"
-          );
-          return Response.send(res);
-        }
-        const associate = await db.AssociatedCampaign.findOne({
-          where: {
+        if (donor) {
+          const associate = await db.AssociatedCampaign.findOne({
+            where: {
+              DonorId: donor.id,
+              CampaignId: campaignId
+            }
+          });
+
+          if (associate) {
+            Response.setSuccess(
+              HttpStatusCode.STATUS_OK,
+              'You already have access to this campaign'
+            );
+            return Response.send(res);
+          }
+          await db.AssociatedCampaign.create({
             DonorId: donor.id,
             CampaignId: campaignId
-          }
-        });
-
-        if (associate) {
-          Response.setSuccess(
-            HttpStatusCode.STATUS_OK,
-            'You already have access to this campaign'
-          );
-          return Response.send(res);
+          });
         }
-        await db.AssociatedCampaign.create({
-          DonorId: donor.id,
-          CampaignId: campaignId
-        });
+
         await isAdded.update({isAdded: true});
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
-          'campaign has been confirmed'
+          'campaign invitation has been confirmed',
+          {
+            campaignId,
+            is_public: campaign.is_public,
+            user_exist,
+            email: token_exist.email
+          }
         );
         return Response.send(res);
       });
@@ -1176,10 +1257,9 @@ class AuthController {
     const data = req.body;
     try {
       const rules = {
-        organisation_name: 'required|string',
+        organisation_name: 'string',
         password: 'required',
-        website_url: 'required|url',
-        token: 'required|string',
+        website_url: 'url',
         campaignId: 'integer|required',
         email: 'email|required'
       };
@@ -1190,19 +1270,25 @@ class AuthController {
         Response.setError(400, validation.errors);
         return Response.send(res);
       }
-      const [campaign, token_exist] = await Promise.all([
+      const [campaign, exist] = await Promise.all([
         CampaignService.getCampaignById(data.campaignId),
-        db.Invites.findOne({where: {token: data.token}})
+        db.Invites.findOne({
+          where: {email: data.email, isAdded: true, CampaignId: data.campaignId}
+        })
       ]);
-      const url_string = data.website_url;
-      const domain = extractDomain(url_string);
 
+      const url_string = data.website_url;
       const email = data.email;
-      const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-      if (!email.match(new RegExp(re))) {
-        Response.setError(400, 'Email must end in @' + domain);
-        return Response.send(res);
+      if (url_string) {
+        const domain = extractDomain(url_string);
+
+        const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+        if (!email.match(new RegExp(re))) {
+          Response.setError(400, 'Email must end in @' + domain);
+          return Response.send(res);
+        }
       }
+
       const userExist = await UserService.findSingleUser({
         email: email
       });
@@ -1214,94 +1300,96 @@ class AuthController {
         );
         return Response.send(res);
       }
+
       if (userExist) {
         Response.setError(400, 'Email Already Exists, Recover Your Account');
         return Response.send(res);
       }
-      if (userExist) {
-        Response.setError(400, 'Email Already Exists, Recover Your Account');
-        return Response.send(res);
-      }
-      const isAdded = await db.Invites.findOne({
-        where: {
-          CampaignId: data.campaignId,
-          token: data.token,
-          email: data.email,
-          isAdded: false
-        }
-      });
-      if (!isAdded) {
+      // const isAdded = await db.Invites.findOne({
+      //   where: {
+      //     CampaignId: data.campaignId,
+      //     email: data.email,
+      //     isAdded: true
+      //   }
+      // });
+
+      if (!exist) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           "You don't have access to view this campaign"
         );
         return Response.send(res);
       }
-      const organisationExist = await db.Organisation.findOne({
+      const ass = await db.AssociatedCampaign.findOne({
         where: {
-          [Op.or]: [
-            {
-              name: data.organisation_name
-            },
-            {
-              website_url: data.website_url
-            }
-          ]
+          DonorId: createdOrganisation.id,
+          CampaignId: data.campaignId
         }
       });
-      if (organisationExist) {
+
+      if (ass) {
         Response.setError(
-          400,
-          'An Organisation with such name or website url already exist'
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Already on campaign'
         );
         return Response.send(res);
       }
+      // const organisationExist = await db.Organisation.findOne({
+      //   where: {
+      //     [Op.or]: [
+      //       {
+      //         name: data.organisation_name
+      //       },
+      //       {
+      //         website_url: data.website_url
+      //       }
+      //     ]
+      //   }
+      // });
+      // if (organisationExist) {
+      //   Response.setError(
+      //     400,
+      //     'An Organisation with such name or website url already exist'
+      //   );
+      //   return Response.send(res);
+      // }
 
-      jwt.verify(data.token, process.env.SECRET_KEY, async (err, payload) => {
-        if (err) {
-          Response.setError(
-            HttpStatusCode.STATUS_UNAUTHORIZED,
-            'Unauthorised. Token Invalid'
-          );
-          return Response.send(res);
-        }
-        const password = createHash(req.body.password);
-        const user = await UserService.addUser({
-          RoleId: AclRoles.Donor,
-          email: data.email,
-          password
-        });
-
-        const createdOrganisation = await db.Organisation.create({
-          name: data.organisation_name,
-          email: data.email,
-          website_url: data.website_url,
-          registration_id: generateOrganisationId()
-        });
-
-        await db.OrganisationMembers.create({
-          UserId: user.id,
-          role: 'donor',
-          OrganisationId: token_exist.inviterId
-        });
-        await db.AssociatedCampaign.create({
-          DonorId: createdOrganisation.id,
-          CampaignId: data.campaignId
-        });
-
-        QueueService.createWallet(createdOrganisation.id, 'organisation');
-
-        Response.setSuccess(
-          HttpStatusCode.STATUS_CREATED,
-          'Donor and User registered successfully',
-          createdOrganisation
-        );
-        return Response.send(res);
+      const password = createHash(req.body.password);
+      const user = await UserService.addUser({
+        RoleId: AclRoles.Donor,
+        email: data.email,
+        password
       });
+
+      const createdOrganisation = await db.Organisation.create({
+        name: data.organisation_name || 'no org',
+        email: data.email,
+        website_url: data.website_url || 'null',
+        registration_id: generateOrganisationId()
+      });
+
+      await db.OrganisationMembers.create({
+        UserId: user.id,
+        role: 'donor',
+        OrganisationId: exist.inviterId
+      });
+      await db.AssociatedCampaign.create({
+        DonorId: createdOrganisation.id,
+        CampaignId: data.campaignId
+      });
+
+      await QueueService.createWallet(createdOrganisation.id, 'organisation');
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Donor and User registered successfully',
+        createdOrganisation
+      );
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support' + error
+        'Internal Server Error, Contact Support'
       );
       return Response.send(res);
     }

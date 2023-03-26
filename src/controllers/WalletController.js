@@ -58,8 +58,6 @@ class WalletController {
   }
   static async getOrganisationWallet(req, res) {
     try {
-      const loger = Logger;
-
       const user = await BlockchainService.setUserKeypair(
         `organisation_${req.organisation.id}`
       );
@@ -74,18 +72,20 @@ class WalletController {
         });
       }
 
-      let {
-        total: total_deposit
-      } = await TransactionService.getTotalTransactionAmount({
+      let [
+        {total: total_deposit}
+      ] = await TransactionService.getTotalTransactionAmount({
         OrganisationId,
         status: 'success',
+        is_approved: true,
         transaction_type: 'deposit'
       });
 
-      let {
-        total: spend_for_campaign
-      } = await TransactionService.getTotalTransactionAmount({
+      let [
+        {total: spend_for_campaign}
+      ] = await TransactionService.getTotalTransactionAmount({
         OrganisationId,
+        is_approved: true,
         status: 'success',
         transaction_type: 'transfer',
         CampaignId: {
@@ -97,7 +97,7 @@ class WalletController {
         OrganisationId
       );
       if (!wallet) {
-        QueueService.createWallet(OrganisationId, 'organisation');
+        await QueueService.createWallet(OrganisationId, 'organisation');
       }
 
       const MainWallet = wallet.toObject();

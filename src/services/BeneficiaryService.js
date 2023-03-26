@@ -7,6 +7,7 @@ const {
   Product,
   Transaction,
   Market,
+  FormAnswer,
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
@@ -226,12 +227,16 @@ class BeneficiariesService {
       attributes: userConst.publicAttr,
       include: [
         {
+          order: [['createdAt', 'ASC']],
           model: Campaign,
           as: 'Campaigns',
           require: true,
           where: {
             OrganisationId
-          }
+          },
+          include: [
+            {where: {UserId: id}, model: Wallet, as: 'BeneficiariesWallets'}
+          ]
         }
       ]
     });
@@ -281,6 +286,7 @@ class BeneficiariesService {
           include: ['Organisation']
         },
         {
+          order: [['createdAt', 'ASC']],
           model: Wallet,
           as: 'Wallets'
         }
@@ -372,7 +378,10 @@ class BeneficiariesService {
           model: User,
           as: 'User',
           attributes: userConst.publicAttr,
-          include: ['Answers']
+          include: {
+            model: FormAnswer,
+            as: 'Answers'
+          }
         }
       ]
     });
