@@ -167,25 +167,23 @@ const create_transaction = async (amount, sender, receiver, args) => {
   return transaction;
 };
 
-const addTokenIds = async (tokenId, uuid, amount) => {
+const addTokenIds = async (tokenId, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
     was_funded: true,
-    tokenIds: tokenId,
-    balance: Sequelize.literal(`balance + ${amount}`)
+    tokenIds: tokenId
   });
   Logger.info(`NFT added with ${tokenId}`);
   return wallet;
 };
 
-const removeTokenIds = async (tokenId, amount, uuid) => {
+const removeTokenIds = async (tokenId, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
     was_funded: true,
-    tokenIds: tokenId,
-    balance: Sequelize.literal(`balance - ${amount}`)
+    tokenIds: tokenId
   });
   Logger.info(`NFT removed with ${tokenId}`);
   return wallet;
@@ -552,7 +550,8 @@ RabbitMq['default']
             is_token = false;
           }
 
-          await addTokenIds(arr, uuid, arr.length);
+          await addTokenIds(arr, uuid);
+          await addWalletAmount(arr.length, uuid);
         }
         await update_campaign(campaign.id, {
           status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
@@ -615,7 +614,7 @@ RabbitMq['default']
         let approveNFT;
         let spend;
         let remain;
-        const uuid = beneficiaryWallet.uuid;
+        let uuid = beneficiaryWallet.uuid;
         for (let i = 0; i < amount; i++) {
           spend = beneficiaryWallet.tokenIds[i];
           remain = beneficiaryWallet.tokenIds.slice(amount[i] + 1);
@@ -654,14 +653,11 @@ RabbitMq['default']
         const remainingNFT = beneficiaryWallet.tokenIds.slice(amount);
         const removedNFT = beneficiaryWallet.tokenIds.slice(0, amount);
         await update_order(order.reference, {status: 'confirmed'});
-        await deductWalletAmount(amount, campaignWallet.uuid);
-        await removeTokenIds(remainingNFT, amount, beneficiaryWallet.uuid);
+        await removeTokenIds(remainingNFT, uuid);
         const removedToken = [...vendorWallet.tokenIds, ...removedNFT];
-        const added = await addTokenIds(
-          removedToken,
-          vendorWallet.uuid,
-          amount
-        );
+        await deductWalletAmount(amount, uuid);
+        await addWalletAmount(amount, vendorWallet.uuid);
+        await addTokenIds(removedToken, vendorWallet.uuid);
         await update_Voucher(
           {
             campaignId: campaignWallet.CampaignId,
@@ -669,7 +665,7 @@ RabbitMq['default']
           },
           amount
         );
-
+        await deductWalletAmount(amount, campaignWallet.uuid);
         Logger.info('NFT  BURNED');
       })
       .then(() => {
