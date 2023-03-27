@@ -1403,7 +1403,7 @@ async function loopCampaigns(campaignId, beneficiaries) {
     }
     return beneficiaries;
   } catch (error) {
-    return error;
+    return error; 
   }
 }
 
