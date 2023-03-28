@@ -719,7 +719,7 @@ class AuthController {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.' + error;
+          : 'Login failed. Please try again later.';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -809,7 +809,7 @@ class AuthController {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.' + error;
+          : 'Login failed. Please try again later.';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1048,7 +1048,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed please try again.' + error
+        'Request failed please try again.'
       );
       return Response.send(res);
     }
@@ -1129,7 +1129,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error. Please try again.' + error
+        'Internal Server Error. Please try again.'
       );
       return Response.send(res);
     }
@@ -1143,7 +1143,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Reset password request failed. Please try again.' + error
+        'Reset password request failed. Please try again.'
       );
       return Response.send(res);
     }
@@ -1248,7 +1248,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error. Please try again.' + error
+        'Internal Server Error. Please try again.'
       );
       return Response.send(res);
     }
