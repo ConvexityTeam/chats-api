@@ -13,11 +13,11 @@ module.exports = {
     //   type: Sequelize.ENUM('campaign', 'cash-for-work', 'item'),
     //   defaultValue: 'campaign'
     // });
-    await queryInterface.addColumn('Campaigns', 'minting_limit', {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-      defaultValue: 0
-    });
+    // await queryInterface.addColumn('Campaigns', 'minting_limit', {
+    //   type: Sequelize.INTEGER,
+    //   allowNull: true,
+    //   defaultValue: 0
+    // });
   },
 
   down: async (queryInterface, Sequelize) => {
