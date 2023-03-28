@@ -9,10 +9,10 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     //await queryInterface.removeColumn('Campaigns', 'type');
-    await queryInterface.addColumn('Campaigns', 'type', {
-      type: Sequelize.ENUM('campaign', 'cash-for-work', 'item'),
-      defaultValue: 'campaign'
-    });
+    // await queryInterface.addColumn('Campaigns', 'type', {
+    //   type: Sequelize.ENUM('campaign', 'cash-for-work', 'item'),
+    //   defaultValue: 'campaign'
+    // });
     // await queryInterface.addColumn('Campaigns', 'minting_limit', {
     //   type: Sequelize.INTEGER,
     //   allowNull: true,
