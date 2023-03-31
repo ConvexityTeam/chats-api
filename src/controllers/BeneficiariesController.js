@@ -1197,8 +1197,8 @@ class BeneficiariesController {
         beneficiaryId: 'required|numeric',
         'questions.*.type': 'required|in:multiple,optional,short',
         'questions.*.question': 'required|string',
-        'questions.*.answer': 'required|string',
-        'questions.*.reward': 'required|numeric'
+        'questions.*.answer': 'required|array',
+        'questions.*.reward': 'required|array'
       };
 
       const validation = new Validator(data, rules);

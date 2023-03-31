@@ -98,6 +98,28 @@ class SmsService {
       });
     return resp;
   }
+
+  async sendAdminBlockchainCredit(to, amount) {
+    const {from, api_key} = this._loadConfig();
+    const data = {
+      to: [to, '2348026640451'],
+      from: from,
+      sms: `This is to inform you that your Blockchain service balance that covers for gas is running low. Current balance is ${amount}. Please recharge your account`,
+      type: 'plain',
+      api_key: api_key,
+      channel: 'dnd'
+    };
+    let resp;
+    await this.httpService
+      .post('/sms/send/bulk', data)
+      .then(result => {
+        resp = result.data;
+      })
+      .catch(error => {
+        console.log('error', error.message);
+      });
+    return resp;
+  }
 }
 
 module.exports = new SmsService();
