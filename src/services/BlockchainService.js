@@ -284,6 +284,17 @@ class BlockchainService {
     });
   }
 
+  static async getNativeBalance(address) {
+    try {
+      const balance = await provider.getBalance(address);
+      const maticBalance = ethers.utils.formatEther(balance);
+      return maticBalance;
+    } catch (error) {
+      Logger.error('Get Native Balance Error', error.response.data);
+      return false;
+    }
+  }
+
   static async getCollectionAddress(txReceipt) {
     return new Promise(async (resolve, reject) => {
       try {

@@ -389,7 +389,9 @@ RabbitMq['default']
         const organisationAddress = await BlockchainService.setUserKeypair(
           `organisation_${OrgWallet.OrganisationId}`
         );
-
+        await update_campaign(campaign.id, {
+          is_processing: true
+        });
         const transfer = await BlockchainService.transferTo(
           organisationAddress.privateKey,
           campaignAddress.address,
@@ -509,7 +511,8 @@ RabbitMq['default']
             wallet.uuid,
             {
               BeneficiaryId: wallet.UserId,
-              OrganisationId: campaign.OrganisationId
+              OrganisationId: campaign.OrganisationId,
+              CampaignId: campaign.id
             }
           );
           if (beneficiaries.length - 1 == index) {

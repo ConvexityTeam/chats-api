@@ -19,7 +19,7 @@ module.exports = {
     //   allowNull: true,
     //   defaultValue: 0
     // });
-  },
+  }, 
 
   down: async (queryInterface, Sequelize) => {
     /**
