@@ -401,6 +401,7 @@ class BlockchainService {
         Logger.error(
           `Error minting token: ${JSON.stringify(error.response.data)}`
         );
+        Logger.info(`Error code: `+ error.response.data.message.code)
         error.response.data.message.code ===
         ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
           ? await this.reRunContract('token', 'mint', {amount, mintTo})
