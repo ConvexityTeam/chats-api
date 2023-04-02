@@ -1,5 +1,4 @@
 const {BlockchainService, WalletService, QueueService} = require('../services');
-const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {RabbitMq, Logger} = require('../libs');
 const {
   CREATE_WALLET,
@@ -59,18 +58,23 @@ RabbitMq['default']
 
     confirmAndCreateWalletQueue
       .activateConsumer(async msg => {
-        const {content, hash} = msg.getContent();
+        const {content, keyPair} = msg.getContent();
+        // let confirm;
+        // setTimeout(async () => {
+        //   confirm = await BlockchainService.confirmTransaction(
+        //     hash.data.AddedUser,
+        //     CONFIRM_AND_CREATE_WALLET,
+        //     content
+        //   );
+        // }, RERUN_QUEUE_AFTER);
 
-        const confirm = await BlockchainService.confirmTransaction(
-          hash.data.AddedUser
-        );
-        if (!confirm) {
-          msg.nack();
-          return;
-        }
+        // if (!confirm) {
+        //   msg.nack();
+        //   return;
+        // }
 
         await WalletService.updateOrCreate(content, {
-          address: hash.keyPair.address
+          address: keyPair.address
         });
         Logger.info('Account Wallet Created');
         msg.ack();

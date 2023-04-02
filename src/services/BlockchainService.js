@@ -1,3 +1,5 @@
+const {RERUN_QUEUE_AFTER} = require('../constants/rerun.queue');
+
 const {createClient} = require('redis');
 const axios = require('axios');
 const ethers = require('ethers');
@@ -20,8 +22,6 @@ const Interface = new ethers.utils.Interface([
 
 const Axios = axios.create();
 
-const REQUEUE_TIME = 5000;
-
 class BlockchainService {
   static async requeueMessage(bind, args) {
     const confirmTransaction = RabbitMq['default'].declareQueue(bind, {
@@ -33,6 +33,24 @@ class BlockchainService {
         contentType: 'application/json'
       })
     );
+  }
+  static async reRunContract(contract, method, args) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Increasing gas price');
+        const runContract = await Axios.post(
+          `${tokenConfig.baseURL}/increase-gas-price`,
+          {contract, method, ...args}
+        );
+        Logger.info('Increased Gas Price');
+        resolve(runContract);
+      } catch (error) {
+        Logger.error(
+          `Error increasing gas price: ${JSON.stringify(error?.response?.data)}`
+        );
+        reject(error);
+      }
+    });
   }
   static async nftTransfer(
     senderPrivateKey,
@@ -90,9 +108,10 @@ class BlockchainService {
             error?.response?.data
           )}`
         );
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           await this.requeueMessage(bind, message);
-        }, REQUEUE_TIME);
+        }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         reject(error);
       }
     });
@@ -247,38 +266,19 @@ class BlockchainService {
     });
   }
 
-  // static async confirmTransaction(hash) {
-  //   return new Promise(async (resolve, reject) => {
-  //     try {
-  //       Logger.info('Confirming transaction');
-  //       //const data = await provider.getTransactionReceipt(hash);
-  //       const {data} = await Axios.get(
-  //         `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-  //       );
-  //       Logger.info('Transaction confirmed');
-  //       resolve(data);
-  //     } catch (error) {
-  //       Logger.error(`Error confirming transaction: ${error}`);
-  //       reject(error);
-  //     }
-  //   });
-  // }
-
-  static async confirmTransaction(hash) {
+  static async confirmTransaction(hash, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Confirming transaction');
         const data = await provider.getTransactionReceipt(hash);
-        // const {data} = await Axios.get(
-        //   `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-        // );
         Logger.info('Transaction confirmed..');
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
-        // setTimeout(async () => {
-        //   await this.requeueMessage(bind, message);
-        // }, REQUEUE_TIME);
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         reject(error);
       }
     });
@@ -345,21 +345,20 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);
-        const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`
-        );
+        // const {data} = await Axios.post(
+        //   `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`
+        // );
         Logger.info(`User Added`);
-        resolve({data, keyPair});
+        resolve(keyPair);
       } catch (error) {
         Logger.error(
           `Adding User Error: ${JSON.stringify(error?.response?.data)}`
         );
-        reject(error);
         const id = setTimeout(async () => {
           await this.requeueMessage(bind, message);
-        }, REQUEUE_TIME);
-
+        }, RERUN_QUEUE_AFTER);
         clearTimeout(id);
+        reject(error);
       }
     });
   }
@@ -376,11 +375,12 @@ class BlockchainService {
         Logger.error(
           `Error minting NFT: ${JSON.stringify(error.response.data)}`
         );
+
         reject(error);
       }
     });
   }
-  static async mintToken(mintTo, amount) {
+  static async mintToken(mintTo, amount, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
@@ -401,6 +401,14 @@ class BlockchainService {
         Logger.error(
           `Error minting token: ${JSON.stringify(error.response.data)}`
         );
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ? await this.reRunContract('token', 'mint', {amount, mintTo})
+          : null;
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         reject(error);
       }
     });
@@ -427,6 +435,13 @@ class BlockchainService {
         Logger.error(
           `Error redeeming token: ` + JSON.stringify(error.response.data)
         );
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ? await this.reRunContract('token', 'redeem', {
+              password: senderpswd,
+              amount
+            })
+          : null;
         reject(error);
       }
     });
@@ -445,6 +460,14 @@ class BlockchainService {
         Logger.error(
           `Error approving to spend: ${JSON.stringify(error.response.data)}`
         );
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ? await this.reRunContract('token', 'approve', {
+              password: ownerPassword,
+              spenderAdd,
+              amount
+            })
+          : null;
         reject(error);
       }
     });
@@ -469,7 +492,6 @@ class BlockchainService {
   }
 
   static async transferTo(senderPass, receiverAdd, amount) {
-    //Logger.info(senderaddr, senderpwsd, receiver, amount);
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring to campaign wallet');
@@ -484,6 +506,14 @@ class BlockchainService {
             error.response.data
           )}`
         );
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ? await this.reRunContract('token', 'redeem', {
+              password: senderPass,
+              receiverAdd,
+              amount
+            })
+          : null;
         reject(error);
       }
     });
@@ -504,6 +534,15 @@ class BlockchainService {
             error.response ? JSON.stringify(error.response.data) : error
           } `
         );
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ? await this.reRunContract('token', 'transferfrom', {
+              password: spenderPass,
+              tokenownerAdd,
+              receiver,
+              amount
+            })
+          : null;
         reject(error);
       }
     });
@@ -517,6 +556,13 @@ class BlockchainService {
         );
         resolve(data);
       } catch (error) {
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ? await this.reRunContract('token', 'allowance', {
+              tokenOwner,
+              spenderAddr
+            })
+          : null;
         reject(error);
       }
     });
@@ -544,6 +590,12 @@ class BlockchainService {
         );
         resolve(data);
       } catch (error) {
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ? await this.reRunContract('token', 'balance', {
+              address
+            })
+          : null;
         reject(error);
       }
     });
