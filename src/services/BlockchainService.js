@@ -39,7 +39,7 @@ class BlockchainService {
       try {
         Logger.info('Increasing gas price');
         const runContract = await Axios.post(
-          `${tokenConfig.baseURL}/increase-gas-price`,
+          `${tokenConfig.baseURL}/txn/increase-gas-price`,
           {contract, method, ...args}
         );
         Logger.info('Increased Gas Price');
@@ -406,7 +406,9 @@ class BlockchainService {
 
         if (
           error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
         ) {
           const {retried} = await this.reRunContract('token', 'mint', {
             amount,
@@ -451,7 +453,9 @@ class BlockchainService {
 
         if (
           error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
         ) {
           const {retried} = await this.reRunContract('token', 'redeem', {
             password: senderpswd,
@@ -488,7 +492,9 @@ class BlockchainService {
 
         if (
           error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
         ) {
         }
 
@@ -595,7 +601,9 @@ class BlockchainService {
 
         if (
           error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
         ) {
           const {retried} = await this.reRunContract('token', 'transferFrom', {
             password: spenderPass,
@@ -630,7 +638,9 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         error.response.data.message.code ===
-        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+        ('REPLACEMENT_UNDERPRICED' ||
+          'UNPREDICTABLE_GAS_LIMIT' ||
+          'INSUFFICIENT_FUNDS')
           ? await this.reRunContract('token', 'allowance', {
               tokenOwner,
               spenderAddr
@@ -664,7 +674,9 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         error.response.data.message.code ===
-        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+        ('REPLACEMENT_UNDERPRICED' ||
+          'UNPREDICTABLE_GAS_LIMIT' ||
+          'INSUFFICIENT_FUNDS')
           ? await this.reRunContract('token', 'balance', {
               address
             })
