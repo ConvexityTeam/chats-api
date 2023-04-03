@@ -560,13 +560,11 @@ RabbitMq['default']
           lastIndex,
           token_type
         } = msg.getContent();
-        const message = msg.getContent();
         const {Approved} = await BlockchainService.approveToSpend(
           campaignPrivateKey,
           BAddress,
           amount,
           {
-            Approved,
             amount,
             transactionId,
             wallet_uuid,
