@@ -536,7 +536,7 @@ RabbitMq['default']
             );
           }, index * 5000);
         }
-
+        Logger.info('Sent for approving to spend');
         msg.ack();
       })
       .catch(error => {
