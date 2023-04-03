@@ -545,7 +545,9 @@ class BlockchainService {
         );
         if (
           error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
         ) {
           const {retried} = await this.reRunContract('token', 'transfer', {
             password: senderPass,
