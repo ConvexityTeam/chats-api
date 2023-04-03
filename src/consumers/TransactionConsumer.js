@@ -341,13 +341,14 @@ RabbitMq['default']
         );
 
         let confirm;
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           confirm = await BlockchainService.confirmTransaction(
             hash,
             CONFIRM_NGO_FUNDING,
             msg.getContent()
           );
-        }, RERUN_QUEUE_AFTER);
+        });
+        clearTimeout(id);
         if (!confirm) {
           msg.nack();
           return;
@@ -441,14 +442,14 @@ RabbitMq['default']
           amount
         } = msg.getContent();
         let confirm;
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           confirm = await BlockchainService.confirmTransaction(
             hash,
             CONFIRM_CAMPAIGN_FUNDING,
             msg.getContent()
           );
         }, RERUN_QUEUE_AFTER);
-
+        clearTimeout(id);
         if (!confirm) {
           msg.nack();
           return;
@@ -619,14 +620,14 @@ RabbitMq['default']
           token_type
         } = msg.getContent();
         let confirm;
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           confirm = await BlockchainService.confirmTransaction(
             hash,
             SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
             msg.getContent()
           );
         }, RERUN_QUEUE_AFTER);
-
+        clearTimeout(id);
         if (!confirm) {
           msg.nack();
           return;
@@ -799,9 +800,10 @@ RabbitMq['default']
       } = msg.getContent();
 
       let confirm;
-      setTimeout(async () => {
+      const id = setTimeout(async () => {
         confirm = await BlockchainService.confirmTransaction(hash);
       }, RERUN_QUEUE_AFTER);
+      clearTimeout(id);
       if (!confirm) {
         msg.nack();
         return;
@@ -1041,13 +1043,14 @@ RabbitMq['default']
         } = msg.getContent();
 
         let confirm;
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           confirm = await BlockchainService.confirmTransaction(
             hash,
             CONFIRM_FUND_SINGLE_BENEFICIARY,
             msg.getContent()
           );
         }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         if (!confirm) {
           msg.nack();
           return;
@@ -1144,13 +1147,14 @@ RabbitMq['default']
         } = msg.getContent();
 
         let confirm;
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           confirm = await BlockchainService.confirmTransaction(
             hash,
             CONFIRM_VENDOR_ORDER_QUEUE,
             msg.getContent()
           );
         }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         if (!confirm) {
           msg.nack();
           return;
@@ -1293,13 +1297,14 @@ RabbitMq['default']
         } = msg.getContent();
 
         let confirm;
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           confirm = await BlockchainService.confirmTransaction(
             hash,
             CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
             msg.getContent()
           );
         }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         if (!confirm) {
           msg.nack();
           return;
