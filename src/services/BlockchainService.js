@@ -380,7 +380,8 @@ class BlockchainService {
       }
     });
   }
-  static async mintToken(mintTo, amount, bind, message) {
+  static async mintToken(mintTo, amount, message) {
+    const {transactionId, transactionReference, OrganisationId} = message;
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
@@ -401,20 +402,31 @@ class BlockchainService {
         Logger.error(
           `Error minting token: ${JSON.stringify(error.response.data)}`
         );
-        Logger.info(`Error code: `+ error.response.data.message.code)
-        error.response.data.message.code ===
-        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
-          ? await this.reRunContract('token', 'mint', {amount, mintTo})
-          : null;
-        const id = setTimeout(async () => {
-          await this.requeueMessage(bind, message);
-        }, RERUN_QUEUE_AFTER);
-        clearTimeout(id);
-        reject(error);
+        Logger.info(`Error code: ` + error.response.data.message.code);
+
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+        ) {
+          const {retried} = await this.reRunContract('token', 'mint', {
+            amount,
+            password: '',
+            address: mintTo
+          });
+          if (retried) {
+            await QueueService.confirmNGO_FUNDING(
+              OrganisationId,
+              retried,
+              transactionId,
+              transactionReference
+            );
+          }
+        }
+        return reject(error);
       }
     });
   }
-  static async redeem(senderpswd, amount) {
+  static async redeem(senderpswd, amount, message, params) {
     return new Promise(async (resolve, reject) => {
       const mintTo = senderpswd;
       const payload = {mintTo, amount};
@@ -436,19 +448,31 @@ class BlockchainService {
         Logger.error(
           `Error redeeming token: ` + JSON.stringify(error.response.data)
         );
-        error.response.data.message.code ===
-        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
-          ? await this.reRunContract('token', 'redeem', {
-              password: senderpswd,
-              amount
-            })
-          : null;
+
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+        ) {
+          const {retried} = await this.reRunContract('token', 'redeem', {
+            password: senderpswd,
+            amount
+          });
+          if (retried) {
+            if (params === 'vendorRedeem') {
+              await QueueService.confirmVRedeem(retried, ...message);
+            }
+            if (params === 'beneficiaryRedeem') {
+              await QueueService.redeemBeneficiaryOnce(retried, ...message);
+            }
+          }
+        }
+
         reject(error);
       }
     });
   }
 
-  static async approveToSpend(ownerPassword, spenderAdd, amount) {
+  static async approveToSpend(ownerPassword, spenderAdd, amount, message) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
@@ -461,14 +485,26 @@ class BlockchainService {
         Logger.error(
           `Error approving to spend: ${JSON.stringify(error.response.data)}`
         );
-        error.response.data.message.code ===
-        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
-          ? await this.reRunContract('token', 'approve', {
-              password: ownerPassword,
-              spenderAdd,
-              amount
-            })
-          : null;
+
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+        ) {
+        }
+
+        const {retried} = await this.reRunContract(
+          'token',
+          'increaseAllowance',
+          {
+            password: ownerPassword,
+            spenderPswd: spenderAdd,
+            amount
+          }
+        );
+        if (retried) {
+          await QueueService.sendBForConfirmation(retried, ...message);
+        }
+
         reject(error);
       }
     });
@@ -492,7 +528,7 @@ class BlockchainService {
     });
   }
 
-  static async transferTo(senderPass, receiverAdd, amount) {
+  static async transferTo(senderPass, receiverAdd, amount, message, params) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring to campaign wallet');
@@ -507,20 +543,39 @@ class BlockchainService {
             error.response.data
           )}`
         );
-        error.response.data.message.code ===
-        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
-          ? await this.reRunContract('token', 'redeem', {
-              password: senderPass,
-              receiverAdd,
-              amount
-            })
-          : null;
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+        ) {
+          const {retried} = await this.reRunContract('token', 'transfer', {
+            password: senderPass,
+            receiverAdd,
+            amount
+          });
+
+          if (retried) {
+            if (params === 'BFundB') {
+              await QueueService.confirmBFundingB(retried, ...message);
+            }
+            if (params === 'fundCampaign') {
+              await QueueService.confirmCampaign_FUNDING(retried, ...message);
+            }
+          }
+        }
+
         reject(error);
       }
     });
   }
 
-  static async transferFrom(tokenownerAdd, receiver, spenderPass, amount) {
+  static async transferFrom(
+    tokenownerAdd,
+    receiver,
+    spenderPass,
+    amount,
+    message,
+    params
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring funds from..');
@@ -535,15 +590,30 @@ class BlockchainService {
             error.response ? JSON.stringify(error.response.data) : error
           } `
         );
-        error.response.data.message.code ===
-        ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
-          ? await this.reRunContract('token', 'transferfrom', {
-              password: spenderPass,
-              tokenownerAdd,
-              receiver,
-              amount
-            })
-          : null;
+
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' || 'UNPREDICTABLE_GAS_LIMIT')
+        ) {
+          const {retried} = await this.reRunContract('token', 'transferFrom', {
+            password: spenderPass,
+            tokenownerAdd,
+            receiver,
+            amount
+          });
+
+          if (retried) {
+            if (params === 'BFundB') {
+              await QueueService.confirmBFundingB(retried, ...message);
+            }
+            if (params === 'vendorWithdrawal') {
+              await QueueService.confirmVendorOrder(retried, ...message);
+            } else {
+              await QueueService.confirmBTransferRedeem(retried, ...message);
+            }
+          }
+        }
+
         reject(error);
       }
     });
@@ -603,8 +673,6 @@ class BlockchainService {
   }
 
   static async redeemx(senderpswd, amount) {
-    Logger.info(senderpswd);
-
     return new Promise(async (resolve, reject) => {
       const mintTo = senderaddr;
       const payload = {mintTo, amount};
@@ -664,4 +732,10 @@ class BlockchainService {
   }
 }
 
+// async function fuc() {
+//   return await BlockchainService.setUserKeypair(`user${32}`);
+// }
+// fuc().then(r => {
+//   console.log(r.privateKey, 'key', r.address, 'address');
+// });
 module.exports = BlockchainService;
