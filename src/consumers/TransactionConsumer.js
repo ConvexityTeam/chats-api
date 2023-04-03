@@ -296,12 +296,11 @@ RabbitMq['default']
           const organisation = await BlockchainService.setUserKeypair(
             `organisation_${OrganisationId}`
           );
-
+          const message = msg.getContent();
           const mint = await BlockchainService.mintToken(
             organisation.address,
             amount,
-            VERIFY_FIAT_DEPOSIT,
-            msg.getContent()
+            message
           );
 
           if (!mint) {
@@ -395,7 +394,14 @@ RabbitMq['default']
         const transfer = await BlockchainService.transferTo(
           organisationAddress.privateKey,
           campaignAddress.address,
-          realBudget
+          realBudget,
+          {
+            transactionId,
+            campaign,
+            OrgWallet,
+            realBudget
+          },
+          'fundCampaign'
         );
 
         if (!transfer) {
@@ -558,11 +564,22 @@ RabbitMq['default']
           lastIndex,
           token_type
         } = msg.getContent();
-
+        const message = msg.getContent();
         const {Approved} = await BlockchainService.approveToSpend(
           campaignPrivateKey,
           BAddress,
-          amount
+          amount,
+          {
+            Approved,
+            amount,
+            transactionId,
+            wallet_uuid,
+            campaign,
+            beneficiary,
+            budget,
+            lastIndex,
+            token_type
+          }
         );
         await update_transaction({transaction_hash: Approved}, transactionId);
         if (!Approved) {
@@ -735,7 +752,16 @@ RabbitMq['default']
           campaignAddress.address,
           beneficiary.address,
           beneficiary.privateKey,
-          amount
+          amount,
+          {
+            privateKey: beneficiary.privateKey,
+            transactionId: transaction.uuid,
+            amount,
+            recipient_code: bankAccount.recipient_code,
+            userWallet,
+            campaignWallet
+          },
+          'withdrawal'
         );
 
         if (!transfer) {
@@ -774,11 +800,7 @@ RabbitMq['default']
 
       let confirm;
       setTimeout(async () => {
-        confirm = await BlockchainService.confirmTransaction(
-          hash,
-          CONFIRM_BENEFICIARY_TRANSFER_REDEEM,
-          msg.getContent()
-        );
+        confirm = await BlockchainService.confirmTransaction(hash);
       }, RERUN_QUEUE_AFTER);
       if (!confirm) {
         msg.nack();
@@ -804,7 +826,18 @@ RabbitMq['default']
           userWallet,
           campaignWallet
         } = msg.getContent();
-        const redeem = await BlockchainService.redeem(privateKey, amount);
+        const redeem = await BlockchainService.redeem(
+          privateKey,
+          amount,
+          {
+            amount,
+            transactionId,
+            campaignWallet,
+            userWallet,
+            recipient_code
+          },
+          'beneficiaryRedeem'
+        );
         if (!redeem) {
           msg.nack();
           return;
@@ -875,7 +908,14 @@ RabbitMq['default']
         );
         const redeem = await BlockchainService.redeem(
           vendor.privateKey,
-          amount
+          amount,
+          {
+            amount,
+            recipient_code: bankAccount.recipient_code,
+            transactionId: transaction.uuid,
+            uuid: userWallet.uuid
+          },
+          'vendorRedeem'
         );
 
         if (!redeem) {
@@ -1056,7 +1096,16 @@ RabbitMq['default']
           campaign.address,
           vendor.address,
           beneficiary.privateKey,
-          amount
+          amount,
+          {
+            amount,
+            transaction,
+            order,
+            beneficiaryWallet,
+            campaignWallet,
+            vendorWallet
+          },
+          'vendorWithdrawal'
         );
         if (!transfer) {
           msg.nack();
@@ -1153,7 +1202,7 @@ RabbitMq['default']
           transaction,
           campaignWallet
         } = msg.getContent();
-
+        const transactionId = transaction.uuid;
         let hash;
         const RWallet = await BlockchainService.setUserKeypair(
           `user_${receiverWallet.UserId}`
@@ -1170,7 +1219,15 @@ RabbitMq['default']
             campaign.address,
             RWallet.address,
             beneficiary.privateKey,
-            amount
+            amount,
+            {
+              amount,
+              senderWallet,
+              receiverWallet,
+              transactionId,
+              campaignWallet
+            },
+            'BFundB'
           );
 
           if (!transferFrom) {
@@ -1179,6 +1236,7 @@ RabbitMq['default']
           }
           hash = transferFrom.TransferedFrom;
         }
+
         if (!campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}`
@@ -1186,7 +1244,15 @@ RabbitMq['default']
           const transferTo = await BlockchainService.transferTo(
             beneficiary.privateKey,
             RWallet.address,
-            amount
+            amount,
+            {
+              amount,
+              senderWallet,
+              receiverWallet,
+              transactionId,
+              campaignWallet
+            },
+            'BFundB'
           );
           if (!transferTo) {
             msg.nack();
@@ -1199,7 +1265,7 @@ RabbitMq['default']
           amount,
           senderWallet,
           receiverWallet,
-          transaction.uuid,
+          transactionId,
           campaignWallet
         );
 
