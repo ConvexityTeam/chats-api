@@ -36,7 +36,6 @@ class BlockchainService {
   }
   static async reRunContract(contract, method, args) {
     return new Promise(async (resolve, reject) => {
-      console.log(args);
       try {
         Logger.info('Increasing gas price');
         const runContract = await Axios.post(
