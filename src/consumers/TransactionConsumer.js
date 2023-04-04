@@ -393,10 +393,11 @@ RabbitMq['default']
         Logger.info(
           `organisation_${OrgWallet.OrganisationId}, organisationAddress.privateKey: ${organisationAddress.privateKey}`
         );
-
+        const privateKey = `${organisationAddress.privateKey}`;
+        const address = `${campaignAddress.address}`;
         const transfer = await BlockchainService.transferTo(
-          organisationAddress.privateKey,
-          campaignAddress.address,
+          privateKey,
+          address,
           realBudget,
           {
             transactionId,
