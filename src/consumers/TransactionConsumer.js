@@ -395,8 +395,8 @@ RabbitMq['default']
         );
 
         const transfer = await BlockchainService.transferTo(
-          'organisationAddress.privateKey',
-          'campaignAddress.address',
+          organisationAddress.privateKey,
+          campaignAddress.address,
           realBudget,
           {
             transactionId,
