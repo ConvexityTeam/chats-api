@@ -387,17 +387,11 @@ RabbitMq['default']
           `organisation_${OrgWallet.OrganisationId}`
         );
 
-        Logger.info(
-          `campaign_${campaignWallet.CampaignId}, campaignAddress.address: ${campaignAddress.address}`
-        );
-        Logger.info(
-          `organisation_${OrgWallet.OrganisationId}, organisationAddress.privateKey: ${organisationAddress.privateKey}`
-        );
         const privateKey = `${organisationAddress.privateKey}`;
         const address = `${campaignAddress.address}`;
         const transfer = await BlockchainService.transferTo(
-          privateKey,
-          address,
+          '0x9d26e03555be3671abdfa4d2a98bb7dfd50f0694e17f93318bf8867a0ea26e1f',
+          ' 0x93798780b2360BFA1a053cf406e7eeBCC2957624',
           realBudget,
           {
             transactionId,
