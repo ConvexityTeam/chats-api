@@ -399,9 +399,11 @@ RabbitMq['default']
           OrgWallet,
           realBudget
         };
+        const privateKey = organisationAddress.privateKey;
+        const address = campaignAddress.address;
         const transfer = await BlockchainService.transferTo(
-          organisationAddress.privateKey,
-          campaignAddress.address,
+          privateKey,
+          address,
           realBudget,
           extraParams,
           'fundCampaign'
