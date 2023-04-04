@@ -386,10 +386,14 @@ RabbitMq['default']
         const organisationAddress = await BlockchainService.setUserKeypair(
           `organisation_${OrgWallet.OrganisationId}`
         );
-        Logger.info(`organisationAddress.privateKey,
-          campaignAddress.address: ${
-            (organisationAddress.privateKey, campaignAddress.address)
-          }`);
+
+        Logger.info(
+          `campaign_${campaignWallet.CampaignId}, campaignAddress.address: ${campaignAddress.address}`
+        );
+        Logger.info(
+          `organisation_${OrgWallet.OrganisationId}, organisationAddress.privateKey: ${organisationAddress.privateKey}`
+        );
+
         const transfer = await BlockchainService.transferTo(
           organisationAddress.privateKey,
           campaignAddress.address,
