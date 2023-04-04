@@ -494,8 +494,8 @@ class BlockchainService {
         if (
           error.response.data.message.code ===
           ('REPLACEMENT_UNDERPRICED' ||
-            'UNPREDICTABLE_GAS_LIMIT' ||
-            'INSUFFICIENT_FUNDS')
+            error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+            error.response.data.message.code === 'INSUFFICIENT_FUNDS')
         ) {
           const keys = {
             ownerPassword,
