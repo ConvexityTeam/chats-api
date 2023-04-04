@@ -513,6 +513,7 @@ RabbitMq['default']
           return;
         }
         await QueueService.sendBForConfirmation(retried, ...message);
+        msg.ack();
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error.message}`);
