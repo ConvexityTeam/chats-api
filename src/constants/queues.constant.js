@@ -43,5 +43,6 @@ module.exports = {
   CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY:
     'confirmBeneficiaryFundingBeneficiary',
   SEND_EACH_BENEFICIARY_FOR_REDEEMING: 'sendEachBeneficiaryForRedeeming',
-  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION: 'sendEachBeneficiaryForConfirmation'
+  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION: 'sendEachBeneficiaryForConfirmation',
+  INCREASE_ALLOWANCE: 'increaseAllowance'
 };

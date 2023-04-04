@@ -19,7 +19,8 @@ const {
   CONFIRM_BENEFICIARY_TRANSFER_REDEEM,
   REDEEM_BENEFICIARY_ONCE,
   SEND_EACH_BENEFICIARY_FOR_REDEEMING,
-  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION
+  SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
+  INCREASE_ALLOWANCE
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -208,6 +209,11 @@ const sendBForRedeem = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const increaseAllowance = RabbitMq['default'].declareQueue(INCREASE_ALLOWANCE, {
+  prefetch: 1,
+  durable: true
+});
 
 const update_campaign = async (id, args) => {
   const campaign = await Campaign.findOne({where: {id}});
@@ -487,6 +493,31 @@ RabbitMq['default']
       })
       .then(() => {
         Logger.info('Running Process For Confirm Campaign Funding');
+      });
+    increaseAllowance
+      .activateConsumer(async msg => {
+        const {keys, message} = msg.getContent();
+
+        const {retried} = await BlockchainService.reRunContract(
+          'token',
+          'increaseAllowance',
+          {
+            password: keys.ownerPassword,
+            spenderPswd: keys.spenderAdd,
+            amount: keys.amount
+          }
+        );
+        if (!retried) {
+          msg.nack();
+          return;
+        }
+        await QueueService.sendBForConfirmation(retried, ...message);
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error.message}`);
+      })
+      .then(() => {
+        Logger.info('Running Process For Increasing Allowance');
       });
     processFundBeneficiaries
       .activateConsumer(async msg => {
