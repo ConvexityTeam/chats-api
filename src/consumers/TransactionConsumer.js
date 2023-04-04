@@ -505,7 +505,7 @@ RabbitMq['default']
           {
             password: keys.ownerPassword,
             spenderPswd: keys.spenderAdd,
-            amount: `${keys.amount}`
+            amount: keys.amount.toString()
           }
         );
         if (!retried) {
