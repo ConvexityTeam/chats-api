@@ -496,19 +496,12 @@ class BlockchainService {
             'UNPREDICTABLE_GAS_LIMIT' ||
             'INSUFFICIENT_FUNDS')
         ) {
-        }
-
-        const {retried} = await this.reRunContract(
-          'token',
-          'increaseAllowance',
-          {
-            password: ownerPassword,
-            spenderPswd: spenderAdd,
+          const keys = {
+            ownerPassword,
+            spenderAdd,
             amount
-          }
-        );
-        if (retried) {
-          await QueueService.sendBForConfirmation(retried, ...message);
+          };
+          await QueueService.increaseAllowance(keys, message);
         }
 
         reject(error);
