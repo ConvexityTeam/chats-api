@@ -393,21 +393,18 @@ RabbitMq['default']
         Logger.info(
           `organisation_${OrgWallet.OrganisationId}, organisationAddress.privateKey: ${organisationAddress.privateKey}`
         );
-        const extraParams = {
-          transactionId,
-          campaign,
-          OrgWallet,
-          realBudget
-        };
-        const privateKey = organisationAddress.privateKey;
-        const address = campaignAddress.address;
-        const transfer = await BlockchainService.transferTo(
-          privateKey,
-          address,
-          realBudget,
-          extraParams,
-          'fundCampaign'
-        );
+        const transfer = await BlockchainService.transferTo({
+          senderPass: organisationAddress.privateKey,
+          receiverAdd: campaignAddress.address,
+          amount: realBudget,
+          message: {
+            transactionId,
+            campaign,
+            OrgWallet,
+            realBudget
+          },
+          params: 'fundCampaign'
+        });
 
         if (!transfer) {
           msg.nack();
@@ -1234,19 +1231,19 @@ RabbitMq['default']
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}`
           );
-          const transferTo = await BlockchainService.transferTo(
-            beneficiary.privateKey,
-            RWallet.address,
+          const transferTo = await BlockchainService.transferTo({
+            senderPass: beneficiary.privateKey,
+            receiverAdd: RWallet.address,
             amount,
-            {
+            message: {
               amount,
               senderWallet,
               receiverWallet,
               transactionId,
               campaignWallet
             },
-            'BFundB'
-          );
+            params: 'BFundB'
+          });
           if (!transferTo) {
             msg.nack();
             return;

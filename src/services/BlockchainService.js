@@ -534,7 +534,7 @@ class BlockchainService {
     });
   }
 
-  static async transferTo(senderPass, receiverAdd, amount, message, params) {
+  static async transferTo({senderPass, receiverAdd, amount, message, params}) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring to campaign wallet');
