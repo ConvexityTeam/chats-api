@@ -36,6 +36,7 @@ class BlockchainService {
   }
   static async reRunContract(contract, method, args) {
     return new Promise(async (resolve, reject) => {
+      console.log(args);
       try {
         Logger.info('Increasing gas price');
         const runContract = await Axios.post(
@@ -411,7 +412,7 @@ class BlockchainService {
             'INSUFFICIENT_FUNDS')
         ) {
           const {retried} = await this.reRunContract('token', 'mint', {
-            amount,
+            amount: `${amount}`,
             password: '',
             address: mintTo
           });
@@ -459,7 +460,7 @@ class BlockchainService {
         ) {
           const {retried} = await this.reRunContract('token', 'redeem', {
             password: senderpswd,
-            amount
+            amount: `${amount}`
           });
           if (retried) {
             if (params === 'vendorRedeem') {
@@ -530,10 +531,6 @@ class BlockchainService {
   static async transferTo(senderPass, receiverAdd, amount, message, params) {
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info(`senderPass: ${senderPass}`);
-        Logger.info(`receiverAdd: ${receiverAdd}`);
-        Logger.info(`amount: ${amount}`);
-        Logger.info('Transferring to campaign wallet');
         const {data} = await Axios.post(
           `${tokenConfig.baseURL}/txn/transfer/${senderPass}/${receiverAdd}/${amount}`
         );
@@ -554,7 +551,7 @@ class BlockchainService {
           const {retried} = await this.reRunContract('token', 'transfer', {
             password: senderPass,
             receiverAdd,
-            amount
+            amount: `${amount}`
           });
 
           if (retried) {
@@ -605,7 +602,7 @@ class BlockchainService {
             password: spenderPass,
             tokenownerAdd,
             receiver,
-            amount
+            amount: `${amount}`
           });
 
           if (retried) {
@@ -743,9 +740,14 @@ class BlockchainService {
 }
 
 // async function fuc() {
-//   return await BlockchainService.setUserKeypair(`user${32}`);
+//   return await BlockchainService.reRunContract('token', 'increaseAllowance', {
+//     password:
+//       '0x0652bc7b3bc3d9dddba36b2ff0173a6dbcfd5b2cba15e14efa96c2b24700df83',
+//     spenderPswd: '0x4F76b88a2A1579976FCb7636544e290A2CFec956',
+//     amount: '20'
+//   });
 // }
 // fuc().then(r => {
-//   console.log(r.privateKey, 'key', r.address, 'address');
+//   console.log(r);
 // });
 module.exports = BlockchainService;
