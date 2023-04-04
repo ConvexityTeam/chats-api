@@ -537,6 +537,8 @@ class BlockchainService {
   static async transferTo(senderPass, receiverAdd, amount, message, params) {
     return new Promise(async (resolve, reject) => {
       try {
+        Logger.info(`senderPass: ${senderPass}`);
+        Logger.info(`receiverAdd: ${receiverAdd}`);
         Logger.info('Transferring to campaign wallet');
         const {data} = await Axios.post(
           `${tokenConfig.baseURL}/txn/transfer/${senderPass}/${receiverAdd}/${amount}`

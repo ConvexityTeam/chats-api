@@ -389,6 +389,8 @@ RabbitMq['default']
 
         const privateKey = `${organisationAddress.privateKey}`;
         const address = `${campaignAddress.address}`;
+        Logger.info(`PrivateKey: ${privateKey}`);
+        Logger.info(`address: ${address}`);
         const transfer = await BlockchainService.transferTo(
           privateKey,
           address,
