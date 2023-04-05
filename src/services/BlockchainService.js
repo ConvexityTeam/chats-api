@@ -38,12 +38,15 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Increasing gas price');
-        const runContract = await Axios.post(
-          `${tokenConfig.baseURL}/txn/increase-gas-price`,
-          {contract, method, ...args}
-        );
+        const {
+          data
+        } = await Axios.post(`${tokenConfig.baseURL}/txn/increase-gas-price`, {
+          contract,
+          method,
+          ...args
+        });
         Logger.info('Increased Gas Price');
-        resolve(runContract);
+        resolve(data);
       } catch (error) {
         Logger.error(
           `Error increasing gas price: ${JSON.stringify(error?.response?.data)}`

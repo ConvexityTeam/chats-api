@@ -513,7 +513,6 @@ RabbitMq['default']
         }
         Logger.info(`gasFee: ${JSON.stringify(gasFee)}`);
         await QueueService.sendBForConfirmation(gasFee.retried, ...message);
-
         msg.ack();
       })
       .catch(error => {
