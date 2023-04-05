@@ -654,7 +654,6 @@ RabbitMq['default']
         } = msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
-        Logger.info(`hash: ${hash}`);
         if (!confirm) {
           msg.nack();
           return;
