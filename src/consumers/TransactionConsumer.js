@@ -497,8 +497,6 @@ RabbitMq['default']
     increaseAllowance
       .activateConsumer(async msg => {
         const {keys, message} = msg.getContent();
-        Logger.info(JSON.stringify(keys), 'keys');
-        Logger.info(JSON.stringify(message), 'message');
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'increaseAllowance',
