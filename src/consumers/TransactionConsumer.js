@@ -514,7 +514,7 @@ RabbitMq['default']
             amount: keys.amount.toString()
           }
         );
-        Logger.info(`gasFee 1: ${JSON.stringify(gasFee)}`);
+        Logger.info(`amount 1: ${JSON.stringify(amount)}`);
         if (!gasFee) {
           msg.nack();
           return;
