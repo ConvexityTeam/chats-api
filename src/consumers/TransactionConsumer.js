@@ -395,8 +395,6 @@ RabbitMq['default']
 
         const privateKey = `${organisationAddress.privateKey}`;
         const address = `${campaignAddress.address}`;
-        Logger.info(`PrivateKey: ${privateKey}`);
-        Logger.info(`address: ${address}`);
         const transfer = await BlockchainService.transferTo(
           privateKey,
           address,
@@ -497,6 +495,16 @@ RabbitMq['default']
     increaseAllowance
       .activateConsumer(async msg => {
         const {keys, message} = msg.getContent();
+        const {
+          amount,
+          transactionId,
+          wallet_uuid,
+          campaign,
+          beneficiary,
+          budget,
+          lastIndex,
+          token_type
+        } = message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'increaseAllowance',
@@ -512,7 +520,17 @@ RabbitMq['default']
           return;
         }
         Logger.info(`gasFee: ${JSON.stringify(gasFee)}`);
-        await QueueService.sendBForConfirmation(gasFee.retried, ...message);
+        await QueueService.sendBForConfirmation(
+          gasFee.retried,
+          amount,
+          transactionId,
+          wallet_uuid,
+          campaign,
+          beneficiary,
+          budget,
+          lastIndex,
+          token_type
+        );
         msg.ack();
       })
       .catch(error => {
