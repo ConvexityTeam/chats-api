@@ -499,7 +499,7 @@ RabbitMq['default']
         const {keys, message} = msg.getContent();
         Logger.info(JSON.stringify(keys), 'keys');
         Logger.info(JSON.stringify(message), 'message');
-        const {retried} = await BlockchainService.reRunContract(
+        const gasFee = await BlockchainService.reRunContract(
           'token',
           'increaseAllowance',
           {
@@ -508,12 +508,13 @@ RabbitMq['default']
             amount: keys.amount.toString()
           }
         );
-        if (!retried) {
+        if (!gasFee) {
           msg.nack();
           return;
         }
-        await QueueService.sendBForConfirmation(retried, ...message);
-        Logger.info(`retried: ${retried}`);
+        Logger.info(`gasFee: ${JSON.stringify(gasFee)}`);
+        await QueueService.sendBForConfirmation(gasFee.retried, ...message);
+
         msg.ack();
       })
       .catch(error => {
