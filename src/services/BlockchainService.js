@@ -1,3 +1,5 @@
+const {RERUN_QUEUE_AFTER} = require('../constants/rerun.queue');
+
 const {createClient} = require('redis');
 const axios = require('axios');
 const ethers = require('ethers');
@@ -20,8 +22,6 @@ const Interface = new ethers.utils.Interface([
 
 const Axios = axios.create();
 
-const REQUEUE_TIME = 5000;
-
 class BlockchainService {
   static async requeueMessage(bind, args) {
     const confirmTransaction = RabbitMq['default'].declareQueue(bind, {
@@ -33,6 +33,24 @@ class BlockchainService {
         contentType: 'application/json'
       })
     );
+  }
+  static async reRunContract(contract, method, args) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Increasing gas price');
+        const runContract = await Axios.post(
+          `${tokenConfig.baseURL}/txn/increase-gas-price`,
+          {contract, method, ...args}
+        );
+        Logger.info('Increased Gas Price');
+        resolve(runContract);
+      } catch (error) {
+        Logger.error(
+          `Error increasing gas price: ${JSON.stringify(error?.response?.data)}`
+        );
+        reject(error);
+      }
+    });
   }
   static async nftTransfer(
     senderPrivateKey,
@@ -90,9 +108,10 @@ class BlockchainService {
             error?.response?.data
           )}`
         );
-        setTimeout(async () => {
+        const id = setTimeout(async () => {
           await this.requeueMessage(bind, message);
-        }, REQUEUE_TIME);
+        }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         reject(error);
       }
     });
@@ -247,38 +266,19 @@ class BlockchainService {
     });
   }
 
-  // static async confirmTransaction(hash) {
-  //   return new Promise(async (resolve, reject) => {
-  //     try {
-  //       Logger.info('Confirming transaction');
-  //       //const data = await provider.getTransactionReceipt(hash);
-  //       const {data} = await Axios.get(
-  //         `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-  //       );
-  //       Logger.info('Transaction confirmed');
-  //       resolve(data);
-  //     } catch (error) {
-  //       Logger.error(`Error confirming transaction: ${error}`);
-  //       reject(error);
-  //     }
-  //   });
-  // }
-
-  static async confirmTransaction(hash) {
+  static async confirmTransaction(hash, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Confirming transaction');
         const data = await provider.getTransactionReceipt(hash);
-        // const {data} = await Axios.get(
-        //   `${process.env.POLYGON_BASE_URL}/api?module=transaction&action=gettxreceiptstatus&txhash=${hash}&apikey=${process.env.POLYGON_API_KEY}`
-        // );
         Logger.info('Transaction confirmed..');
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
-        // setTimeout(async () => {
-        //   await this.requeueMessage(bind, message);
-        // }, REQUEUE_TIME);
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
         reject(error);
       }
     });
@@ -345,21 +345,20 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);
-        const {data} = await Axios.post(
-          `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`
-        );
+        // const {data} = await Axios.post(
+        //   `${tokenConfig.baseURL}/user/adduser/${keyPair.address}`
+        // );
         Logger.info(`User Added`);
-        resolve({data, keyPair});
+        resolve(keyPair);
       } catch (error) {
         Logger.error(
           `Adding User Error: ${JSON.stringify(error?.response?.data)}`
         );
-        reject(error);
         const id = setTimeout(async () => {
           await this.requeueMessage(bind, message);
-        }, REQUEUE_TIME);
-
+        }, RERUN_QUEUE_AFTER);
         clearTimeout(id);
+        reject(error);
       }
     });
   }
@@ -376,11 +375,13 @@ class BlockchainService {
         Logger.error(
           `Error minting NFT: ${JSON.stringify(error.response.data)}`
         );
+
         reject(error);
       }
     });
   }
-  static async mintToken(mintTo, amount) {
+  static async mintToken(mintTo, amount, message) {
+    const {transactionId, transactionReference, OrganisationId} = message;
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
@@ -401,11 +402,33 @@ class BlockchainService {
         Logger.error(
           `Error minting token: ${JSON.stringify(error.response.data)}`
         );
-        reject(error);
+        Logger.info(`Error code: ` + error.response.data.message.code);
+
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
+        ) {
+          const {retried} = await this.reRunContract('token', 'mint', {
+            amount: `${amount}`,
+            password: '',
+            address: mintTo
+          });
+          if (retried) {
+            await QueueService.confirmNGO_FUNDING(
+              OrganisationId,
+              retried,
+              transactionId,
+              transactionReference
+            );
+          }
+        }
+        return reject(error);
       }
     });
   }
-  static async redeem(senderpswd, amount) {
+  static async redeem(senderpswd, amount, message, params) {
     return new Promise(async (resolve, reject) => {
       const mintTo = senderpswd;
       const payload = {mintTo, amount};
@@ -427,12 +450,33 @@ class BlockchainService {
         Logger.error(
           `Error redeeming token: ` + JSON.stringify(error.response.data)
         );
+
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
+        ) {
+          const {retried} = await this.reRunContract('token', 'redeem', {
+            password: senderpswd,
+            amount: `${amount}`
+          });
+          if (retried) {
+            if (params === 'vendorRedeem') {
+              await QueueService.confirmVRedeem(retried, ...message);
+            }
+            if (params === 'beneficiaryRedeem') {
+              await QueueService.redeemBeneficiaryOnce(retried, ...message);
+            }
+          }
+        }
+
         reject(error);
       }
     });
   }
 
-  static async approveToSpend(ownerPassword, spenderAdd, amount) {
+  static async approveToSpend(ownerPassword, spenderAdd, amount, message) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
@@ -445,6 +489,20 @@ class BlockchainService {
         Logger.error(
           `Error approving to spend: ${JSON.stringify(error.response.data)}`
         );
+
+        if (
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
+        ) {
+          const keys = {
+            ownerPassword,
+            spenderAdd,
+            amount
+          };
+          await QueueService.increaseAllowance(keys, message);
+        }
+
         reject(error);
       }
     });
@@ -468,11 +526,9 @@ class BlockchainService {
     });
   }
 
-  static async transferTo(senderPass, receiverAdd, amount) {
-    //Logger.info(senderaddr, senderpwsd, receiver, amount);
+  static async transferTo(senderPass, receiverAdd, amount, message, params) {
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Transferring to campaign wallet');
         const {data} = await Axios.post(
           `${tokenConfig.baseURL}/txn/transfer/${senderPass}/${receiverAdd}/${amount}`
         );
@@ -484,12 +540,41 @@ class BlockchainService {
             error.response.data
           )}`
         );
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
+        ) {
+          const {retried} = await this.reRunContract('token', 'transfer', {
+            password: senderPass,
+            receiverAdd,
+            amount: `${amount}`
+          });
+
+          if (retried) {
+            if (params === 'BFundB') {
+              await QueueService.confirmBFundingB(retried, ...message);
+            }
+            if (params === 'fundCampaign') {
+              await QueueService.confirmCampaign_FUNDING(retried, ...message);
+            }
+          }
+        }
+
         reject(error);
       }
     });
   }
 
-  static async transferFrom(tokenownerAdd, receiver, spenderPass, amount) {
+  static async transferFrom(
+    tokenownerAdd,
+    receiver,
+    spenderPass,
+    amount,
+    message,
+    params
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Transferring funds from..');
@@ -504,6 +589,32 @@ class BlockchainService {
             error.response ? JSON.stringify(error.response.data) : error
           } `
         );
+
+        if (
+          error.response.data.message.code ===
+          ('REPLACEMENT_UNDERPRICED' ||
+            'UNPREDICTABLE_GAS_LIMIT' ||
+            'INSUFFICIENT_FUNDS')
+        ) {
+          const {retried} = await this.reRunContract('token', 'transferFrom', {
+            password: spenderPass,
+            tokenownerAdd,
+            receiver,
+            amount: `${amount}`
+          });
+
+          if (retried) {
+            if (params === 'BFundB') {
+              await QueueService.confirmBFundingB(retried, ...message);
+            }
+            if (params === 'vendorWithdrawal') {
+              await QueueService.confirmVendorOrder(retried, ...message);
+            } else {
+              await QueueService.confirmBTransferRedeem(retried, ...message);
+            }
+          }
+        }
+
         reject(error);
       }
     });
@@ -517,6 +628,15 @@ class BlockchainService {
         );
         resolve(data);
       } catch (error) {
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' ||
+          'UNPREDICTABLE_GAS_LIMIT' ||
+          'INSUFFICIENT_FUNDS')
+          ? await this.reRunContract('token', 'allowance', {
+              tokenOwner,
+              spenderAddr
+            })
+          : null;
         reject(error);
       }
     });
@@ -544,14 +664,20 @@ class BlockchainService {
         );
         resolve(data);
       } catch (error) {
+        error.response.data.message.code ===
+        ('REPLACEMENT_UNDERPRICED' ||
+          'UNPREDICTABLE_GAS_LIMIT' ||
+          'INSUFFICIENT_FUNDS')
+          ? await this.reRunContract('token', 'balance', {
+              address
+            })
+          : null;
         reject(error);
       }
     });
   }
 
   static async redeemx(senderpswd, amount) {
-    Logger.info(senderpswd);
-
     return new Promise(async (resolve, reject) => {
       const mintTo = senderaddr;
       const payload = {mintTo, amount};
@@ -611,4 +737,15 @@ class BlockchainService {
   }
 }
 
+// async function fuc() {
+//   return await BlockchainService.reRunContract('token', 'increaseAllowance', {
+//     password:
+//       '0x0652bc7b3bc3d9dddba36b2ff0173a6dbcfd5b2cba15e14efa96c2b24700df83',
+//     spenderPswd: '0x4F76b88a2A1579976FCb7636544e290A2CFec956',
+//     amount: '20'
+//   });
+// }
+// fuc().then(r => {
+//   console.log(r);
+// });
 module.exports = BlockchainService;

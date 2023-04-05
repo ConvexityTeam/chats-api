@@ -39,7 +39,8 @@ const {
   CONFIRM_BENEFICIARY_REDEEM,
   REDEEM_BENEFICIARY_ONCE,
   SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
-  SEND_EACH_BENEFICIARY_FOR_REDEEMING
+  SEND_EACH_BENEFICIARY_FOR_REDEEMING,
+  INCREASE_ALLOWANCE
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -266,7 +267,19 @@ const sendBForRedeem = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const increaseAllowance = RabbitMq['default'].declareQueue(INCREASE_ALLOWANCE, {
+  durable: true
+});
 class QueueService {
+  static async increaseAllowance(keys, message) {
+    const payload = {keys, message};
+    increaseAllowance.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async sendBForRedeem(
     amount,
     transactionId,
@@ -660,8 +673,8 @@ class QueueService {
     );
   }
 
-  static async confirmAndCreateWallet(content, hash) {
-    const payload = {content, hash};
+  static async confirmAndCreateWallet(content, keyPair) {
+    const payload = {content, keyPair};
     confirmAndCreateWalletQueue.send(
       new Message(payload, {
         contentType: 'application/json'
