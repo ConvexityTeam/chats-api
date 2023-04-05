@@ -513,6 +513,7 @@ RabbitMq['default']
           return;
         }
         await QueueService.sendBForConfirmation(retried, ...message);
+        Logger.info(`retried: ${retried}`);
         msg.ack();
       })
       .catch(error => {
@@ -653,7 +654,7 @@ RabbitMq['default']
         } = msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
-
+        Logger.info(`hash: ${hash}`);
         if (!confirm) {
           msg.nack();
           return;
