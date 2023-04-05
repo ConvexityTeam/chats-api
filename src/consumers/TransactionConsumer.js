@@ -652,11 +652,7 @@ RabbitMq['default']
           token_type
         } = msg.getContent();
 
-        const confirm = await BlockchainService.confirmTransaction(
-          hash,
-          SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
-          msg.getContent()
-        );
+        const confirm = await BlockchainService.confirmTransaction(hash);
 
         if (!confirm) {
           msg.nack();
