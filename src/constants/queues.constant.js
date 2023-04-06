@@ -44,5 +44,16 @@ module.exports = {
     'confirmBeneficiaryFundingBeneficiary',
   SEND_EACH_BENEFICIARY_FOR_REDEEMING: 'sendEachBeneficiaryForRedeeming',
   SEND_EACH_BENEFICIARY_FOR_CONFIRMATION: 'sendEachBeneficiaryForConfirmation',
-  INCREASE_ALLOWANCE: 'increaseAllowance'
+  INCREASE_TRANSFER_CAMPAIGN_GAS: 'increaseTransferCampaignGas',
+  INCREASE_TRANSFER_BENEFICIARY_GAS: 'increaseTransferBeneficiaryGas',
+  INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL:
+    'increaseGasForBeneficiaryWithdrawal',
+  INCREASE_GAS_FOR_VENDOR_WITHDRAWAL: 'increaseGasForVendorWithdrawal',
+  INCREASE_TRANSFER_FROM_GAS: 'increaseTransferFromGas',
+  INCREASE_VTRANSFER_FROM_GAS: 'increaseVTransferFromGas',
+  INCREASE_ALLOWANCE_GAS: 'increaseAllowanceGas',
+  DECREASE_ALLOWANCE_GAS: 'decreaseAllowanceGas',
+  INCREASE_MINTING_GAS: 'increaseMintingGas',
+  INCREASE_GAS_SINGLE_BENEFICIARY: 'increaseGasForFundingSB',
+  INCREASE_REDEEM_GAS_BREDEEM: 'increaseRedeemGasForBRedeem'
 };

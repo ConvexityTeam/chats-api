@@ -40,7 +40,15 @@ const {
   REDEEM_BENEFICIARY_ONCE,
   SEND_EACH_BENEFICIARY_FOR_CONFIRMATION,
   SEND_EACH_BENEFICIARY_FOR_REDEEMING,
-  INCREASE_ALLOWANCE
+  INCREASE_ALLOWANCE_GAS,
+  INCREASE_TRANSFER_CAMPAIGN_GAS,
+  INCREASE_TRANSFER_BENEFICIARY_GAS,
+  INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL,
+  INCREASE_GAS_FOR_VENDOR_WITHDRAWAL,
+  INCREASE_REDEEM_GAS_BREDEEM,
+  INCREASE_MINTING_GAS,
+  INCREASE_VTRANSFER_FROM_GAS,
+  INCREASE_GAS_SINGLE_BENEFICIARY
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -268,10 +276,133 @@ const sendBForRedeem = RabbitMq['default'].declareQueue(
   }
 );
 
-const increaseAllowance = RabbitMq['default'].declareQueue(INCREASE_ALLOWANCE, {
-  durable: true
-});
+const increaseAllowance = RabbitMq['default'].declareQueue(
+  INCREASE_ALLOWANCE_GAS,
+  {
+    durable: true
+  }
+);
+
+const increaseTransferCampaignGas = RabbitMq['default'].declareQueue(
+  INCREASE_TRANSFER_CAMPAIGN_GAS,
+  {
+    durable: true
+  }
+);
+
+const increaseTransferBeneficiaryGas = RabbitMq['default'].declareQueue(
+  INCREASE_TRANSFER_BENEFICIARY_GAS,
+  {
+    durable: true
+  }
+);
+
+const increaseGasForBWithdrawal = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL,
+  {
+    durable: true
+  }
+);
+
+const increaseGasForVWithdrawal = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_VENDOR_WITHDRAWAL,
+  {
+    durable: true
+  }
+);
+
+const increaseGasFoBRWithdrawal = RabbitMq['default'].declareQueue(
+  INCREASE_REDEEM_GAS_BREDEEM,
+  {
+    durable: true
+  }
+);
+
+const increaseGasForMinting = RabbitMq['default'].declareQueue(
+  INCREASE_MINTING_GAS,
+  {
+    durable: true
+  }
+);
+
+const increaseGasFeeVTransferFrom = RabbitMq['default'].declareQueue(
+  INCREASE_VTRANSFER_FROM_GAS,
+  {
+    durable: true
+  }
+);
+
+const increaseGasFeeForSB = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_SINGLE_BENEFICIARY,
+  {
+    durable: true
+  }
+);
 class QueueService {
+  static async increaseGasFeeForSB(keys, message) {
+    const payload = {keys, message};
+    increaseGasFeeForSB.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasFeeVTransferFrom(keys, message) {
+    const payload = {keys, message};
+    increaseGasFeeVTransferFrom.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasForMinting(keys, message) {
+    const payload = {keys, message};
+    increaseGasForMinting.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasFoBRWithdrawal(keys, message) {
+    const payload = {keys, message};
+    increaseGasFoBRWithdrawal.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasFoVWithdrawal(keys, message) {
+    const payload = {keys, message};
+    increaseGasForVWithdrawal.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasForBWithdrawal(keys, message) {
+    const payload = {keys, message};
+    increaseGasForBWithdrawal.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseTransferCampaignGas(keys, message) {
+    const payload = {keys, message};
+    increaseTransferCampaignGas.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseTransferBeneficiaryGas(keys, message) {
+    const payload = {keys, message};
+    increaseTransferBeneficiaryGas.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async increaseAllowance(keys, message) {
     const payload = {keys, message};
     increaseAllowance.send(
@@ -510,15 +641,15 @@ class QueueService {
     );
   }
   static async confirmNGO_FUNDING(
-    OrganisationId,
     hash,
+    OrganisationId,
     transactionId,
     transactionReference,
     amount
   ) {
     const payload = {
-      OrganisationId,
       hash,
+      OrganisationId,
       transactionId,
       transactionReference,
       amount
