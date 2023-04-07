@@ -52,6 +52,7 @@ class BlockchainService {
         Logger.error(
           `Error increasing gas price: ${JSON.stringify(error?.response?.data)}`
         );
+
         reject(error);
       }
     });

@@ -461,11 +461,7 @@ RabbitMq['default']
           OrganisationId
         );
 
-        const confirm = await BlockchainService.confirmTransaction(
-          hash,
-          CONFIRM_NGO_FUNDING,
-          msg.getContent()
-        );
+        const confirm = await BlockchainService.confirmTransaction(hash);
 
         if (!confirm) {
           msg.nack();
@@ -733,7 +729,7 @@ RabbitMq['default']
               lastIndex,
               token_type
             );
-          }, index * 5000);
+          }, index * 10000);
         }
         Logger.info('Sent for approving to spend');
         msg.ack();
