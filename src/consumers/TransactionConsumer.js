@@ -1441,7 +1441,7 @@ RabbitMq['default']
             campaignWallet,
             vendorWallet
           },
-          'vendorWithdrawal'
+          'vendorOrder'
         );
         if (!transfer) {
           msg.nack();
@@ -1481,7 +1481,7 @@ RabbitMq['default']
         } = message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
-          'transfer',
+          'transferFrom',
           keys
         );
         if (!gasFee) {
