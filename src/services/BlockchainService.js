@@ -558,9 +558,9 @@ class BlockchainService {
           if (type === 'BFundB') {
             await QueueService.increaseTransferBeneficiaryGas(keys, message);
           }
-          if (type === 'vendorWithdrawal') {
-            await QueueService.increaseGasFeeVTransferFrom(keys, message);
-          }
+          // if (type === 'vendorWithdrawal') {
+          //   await QueueService.increaseGasFeeVTransferFrom(keys, message);
+          // }
         }
         reject(error);
       }
@@ -606,6 +606,9 @@ class BlockchainService {
           }
           if (type === 'BWithdrawal') {
             await QueueService.increaseGasForBWithdrawal(keys, message);
+          }
+          if (type === 'vendorOrder') {
+            await QueueService.increaseGasFeeVTransferFrom(keys, message);
           }
         }
 
