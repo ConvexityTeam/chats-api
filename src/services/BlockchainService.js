@@ -599,7 +599,7 @@ class BlockchainService {
             password: spenderPass,
             receiverAdd: receiver,
             tokenownerAdd,
-            amount
+            amount: amount.toString()
           };
           if (type === 'BFundB') {
             await QueueService.increaseTransferBeneficiaryGas(keys, message);
