@@ -1479,7 +1479,7 @@ RabbitMq['default']
           vendorWallet
         } = message;
 
-        Logger.info(`${JSON.stringify(keys)}`);
+        Logger.info(`Vendor transfer From: ${JSON.stringify(keys)}`);
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'transferFrom',
