@@ -1478,11 +1478,14 @@ RabbitMq['default']
           campaignWallet,
           vendorWallet
         } = message;
+
+        Logger.info(`${JSON.stringify(keys)}`);
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'transferFrom',
           keys
         );
+
         if (!gasFee) {
           msg.nack();
           return;
