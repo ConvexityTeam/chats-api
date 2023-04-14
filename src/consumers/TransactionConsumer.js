@@ -1457,7 +1457,6 @@ RabbitMq['default']
           campaignWallet,
           vendorWallet
         );
-        msg.ack();
         Logger.info('BENEFICIARY ORDER SENT FOR CONFIRMATION');
         msg.ack();
       })
