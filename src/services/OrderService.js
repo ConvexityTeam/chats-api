@@ -99,9 +99,9 @@ class OrderService {
     return gender;
   }
 
-  static async productPurchasedBy(OrganisationId) {
-    const product = await Order.findAll({
-      where: {status: 'confirmed'},
+  static async productPurchasedBy(id) {
+    const product = await Order.findOne({
+      where: {id},
       include: [
         {
           model: User,
