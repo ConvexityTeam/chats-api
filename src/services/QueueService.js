@@ -1144,6 +1144,7 @@ class QueueService {
       transaction_origin: 'wallet',
       transaction_type: 'withdrawal',
       VendorId: userId,
+      BankId: bankAccount.id,
       narration: 'Wallet withdrawal to bank account'
     });
     const payload = {bankAccount, userWallet, userId, amount, transaction};
