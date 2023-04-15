@@ -38,16 +38,21 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Increasing gas price');
-        const runContract = await Axios.post(
+        const {data} = await Axios.post(
           `${tokenConfig.baseURL}/txn/increase-gas-price`,
-          {contract, method, ...args}
+          {
+            contract,
+            method,
+            ...args
+          }
         );
         Logger.info('Increased Gas Price');
-        resolve(runContract);
+        resolve(data);
       } catch (error) {
         Logger.error(
           `Error increasing gas price: ${JSON.stringify(error?.response?.data)}`
         );
+
         reject(error);
       }
     });
@@ -221,7 +226,6 @@ class BlockchainService {
         if (!token || moment().isAfter(token.expires)) {
           await this.signInSwitchWallet();
         }
-        console.log(token);
         const {data} = await Axios.put(
           `${switchWallet.baseURL}/v1/merchant/webhook`,
           {webhookUrl: '', publicKey: switchWallet.publicKey},
@@ -405,30 +409,22 @@ class BlockchainService {
         Logger.info(`Error code: ` + error.response.data.message.code);
 
         if (
-          error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' ||
-            'UNPREDICTABLE_GAS_LIMIT' ||
-            'INSUFFICIENT_FUNDS')
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
         ) {
-          const {retried} = await this.reRunContract('token', 'mint', {
-            amount: `${amount}`,
+          const keys = {
             password: '',
-            address: mintTo
-          });
-          if (retried) {
-            await QueueService.confirmNGO_FUNDING(
-              OrganisationId,
-              retried,
-              transactionId,
-              transactionReference
-            );
-          }
+            address: mintTo,
+            amount
+          };
+          await QueueService.increaseGasForMinting(keys, message);
         }
         return reject(error);
       }
     });
   }
-  static async redeem(senderpswd, amount, message, params) {
+  static async redeem(senderpswd, amount, message, type) {
     return new Promise(async (resolve, reject) => {
       const mintTo = senderpswd;
       const payload = {mintTo, amount};
@@ -450,33 +446,34 @@ class BlockchainService {
         Logger.error(
           `Error redeeming token: ` + JSON.stringify(error.response.data)
         );
-
         if (
-          error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' ||
-            'UNPREDICTABLE_GAS_LIMIT' ||
-            'INSUFFICIENT_FUNDS')
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
         ) {
-          const {retried} = await this.reRunContract('token', 'redeem', {
+          const keys = {
             password: senderpswd,
-            amount: `${amount}`
-          });
-          if (retried) {
-            if (params === 'vendorRedeem') {
-              await QueueService.confirmVRedeem(retried, ...message);
-            }
-            if (params === 'beneficiaryRedeem') {
-              await QueueService.redeemBeneficiaryOnce(retried, ...message);
-            }
+            amount
+          };
+          if (type === 'vendorRedeem') {
+            await QueueService.increaseGasFoVWithdrawal(keys, message);
+          }
+          if (type === 'beneficiaryRedeem') {
+            await QueueService.increaseGasFoBRWithdrawal(keys, message);
           }
         }
-
         reject(error);
       }
     });
   }
 
-  static async approveToSpend(ownerPassword, spenderAdd, amount, message) {
+  static async approveToSpend(
+    ownerPassword,
+    spenderAdd,
+    amount,
+    message,
+    type
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
@@ -500,7 +497,12 @@ class BlockchainService {
             spenderAdd,
             amount
           };
-          await QueueService.increaseAllowance(keys, message);
+          if (type === 'single') {
+            await QueueService.increaseGasFeeForSB(keys, message);
+          }
+          if (type === 'multiple') {
+            await QueueService.increaseAllowance(keys, message);
+          }
         }
 
         reject(error);
@@ -526,7 +528,7 @@ class BlockchainService {
     });
   }
 
-  static async transferTo(senderPass, receiverAdd, amount, message, params) {
+  static async transferTo(senderPass, receiverAdd, amount, message, type) {
     return new Promise(async (resolve, reject) => {
       try {
         const {data} = await Axios.post(
@@ -541,27 +543,25 @@ class BlockchainService {
           )}`
         );
         if (
-          error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' ||
-            'UNPREDICTABLE_GAS_LIMIT' ||
-            'INSUFFICIENT_FUNDS')
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
         ) {
-          const {retried} = await this.reRunContract('token', 'transfer', {
+          const keys = {
             password: senderPass,
             receiverAdd,
-            amount: `${amount}`
-          });
-
-          if (retried) {
-            if (params === 'BFundB') {
-              await QueueService.confirmBFundingB(retried, ...message);
-            }
-            if (params === 'fundCampaign') {
-              await QueueService.confirmCampaign_FUNDING(retried, ...message);
-            }
+            amount
+          };
+          if (type === 'fundCampaign') {
+            await QueueService.increaseTransferCampaignGas(keys, message);
           }
+          if (type === 'BFundB') {
+            await QueueService.increaseTransferBeneficiaryGas(keys, message);
+          }
+          // if (type === 'vendorWithdrawal') {
+          //   await QueueService.increaseGasFeeVTransferFrom(keys, message);
+          // }
         }
-
         reject(error);
       }
     });
@@ -573,7 +573,7 @@ class BlockchainService {
     spenderPass,
     amount,
     message,
-    params
+    type
   ) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -591,27 +591,24 @@ class BlockchainService {
         );
 
         if (
-          error.response.data.message.code ===
-          ('REPLACEMENT_UNDERPRICED' ||
-            'UNPREDICTABLE_GAS_LIMIT' ||
-            'INSUFFICIENT_FUNDS')
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
         ) {
-          const {retried} = await this.reRunContract('token', 'transferFrom', {
+          const keys = {
             password: spenderPass,
             tokenownerAdd,
-            receiver,
-            amount: `${amount}`
-          });
-
-          if (retried) {
-            if (params === 'BFundB') {
-              await QueueService.confirmBFundingB(retried, ...message);
-            }
-            if (params === 'vendorWithdrawal') {
-              await QueueService.confirmVendorOrder(retried, ...message);
-            } else {
-              await QueueService.confirmBTransferRedeem(retried, ...message);
-            }
+            receiverAdd: receiver,
+            amount: amount.toString()
+          };
+          if (type === 'BFundB') {
+            await QueueService.increaseTransferBeneficiaryGas(keys, message);
+          }
+          if (type === 'BWithdrawal') {
+            await QueueService.increaseGasForBWithdrawal(keys, message);
+          }
+          if (type === 'vendorOrder') {
+            await QueueService.increaseGasFeeVTransferFrom(keys, message);
           }
         }
 
