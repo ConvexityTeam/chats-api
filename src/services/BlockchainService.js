@@ -70,6 +70,7 @@ class BlockchainService {
         const {data} = await Axios.post(
           `${tokenConfig.baseURL}/txn/transfer-nft/${senderPrivateKey}/${sender}/${receiver}/${tokenId}/${collectionAdd}`
         );
+        Logger.info(`TRANSFERRED Logs`, data);
         Logger.info(`TRANSFERRED NFT`);
         resolve(data);
       } catch (error) {

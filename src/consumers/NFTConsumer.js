@@ -39,6 +39,7 @@ const {
   ProductBeneficiary,
   Order
 } = require('../models');
+const { nftTransfer } = require('../services/BlockchainService');
 
 const deployNFTCollection = RabbitMq['default'].declareQueue(
   DEPLOY_NFT_COLLECTION,
@@ -485,13 +486,15 @@ RabbitMq['default']
           let uuid = wallet.uuid;
           let arr = Object.values(split);
           for (let i = 0; i < arr.length; i++) {
-            await BlockchainService.nftTransfer(
+            const nftTransfer = await BlockchainService.nftTransfer(
               campaignAddress.privateKey,
               campaignAddress.address,
               beneficiaryAddress.address,
               arr[i],
               collectionAddress
             );
+            Logger.info('Transfer Items', nftTransfer);
+
           }
           const transaction = await create_transaction(
             campaign.minting_limit,
