@@ -597,8 +597,8 @@ class BlockchainService {
         ) {
           const keys = {
             password: spenderPass,
-            receiverAdd: receiver,
             tokenownerAdd,
+            receiverAdd: receiver,
             amount: amount.toString()
           };
           if (type === 'BFundB') {
