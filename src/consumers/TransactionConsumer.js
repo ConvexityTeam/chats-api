@@ -596,7 +596,6 @@ RabbitMq['default']
         setTimeout(async () => {
           confirm = await BlockchainService.confirmTransaction(hash);
         }, 5000);
-
         if (!confirm) {
           msg.nack();
           return;
