@@ -273,9 +273,13 @@ class BlockchainService {
   static async confirmTransaction(hash, bind, message) {
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Confirming transaction '+ hash);
+        Logger.info('Confirming transaction ' + hash);
         const data = await provider.getTransactionReceipt(hash);
-        Logger.info('Transaction confirmed.. ' + data);
+        if (!data) {
+          Logger.info(`Transaction yet to be mined`);
+        } else {
+          Logger.info('Transaction confirmed and mined ' + data);
+        }
         resolve(data);
       } catch (error) {
         Logger.error(`Error confirming transaction: ${error}`);
