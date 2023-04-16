@@ -810,11 +810,11 @@ RabbitMq['default']
           token_type
         } = msg.getContent();
 
-        const confirm = await BlockchainService.confirmTransaction(hash);
-        if (!confirm) {
-          msg.nack();
-          return;
-        }
+        // const confirm = await BlockchainService.confirmTransaction(hash);
+        // if (!confirm) {
+        //   msg.nack();
+        //   return;
+        // }
         await addWalletAmount(amount, uuid);
         await update_transaction(
           {status: 'success', is_approved: true},
