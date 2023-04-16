@@ -729,7 +729,7 @@ RabbitMq['default']
               lastIndex,
               token_type
             );
-          }, index * 10000);
+          }, index * 5000);
         }
         Logger.info('Sent for approving to spend');
         msg.ack();

@@ -62,6 +62,7 @@
     "prettier": "^2.1.1",
     "psl": "^1.8.0",
     "qrcode": "^1.5.0",
+    "rabbitmq-delete-message": "^1.0.0",
     "randomstring": "^1.2.1",
     "rascal": "^13.0.0",
     "rate-limiter-flexible": "^2.4.1",
