@@ -38,6 +38,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'VendorId',
         as: 'Vendor'
       });
+      Transaction.belongsTo(models.BankAccount, {
+        foreignKey: 'BankId',
+        as: 'Bank'
+      });
     }
   }
   Transaction.init(
@@ -55,6 +59,7 @@ module.exports = (sequelize, DataTypes) => {
       BeneficiaryId: DataTypes.INTEGER,
       OrganisationId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER,
+      BankId: DataTypes.INTEGER,
       transaction_type: DataTypes.ENUM(
         'deposit',
         'withdrawal',
