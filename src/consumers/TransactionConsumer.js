@@ -592,15 +592,13 @@ RabbitMq['default']
           OrgWallet,
           amount
         } = msg.getContent();
-        let confirm;
-        const id = setTimeout(async () => {
-          confirm = await BlockchainService.confirmTransaction(hash);
-        }, 5000);
+
+        const confirm = await BlockchainService.confirmTransaction(hash);
+
         if (!confirm) {
           msg.nack();
           return;
         }
-        clearTimeout(id);
         if (campaign.type === 'cash-for-work') {
           await update_campaign(campaign.id, {
             status: 'active',
