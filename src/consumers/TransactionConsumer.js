@@ -592,9 +592,10 @@ RabbitMq['default']
           OrgWallet,
           amount
         } = msg.getContent();
-
-        const confirm = await BlockchainService.confirmTransaction(hash);
-
+        let confirm;
+        setTimeout(async () => {
+          confirm = await BlockchainService.confirmTransaction(hash);
+        }, 5000);
         if (!confirm) {
           msg.nack();
           return;
