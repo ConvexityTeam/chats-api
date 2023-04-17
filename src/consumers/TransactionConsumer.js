@@ -683,16 +683,10 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await QueueService.sendBForConfirmation(
+        await QueueService.confirmOneBeneficiary(
           gasFee.retried,
-          amount,
-          transactionId,
           wallet_uuid,
-          campaign,
-          beneficiary,
-          budget,
-          lastIndex,
-          token_type
+          transactionId
         );
         msg.ack();
       })
