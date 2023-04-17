@@ -9,6 +9,7 @@ const {
   PROCESS_VENDOR_ORDER,
   FUND_BENEFICIARY,
   FROM_NGO_TO_CAMPAIGN,
+  CONFIRM_ONE_BENEFICIARY,
   PAYSTACK_DEPOSIT,
   PAY_FOR_PRODUCT,
   DEPLOY_NFT_COLLECTION,
@@ -48,7 +49,8 @@ const {
   INCREASE_REDEEM_GAS_BREDEEM,
   INCREASE_MINTING_GAS,
   INCREASE_VTRANSFER_FROM_GAS,
-  INCREASE_GAS_SINGLE_BENEFICIARY
+  INCREASE_GAS_SINGLE_BENEFICIARY,
+  APPROVE_TO_SPEND_ONE_BENEFICIARY
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -338,7 +340,65 @@ const increaseGasFeeForSB = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const approveOneBeneficiary = RabbitMq['default'].declareQueue(
+  APPROVE_TO_SPEND_ONE_BENEFICIARY,
+  {
+    durable: true
+  }
+);
+
+const confirmOneBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_ONE_BENEFICIARY,
+  {
+    durable: true
+  }
+);
 class QueueService {
+  static async confirmOneBeneficiary(hash, uuid, transactionId) {
+    const payload = {hash, uuid, transactionId};
+    confirmOneBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async approveOneBeneficiary(
+    campaignPrivateKey,
+    BAddress,
+    amount,
+    wallet_uuid,
+    campaign,
+    beneficiary
+  ) {
+    const transaction = await Transaction.create({
+      reference: generateTransactionRef(),
+      BeneficiaryId: beneficiary.id,
+      CampaignId: campaign.id,
+      amount,
+      status: 'processing',
+      is_approved: false,
+      OrganisationId: campaign.OrganisationId,
+      transaction_type: 'approval',
+      narration: 'Approve beneficiary spending',
+      transaction_origin: 'wallet'
+    });
+    const payload = {
+      campaignPrivateKey,
+      BAddress,
+      amount,
+      wallet_uuid,
+      campaign,
+      beneficiary,
+      transactionId: transaction.uuid
+    };
+
+    approveOneBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async increaseGasFeeForSB(keys, message) {
     const payload = {keys, message};
     increaseGasFeeForSB.send(

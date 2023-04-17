@@ -25,8 +25,10 @@ const {
   MailerService,
   OrganisationService,
   CampaignService,
-  WalletService
+  WalletService,
+  BlockchainService
 } = require('../services');
+const BeneficiariesService = require('../services/BeneficiaryService');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
   {
@@ -872,13 +874,42 @@ class AuthController {
         );
         return Response.send(res);
       }
-      const wallet = await WalletService.findSingleWallet({
-        UserId: user.id,
-        CampaignId: null
-      });
-      if (!wallet) {
-        await QueueService.createWallet(user.id, 'user');
+
+      const beneficiaryWallets = await WalletService.findUserWallets(user.id);
+
+      for (let wallet of beneficiaryWallets) {
+        const campaign = await CampaignService.getCampaignById(
+          wallet.CampaignId
+        );
+        if (
+          wallet.CampaignId &&
+          campaign.type === 'campaign' &&
+          !wallet.was_funded
+        ) {
+          const [
+            campaign_token,
+            beneficiary_token,
+            campaignBeneficiary
+          ] = await Promise.all([
+            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+            BlockchainService.setUserKeypair(
+              `user_${user.id}campaign_${wallet.CampaignId}`
+            ),
+            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+          ]);
+
+          let amount = campaign.budget / campaignBeneficiary.length;
+          await QueueService.approveOneBeneficiary(
+            campaign_token.privateKey,
+            beneficiary_token.address,
+            amount,
+            wallet.uuid,
+            campaign,
+            user
+          );
+        }
       }
+
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -886,7 +917,7 @@ class AuthController {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.';
+          : 'Login failed. Please try again later.' + error;
       Response.setError(401, message);
       return Response.send(res);
     }

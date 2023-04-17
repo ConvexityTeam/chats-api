@@ -16,6 +16,7 @@ const {
 } = require('../services');
 const db = require('../models');
 const Utils = require('../libs/Utils');
+const BeneficiariesService = require('../services/BeneficiaryService');
 class OrderController {
   static async getOrderByReference(req, res) {
     try {
@@ -96,10 +97,36 @@ class OrderController {
       const vendorWallet = await WalletService.findSingleWallet({
         UserId: data.order.Vendor.id
       });
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${data.order.CampaignId}`
+      );
+      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
+        data.order.CampaignId
+      );
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(
         id,
         data.order.CampaignId
       );
+      const campaign = await CampaignService.getCampaignById(
+        data.order.CampaignId
+      );
+      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+        let amount = campaign.budget / approvedBeneficiaries.length;
+        await QueueService.approveOneBeneficiary(
+          campaign_token.privateKey,
+          beneficiaryWallet.address,
+          amount,
+          beneficiaryWallet.uuid,
+          campaign,
+          user
+        );
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Initializing payment please try again'
+        );
+        Logger.error('Initializing payment please try again');
+        return Response.send(res);
+      }
 
       const token = await BlockchainService.allowance(
         campaignWallet.address,
@@ -134,10 +161,6 @@ class OrderController {
         Logger.error(`Campaign Wallet Not Found..`);
         return Response.send(res);
       }
-
-      const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
-      );
 
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
@@ -183,7 +206,12 @@ class OrderController {
   static async completeOrder(req, res) {
     try {
       const {reference} = req.params;
+
       const data = await VendorService.getOrder({reference});
+      const campaign = await CampaignService.getCampaignById(
+        data.order.CampaignId
+      );
+
       if (!data) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -199,20 +227,9 @@ class OrderController {
         );
         return Response.send(res);
       }
-      const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${data.order.CampaignId}`
+      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
+        data.order.CampaignId
       );
-
-      const beneficiary_token = await BlockchainService.setUserKeypair(
-        `user_${req.user.id}campaign_${data.order.CampaignId}`
-      );
-
-      const token = await BlockchainService.allowance(
-        campaign_token.address,
-        beneficiary_token.address
-      );
-
-      const balance = Number(token.Allowed.split(',').join(''));
 
       const [
         campaignWallet,
@@ -226,38 +243,39 @@ class OrderController {
         WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
         WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
       ]);
-
-      if (!beneficiaryWallet) {
-        await QueueService.createWallet(
-          req.user.id,
-          'user',
-          data.order.CampaignId
-        );
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Beneficiary Wallet not found, Please Try Later'
-        );
-        return Response.send(res);
-      }
-      if (!vendorWallet) {
-        await QueueService.createWallet(data.order.Vendor.id, 'user');
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Vendor Wallet not found. Please try later'
-        );
-        return Response.send(res);
-      }
-      if (!campaignWallet) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign Wallet Not Found..'
-        );
-        return Response.send(res);
-      }
-
-      const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${data.order.CampaignId}`
       );
+
+      const beneficiary_token = await BlockchainService.setUserKeypair(
+        `user_${req.user.id}campaign_${data.order.CampaignId}`
+      );
+
+      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+        let amount = campaign.budget / approvedBeneficiaries.length;
+        await QueueService.approveOneBeneficiary(
+          campaign_token.privateKey,
+          beneficiary_token.address,
+          amount,
+          beneficiaryWallet.uuid,
+          campaign,
+          req.user
+        );
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Initializing payment'
+        );
+        Logger.error('Initializing payment');
+        return Response.send(res);
+      }
+
+      const token = await BlockchainService.allowance(
+        campaign_token.address,
+        beneficiary_token.address
+      );
+
+      const balance = Number(token.Allowed.split(',').join(''));
+
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
