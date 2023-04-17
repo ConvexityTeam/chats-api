@@ -205,6 +205,9 @@ class OrderController {
         );
         return Response.send(res);
       }
+      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
+        data.order.CampaignId
+      );
 
       const [
         campaignWallet,
@@ -225,6 +228,24 @@ class OrderController {
       const beneficiary_token = await BlockchainService.setUserKeypair(
         `user_${req.user.id}campaign_${data.order.CampaignId}`
       );
+
+      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+        let amount = campaign.budget / approvedBeneficiaries.length;
+        await QueueService.approveOneBeneficiary(
+          campaign_token.privateKey,
+          beneficiary_token.address,
+          amount,
+          beneficiaryWallet.uuid,
+          campaign,
+          req.user
+        );
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Initializing payment'
+        );
+        Logger.error('Initializing payment');
+        return Response.send(res);
+      }
 
       const token = await BlockchainService.allowance(
         campaign_token.address,
