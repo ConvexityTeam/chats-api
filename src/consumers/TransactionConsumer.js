@@ -1752,6 +1752,8 @@ RabbitMq['default']
           beneficiary,
           transactionId
         } = msg.getContent();
+
+        Logger.info(`Message: ${JSON.stringify(msg.getContent())}`);
         const share = amount;
         const {Approved} = await BlockchainService.approveToSpend(
           campaignPrivateKey,
@@ -1788,7 +1790,7 @@ RabbitMq['default']
     confirmOneBeneficiary
       .activateConsumer(async msg => {
         const {hash, uuid, transactionId} = msg.getContent();
-
+        Logger.info(`Message Confirm: ${JSON.stringify(msg.getContent())}`);
         const confirm = await BlockchainService.confirmTransaction(hash);
         if (!confirm) {
           msg.nack();

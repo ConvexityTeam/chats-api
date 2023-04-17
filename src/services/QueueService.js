@@ -379,7 +379,9 @@ class QueueService {
       status: 'processing',
       is_approved: false,
       OrganisationId: campaign.OrganisationId,
-      transaction_type: 'approval'
+      transaction_type: 'approval',
+      narration: 'Approve beneficiary spending',
+      transaction_origin: 'wallet'
     });
     const payload = {
       campaignPrivateKey,
