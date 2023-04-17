@@ -184,6 +184,9 @@ class OrderController {
     try {
       const {reference} = req.params;
       const data = await VendorService.getOrder({reference});
+      const campaign = await CampaignService.getCampaignById(
+        data.order.CampaignId
+      );
       if (!data) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -199,20 +202,6 @@ class OrderController {
         );
         return Response.send(res);
       }
-      const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${data.order.CampaignId}`
-      );
-
-      const beneficiary_token = await BlockchainService.setUserKeypair(
-        `user_${req.user.id}campaign_${data.order.CampaignId}`
-      );
-
-      const token = await BlockchainService.allowance(
-        campaign_token.address,
-        beneficiary_token.address
-      );
-
-      const balance = Number(token.Allowed.split(',').join(''));
 
       const [
         campaignWallet,
@@ -226,6 +215,31 @@ class OrderController {
         WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
         WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
       ]);
+
+      const campaign_token = await BlockchainService.setUserKeypair(
+        `campaign_${data.order.CampaignId}`
+      );
+
+      const beneficiary_token = await BlockchainService.setUserKeypair(
+        `user_${req.user.id}campaign_${data.order.CampaignId}`
+      );
+      if (!beneficiaryWallet.was_funded) {
+        await QueueService.approveOneBeneficiary(
+          campaign_token.privateKey,
+          beneficiary_token.address,
+          beneficiaryWallet.amount,
+          beneficiaryWallet.uuid,
+          campaign,
+          req.user
+        );
+      }
+
+      const token = await BlockchainService.allowance(
+        campaign_token.address,
+        beneficiary_token.address
+      );
+
+      const balance = Number(token.Allowed.split(',').join(''));
 
       if (!beneficiaryWallet) {
         await QueueService.createWallet(
@@ -255,9 +269,6 @@ class OrderController {
         return Response.send(res);
       }
 
-      const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
-      );
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
