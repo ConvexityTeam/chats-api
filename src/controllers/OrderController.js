@@ -120,8 +120,11 @@ class OrderController {
           campaign,
           user
         );
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Initializing payment');
-        Logger.error('Initializing payment');
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Initializing payment please try again'
+        );
+        Logger.error('Initializing payment please try again');
         return Response.send(res);
       }
 
