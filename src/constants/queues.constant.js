@@ -55,5 +55,7 @@ module.exports = {
   DECREASE_ALLOWANCE_GAS: 'decreaseAllowanceGas',
   INCREASE_MINTING_GAS: 'increaseMintingGas',
   INCREASE_GAS_SINGLE_BENEFICIARY: 'increaseGasForFundingSB',
-  INCREASE_REDEEM_GAS_BREDEEM: 'increaseRedeemGasForBRedeem'
+  INCREASE_REDEEM_GAS_BREDEEM: 'increaseRedeemGasForBRedeem',
+  APPROVE_TO_SPEND_ONE_BENEFICIARY: 'approveOneBeneficiary',
+  CONFIRM_ONE_BENEFICIARY: 'confirmOneBeneficiary'
 };

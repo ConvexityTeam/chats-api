@@ -28,7 +28,9 @@ const {
   INCREASE_REDEEM_GAS_BREDEEM,
   INCREASE_MINTING_GAS,
   INCREASE_VTRANSFER_FROM_GAS,
-  INCREASE_GAS_SINGLE_BENEFICIARY
+  INCREASE_GAS_SINGLE_BENEFICIARY,
+  APPROVE_TO_SPEND_ONE_BENEFICIARY,
+  CONFIRM_ONE_BENEFICIARY
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -288,6 +290,21 @@ const increaseGasForSB = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const confirmOneBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_ONE_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+const approveOneBeneficiary = RabbitMq['default'].declareQueue(
+  APPROVE_TO_SPEND_ONE_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
 const update_campaign = async (id, args) => {
   const campaign = await Campaign.findOne({where: {id}});
   if (!campaign) return null;
@@ -323,11 +340,19 @@ const addWalletAmount = async (amount, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
-    was_funded: true,
     balance: Sequelize.literal(`balance + ${amount}`),
     fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
   });
   Logger.info(`Wallet amount added with ${amount}`);
+  return wallet;
+};
+
+const updateWasFunded = async uuid => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    was_funded: true
+  });
   return wallet;
 };
 
@@ -702,16 +727,16 @@ RabbitMq['default']
           );
           const share = parseInt(campaign.budget / beneficiaries.length);
 
-          const transaction = await create_transaction(
-            beneficiaries.length > 0 ? parsedAmount : realBudget,
-            OrgWallet.uuid,
-            wallet.uuid,
-            {
-              BeneficiaryId: wallet.UserId,
-              OrganisationId: campaign.OrganisationId,
-              CampaignId: campaign.id
-            }
-          );
+          // const transaction = await create_transaction(
+          //   beneficiaries.length > 0 ? parsedAmount : realBudget,
+          //   OrgWallet.uuid,
+          //   wallet.uuid,
+          //   {
+          //     BeneficiaryId: wallet.UserId,
+          //     OrganisationId: campaign.OrganisationId,
+          //     CampaignId: campaign.id
+          //   }
+          // );
           if (beneficiaries.length - 1 == index) {
             lastIndex = index;
           }
@@ -719,7 +744,7 @@ RabbitMq['default']
           setTimeout(async () => {
             await QueueService.sendBForRedeem(
               share,
-              transaction.uuid,
+              undefined,
               wallet.uuid,
               campaign,
               beneficiary,
@@ -755,31 +780,9 @@ RabbitMq['default']
           lastIndex,
           token_type
         } = msg.getContent();
-        const {Approved} = await BlockchainService.approveToSpend(
-          campaignPrivateKey,
-          BAddress,
-          amount,
-          {
-            amount,
-            transactionId,
-            wallet_uuid,
-            campaign,
-            beneficiary,
-            budget,
-            lastIndex,
-            token_type
-          },
-
-          'multiple'
-        );
-        await update_transaction({transaction_hash: Approved}, transactionId);
-        if (!Approved) {
-          msg.nack();
-          return;
-        }
 
         await QueueService.sendBForConfirmation(
-          Approved,
+          undefined,
           amount,
           transactionId,
           wallet_uuid,
@@ -810,16 +813,7 @@ RabbitMq['default']
           token_type
         } = msg.getContent();
 
-        // const confirm = await BlockchainService.confirmTransaction(hash);
-        // if (!confirm) {
-        //   msg.nack();
-        //   return;
-        // }
         await addWalletAmount(amount, uuid);
-        await update_transaction(
-          {status: 'success', is_approved: true},
-          transactionId
-        );
         let istoken = false;
         let QrCode;
         const smsToken = GenearteSMSToken();
@@ -1703,6 +1697,7 @@ RabbitMq['default']
           `Running Process For Increasing Gas for Beneficiary to Beneficiary Transfer`
         );
       });
+
     confirmBFundingBeneficiary
       .activateConsumer(async msg => {
         const {
@@ -1746,7 +1741,77 @@ RabbitMq['default']
           `Running Process For Confirming Beneficiary to Beneficiary Transfer`
         );
       });
+
+    approveOneBeneficiary
+      .activateConsumer(async msg => {
+        const {
+          campaignPrivateKey,
+          BAddress,
+          amount,
+          wallet_uuid,
+          campaign,
+          beneficiary,
+          transactionId
+        } = msg.getContent();
+        const share = amount;
+        const {Approved} = await BlockchainService.approveToSpend(
+          campaignPrivateKey,
+          BAddress,
+          amount,
+          {
+            amount,
+            transactionId,
+            wallet_uuid,
+            campaign,
+            beneficiary,
+            share
+          },
+
+          'multiple'
+        );
+        if (!Approved) {
+          msg.nack();
+          return;
+        }
+        await QueueService.confirmOneBeneficiary(
+          Approved,
+          wallet_uuid,
+          transactionId
+        );
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+
+      .then(_ => {
+        Logger.info(`Running Process For Approving Single Beneficiary`);
+      });
+    confirmOneBeneficiary
+      .activateConsumer(async msg => {
+        const {hash, uuid, transactionId} = msg.getContent();
+
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        await update_transaction(
+          {is_approved: true, transaction_hash: hash, status: 'success'},
+          transactionId
+        );
+        await updateWasFunded(uuid);
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+
+      .then(_ => {
+        Logger.info(
+          `Running Process For Confirming Approving Single Beneficiary`
+        );
+      });
   })
+
   .catch(error => {
     console.log(`RabbitMq Error: ${error}`);
   });

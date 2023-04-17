@@ -599,8 +599,7 @@ class BeneficiariesService {
               model: Wallet,
               as: 'Wallets',
               where: {
-                CampaignId,
-                was_funded: false
+                CampaignId
               }
             }
           ]
