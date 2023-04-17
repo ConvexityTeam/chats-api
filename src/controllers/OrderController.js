@@ -121,7 +121,7 @@ class OrderController {
           user
         );
         Response.setError(
-          HttpStatusCode.STATUS_OK,
+          HttpStatusCode.STATUS_BAD_REQUEST,
           'Initializing payment please try again'
         );
         Logger.error('Initializing payment please try again');
