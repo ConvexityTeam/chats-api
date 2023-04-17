@@ -162,10 +162,6 @@ class OrderController {
         return Response.send(res);
       }
 
-      const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
-      );
-
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
