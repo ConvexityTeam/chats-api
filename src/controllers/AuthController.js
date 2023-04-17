@@ -878,7 +878,10 @@ class AuthController {
       const beneficiaryWallets = await WalletService.findUserWallets(user.id);
 
       for (let wallet of beneficiaryWallets) {
-        if (wallet.CampaignId && !wallet.was_funded) {
+      const campaign = await CampaignService.getCampaignById(
+            wallet.CampaignId
+          );
+        if (wallet.CampaignId && campaign.type === 'campaign' && !wallet.was_funded) {
           const [
             campaign_token,
             beneficiary_token,
@@ -890,9 +893,7 @@ class AuthController {
             ),
             BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
           ]);
-          const campaign = await CampaignService.getCampaignById(
-            wallet.CampaignId
-          );
+          
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
