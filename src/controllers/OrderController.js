@@ -107,6 +107,9 @@ class OrderController {
         id,
         data.order.CampaignId
       );
+      const campaign = await CampaignService.getCampaignById(
+        data.order.CampaignId
+      );
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = campaign.budget / approvedBeneficiaries.length;
         await QueueService.approveOneBeneficiary(
@@ -158,10 +161,6 @@ class OrderController {
         Logger.error(`Campaign Wallet Not Found..`);
         return Response.send(res);
       }
-
-      const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
-      );
 
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
