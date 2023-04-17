@@ -861,7 +861,6 @@ RabbitMq['default']
             is_funded: true,
             amount_disbursed: budget
           }));
-
         msg.ack();
       })
       .catch(error => {

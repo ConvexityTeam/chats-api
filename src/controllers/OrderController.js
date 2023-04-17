@@ -215,7 +215,6 @@ class OrderController {
         WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
         WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
       ]);
-
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
@@ -223,6 +222,7 @@ class OrderController {
       const beneficiary_token = await BlockchainService.setUserKeypair(
         `user_${req.user.id}campaign_${data.order.CampaignId}`
       );
+      console.log(beneficiary_token, 'beneficiary_token');
       if (!beneficiaryWallet.was_funded) {
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
