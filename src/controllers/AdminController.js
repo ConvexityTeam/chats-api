@@ -437,7 +437,7 @@ setInterval(async () => {
         await SmsService.sendAdminBlockchainCredit(user.phone, balance);
         console.log("Blockchain gas is getting low");
       } else {
-        console.log("Blockchain gas is funded");
+        console.log("Blockchain gas is funded"); 
       }
     }
     
