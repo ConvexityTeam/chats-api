@@ -234,11 +234,9 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {collection} = msg.getContent();
         const newCollection = await BlockchainService.createNFTCollection(
-          collection.title,
-          DEPLOY_NFT_COLLECTION,
-          collection
+          collection.title
         );
-
+        Logger.info(`collection: ${JSON.stringify(collection)}`)
         if (!newCollection) {
           msg.nack();
           return;

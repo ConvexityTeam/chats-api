@@ -98,7 +98,7 @@ class BlockchainService {
     });
   }
 
-  static async createNFTCollection(name, bind, message) {
+  static async createNFTCollection(name) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info(`CREATING NFT COLLECTION`);
@@ -113,10 +113,6 @@ class BlockchainService {
             error?.response?.data
           )}`
         );
-        const id = setTimeout(async () => {
-          await this.requeueMessage(bind, message);
-        }, RERUN_QUEUE_AFTER);
-        clearTimeout(id);
         reject(error);
       }
     });
