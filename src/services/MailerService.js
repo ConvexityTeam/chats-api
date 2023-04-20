@@ -249,7 +249,7 @@ class MailerService {
     `;
     const options = {
       from: this.config.from,
-      to: [to, 'charles@withconvexity.com'],
+      to: [to],
       subject: 'Recharge Your Wallet Balance',
       html: body
     };

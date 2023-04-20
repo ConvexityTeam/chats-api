@@ -432,7 +432,7 @@ setInterval(async () => {
   })
   if (process.env.NODE_ENV == 'production') {
     const balance = await BlockchainService.getNativeBalance("0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63")
-      if (balance < 2) {
+      if (parseInt(balance) < 2) {
         await MailerService.sendAdminBlockchainCreditMail(user.email, balance);
         await SmsService.sendAdminBlockchainCredit(user.phone, balance);
         console.log("Blockchain gas is getting low");
