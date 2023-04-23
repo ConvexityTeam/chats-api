@@ -234,11 +234,8 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {collection} = msg.getContent();
         const newCollection = await BlockchainService.createNFTCollection(
-          collection.title,
-          DEPLOY_NFT_COLLECTION,
-          collection
+          collection.title
         );
-
         if (!newCollection) {
           msg.nack();
           return;
@@ -448,7 +445,7 @@ RabbitMq['default']
 
         let tokenIds = tokenId;
         let data = [];
-
+Logger.info('Collection Address: '+ campaign.collection_hash)
         for (let i = 1; i <= tokenIds; i++) {
           data.push(i);
         }
@@ -599,6 +596,7 @@ RabbitMq['default']
         const campaign = await CampaignService.getCampaignById(
           campaignWallet.CampaignId
         );
+              
         const confirmTransaction = await BlockchainService.confirmTransaction(
           campaign.collection_hash
         );
