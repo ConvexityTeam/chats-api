@@ -236,7 +236,6 @@ RabbitMq['default']
         const newCollection = await BlockchainService.createNFTCollection(
           collection.title
         );
-        Logger.info(`collection: ${JSON.stringify(collection)}`)
         if (!newCollection) {
           msg.nack();
           return;
@@ -446,7 +445,7 @@ RabbitMq['default']
 
         let tokenIds = tokenId;
         let data = [];
-
+Logger.info('Collection Address: '+ campaign.collection_hash)
         for (let i = 1; i <= tokenIds; i++) {
           data.push(i);
         }
@@ -597,6 +596,7 @@ RabbitMq['default']
         const campaign = await CampaignService.getCampaignById(
           campaignWallet.CampaignId
         );
+              
         const confirmTransaction = await BlockchainService.confirmTransaction(
           campaign.collection_hash
         );

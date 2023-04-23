@@ -268,6 +268,7 @@ class BlockchainService {
 
   static async confirmTransaction(hash, bind, message) {
     return new Promise(async (resolve, reject) => {
+
       try {
         Logger.info('Confirming transaction ' + hash);
         const data = await provider.getTransactionReceipt(hash);
@@ -302,7 +303,7 @@ class BlockchainService {
   static async getCollectionAddress(txReceipt) {
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Fetching Collection Address');
+        Logger.info('Fetching Collection Address: '+txReceipt);
         const topics = txReceipt.logs[1].topics;
         const data = txReceipt.logs[1].data;
         const log = Interface.parseLog({data, topics});
