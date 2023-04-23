@@ -462,6 +462,7 @@ Logger.info('Collection Address: '+ campaign.collection_hash)
             confirmTransaction
           );
 
+          Logger.info(`collection: ${collectionAddress}`)
           if (!collectionAddress) {
             msg.nack();
             return;
