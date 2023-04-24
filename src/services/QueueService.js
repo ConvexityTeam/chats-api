@@ -50,7 +50,9 @@ const {
   INCREASE_MINTING_GAS,
   INCREASE_VTRANSFER_FROM_GAS,
   INCREASE_GAS_SINGLE_BENEFICIARY,
-  APPROVE_TO_SPEND_ONE_BENEFICIARY
+  APPROVE_TO_SPEND_ONE_BENEFICIARY,
+  INCREASE_GAS_FOR_NEW_COLLECTION,
+  INCREASE_GAS_FOR_MINTING_LIMIT
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -354,7 +356,37 @@ const confirmOneBeneficiary = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const increaseGasNewCollection = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_NEW_COLLECTION,
+  {
+    durable: true
+  }
+);
+
+const increaseGasMintingLimit = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_MINTING_LIMIT,
+  {
+    durable: true
+  }
+);
 class QueueService {
+  static async increaseGasMintingLimit(collection, keys, contractIndex) {
+    const payload = {collection, keys, contractIndex};
+    increaseGasMintingLimit.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasNewCollection(collection, keys) {
+    const payload = {collection, keys};
+    increaseGasNewCollection.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async confirmOneBeneficiary(hash, uuid, transactionId) {
     const payload = {hash, uuid, transactionId};
     confirmOneBeneficiary.send(

@@ -18,7 +18,9 @@ const {
   FUN_NFT_CAMPAIGN,
   CONFIRM_AND_UPDATE_CAMPAIGN,
   DISBURSE_ITEM,
-  CONFIRM_AND_DISBURSE_ITEM
+  CONFIRM_AND_DISBURSE_ITEM,
+  INCREASE_GAS_FOR_NEW_COLLECTION,
+  INCREASE_GAS_FOR_MINTING_LIMIT
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -115,7 +117,21 @@ const loopItemBeneficiary = RabbitMq['default'].declareQueue(
     prefetch: 1
   }
 );
+const increaseGasNewCollection = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_NEW_COLLECTION,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
 
+const increaseForMintLimit = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_MINTING_LIMIT,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
 const transferMintToVendor = RabbitMq['default'].declareQueue(
   TRANSFER_MINT_TO_VENDOR,
   {
@@ -124,10 +140,7 @@ const transferMintToVendor = RabbitMq['default'].declareQueue(
   }
 );
 
-const payVendor = RabbitMq['default'].declareQueue(CONFIRM_AND_PAY_VENDOR, {
-  durable: true,
-  prefetch: 1
-});
+
 //########################...UPDATING TRANSACTIONS...##########################
 
 const update_Voucher = async (args, amount) => {
@@ -234,7 +247,7 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {collection} = msg.getContent();
         const newCollection = await BlockchainService.createNFTCollection(
-          collection.title
+          collection
         );
         if (!newCollection) {
           msg.nack();
@@ -254,6 +267,29 @@ RabbitMq['default']
         Logger.error(`Collection Consumer Error: ${JSON.stringify(error)}`);
       });
     //STEP 02: CONFIRM AND SET MINTING LIMIT
+increaseGasNewCollection.activateConsumer(async msg=> {
+  const {collection, keys} = msg.getContent()
+
+  const gasFee = await BlockchainService.reRunContract(
+          'deployNFTCollection',
+          keys
+        );
+
+        if (!gasFee) {
+          msg.nack();
+          return;
+        }
+        await update_campaign(collection.id, {
+          collection_hash: gasFee.retried
+        });
+        Logger.info('Increased gas for creating new NFT collection')
+
+}).then(() => {
+        Logger.info('Running Process For Deploying New NFT Collection');
+      })
+      .catch(error => {
+        Logger.error(`Collection Consumer Error: ${JSON.stringify(error)}`);
+      });
     confirmAndMLimit
       .activateConsumer(async msg => {
         const {collection, hash} = msg.getContent();
@@ -311,6 +347,32 @@ RabbitMq['default']
       })
       .catch(error => {
         Logger.error(`MLimit Set Consumer Error: ${JSON.stringify(error)}`);
+      });
+
+      increaseForMintLimit.activateConsumer(async msg=> {
+  const {collection, keys, contractIndex} = msg.getContent()
+
+  const gasFee = await BlockchainService.reRunContract(
+          'mintingLimit',
+          keys
+        );
+
+        if (!gasFee) {
+          msg.nack();
+          return;
+        }
+        await QueueService.confirmAndSendMintNFT(
+          gasFee.retried,
+          collection,
+          contractIndex
+        );
+        Logger.info('Increased gas for creating Minting Limit')
+
+}).then(() => {
+        Logger.info('Running Process For Deploying New NFT Collection');
+      })
+      .catch(error => {
+        Logger.error(`Collection Consumer Error: ${JSON.stringify(error)}`);
       });
     // FUND CAMPAIGN CONSUMER
     confirmAndSendMintNFT

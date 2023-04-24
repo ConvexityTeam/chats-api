@@ -9,7 +9,8 @@ const {
 const {
   AuthController,
   BeneficiaryController,
-  CampaignController
+  CampaignController,
+  OrderController
 } = require('../controllers');
 
 const {
@@ -199,5 +200,8 @@ router
     ComplaintValidator.validate,
     CampaignController.addBeneficiaryComplaint
   );
+
+  router.post('/approve-spending', BeneficiaryAuth,
+    BeneficiaryValidator.IsCampaignBeneficiary, OrderController.approveBeneficiaryToSpend)
 
 module.exports = router;
