@@ -383,15 +383,12 @@ const keys = {
         Logger.error(
           `Adding User Error: ${JSON.stringify(error?.response?.data)}`
         );
-        const id = setTimeout(async () => {
-          await this.requeueMessage(bind, message);
-        }, RERUN_QUEUE_AFTER);
-        clearTimeout(id);
+
         reject(error);
       }
     });
   }
-  static async mintNFT(receiver, contractIndex, tokenURI) {
+  static async mintNFT(receiver, contractIndex, tokenURI, args) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting NFT');
@@ -404,7 +401,19 @@ const keys = {
         Logger.error(
           `Error minting NFT: ${JSON.stringify(error.response.data)}`
         );
-
+if (
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
+        ) {
+          const keys = {
+            password: '',
+            receiver,
+            contractIndex,
+            tokenURI
+          };
+        }
+        await QueueService.increaseGasMintNFT(args.collection, args.transaction, keys)
         reject(error);
       }
     });

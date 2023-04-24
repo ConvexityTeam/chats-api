@@ -14,13 +14,12 @@ const {
   CONFIRM_AND_GENERATE_TOKEN,
   LOOP_ITEM_BENEFICIARY,
   TRANSFER_MINT_TO_VENDOR,
-  CONFIRM_AND_PAY_VENDOR,
-  FUN_NFT_CAMPAIGN,
-  CONFIRM_AND_UPDATE_CAMPAIGN,
+ INCREASE_MINTING_GAS,
   DISBURSE_ITEM,
   CONFIRM_AND_DISBURSE_ITEM,
   INCREASE_GAS_FOR_NEW_COLLECTION,
-  INCREASE_GAS_FOR_MINTING_LIMIT
+  INCREASE_GAS_FOR_MINTING_LIMIT,
+  INCREASE_GAS_MINT_NFT
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -140,7 +139,13 @@ const transferMintToVendor = RabbitMq['default'].declareQueue(
   }
 );
 
-
+const increaseGasMintNFT = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_MINT_NFT,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
 //########################...UPDATING TRANSACTIONS...##########################
 
 const update_Voucher = async (args, amount) => {
@@ -465,6 +470,7 @@ increaseGasNewCollection.activateConsumer(async msg=> {
       .catch(error => {
         Logger.error(`Minting Consumer Error: ${JSON.stringify(error)}`);
       });
+      
     mintNFT
       .activateConsumer(async msg => {
         const {
@@ -477,7 +483,8 @@ increaseGasNewCollection.activateConsumer(async msg=> {
         const createdMintingLimit = await BlockchainService.mintNFT(
           receiver,
           contractIndex,
-          tokenURI
+          tokenURI,
+          {collection, transaction}
         );
 
         if (!createdMintingLimit) {
@@ -500,14 +507,34 @@ increaseGasNewCollection.activateConsumer(async msg=> {
         Logger.error(`Minting Limit Consumer Error: ${JSON.stringify(error)}`);
       });
     //############### DISBURSE I  ############################
+increaseGasMintNFT.activateConsumer(async msg=>{
+        const {collection, transaction, keys} = msg.getContent()
+const gasFee = await BlockchainService.reRunContract(
+          'mintNFT',
+          keys
+        );
 
+        if (!gasFee) {
+          msg.nack();
+          return;
+        }
+        await QueueService.confirmAndMintNFT(
+          collection,
+          gasFee.retried,
+          transaction
+        );
+      }).then(() => {
+        Logger.info('Running Process Increasing Gas For Minting NFT');
+      })
+      .catch(error => {
+        Logger.error(`Minting Consumer Error: ${JSON.stringify(error)}`);
+      });
     disburseItem
       .activateConsumer(async msg => {
         const {campaign, beneficiaries, token_type, tokenId} = msg.getContent();
 
         let tokenIds = tokenId;
         let data = [];
-Logger.info('Collection Address: '+ campaign.collection_hash)
         for (let i = 1; i <= tokenIds; i++) {
           data.push(i);
         }
