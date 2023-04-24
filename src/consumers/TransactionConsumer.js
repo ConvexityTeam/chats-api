@@ -347,6 +347,12 @@ const addWalletAmount = async (amount, uuid) => {
   return wallet;
 };
 
+const updateQrCode= async(amount, args)=>{
+  const qrcode = await VoucherToken.findOne(args)
+  if(!qrcode) return null
+  await qrcode.update({amount: Sequelize.literal(`amount - ${amount}`),})
+  return qrcode
+}
 const updateWasFunded = async uuid => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
@@ -863,45 +869,6 @@ RabbitMq['default']
       .then(() => {
         Logger.info(`Running Process For Sending Beneficiary For Confirmation`);
       });
-    processCampaignPaystack
-      .activateConsumer(async msg => {
-        const {camp_id, camp_uuid, org_uuid, org_id, amount} = msg.getContent();
-        const campaign = await BlockchainService.setUserKeypair(
-          `campaign_${camp_id}`
-        );
-        await BlockchainService.mintToken(campaign.address, amount);
-        await Wallet.update(
-          {
-            balance: Sequelize.literal(`balance + ${amount}`)
-          },
-          {
-            where: {
-              CampaignId: camp_id
-            }
-          }
-        );
-        Campaign.update(
-          {
-            amount_disbursed: Sequelize.literal(`amount_disbursed + ${amount}`),
-            is_funded: true
-          },
-          {where: {id: camp_id}}
-        );
-        await Transaction.create({
-          amount,
-          reference: generateTransactionRef(),
-          status: 'success',
-          transaction_origin: 'wallet',
-          transaction_type: 'transfer',
-          SenderWalletId: org_uuid,
-          ReceiverWalletId: camp_uuid,
-          OrganisationId: org_id,
-          narration: 'Approve Campaign Funding'
-        });
-        msg.ack();
-      })
-      .catch(() => {});
-
     processBeneficiaryPaystackWithdrawal
       .activateConsumer(async msg => {
         const {
@@ -1142,6 +1109,8 @@ RabbitMq['default']
           {status: 'success', is_approved: true},
           transactionId
         );
+        await updateQrCode(amount, {campaignId: campaignWallet.CampaignId,
+              beneficiaryId: userWallet.UserId})
       })
       .catch(error => {
         Logger.error(`RABBITMQ ERROR: ${error}`);
@@ -1527,6 +1496,7 @@ RabbitMq['default']
         const token = await BlockchainService.balance(vendorWallet.address);
         const balance = Number(token.Balance.split(',').join(''));
         // await addWalletAmount(amount, vendorWallet.uuid);
+
         await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
           {status: 'success', is_approved: true},
@@ -1539,17 +1509,8 @@ RabbitMq['default']
             OrganisationId: campaignWallet.OrganisationId
           });
         });
-        await VoucherToken.update(
-          {
-            amount: Sequelize.literal(`amount - ${amount}`)
-          },
-          {
-            where: {
-              campaignId: campaignWallet.CampaignId,
-              beneficiaryId: beneficiaryWallet.UserId
-            }
-          }
-        );
+        await updateQrCode(amount, {campaignId: campaignWallet.CampaignId,
+              beneficiaryId: beneficiaryWallet.UserId})
         Logger.info('ORDER CONFIRMED');
         msg.ack();
       })

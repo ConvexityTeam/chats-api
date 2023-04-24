@@ -57,5 +57,9 @@ module.exports = {
   INCREASE_GAS_SINGLE_BENEFICIARY: 'increaseGasForFundingSB',
   INCREASE_REDEEM_GAS_BREDEEM: 'increaseRedeemGasForBRedeem',
   APPROVE_TO_SPEND_ONE_BENEFICIARY: 'approveOneBeneficiary',
-  CONFIRM_ONE_BENEFICIARY: 'confirmOneBeneficiary'
+  CONFIRM_ONE_BENEFICIARY: 'confirmOneBeneficiary',
+  INCREASE_GAS_FOR_NEW_COLLECTION: 'newNFTCollection',
+  INCREASE_GAS_FOR_MINTING_LIMIT: 'newNFTMintingLimit',
+  APPROVE_TO_SPEND_ONE_NFT_BENEFICIARY: 'approveOneNftBeneficiary',
+  INCREASE_GAS_MINT_NFT: 'increaseGasMintNFT'
 };

@@ -41,6 +41,48 @@ class OrderController {
       return Response.send(res);
     }
   }
+
+  static async approveBeneficiaryToSpend(req, res){
+    const data = req.body;
+    try{
+      const [campaign, approvedBeneficiaries, campaign_token, beneficiaryWallet] = Promise.all([await CampaignService.getCampaignById(
+        data.campaignId
+      ), await BeneficiariesService.getApprovedBeneficiaries(
+        data.campaignId
+      ), await BlockchainService.setUserKeypair(
+        `campaign_${data.campaignId}`
+      ), await WalletService.findUserCampaignWallet(
+        req.user.id,
+        data.campaignId
+      )])
+
+if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+        let amount = campaign.budget / approvedBeneficiaries.length;
+        await QueueService.approveOneBeneficiary(
+          campaign_token.privateKey,
+          beneficiaryWallet.address,
+          amount,
+          beneficiaryWallet.uuid,
+          campaign,
+          req.user
+        );
+      }
+      Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Initializing payment'
+        );
+        Logger.info('Initializing payment');
+        return Response.send(res);
+    }catch(error){
+Logger.error(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.',
+        error
+      );
+      return Response.send(res);
+    }
+  }
   static async comfirmsmsTOKEN(req, res) {
     const pin = req.body.pin;
     const id = req.body.beneficiaryId;
@@ -100,9 +142,7 @@ class OrderController {
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
-      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
-        data.order.CampaignId
-      );
+      
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(
         id,
         data.order.CampaignId
@@ -110,23 +150,7 @@ class OrderController {
       const campaign = await CampaignService.getCampaignById(
         data.order.CampaignId
       );
-      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
-        let amount = campaign.budget / approvedBeneficiaries.length;
-        await QueueService.approveOneBeneficiary(
-          campaign_token.privateKey,
-          beneficiaryWallet.address,
-          amount,
-          beneficiaryWallet.uuid,
-          campaign,
-          user
-        );
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Initializing payment please try again'
-        );
-        Logger.error('Initializing payment please try again');
-        return Response.send(res);
-      }
+      
 
       const token = await BlockchainService.allowance(
         campaignWallet.address,
