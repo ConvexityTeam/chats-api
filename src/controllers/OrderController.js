@@ -139,9 +139,6 @@ Logger.error(error);
       const vendorWallet = await WalletService.findSingleWallet({
         UserId: data.order.Vendor.id
       });
-      const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${data.order.CampaignId}`
-      );
       
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(
         id,
