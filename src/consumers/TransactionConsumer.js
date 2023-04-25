@@ -10,7 +10,7 @@ const {
   FUND_BENEFICIARIES,
   TRANSFER_FROM_TO_BENEFICIARY
 } = require('../constants/queues.constant');
-const {RabbitMq, Logger} = require('../libs');
+const { RabbitMq, Logger } = require('../libs');
 const {
   WalletService,
   QueueService,
@@ -113,27 +113,27 @@ const beneficiaryFundBeneficiary = RabbitMq['default'].declareQueue(
 );
 
 const update_campaign = async (id, args) => {
-  const campaign = await Campaign.findOne({where: {id}});
+  const campaign = await Campaign.findOne({ where: { id } });
   if (!campaign) return null;
   await campaign.update(args);
   return campaign;
 };
 
 const update_order = async (reference, args) => {
-  const order = await Order.findOne({where: {reference}});
+  const order = await Order.findOne({ where: { reference } });
   if (!order) return null;
   await order.update(args);
   return order;
 };
 
 const update_transaction = async (args, uuid) => {
-  const transaction = await Transaction.findOne({where: {uuid}});
+  const transaction = await Transaction.findOne({ where: { uuid } });
   if (!transaction) return null;
   await transaction.update(args);
   return transaction;
 };
 const deductWalletAmount = async (amount, uuid) => {
-  const wallet = await Wallet.findOne({where: {uuid}});
+  const wallet = await Wallet.findOne({ where: { uuid } });
   if (!wallet) return null;
   await wallet.update({
     balance: Sequelize.literal(`balance - ${amount}`),
@@ -144,7 +144,7 @@ const deductWalletAmount = async (amount, uuid) => {
 };
 
 const addWalletAmount = async (amount, uuid) => {
-  const wallet = await Wallet.findOne({where: {uuid}});
+  const wallet = await Wallet.findOne({ where: { uuid } });
   if (!wallet) return null;
   await wallet.update({
     was_funded: true,
@@ -156,7 +156,7 @@ const addWalletAmount = async (amount, uuid) => {
 };
 
 const blockchainBalance = async (balance, uuid) => {
-  const wallet = await Wallet.findOne({where: {uuid}});
+  const wallet = await Wallet.findOne({ where: { uuid } });
   if (!wallet) return null;
   await wallet.update({
     was_funded: true,
@@ -227,7 +227,7 @@ RabbitMq['default']
           if (!confirmed && minted) {
             confirm = await BlockchainService.confirmTransaction(mint.Minted);
             await update_transaction(
-              {status: 'failed', is_approved: false},
+              { status: 'failed', is_approved: false },
               transactionId
             );
 
@@ -239,7 +239,7 @@ RabbitMq['default']
 
           if (confirm && minted) {
             await update_transaction(
-              {status: 'success', is_approved: true},
+              { status: 'success', is_approved: true },
               transactionId
             );
             await wallet.update({
@@ -295,7 +295,7 @@ RabbitMq['default']
         }
 
         if (!transfer) {
-          await update_transaction({status: 'failed'}, transactionId);
+          await update_transaction({ status: 'failed' }, transactionId);
           msg.nack();
           has_run_once = false;
           return;
@@ -305,7 +305,7 @@ RabbitMq['default']
           transfer.Transfered
         );
         if (!confirm) {
-          await update_transaction({status: 'processing'}, transactionId);
+          await update_transaction({ status: 'processing' }, transactionId);
           msg.nack();
           return;
         }
@@ -395,7 +395,7 @@ RabbitMq['default']
               share
             );
           if (!approve_to_spend) {
-            await update_transaction({status: 'failed'}, transaction.uuid);
+            await update_transaction({ status: 'failed' }, transaction.uuid);
             benefitIndex = index;
             msg.nack();
             return;
@@ -405,7 +405,7 @@ RabbitMq['default']
           await addWalletAmount(share, uuid);
           // await deductWalletAmount(share, campaignWallet.uuid);
           await update_transaction(
-            {status: 'success', is_approved: true},
+            { status: 'success', is_approved: true },
             transaction.uuid
           );
           let istoken = false;
@@ -413,14 +413,14 @@ RabbitMq['default']
           const smsToken = GenearteSMSToken();
           const qrCodeData = {
             OrganisationId: campaign.OrganisationId,
-            Campaign: {id: campaign.id, title: campaign.title},
+            Campaign: { id: campaign.id, title: campaign.title },
             Beneficiary: {
               id: beneficiary.UserId,
               name:
                 beneficiary.User.first_name || beneficiary.User.last_name
                   ? beneficiary.User.first_name +
-                    ' ' +
-                    beneficiary.User.last_name
+                  ' ' +
+                  beneficiary.User.last_name
                   : ''
             },
             amount: share
@@ -431,12 +431,11 @@ RabbitMq['default']
           } else if (token_type === 'smstoken') {
             SmsService.sendOtp(
               beneficiary.User.phone,
-              `Hello ${
-                beneficiary.User.first_name || beneficiary.User.last_name
-                  ? beneficiary.User.first_name +
-                    ' ' +
-                    beneficiary.User.last_name
-                  : ''
+              `Hello ${beneficiary.User.first_name || beneficiary.User.last_name
+                ? beneficiary.User.first_name +
+                ' ' +
+                beneficiary.User.last_name
+                : ''
               } your convexity token is ${smsToken}, you are approved to spend ${share}.`
             );
             istoken = true;
@@ -471,7 +470,7 @@ RabbitMq['default']
 
     processCampaignPaystack
       .activateConsumer(async msg => {
-        const {camp_id, camp_uuid, org_uuid, org_id, amount} = msg.getContent();
+        const { camp_id, camp_uuid, org_uuid, org_id, amount } = msg.getContent();
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${camp_id}`
         );
@@ -491,7 +490,7 @@ RabbitMq['default']
             amount_disbursed: Sequelize.literal(`amount_disbursed + ${amount}`),
             is_funded: true
           },
-          {where: {id: camp_id}}
+          { where: { id: camp_id } }
         );
         await Transaction.create({
           amount,
@@ -506,7 +505,7 @@ RabbitMq['default']
         });
         msg.ack();
       })
-      .catch(() => {});
+      .catch(() => { });
 
     processBeneficiaryPaystackWithdrawal
       .activateConsumer(async msg => {
@@ -567,7 +566,7 @@ RabbitMq['default']
         await deductWalletAmount(amount, campaignWallet.uuid);
         await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction(
-          {status: 'success', is_approved: true},
+          { status: 'success', is_approved: true },
           transaction.uuid
         );
         redeem_ben_once = false;
@@ -586,7 +585,7 @@ RabbitMq['default']
 
     processVendorPaystackWithdrawal
       .activateConsumer(async msg => {
-        const {bankAccount, userWallet, amount, transaction} = msg.getContent();
+        const { bankAccount, userWallet, amount, transaction } = msg.getContent();
         const vendor = await BlockchainService.setUserKeypair(
           `user_${userWallet.UserId}`
         );
@@ -597,7 +596,7 @@ RabbitMq['default']
 
         if (!redeem) {
           msg.nack();
-          await update_transaction({status: 'failed'}, transaction.uuid);
+          await update_transaction({ status: 'failed' }, transaction.uuid);
         }
         await PaystackService.withdraw(
           'balance',
@@ -606,7 +605,7 @@ RabbitMq['default']
           'spending'
         );
         // await deductWalletAmount(amount, userWallet.uuid);
-        await update_transaction({status: 'success'}, transaction.uuid);
+        await update_transaction({ status: 'success' }, transaction.uuid);
         msg.ack();
         return;
       })
@@ -641,19 +640,19 @@ RabbitMq['default']
         );
 
         if (!approve_to_spend) {
-          await update_transaction({status: 'failed'}, transaction.uuid);
+          await update_transaction({ status: 'failed' }, transaction.uuid);
           msg.nack();
           return;
         }
         await addWalletAmount(amount_disburse, beneficiaryWallet.uuid);
         await deductWalletAmount(amount_disburse, campaignWallet.uuid);
         await update_transaction(
-          {status: 'success', is_approved: true},
+          { status: 'success', is_approved: true },
           transaction.uuid
         );
         await TaskAssignment.update(
-          {status: 'disbursed'},
-          {where: {id: task_assignment.id}}
+          { status: 'disbursed' },
+          { where: { id: task_assignment.id } }
         );
 
         msg.ack();
@@ -694,14 +693,14 @@ RabbitMq['default']
           amount
         );
         if (!transfer) {
-          await update_transaction({status: 'failed'}, transaction);
-          await update_order(order.reference, {status: 'failed'});
+          await update_transaction({ status: 'failed' }, transaction);
+          await update_order(order.reference, { status: 'failed' });
           msg.nack();
           return null;
         }
         await BlockchainService.confirmTransaction(transfer.TransferedFrom);
 
-        await update_order(order.reference, {status: 'confirmed'});
+        await update_order(order.reference, { status: 'confirmed' });
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
         const token = await BlockchainService.balance(vendorWallet.address);
@@ -709,7 +708,7 @@ RabbitMq['default']
         // await addWalletAmount(amount, vendorWallet.uuid);
         await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
-          {status: 'success', is_approved: true},
+          { status: 'success', is_approved: true },
           transaction
         );
         order.Cart.forEach(async prod => {
@@ -782,7 +781,7 @@ RabbitMq['default']
         }
 
         if (!confirm) {
-          await update_transaction({status: 'failed'}, transaction);
+          await update_transaction({ status: 'failed' }, transaction);
           msg.nack();
           Logger.error('Not confirmed');
           return null;
@@ -803,9 +802,7 @@ RabbitMq['default']
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
-      })
-
-      .then(_ => {
+      }).then(_ => {
         Logger.info(`Running Process For Beneficiary to Beneficiary Transfer`);
       });
   })
