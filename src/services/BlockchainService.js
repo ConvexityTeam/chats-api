@@ -34,7 +34,7 @@ class BlockchainService {
       })
     );
   }
-  static async reRunContract(contract= 'nft', method, args) {
+  static async reRunContract(contract = 'nft', method, args) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Increasing gas price');
@@ -117,15 +117,46 @@ class BlockchainService {
           error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
           error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
           error.response.data.message.code === 'INSUFFICIENT_FUNDS'
-        ){
-const keys = {
+        ) {
+          const keys = {
             password: '',
             contractName: collection.title,
             collectionName: collection.title,
             collectionSymbol: collection.title
           };
-          await QueueService.increaseGasNewCollection(collection, keys)
+          await QueueService.increaseGasNewCollection(collection, keys);
         }
+        reject(error);
+      }
+    });
+  }
+
+  static async createEscrowCollection(collection) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info(`CREATING ESCROW`);
+        const {data} = await Axios.post(
+          `${tokenConfig.baseURL}/txn/create-escrow/${collection.title}`
+        );
+        Logger.info(`CREATED ESCROW`);
+        resolve(data);
+      } catch (error) {
+        Logger.error(
+          `ERROR CREATING ESCROW: ${JSON.stringify(error?.response?.data)}`
+        );
+        // if (
+        //   error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+        //   error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+        //   error.response.data.message.code === 'INSUFFICIENT_FUNDS'
+        // ) {
+        //   const keys = {
+        //     password: '',
+        //     contractName: collection.title,
+        //     collectionName: collection.title,
+        //     collectionSymbol: collection.title
+        //   };
+        //   await QueueService.increaseGasNewCollection(collection, keys);
+        // }
         reject(error);
       }
     });
@@ -147,15 +178,15 @@ const keys = {
           )}`
         );
         const keys = {
-            password: '',
-            limit
-          };
+          password: '',
+          limit
+        };
         if (
           error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
           error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
           error.response.data.message.code === 'INSUFFICIENT_FUNDS'
-        ){
-          await QueueService.increaseGasMintingLimit(collection, keys, index)
+        ) {
+          await QueueService.increaseGasMintingLimit(collection, keys, index);
         }
         reject(error);
       }
@@ -292,7 +323,6 @@ const keys = {
 
   static async confirmTransaction(hash, bind, message) {
     return new Promise(async (resolve, reject) => {
-
       try {
         Logger.info('Confirming transaction ' + hash);
         const data = await provider.getTransactionReceipt(hash);
@@ -327,7 +357,7 @@ const keys = {
   static async getCollectionAddress(txReceipt) {
     return new Promise(async (resolve, reject) => {
       try {
-        Logger.info('Fetching Collection Address: '+txReceipt);
+        Logger.info('Fetching Collection Address: ' + txReceipt);
         const topics = txReceipt.logs[1].topics;
         const data = txReceipt.logs[1].data;
         const log = Interface.parseLog({data, topics});
@@ -401,7 +431,7 @@ const keys = {
         Logger.error(
           `Error minting NFT: ${JSON.stringify(error.response.data)}`
         );
-if (
+        if (
           error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
           error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
           error.response.data.message.code === 'INSUFFICIENT_FUNDS'
@@ -413,7 +443,11 @@ if (
             tokenURI
           };
         }
-        await QueueService.increaseGasMintNFT(args.collection, args.transaction, keys)
+        await QueueService.increaseGasMintNFT(
+          args.collection,
+          args.transaction,
+          keys
+        );
         reject(error);
       }
     });

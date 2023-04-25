@@ -4,7 +4,8 @@ const {
   FieldAgentAuth,
   NgoSubAdminAuth,
   Auth,
-  FieldAgentBeneficiaryAuth
+  FieldAgentBeneficiaryAuth,
+  VendorBeneficiaryAuth
 } = require('../middleware');
 const {
   AuthController,
@@ -201,7 +202,11 @@ router
     CampaignController.addBeneficiaryComplaint
   );
 
-  router.post('/approve-spending', BeneficiaryAuth,
-    BeneficiaryValidator.IsCampaignBeneficiary, OrderController.approveBeneficiaryToSpend)
+router.post(
+  '/approve-spending',
+  VendorBeneficiaryAuth,
+  BeneficiaryValidator.IsCampaignBeneficiary,
+  OrderController.approveBeneficiaryToSpend
+);
 
 module.exports = router;

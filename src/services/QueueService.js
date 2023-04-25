@@ -53,7 +53,8 @@ const {
   APPROVE_TO_SPEND_ONE_BENEFICIARY,
   INCREASE_GAS_FOR_NEW_COLLECTION,
   INCREASE_GAS_FOR_MINTING_LIMIT,
-  INCREASE_GAS_MINT_NFT
+  INCREASE_GAS_MINT_NFT,
+  ESCROW_HASH
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -145,6 +146,10 @@ const deployNewCollection = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const deployEscrowCollection = RabbitMq['default'].declareQueue(ESCROW_HASH, {
+  durable: true
+});
 
 const nftMintingLimit = RabbitMq['default'].declareQueue(NFT_MINTING_LIMIT, {
   durable: true
@@ -364,7 +369,7 @@ const increaseGasNewCollection = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
-INCREASE_MINTING_GAS
+INCREASE_MINTING_GAS;
 const increaseGasMintingLimit = RabbitMq['default'].declareQueue(
   INCREASE_GAS_FOR_MINTING_LIMIT,
   {
@@ -380,7 +385,7 @@ const increaseGasMintNFT = RabbitMq['default'].declareQueue(
 );
 class QueueService {
   static async increaseGasMintNFT(collection, transaction, keys) {
-    const payload = {collection,transaction, keys};
+    const payload = {collection, transaction, keys};
     increaseGasMintNFT.send(
       new Message(payload, {
         contentType: 'application/json'
@@ -816,6 +821,14 @@ class QueueService {
   static async createCollection(collection) {
     const payload = {collection};
     deployNewCollection.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async createEscrow(collection) {
+    const payload = {collection};
+    deployEscrowCollection.send(
       new Message(payload, {
         contentType: 'application/json'
       })
