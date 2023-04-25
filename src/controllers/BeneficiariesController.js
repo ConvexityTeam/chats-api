@@ -83,7 +83,7 @@ class BeneficiariesController {
                 location: location,
                 address: address,
                 referal_id: '',
-                pin: '',
+                pin: '0000',//default pin set to zero, pin should be encrypted
                 last_login: new Date(),
                 right_fingers: right_fingers,
                 left_fingers: left_fingers,
