@@ -1,6 +1,6 @@
 const {Response, Logger} = require('../libs');
 const moment = require('moment');
-const {HttpStatusCode, compareHash} = require('../utils');
+const {HttpStatusCode, compareHash, AclRoles} = require('../utils');
 
 const {ProductBeneficiary} = require('../models');
 
@@ -42,21 +42,30 @@ class OrderController {
     }
   }
 
-  static async approveBeneficiaryToSpend(req, res){
+  static async approveBeneficiaryToSpend(req, res) {
     const data = req.body;
-    try{
-      const [campaign, approvedBeneficiaries, campaign_token, beneficiaryWallet] = Promise.all([await CampaignService.getCampaignById(
-        data.campaignId
-      ), await BeneficiariesService.getApprovedBeneficiaries(
-        data.campaignId
-      ), await BlockchainService.setUserKeypair(
-        `campaign_${data.campaignId}`
-      ), await WalletService.findUserCampaignWallet(
-        req.user.id,
-        data.campaignId
-      )])
-
-if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+    try {
+      const [
+        campaign,
+        approvedBeneficiaries,
+        campaign_token,
+        beneficiaryWallet,
+        user
+      ] = await Promise.all([
+        CampaignService.getCampaignById(data.campaign_id),
+        BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
+        BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
+        WalletService.findUserCampaignWallet(
+          data.beneficiary_id,
+          data.campaign_id
+        ),
+        UserService.findSingleUser({
+          RoleId: AclRoles.Beneficiary,
+          id: data.beneficiary_id
+        })
+      ]);
+      console.log(beneficiaryWallet);
+      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = campaign.budget / approvedBeneficiaries.length;
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
@@ -64,20 +73,33 @@ if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
           amount,
           beneficiaryWallet.uuid,
           campaign,
-          req.user
+          user
         );
       }
-      Response.setSuccess(
-          HttpStatusCode.STATUS_OK,
-          'Initializing payment'
+      if (!user) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Beneficiary not found'
         );
-        Logger.info('Initializing payment');
+        Logger.error('Beneficiary not found');
         return Response.send(res);
-    }catch(error){
-Logger.error(error);
+      }
+      if (!campaign) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+        Logger.error('Campaign not found');
+        return Response.send(res);
+      }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Initializing payment');
+      Logger.info('Initializing payment');
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.',
+        'Internal server error. Please try again later.' + error,
         error
       );
       return Response.send(res);
@@ -139,7 +161,7 @@ Logger.error(error);
       const vendorWallet = await WalletService.findSingleWallet({
         UserId: data.order.Vendor.id
       });
-      
+
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(
         id,
         data.order.CampaignId
@@ -147,7 +169,6 @@ Logger.error(error);
       const campaign = await CampaignService.getCampaignById(
         data.order.CampaignId
       );
-      
 
       const token = await BlockchainService.allowance(
         campaignWallet.address,

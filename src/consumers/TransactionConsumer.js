@@ -353,8 +353,8 @@ const addWalletAmount = async (amount, uuid) => {
   return wallet;
 };
 
-const updateQrCode = async (amount, args) => {
-  const qrcode = await VoucherToken.findOne(args);
+const updateQrCode = async (amount, where) => {
+  const qrcode = await VoucherToken.findOne({where});
   if (!qrcode) return null;
   await qrcode.update({amount: Sequelize.literal(`amount - ${amount}`)});
   return qrcode;
