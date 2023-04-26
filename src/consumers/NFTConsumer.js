@@ -14,12 +14,13 @@ const {
   CONFIRM_AND_GENERATE_TOKEN,
   LOOP_ITEM_BENEFICIARY,
   TRANSFER_MINT_TO_VENDOR,
- INCREASE_MINTING_GAS,
+  INCREASE_MINTING_GAS,
   DISBURSE_ITEM,
   CONFIRM_AND_DISBURSE_ITEM,
   INCREASE_GAS_FOR_NEW_COLLECTION,
   INCREASE_GAS_FOR_MINTING_LIMIT,
-  INCREASE_GAS_MINT_NFT
+  INCREASE_GAS_MINT_NFT,
+  APPROVE_NFT_SPENDING
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -93,8 +94,8 @@ const disburseItem = RabbitMq['default'].declareQueue(DISBURSE_ITEM, {
   prefetch: 1
 });
 
-const confirmAndDisburseItem = RabbitMq['default'].declareQueue(
-  CONFIRM_AND_DISBURSE_ITEM,
+const approveNFTSpending = RabbitMq['default'].declareQueue(
+  APPROVE_NFT_SPENDING,
   {
     durable: true,
     prefetch: 1
@@ -272,10 +273,11 @@ RabbitMq['default']
         Logger.error(`Collection Consumer Error: ${JSON.stringify(error)}`);
       });
     //STEP 02: CONFIRM AND SET MINTING LIMIT
-increaseGasNewCollection.activateConsumer(async msg=> {
-  const {collection, keys} = msg.getContent()
+    increaseGasNewCollection
+      .activateConsumer(async msg => {
+        const {collection, keys} = msg.getContent();
 
-  const gasFee = await BlockchainService.reRunContract(
+        const gasFee = await BlockchainService.reRunContract(
           'deployNFTCollection',
           keys
         );
@@ -287,9 +289,9 @@ increaseGasNewCollection.activateConsumer(async msg=> {
         await update_campaign(collection.id, {
           collection_hash: gasFee.retried
         });
-        Logger.info('Increased gas for creating new NFT collection')
-
-}).then(() => {
+        Logger.info('Increased gas for creating new NFT collection');
+      })
+      .then(() => {
         Logger.info('Running Process For Deploying New NFT Collection');
       })
       .catch(error => {
@@ -354,10 +356,11 @@ increaseGasNewCollection.activateConsumer(async msg=> {
         Logger.error(`MLimit Set Consumer Error: ${JSON.stringify(error)}`);
       });
 
-      increaseForMintLimit.activateConsumer(async msg=> {
-  const {collection, keys, contractIndex} = msg.getContent()
+    increaseForMintLimit
+      .activateConsumer(async msg => {
+        const {collection, keys, contractIndex} = msg.getContent();
 
-  const gasFee = await BlockchainService.reRunContract(
+        const gasFee = await BlockchainService.reRunContract(
           'mintingLimit',
           keys
         );
@@ -371,9 +374,9 @@ increaseGasNewCollection.activateConsumer(async msg=> {
           collection,
           contractIndex
         );
-        Logger.info('Increased gas for creating Minting Limit')
-
-}).then(() => {
+        Logger.info('Increased gas for creating Minting Limit');
+      })
+      .then(() => {
         Logger.info('Running Process For Deploying New NFT Collection');
       })
       .catch(error => {
@@ -470,7 +473,7 @@ increaseGasNewCollection.activateConsumer(async msg=> {
       .catch(error => {
         Logger.error(`Minting Consumer Error: ${JSON.stringify(error)}`);
       });
-      
+
     mintNFT
       .activateConsumer(async msg => {
         const {
@@ -507,12 +510,10 @@ increaseGasNewCollection.activateConsumer(async msg=> {
         Logger.error(`Minting Limit Consumer Error: ${JSON.stringify(error)}`);
       });
     //############### DISBURSE I  ############################
-increaseGasMintNFT.activateConsumer(async msg=>{
-        const {collection, transaction, keys} = msg.getContent()
-const gasFee = await BlockchainService.reRunContract(
-          'mintNFT',
-          keys
-        );
+    increaseGasMintNFT
+      .activateConsumer(async msg => {
+        const {collection, transaction, keys} = msg.getContent();
+        const gasFee = await BlockchainService.reRunContract('mintNFT', keys);
 
         if (!gasFee) {
           msg.nack();
@@ -523,7 +524,8 @@ const gasFee = await BlockchainService.reRunContract(
           gasFee.retried,
           transaction
         );
-      }).then(() => {
+      })
+      .then(() => {
         Logger.info('Running Process Increasing Gas For Minting NFT');
       })
       .catch(error => {
@@ -551,17 +553,12 @@ const gasFee = await BlockchainService.reRunContract(
             confirmTransaction
           );
 
-          Logger.info(`collection: ${collectionAddress}`)
+          Logger.info(`collection: ${collectionAddress}`);
           if (!collectionAddress) {
             msg.nack();
             return;
           }
-          const beneficiaryAddress = await BlockchainService.setUserKeypair(
-            `user_${beneficiary.UserId}campaign_${beneficiary.CampaignId}`
-          );
-          const campaignAddress = await BlockchainService.setUserKeypair(
-            `campaign_${beneficiary.CampaignId}`
-          );
+
           const length = campaign.minting_limit / beneficiaries.length;
           const array = divideNArray(data, length);
           let split = array[index];
@@ -571,15 +568,6 @@ const gasFee = await BlockchainService.reRunContract(
           let wallet = beneficiary.User.Wallets[0];
           let uuid = wallet.uuid;
           let arr = Object.values(split);
-          for (let i = 0; i < arr.length; i++) {
-            await BlockchainService.nftTransfer(
-              campaignAddress.privateKey,
-              campaignAddress.address,
-              beneficiaryAddress.address,
-              arr[i],
-              collectionAddress
-            );
-          }
           const transaction = await create_transaction(
             campaign.minting_limit,
             OrgWallet.uuid,
@@ -658,10 +646,37 @@ const gasFee = await BlockchainService.reRunContract(
       .catch(error => {
         Logger.error(`Disburse Item Consumer Error: ${JSON.stringify(error)}`);
       });
-    confirmAndDisburseItem
-      .activateConsumer(async msg => {})
+    approveNFTSpending
+      .activateConsumer(async msg => {
+        const {beneficiaryId, campaignId, collectionAddress} = msg.getContent();
+
+        const [beneficiaryAddress, campaignAddress, wallet] = await Promise.all(
+          [
+            BlockchainService.setUserKeypair(
+              `user_${beneficiaryId}campaign_${campaignId}`
+            ),
+            BlockchainService.setUserKeypair(`campaign_${campaignId}`),
+            WalletService.findSingleWallet({
+              CampaignId: campaignId,
+              UserId: beneficiaryId
+            })
+          ]
+        );
+        Logger.info(JSON.stringify(wallet), 'wallet');
+        for (let i = 0; i < wallet.tokenId.length; i++) {
+          await BlockchainService.nftTransfer(
+            campaignAddress.privateKey,
+            campaignAddress.address,
+            beneficiaryAddress.address,
+            wallet.tokenId[i],
+            collectionAddress
+          );
+        }
+        Logger.info(`Approve Beneficiary NFT Spending`);
+        msg.nack();
+      })
       .then(() => {
-        Logger.info('Running Process For Confirming Disbursing Item');
+        Logger.info('Running Process For Approving NFT Spending');
       })
       .catch(error => {
         Logger.error(`Disburse Item Consumer Error: ${JSON.stringify(error)}`);
@@ -686,7 +701,7 @@ const gasFee = await BlockchainService.reRunContract(
         const campaign = await CampaignService.getCampaignById(
           campaignWallet.CampaignId
         );
-              
+
         const confirmTransaction = await BlockchainService.confirmTransaction(
           campaign.collection_hash
         );

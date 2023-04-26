@@ -62,5 +62,6 @@ module.exports = {
   INCREASE_GAS_FOR_MINTING_LIMIT: 'newNFTMintingLimit',
   APPROVE_TO_SPEND_ONE_NFT_BENEFICIARY: 'approveOneNftBeneficiary',
   INCREASE_GAS_MINT_NFT: 'increaseGasMintNFT',
-  ESCROW_HASH: 'escrowHash'
+  ESCROW_HASH: 'escrowHash',
+  APPROVE_NFT_SPENDING: 'approveNFTSpending'
 };
