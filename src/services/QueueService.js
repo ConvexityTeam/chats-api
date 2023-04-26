@@ -54,7 +54,9 @@ const {
   INCREASE_GAS_FOR_NEW_COLLECTION,
   INCREASE_GAS_FOR_MINTING_LIMIT,
   INCREASE_GAS_MINT_NFT,
-  ESCROW_HASH
+  ESCROW_HASH,
+  APPROVE_NFT_SPENDING,
+  INCREASE_GAS_APPROVE_SPENDING
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -369,7 +371,7 @@ const increaseGasNewCollection = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
-INCREASE_MINTING_GAS;
+
 const increaseGasMintingLimit = RabbitMq['default'].declareQueue(
   INCREASE_GAS_FOR_MINTING_LIMIT,
   {
@@ -383,7 +385,42 @@ const increaseGasMintNFT = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const approveNFTSpending = RabbitMq['default'].declareQueue(
+  APPROVE_NFT_SPENDING,
+  {
+    durable: true
+  }
+);
+
+const increaseGasApproveSpending = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_APPROVE_SPENDING,
+  {
+    durable: true
+  }
+);
 class QueueService {
+  static async increaseGasApproveSpending(
+    campaignPrivateKey,
+    campaignAddress,
+    beneficiaryAddress,
+    tokenId,
+    collectionAddress
+  ) {
+    const payload = {
+      campaignPrivateKey,
+      campaignAddress,
+      beneficiaryAddress,
+      tokenId,
+      collectionAddress
+    };
+    increaseGasApproveSpending.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
   static async increaseGasMintNFT(collection, transaction, keys) {
     const payload = {collection, transaction, keys};
     increaseGasMintNFT.send(
@@ -412,6 +449,32 @@ class QueueService {
   static async confirmOneBeneficiary(hash, uuid, transactionId) {
     const payload = {hash, uuid, transactionId};
     confirmOneBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async approveNFTSpending(beneficiaryId, campaignId, campaign) {
+    const transaction = await Transaction.create({
+      reference: generateTransactionRef(),
+      BeneficiaryId: beneficiaryId,
+      CampaignId: campaignId,
+      amount,
+      status: 'processing',
+      is_approved: false,
+      OrganisationId: campaign.OrganisationId,
+      transaction_type: 'approval',
+      narration: 'Approve beneficiary spending',
+      transaction_origin: 'wallet'
+    });
+    const payload = {
+      beneficiaryId,
+      campaignId,
+      transactionId: transaction.uuid
+    };
+
+    approveNFTSpending.send(
       new Message(payload, {
         contentType: 'application/json'
       })

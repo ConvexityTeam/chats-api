@@ -17,6 +17,7 @@ const {
   INCREASE_MINTING_GAS,
   DISBURSE_ITEM,
   CONFIRM_AND_DISBURSE_ITEM,
+  INCREASE_GAS_APPROVE_SPENDING,
   INCREASE_GAS_FOR_NEW_COLLECTION,
   INCREASE_GAS_FOR_MINTING_LIMIT,
   INCREASE_GAS_MINT_NFT,
@@ -142,6 +143,14 @@ const transferMintToVendor = RabbitMq['default'].declareQueue(
 
 const increaseGasMintNFT = RabbitMq['default'].declareQueue(
   INCREASE_GAS_MINT_NFT,
+  {
+    durable: true,
+    prefetch: 1
+  }
+);
+
+const increaseGasApprove = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_APPROVE_SPENDING,
   {
     durable: true,
     prefetch: 1
@@ -552,8 +561,6 @@ RabbitMq['default']
           const collectionAddress = await BlockchainService.getCollectionAddress(
             confirmTransaction
           );
-
-          Logger.info(`collection: ${collectionAddress}`);
           if (!collectionAddress) {
             msg.nack();
             return;
@@ -648,20 +655,36 @@ RabbitMq['default']
       });
     approveNFTSpending
       .activateConsumer(async msg => {
-        const {beneficiaryId, campaignId, collectionAddress} = msg.getContent();
+        const {beneficiaryId, campaignId} = msg.getContent();
 
-        const [beneficiaryAddress, campaignAddress, wallet] = await Promise.all(
-          [
-            BlockchainService.setUserKeypair(
-              `user_${beneficiaryId}campaign_${campaignId}`
-            ),
-            BlockchainService.setUserKeypair(`campaign_${campaignId}`),
-            WalletService.findSingleWallet({
-              CampaignId: campaignId,
-              UserId: beneficiaryId
-            })
-          ]
+        const [
+          beneficiaryAddress,
+          campaignAddress,
+          wallet,
+          campaign
+        ] = await Promise.all([
+          BlockchainService.setUserKeypair(
+            `user_${beneficiaryId}campaign_${campaignId}`
+          ),
+          BlockchainService.setUserKeypair(`campaign_${campaignId}`),
+          WalletService.findSingleWallet({
+            CampaignId: campaignId,
+            UserId: beneficiaryId
+          }),
+          CampaignService.getCampaignById(campaignId)
+        ]);
+        const confirmTransaction = await BlockchainService.confirmTransaction(
+          campaign.collection_hash
         );
+
+        if (!confirmTransaction) {
+          msg.nack();
+          return;
+        }
+        const collectionAddress = await BlockchainService.getCollectionAddress(
+          confirmTransaction
+        );
+
         Logger.info(JSON.stringify(wallet), 'wallet');
         for (let i = 0; i < wallet.tokenId.length; i++) {
           await BlockchainService.nftTransfer(
@@ -681,6 +704,28 @@ RabbitMq['default']
       .catch(error => {
         Logger.error(`Disburse Item Consumer Error: ${JSON.stringify(error)}`);
       });
+    increaseGasApprove.activateConsumer(async msg => {
+      const {
+        campaignPrivateKey,
+        campaignAddress,
+        beneficiaryAddress,
+        tokenId,
+        collectionAddress
+      } = msg.getContent();
+
+      const gasFee = await BlockchainService.reRunContract('NFTtransferFrom_', {
+        password: campaignPrivateKey,
+        tokenId,
+        sender: campaignAddress,
+        receiver: beneficiaryAddress,
+        contractIndex
+      });
+
+      if (!gasFee) {
+        msg.nack();
+        return;
+      }
+    });
     transferMintToVendor
       .activateConsumer(async msg => {
         const {

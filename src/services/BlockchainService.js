@@ -76,6 +76,19 @@ class BlockchainService {
         Logger.error(
           `ERROR TRANSFERRING NFT: ${JSON.stringify(error?.response?.data)}`
         );
+        if (
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
+        ) {
+          await QueueService.increaseGasApproveSpending(
+            senderPrivateKey,
+            sender,
+            receiver,
+            tokenId,
+            collectionAddress
+          );
+        }
         reject(error);
       }
     });

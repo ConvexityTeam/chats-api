@@ -64,7 +64,6 @@ class OrderController {
           id: data.beneficiary_id
         })
       ]);
-      console.log(beneficiaryWallet);
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = campaign.budget / approvedBeneficiaries.length;
         await QueueService.approveOneBeneficiary(
@@ -76,6 +75,15 @@ class OrderController {
           user
         );
       }
+
+      if (campaign.type === 'item' && !beneficiaryWallet.was_funded) {
+        await QueueService.approveNFTSpending(
+          data.beneficiary_id,
+          data.campaign_id,
+          campaign
+        );
+      }
+
       if (!user) {
         Response.errors(
           HttpStatusCode.STATUS_BAD_REQUEST,
