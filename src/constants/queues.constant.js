@@ -63,5 +63,6 @@ module.exports = {
   APPROVE_TO_SPEND_ONE_NFT_BENEFICIARY: 'approveOneNftBeneficiary',
   INCREASE_GAS_MINT_NFT: 'increaseGasMintNFT',
   ESCROW_HASH: 'escrowHash',
-  APPROVE_NFT_SPENDING: 'approveNFTSpending'
+  APPROVE_NFT_SPENDING: 'approveNFTSpending',
+  INCREASE_GAS_APPROVE_SPENDING: 'increaseGasApproveSpending'
 };
