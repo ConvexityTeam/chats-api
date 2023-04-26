@@ -718,7 +718,7 @@ RabbitMq['default']
         tokenId,
         sender: campaignAddress,
         receiver: beneficiaryAddress,
-        contractIndex
+        contractIndex: collectionAddress
       });
 
       if (!gasFee) {
