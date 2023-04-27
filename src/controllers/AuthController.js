@@ -424,7 +424,7 @@ class AuthController {
                 if (err) {
                   console.log('Error Ocurred hashing');
                 }
-                const encryptedPin = createHash(fields.pin);
+                const encryptedPin = createHash('0000');//createHash(fields.pin);//set pin to zero 0
                 bcrypt.hash(fields.password, salt).then(async hash => {
                   const encryptedPassword = hash;
                   await db.User.create({
