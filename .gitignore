@@ -106,5 +106,3 @@ dist
 
 # Upload temp folder
 temp
-# collection ignores
-"CHATS Collection.json"
