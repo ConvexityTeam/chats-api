@@ -715,10 +715,10 @@ RabbitMq['default']
 
       const gasFee = await BlockchainService.reRunContract('NFTtransferFrom_', {
         password: campaignPrivateKey,
-        tokenId,
         sender: campaignAddress,
         receiver: beneficiaryAddress,
-        contractIndex: collectionAddress
+        contractIndex: collectionAddress,
+        tokenId
       });
 
       if (!gasFee) {
