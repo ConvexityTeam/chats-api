@@ -97,13 +97,6 @@ router.get(
   BeneficiaryController.beneficiariesTotalBalance
 );
 
-
-router.get(
-  '/all-balances',
-  NgoSubAdminAuth,
-  BeneficiaryController.beneficiariesAllBalances
-);
-
 router.get('/', BeneficiaryController.getAllUsers);
 router.delete('/:id', BeneficiaryController.deleteUser);
 router.post('/add-account', BeneficiaryController.addAccount);
