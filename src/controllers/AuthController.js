@@ -363,7 +363,7 @@ class AuthController {
         dob: 'required|date|before:today',
         nfc: 'string',
         campaign: 'required|numeric',
-        pin: 'size:4|required'
+       // pin: 'size:4|required' //disabled for now
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
