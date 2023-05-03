@@ -275,14 +275,12 @@ class CampaignService {
           attributes: walletConst.walletExcludes
         }
       ],
-      group: [
-        'Campaign.id',
-        'Campaign.OrganisationId',
-        'Campaign.formId',
-        'Beneficiaries.id',
-        'Jobs.id',
-        'BeneficiariesWallets.uuid'
-      ]
+      // group: [
+      //   'Campaign.id',
+      //   'Beneficiaries.id',
+      //   'Jobs.id',
+      //   'BeneficiariesWallets.uuid'
+      // ]
     });
   }
 
