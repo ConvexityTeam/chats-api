@@ -278,6 +278,7 @@ class CampaignService {
       group: [
         'Campaign.id',
         'Campaign.OrganisationId',
+        'Campaign.formId',
         'Beneficiaries.id',
         'Jobs.id',
         'BeneficiariesWallets.uuid'
