@@ -424,7 +424,7 @@ class AuthController {
                 if (err) {
                   console.log('Error Ocurred hashing');
                 }
-                const encryptedPin = createHash('0000');//createHash(fields.pin);//set pin to zero 0
+                const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
                 bcrypt.hash(fields.password, salt).then(async hash => {
                   const encryptedPassword = hash;
                   await db.User.create({
@@ -1105,7 +1105,7 @@ class AuthController {
     try {
       const rules = {
         'inviteeEmail*': 'email|required',
-        link: 'required|url'
+        link: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
