@@ -27,9 +27,11 @@ const {
   OrganisationService,
   BeneficiaryService,
   VendorService,
+  BlockchainService,
   ProductService,
   WalletService,
   ZohoService,
+  AwsService,
   TransactionService
 } = require('../services');
 const AwsUploadService = require('../services/AwsUploadService');
@@ -196,7 +198,8 @@ class OrganisationController {
           createdAt: campaign.createdAt,
           updatedAt: campaign.updatedAt,
           beneficiaries_count: beneficiaries_count,
-          Jobs: campaign.Jobs
+          Jobs: campaign.Jobs,
+          ck8: (await AwsUploadService.getMnemonic(campaign.id)) || null
         });
       }
       Response.setSuccess(
@@ -355,13 +358,15 @@ class OrganisationController {
 
       for (let data of campaigns) {
         if (new Date(data.end_date) < new Date())
-          data.update({status: 'completed'});
+          data.update({status: 'ended'});
         for (let task of data.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'}
           });
           assignmentTask.push(assignment);
         }
+
+        data.dataValues.ck8 = (await AwsService.getMnemonic(data.id)) || null;
 
         (data.dataValues.beneficiaries_count = data.Beneficiaries.length),
           (data.dataValues.task_count = data.Jobs.length);
@@ -391,7 +396,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -646,8 +651,23 @@ class OrganisationController {
     } catch (error) {}
   }
 
+  static createItemCampaign(req, res) {
+    try {
+    } catch (error) {}
+  }
+
   static async createCampaign(req, res) {
     try {
+      const rules = {
+        formId: 'numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
       const data = SanitizeObject(req.body);
       const spending = data.type == 'campaign' ? 'vendor' : 'all';
       const OrganisationId = req.organisation.id;
@@ -663,18 +683,23 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+      data.is_processing = false;
       CampaignService.addCampaign({
         ...data,
         spending,
         OrganisationId,
         status: 'pending'
       })
-        .then(campaign => {
-          QueueService.createWallet(
+        .then(async campaign => {
+          await QueueService.createWallet(
             OrganisationId,
             'organisation',
             campaign.id
           );
+          campaign.type === 'item'
+            ? await QueueService.createCollection(campaign)
+            : await QueueService.createEscrow(campaign);
+          AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',
@@ -688,7 +713,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Campaign creation failed. Please retry.'
+        'Campaign creation failed. Please retry.' + error
       );
       return Response.send(res);
     }
@@ -707,11 +732,15 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+
       const products = await Promise.all(
         body.map(async _body => {
-          const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
+          const data = SanitizeObject(
+            _body,
+            ['type', 'tag', 'cost'] || ['type', 'tag']
+          );
           data.product_ref = generateProductRef();
-
+          data.cost = data.type === 'item' ? 1 : data.cost;
           const createdProduct = await db.Product.create({
             ...data,
             CampaignId: campaign.id
@@ -978,6 +1007,15 @@ class OrganisationController {
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId
       );
+
+      beneficiaries.forEach(beneficiary => {
+        beneficiary.User.Answers.forEach(answer => {
+          if (answer.campaignId == CampaignId) {
+            beneficiary.dataValues.User.dataValues.Answers = [answer];
+          }
+        });
+      });
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
@@ -987,7 +1025,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.' + error
       );
       return Response.send(res);
     }
@@ -1240,10 +1278,55 @@ class OrganisationController {
   static async getOrganisationBeneficiaryDetails(req, res) {
     try {
       const id = req.params.beneficiary_id;
-      const beneficiary = await BeneficiaryService.organisationBeneficiaryDetails(
-        id,
-        req.organisation.id
-      );
+      let total_wallet_spent = 0;
+      let total_wallet_balance = 0;
+      let total_wallet_received = 0;
+
+      const [beneficiary, transaction] = await Promise.all([
+        BeneficiaryService.organisationBeneficiaryDetails(
+          id,
+          req.organisation.id
+        ),
+        TransactionService.findTransactions({
+          BeneficiaryId: id,
+          is_approved: true
+        })
+      ]);
+
+      for (let tran of transaction) {
+        if (
+          tran.narration === 'Vendor Order' ||
+          tran.transaction_type === 'withdrawal'
+        ) {
+          total_wallet_spent += tran.amount;
+        }
+        if (
+          tran.BeneficiaryId == id &&
+          tran.OrganisationId == req.organisation.id
+        ) {
+          total_wallet_received += tran.amount;
+        }
+      }
+      for (let campaign of beneficiary.Campaigns) {
+        for (let wallet of campaign.BeneficiariesWallets) {
+          if (wallet.CampaignId && wallet.address) {
+            const campaignWallet = await WalletService.findUserCampaignWallet(
+              wallet.UserId,
+              wallet.CampaignId
+            );
+            const token = await BlockchainService.allowance(
+              campaignWallet.address,
+              wallet.address
+            );
+            const balance = Number(token.Allowed.split(',').join(''));
+            total_wallet_balance += balance;
+          }
+        }
+      }
+      beneficiary.dataValues.total_wallet_spent = total_wallet_spent;
+      beneficiary.dataValues.total_wallet_balance = total_wallet_balance;
+      beneficiary.dataValues.total_wallet_received = total_wallet_received;
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiary Details.',
@@ -1253,7 +1336,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.'
+        'Server Error: Unexpected error occured.' + error
       );
       return Response.send(res);
     }
@@ -1262,18 +1345,52 @@ class OrganisationController {
   static async approvedAllbeneficiaries(req, res) {
     try {
       const campaign = req.campaign;
+      const ids = req.body.ids;
 
       if (campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campagin Fund Already Disbursed.'
+          'Campaign Fund Already Disbursed.'
         );
         return Response.send(res);
       }
       const [
         approvals
-      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(campaign.id);
+      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(
+        campaign.id,
+        ids
+      );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
+        approvals
+      });
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Please retry.' + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async rejectAllbeneficiaries(req, res) {
+    try {
+      const campaign = req.campaign;
+      const ids = req.body.ids;
+
+      if (campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign Fund Already Disbursed.'
+        );
+        return Response.send(res);
+      }
+      const [
+        approvals
+      ] = await BeneficiaryService.rejectAllCampaignBeneficiaries(
+        campaign.id,
+        ids
+      );
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries rejected!', {
         approvals
       });
       return Response.send(res);
@@ -2144,6 +2261,7 @@ class OrganisationController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       }
+      data.departmentId = '661286000000006907';
       const createdTicket = await ZohoService.createTicket(data);
       //const generate = await ZohoService.generatingToken()
       Response.setSuccess(201, 'Ticket Created Successfully', createdTicket);

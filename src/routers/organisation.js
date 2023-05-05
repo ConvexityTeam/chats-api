@@ -116,7 +116,7 @@ router.get(
 router
   .route('/:organisation_id/wallets/transactions/:reference?')
   .get(
-    NgoSubAdminAuth,
+    FieldAgentAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.ReferenceOptional,
@@ -309,6 +309,15 @@ router
   );
 
 router
+  .route('/:organisation_id/private/campaigns/:campaign_id')
+  .get(
+    DonorAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.getPrivateCampaign
+  );
+router
   .route('/:organisation_id/campaigns/:campaign_id')
   .get(
     FieldAgentAuth,
@@ -365,6 +374,40 @@ router
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.cryptoPayment
+  );
+router
+  .route('/:organisation_id/campaign_form')
+  .post(
+    FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.campaignForm
+  )
+  .get(
+    FieldAgentAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.getCampaignForm
+  )
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.updateCampaignForm
+  )
+  .delete(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.destroyCampaignForm
+  );
+router
+  .route('/:organisation_id/campaign_form/:form_id')
+  .get(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignController.getSingleCampaignForm
   );
 router
   .route('/:organisation_id/task/:campaign_id/fund_beneficiary')
@@ -515,6 +558,16 @@ router
     ParamValidator.CampaignId,
     CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.approvedAllbeneficiaries
+  );
+router
+  .route('/:organisation_id/campaigns/:campaign_id/beneficiaries/reject')
+  .put(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    ParamValidator.CampaignId,
+    CampaignValidator.campaignBelongsToOrganisation,
+    OrganisationController.rejectAllbeneficiaries
   );
 router
   .route('/products/:vendor_id')

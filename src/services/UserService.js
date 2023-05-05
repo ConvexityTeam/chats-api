@@ -106,6 +106,14 @@ class UserService {
       }
     });
   }
+  static findByUsername(username, extraClause = null) {
+    return User.findOne({
+      where: {
+        username,
+        ...extraClause
+      }
+    });
+  }
 
   static findByPhone(phone, extraClause = null) {
     return User.findOne({

@@ -135,6 +135,7 @@ class UsersController {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
         phone: ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+        username: 'string',
         nin: 'size:16'
       };
       Logger.info(`Request Body: ${JSON.stringify(data)}`);
@@ -143,6 +144,23 @@ class UsersController {
         Logger.error(`Validation Error: ${JSON.stringify(validation.errors)}`);
         Response.setError(422, validation.errors);
         return Response.send(res);
+      }
+
+      if (data.username) {
+        const user = await UserService.findSingleUser({
+          username: data.username
+        });
+        const me = await UserService.findSingleUser({
+          username: data.username,
+          id: req.user.id
+        });
+        if (!me && user) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            `Username already taken`
+          );
+          return Response.send(res);
+        }
       }
 
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
@@ -1473,13 +1491,13 @@ class UsersController {
         );
         return Response.send(res);
       }
-      if (userWallet.balance < amount) {
-        Response.setSuccess(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient Wallet Balance'
-        );
-        return Response.send(res);
-      }
+      // if (userWallet.balance < amount) {
+      //   Response.setSuccess(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Insufficient Wallet Balance'
+      //   );
+      //   return Response.send(res);
+      // }
       await QueueService.fundVendorBankAccount(
         bankAccount,
         userWallet,

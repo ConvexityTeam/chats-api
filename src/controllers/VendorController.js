@@ -1,7 +1,13 @@
 const db = require('../models');
 const moment = require('moment');
 const util = require('../libs/Utils');
-const {VendorService, CampaignService, UserService} = require('../services');
+const {
+  VendorService,
+  CampaignService,
+  BlockchainService,
+  OrderService,
+  UserService
+} = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
 const uploadFile = require('./AmazonController');
@@ -13,7 +19,7 @@ const {Response} = require('../libs');
 const {
   HttpStatusCode,
   generateOrderRef,
-  generateQrcodeURL,
+  generateQrcodeURL
 } = require('../utils');
 const {data} = require('../libs/Response');
 
@@ -38,7 +44,13 @@ class VendorController {
     try {
       const aVendor = await VendorService.getVendorData(id);
       const vToObject = aVendor.toObject();
-      vToObject.Wallets = aVendor.Wallets.map(wallet => wallet.toObject());
+      const token = await BlockchainService.balance(aVendor.Wallets[0].address);
+      const balance = Number(token.Balance.split(',').join(''));
+      vToObject.Wallets = aVendor.Wallets.map(wallet => {
+        wallet.balance = balance;
+        return wallet.toObject();
+      });
+
       if (!aVendor) {
         util.setError(404, `Vendor not found.`);
       } else {
@@ -62,7 +74,7 @@ class VendorController {
         phone: 'required|string',
         address: 'required|string',
         location: 'required|string',
-        bvn: 'required|numeric',
+        bvn: 'required|numeric'
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
@@ -76,12 +88,12 @@ class VendorController {
           address: data.address,
           location: data.location,
           bvn: data.bvn,
-          email: data.email,
+          email: data.email
         };
         const email_exist = await db.User.findOne({
           where: {
-            email: data.email,
-          },
+            email: data.email
+          }
         });
         if (!email_exist | (email_exist | (email_exist.email == data.email))) {
           if (!email_exist) {
@@ -107,7 +119,7 @@ class VendorController {
     const data = req.body;
     const rules = {
       account_number: 'required|numeric',
-      bank_name: 'required|string',
+      bank_name: 'required|string'
     };
 
     const validation = new Validator(data, rules);
@@ -120,8 +132,8 @@ class VendorController {
           const account_exist = await db.Accounts.findOne({
             where: {
               UserId: req.user.id,
-              account_number: data.account_number,
-            },
+              account_number: data.account_number
+            }
           });
           if (account_exist) {
             util.setError(400, 'Account Number already added');
@@ -130,7 +142,7 @@ class VendorController {
             await user
               .createAccount({
                 account_number: data.account_number,
-                bank_name: data.bank_name,
+                bank_name: data.bank_name
               })
               .then(response => {
                 util.setSuccess(201, 'Account Added Successfully');
@@ -156,8 +168,8 @@ class VendorController {
     const user_id = req.params.id;
     await db.User.findOne({
       where: {
-        id: user_id,
-      },
+        id: user_id
+      }
     })
       .then(async user => {
         const stores = await user.getStore();
@@ -197,8 +209,8 @@ class VendorController {
     const products = await db.Product.findAll({
       include: {
         model: db.Market,
-        as: 'Store',
-      },
+        as: 'Store'
+      }
     });
     util.setSuccess(200, 'Products Retrieved', products);
     return util.send(res);
@@ -207,18 +219,18 @@ class VendorController {
   static async singleProduct(req, res) {
     const product = await db.Products.findOne({
       where: {
-        id: req.params.id,
+        id: req.params.id
       },
       include: {
         model: db.Market,
-        as: 'Vendor',
-      },
+        as: 'Vendor'
+      }
     });
     if (product) {
       let qr_code = await codeGenerator(product.id);
       util.setSuccess(200, 'Product Retrieved', {
         product,
-        qr_code,
+        qr_code
       });
       return util.send(res);
     } else {
@@ -230,8 +242,8 @@ class VendorController {
   static async getProductByStore(req, res) {
     const products = await db.Products.findAll({
       where: {
-        MarketId: req.params.storeId,
-      },
+        MarketId: req.params.storeId
+      }
     });
     if (products) {
       util.setSuccess(200, 'Product Retrieved', products);
@@ -247,7 +259,7 @@ class VendorController {
     const rules = {
       name: 'required|string',
       quantity: 'required|numeric',
-      price: 'required|numeric',
+      price: 'required|numeric'
     };
 
     const validation = new Validator(data, rules);
@@ -257,8 +269,8 @@ class VendorController {
     } else {
       let vendorHasStore = await db.Market.findOne({
         where: {
-          UserId: req.user.id,
-        },
+          UserId: req.user.id
+        }
       });
 
       if (!vendorHasStore) {
@@ -269,14 +281,14 @@ class VendorController {
       let productExist = await db.Products.findOne({
         where: {
           name: data.name,
-          MarketId: vendorHasStore.id,
-        },
+          MarketId: vendorHasStore.id
+        }
       });
 
       if (productExist) {
         util.setError(
           422,
-          'Product with the same name has already been registered by Vendor',
+          'Product with the same name has already been registered by Vendor'
         );
         return util.send(res);
       } else {
@@ -285,7 +297,7 @@ class VendorController {
             name: data.name,
             quantity: data.quantity,
             price: data.price,
-            MarketId: data.MarketId,
+            MarketId: data.MarketId
           })
           .then(response => {
             util.setSuccess(200, 'Product Added Successfully');
@@ -301,7 +313,7 @@ class VendorController {
       }, 0);
       util.setSuccess(200, 'Product Retrieved Successfully', {
         products,
-        total_value: sum,
+        total_value: sum
       });
       return util.send(res);
     });
@@ -311,9 +323,9 @@ class VendorController {
     let orders = await db.OrderProducts.findAll({
       attributes: [
         [sequelize.fn('sum', sequelize.col('total_amount')), 'sum_value'],
-        [sequelize.fn('sum', sequelize.col('quantity')), 'sum_quantity'],
+        [sequelize.fn('sum', sequelize.col('quantity')), 'sum_quantity']
       ],
-      raw: true,
+      raw: true
     });
     util.setSuccess(200, 'Order Retrieved', orders);
     return util.send(res);
@@ -324,31 +336,31 @@ class VendorController {
       const user = await db.User.findOne({
         where: {
           id: vendor,
-          RoleId: 4,
+          RoleId: 4
         },
         include: [
           {
             as: 'Wallet',
-            model: db.Wallet,
+            model: db.Wallet
           },
           {
             as: 'Store',
             model: db.Market,
             include: {
               model: db.Products,
-              as: 'Products',
-            },
-          },
-        ],
+              as: 'Products'
+            }
+          }
+        ]
       });
       const transactions = await db.Transaction.findAndCountAll({
         where: {
-          walletRecieverId: user.Wallet.uuid,
+          walletRecieverId: user.Wallet.uuid
         },
         attributes: [
-          [sequelize.fn('sum', sequelize.col('amount')), 'sum_value'],
+          [sequelize.fn('sum', sequelize.col('amount')), 'sum_value']
         ],
-        raw: true,
+        raw: true
       });
       const arr = user.Store.Products.map(element => {
         return element.id;
@@ -356,16 +368,16 @@ class VendorController {
       const soldProducts = await db.OrderProducts.sum('quantity', {
         where: {
           quantity: {
-            [Op.in]: arr,
-          },
-        },
+            [Op.in]: arr
+          }
+        }
       });
       util.setSuccess(200, 'Summary', {
         daily_transaction: transactions.count,
         transaction_value: transactions.rows.length
           ? transactions.rows[0].sum_value
           : 0,
-        product_sold: soldProducts ? soldProducts : 0,
+        product_sold: soldProducts ? soldProducts : 0
       });
       return util.send(res);
     } catch (error) {
@@ -381,13 +393,13 @@ class VendorController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Vendor products',
-        products,
+        products
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support.`
       );
       return Response.send(res);
     }
@@ -407,7 +419,7 @@ class VendorController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Server error. Please retry`,
+        `Server error. Please retry`
       );
       return Response.send(res);
     }
@@ -417,18 +429,18 @@ class VendorController {
     try {
       const CampaignId = req.params.campaign_id;
       const products = await VendorService.vendorStoreProducts(req.vendor.id, {
-        CampaignId,
+        CampaignId
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Vendor Campaign products',
-        products,
+        products
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support.`
       );
       return Response.send(res);
     }
@@ -438,7 +450,7 @@ class VendorController {
     try {
       const {
         found_products,
-        body: {campaign_id, products},
+        body: {campaign_id, products}
       } = req;
       const VendorId = req.vendor.id;
       const reference = generateOrderRef();
@@ -447,19 +459,19 @@ class VendorController {
         quantity: prod.quantity,
         ProductId: prod.product_id,
         unit_price: found_products[prod.product_id].cost,
-        total_amount: found_products[prod.product_id].cost * prod.quantity,
+        total_amount: found_products[prod.product_id].cost * prod.quantity
       }));
 
       const order = await VendorService.createOrder(
         {VendorId, CampaignId: campaign_id, reference},
-        cart,
+        cart
       );
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Create Order', order);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support.`
       );
       return Response.send(res);
     }
@@ -477,13 +489,13 @@ class VendorController {
       }
       Response.setError(
         HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-        `Vendor order not found.`,
+        `Vendor order not found.`
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support.`
       );
       return Response.send(res);
     }
@@ -499,7 +511,7 @@ class VendorController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`,
+        `Internal server error. Contact support.`
       );
       return Response.send(res);
     }
@@ -515,28 +527,53 @@ class VendorController {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Transaction Found.',
-          transactions,
+          transactions
         );
         return Response.send(res);
       }
+
+      for (let transaction of transactions.rows) {
+        if (transaction.narration === 'Vendor Order') {
+          const order = await OrderService.productPurchasedBy(
+            transaction.OrderId
+          );
+          const product = order.Cart[0].Product;
+          transaction.dataValues.type = product.type;
+          transaction.dataValues.tag = product.tag;
+          const beneficiary = await UserService.getAUser(
+            transaction.BeneficiaryId
+          );
+          transaction.dataValues.beneficiary_name =
+            beneficiary.first_name + ' ' + beneficiary.last_name;
+          transaction.dataValues.narration = `Payment from (${
+            beneficiary.first_name + ' ' + beneficiary.last_name
+          })`;
+          transaction.dataValues.transaction_type = 'credit';
+        }
+        if (transaction.dataValues.ReceiverWallet === null)
+          delete transaction.dataValues.ReceiverWallet;
+        if (transaction.dataValues.SenderWallet === null)
+          delete transaction.dataValues.SenderWallet;
+      }
+
       transactions.rows.forEach(transaction => {
         transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${vendor.address}`;
       });
 
       const periods = transactions.rows.map(period =>
-        moment(period.createdAt).format('ddd'),
+        moment(period.createdAt).format('ddd')
       );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Recieved.', {
         periods,
-        transactions,
+        transactions
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal server error. Please try again later.',
-        error,
+        error
       );
       return Response.send(res);
     }
@@ -551,22 +588,29 @@ class VendorController {
       if (!isVerify) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'token not valid',
+          'token not valid'
         );
         return Response.send(res);
       }
       const campaign = await CampaignService.getCampaignById(
-        isVerify.campaignId,
+        isVerify.campaignId
       );
       if (campaign.status == 'completed') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already completed',
+          'Campaign already completed'
+        );
+        return Response.send(res);
+      }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
         );
         return Response.send(res);
       }
       const beneficiary = await UserService.findBeneficiary(
-        isVerify.beneficiaryId,
+        isVerify.beneficiaryId
       );
       smsToken.CampaignId = campaign.id;
       smsToken.Campaign_title = campaign.title;
@@ -576,14 +620,14 @@ class VendorController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Transaction Recieved.',
-        smsToken,
+        smsToken
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal server error. Please try again later.',
-        error,
+        error
       );
       return Response.send(res);
     }
@@ -594,7 +638,7 @@ class VendorController {
       if (!isVendor) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Vendor Not Found',
+          'Vendor Not Found'
         );
         return Response.send(res);
       }
@@ -603,19 +647,19 @@ class VendorController {
       const profile_pic = await uploadFile(
         req.file,
         'u-' + environ + '-' + isVendor.email + '-i.' + extension,
-        'convexity-profile-images',
+        'convexity-profile-images'
       );
       const upload = await req.user.update({profile_pic});
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Profile Image Uploaded',
-        upload,
+        upload
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.',
+        'Internal server error. Please try again later.'
       );
       return Response.send(res);
     }

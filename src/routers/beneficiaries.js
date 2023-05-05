@@ -5,17 +5,20 @@ const {
   NgoSubAdminAuth,
   Auth,
   FieldAgentBeneficiaryAuth,
+  VendorBeneficiaryAuth
 } = require('../middleware');
 const {
   AuthController,
   BeneficiaryController,
   CampaignController,
+  OrderController
 } = require('../controllers');
 
 const {
   CommonValidator,
   BeneficiaryValidator,
   ComplaintValidator,
+  CampaignValidator
 } = require('../validators');
 const router = require('express').Router();
 
@@ -24,71 +27,74 @@ const CashForWorkController = require('../controllers/CashForWorkController');
 router.get(
   '/cash-for-work/tasks',
   Auth,
-  CashForWorkController.viewCashForWorkRefractor,
+  CashForWorkController.viewCashForWorkRefractor
 );
 router.get(
   '/field-app/cash-for-work/tasks/:beneficiaryId',
   FieldAgentBeneficiaryAuth,
-  CashForWorkController.viewCashForWorkRefractorFieldApp,
+  CashForWorkController.viewCashForWorkRefractorFieldApp
 );
 router.post(
   '/cash-for-work/tasks',
   FieldAgentBeneficiaryAuth,
-  CashForWorkController.pickTaskFromCampaign,
+  CashForWorkController.pickTaskFromCampaign
 );
 router.get('/cash-for-work/task/:taskId', CashForWorkController.viewTaskById);
 router.get(
   '/field-app/cash-for-work/:campaignId',
   FieldAgentBeneficiaryAuth,
-  CashForWorkController.getAllCashForWorkTaskFieldAgent,
+  CashForWorkController.getAllCashForWorkTaskFieldAgent
 );
 router.get(
   '/cash-for-work/:campaignId',
   FieldAgentBeneficiaryAuth,
-  CashForWorkController.getAllCashForWorkTask,
+  CashForWorkController.getAllCashForWorkTask
 );
 router.post(
   '/:campaignId/pay-for-product-service/:vendorId/:productId',
   BeneficiaryAuth,
-  BeneficiaryController.BeneficiaryPayForProduct,
+  BeneficiaryController.BeneficiaryPayForProduct
 );
 
 router.get(
   '/gender',
   NgoSubAdminAuth,
-  BeneficiaryController.beneficiariesByGender,
+  BeneficiaryController.beneficiariesByGender
 );
 router.get(
   '/age_group',
   NgoSubAdminAuth,
-  BeneficiaryController.beneficiariesByAgeGroup,
+  BeneficiaryController.beneficiariesByAgeGroup
 );
 router.get(
   '/campaign/age_group',
   NgoSubAdminAuth,
-  BeneficiaryController.beneficiariesByAgeGroup,
+  BeneficiaryController.beneficiariesByAgeGroup
 );
 router.get(
   '/location',
   NgoSubAdminAuth,
-  BeneficiaryController.beneficiariesByLocation,
+  BeneficiaryController.beneficiariesByLocation
 );
 
+router
+  .route('/campaign/forms')
+  .post(BeneficiaryAuth, CampaignController.submitCampaignForm);
 router.get(
   '/marital_status',
   NgoSubAdminAuth,
-  BeneficiaryController.beneficiariesByMaritalStatus,
+  BeneficiaryController.beneficiariesByMaritalStatus
 );
 router.get(
   '/chart/:period',
   BeneficiaryAuth,
-  BeneficiaryController.beneficiaryChart,
+  BeneficiaryController.beneficiaryChart
 );
 
 router.get(
   '/total_balance',
   NgoSubAdminAuth,
-  BeneficiaryController.beneficiariesTotalBalance,
+  BeneficiaryController.beneficiariesTotalBalance
 );
 
 router.get('/', BeneficiaryController.getAllUsers);
@@ -99,15 +105,15 @@ router.post('/complaint', BeneficiaryController.createComplaint);
 router.put('/complaint/resolve', BeneficiaryController.resolveComplaint);
 router.get(
   '/complaints/:beneficiary',
-  BeneficiaryController.getComplaintsByBeneficiary,
+  BeneficiaryController.getComplaintsByBeneficiary
 );
 router.get(
   '/user/beneficiary/:beneficiary',
-  BeneficiaryController.getBeneficiaryUserWallet,
+  BeneficiaryController.getBeneficiaryUserWallet
 );
 router.get(
   '/user-details/:beneficiary',
-  BeneficiaryController.getBeneficiaryUser,
+  BeneficiaryController.getBeneficiaryUser
 );
 
 router.route('/profile').get(BeneficiaryAuth, BeneficiaryController.getProfile);
@@ -122,9 +128,34 @@ router.post(
   BeneficiaryValidator.validateSelfRegister,
   CommonValidator.checkEmailNotTaken,
   CommonValidator.checkPhoneNotTaken,
-  AuthController.beneficiaryRegisterSelf,
+  AuthController.beneficiaryRegisterSelf
 );
+router
+  .route('/survey/:campaign_id')
+  .get(
+    FieldAgentBeneficiaryAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.getCampaignQuestion
+  )
+  .post(
+    BeneficiaryAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.submitQuestion
+  );
 
+router
+  .route('/field/survey/:campaign_id')
+  .post(
+    FieldAgentAuth,
+    CampaignValidator.campaignExists,
+    BeneficiaryController.submitQuestionFieldAgent
+  );
+router.post(
+  '/transfer/beneficiary',
+  BeneficiaryAuth,
+
+  BeneficiaryController.transfer
+);
 router
   .route('/campaigns')
   .get(BeneficiaryAuth, CampaignController.getBeneficiaryCampaigns);
@@ -132,28 +163,28 @@ router.post(
   '/campaigns/:campaign_id/join',
   FieldAgentBeneficiaryAuth,
   BeneficiaryValidator.NotCampaignBeneficiary,
-  BeneficiaryController.joinCampaign,
+  BeneficiaryController.joinCampaign
 );
 
 router.post(
   '/:beneficiary_id/campaigns/:campaign_id/join',
   FieldAgentAuth,
   BeneficiaryValidator.NotCampaignBeneficiary,
-  BeneficiaryController.joinCampaignField,
+  BeneficiaryController.joinCampaignField
 );
 
 router.post(
   '/:beneficiary_id/campaigns/:campaign_id/join',
   FieldAgentAuth,
   BeneficiaryValidator.NotCampaignBeneficiary,
-  BeneficiaryController.joinCampaignField,
+  BeneficiaryController.joinCampaignField
 );
 
 router.put(
   '/campaigns/:campaign_id/leave',
   BeneficiaryAuth,
   BeneficiaryValidator.IsCampaignBeneficiary,
-  BeneficiaryController.leaveCampaign,
+  BeneficiaryController.leaveCampaign
 );
 
 router
@@ -161,14 +192,21 @@ router
   .get(
     BeneficiaryAuth,
     BeneficiaryValidator.IsCampaignBeneficiary,
-    CampaignController.getBeneficiaryCampaignComplaint,
+    CampaignController.getBeneficiaryCampaignComplaint
   )
   .post(
     BeneficiaryAuth,
     BeneficiaryValidator.IsCampaignBeneficiary,
     ComplaintValidator.addComplaintRules(),
     ComplaintValidator.validate,
-    CampaignController.addBeneficiaryComplaint,
+    CampaignController.addBeneficiaryComplaint
   );
+
+router.post(
+  '/approve-spending',
+  VendorBeneficiaryAuth,
+  BeneficiaryValidator.IsCampaignBeneficiary,
+  OrderController.approveBeneficiaryToSpend
+);
 
 module.exports = router;

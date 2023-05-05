@@ -17,20 +17,20 @@ class NgoService {
 
       User.create({
         ...data,
-        password,
+        password
       })
         .then(async user => {
           await OrganisationMembers.create({
             UserId: user.id,
             OrganisationId: organisation.id,
-            role,
+            role
           });
           MailerService.verify(
             user.email,
             user.first_name + ' ' + user.last_name,
-            newPassword,
+            newPassword
           );
-          QueueService.createWallet(user.id, 'user');
+          await QueueService.createWallet(user.id, 'user');
           // send password to user
           resolve(user.toObject());
         })
@@ -45,16 +45,16 @@ class NgoService {
       where: {
         OrganisationId,
         role: {
-          [Op.ne]: 'vendor',
-        },
+          [Op.ne]: 'vendor'
+        }
       },
       include: [
         {
           model: User,
           as: 'User',
-          attributes: userConst.publicAttr,
-        },
-      ],
+          attributes: userConst.publicAttr
+        }
+      ]
     });
   }
 
@@ -63,10 +63,10 @@ class NgoService {
       include: [
         {
           model: Product,
-          as: 'CampaignProducts',
+          as: 'CampaignProducts'
         },
-        {model: User, as: 'CampaignVendors'},
-      ],
+        {model: User, as: 'CampaignVendors'}
+      ]
     });
   }
 }

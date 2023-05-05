@@ -5,6 +5,7 @@ const {v4: uuidv4} = require('uuid');
 const {createHash, GenerateOtp} = require('../utils');
 const bcrypt = require('bcryptjs');
 const moment = require('moment');
+const redis = require('redis');
 const jwt = require('jsonwebtoken');
 const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
@@ -14,9 +15,10 @@ const SmsService = require('./SmsService');
 class AuthService {
   static async login(data, _password, roleId = null) {
     const error = new Error();
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
       if (data) {
         const {password, tfa_secret, ...user} = data.toJSON();
+
         if (bcrypt.compareSync(_password, password)) {
           if (user.status == 'suspended') {
             error.status = 401;
@@ -50,7 +52,6 @@ class AuthService {
             token
           });
         }
-
         error.status = 401;
         error.message = 'Invalid login credentials';
         reject(error);
@@ -200,10 +201,10 @@ class AuthService {
       request_ip
     });
     await MailerService.sendOTP(otp, reset.ref, user.email, name);
-    await SmsService.sendOtp(
-      user.phone,
-      `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`
-    );
+    // await SmsService.sendOtp(
+    //   user.phone,
+    //   `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`
+    // );
     return reset;
   }
 

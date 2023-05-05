@@ -388,7 +388,7 @@ setInterval(async () => {
       console.log("error", error.message);
     });
 }
-  , 600000)
+  , 3600000)
 
 
 setInterval(async () => {
@@ -420,31 +420,29 @@ setInterval(async () => {
       console.log("error", error.message);
     });
 }
-  , 600000)
+  , 3600000)
 
 
 
-// setInterval(async () => {
-//   const user = await db.User.findOne({
-//     where: {
-//       RoleId: AclRoles.SuperAdmin,
-//     }
-//   })
-
-//   const balance = await BlockchainService.balance("0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63")
-//   console.log("balance", balance)
-//       // let resp
-//       // resp = result.data
-//       // if (resp.balance <= 2000) {
-//       //   // const smsRes = await SmsService.sendAdmin(user.phone, resp.balance);
-//       //   // const mailRes = await MailerService.sendAdminNinCreditMail(user.email, resp.balance);
-//       //   console.log("NIN balance is getting low");
-//       // } else {
-//       //   console.log("NIN balance is sufficient");
-//       // }
+setInterval(async () => {
+  const user = await db.User.findOne({
+    where: {
+      RoleId: AclRoles.SuperAdmin,
+    }
+  })
+  if (process.env.NODE_ENV == 'production') {
+    const balance = await BlockchainService.getNativeBalance("0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63")
+      if (parseInt(balance) < 2) {
+        await MailerService.sendAdminBlockchainCreditMail(user.email, balance);
+        await SmsService.sendAdminBlockchainCredit(user.phone, balance);
+        console.log("Blockchain gas is getting low");
+      } else {
+        console.log("Blockchain gas is funded"); 
+      }
+    }
     
-// }
-//   , 5000)
+}
+  , 3600000)
 
 
 

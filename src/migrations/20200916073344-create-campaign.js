@@ -1,67 +1,77 @@
-"use strict";
+'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("Campaigns", {
+    await queryInterface.createTable('Campaigns', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        type: Sequelize.INTEGER
       },
+      // formId: {
+      //   type: Sequelize.INTEGER,
+      //   allowNull: true,
+      //   references: {
+      //     model: {
+      //       tableName: 'CampaignForms'
+      //     },
+      //     key: 'id'
+      //   }
+      // },
       OrganisationMemberId: {
         allowNull: false,
         type: Sequelize.INTEGER,
         references: {
           model: {
-            tableName: "OrganisationMembers",
+            tableName: 'OrganisationMembers'
           },
-          key: "id",
-        },
+          key: 'id'
+        }
       },
       title: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING
       },
       type: {
         allowNull: false,
-        type: Sequelize.ENUM("campaign", "cash-for-work"),
-        defaultValue: "campaign",
+        type: Sequelize.ENUM('campaign', 'cash-for-work'),
+        defaultValue: 'campaign'
       },
       spending: {
         allowNull: false,
         type: Sequelize.STRING,
-        defaultValue: "all",
+        defaultValue: 'all'
       },
       description: {
-        type: Sequelize.TEXT,
+        type: Sequelize.TEXT
       },
       status: {
         type: Sequelize.STRING,
-        defaultValue: "pending",
+        defaultValue: 'pending'
       },
       budget: {
         type: Sequelize.FLOAT,
-        defaultValue: 0.0,
+        defaultValue: 0.0
       },
       location: {
-        type: Sequelize.ARRAY(Sequelize.DECIMAL),
+        type: Sequelize.ARRAY(Sequelize.DECIMAL)
       },
       start_date: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       end_date: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-      },
+        type: Sequelize.DATE
+      }
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("Campaigns");
-  },
+    await queryInterface.dropTable('Campaigns');
+  }
 };

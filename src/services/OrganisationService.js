@@ -61,7 +61,6 @@ class OrganisationService {
   }
 
   static async addDonor(data, user, inviteeId) {
-    console.log(inviteeId, 'iddd');
     return Organisation.create(data).then(organisation => {
       organisation.createMember({
         UserId: user.id,
@@ -127,12 +126,11 @@ class OrganisationService {
   static async getAllDonorsAdmin() {
     return User.findAll({
       where: {
-        RoleId: 8,
-      },
+        RoleId: 8
+      }
     });
   }
 
-  
   static async isMemberUser(user) {
     return OrganisationMembers.findOne({
       where: {
@@ -169,9 +167,9 @@ class OrganisationService {
             UserId: account.id
           });
         })
-        .then(_store => {
+        .then(async _store => {
           store = _store;
-          QueueService.createWallet(account.id, 'user');
+          await QueueService.createWallet(account.id, 'user');
           MailerService.verify(
             data.email,
             data.first_name + ' ' + data.last_name,
