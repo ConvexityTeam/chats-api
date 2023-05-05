@@ -697,8 +697,8 @@ class OrganisationController {
             campaign.id
           );
           campaign.type === 'item'
-            ? QueueService.createCollection(campaign)
-            : null;
+            ? await QueueService.createCollection(campaign)
+            : await QueueService.createEscrow(campaign);
           AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,

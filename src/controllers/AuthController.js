@@ -204,7 +204,7 @@ class AuthController {
         dob: 'required|date|before:today',
         nfc: 'string',
         campaign: 'required|numeric',
-        pin: 'size:4|required'
+       // pin: 'size:4|required' //pin validation disabled
       };
 
       const validation = new Validator(fields, rules);
@@ -263,7 +263,7 @@ class AuthController {
             return Response.send(res);
           }
         }
-        const encryptedPin = createHash(fields.pin);
+        const encryptedPin = createHash('0000');//setting default pin to zero //createHash(fields.pin);
         bcrypt.genSalt(10, (err, salt) => {
           if (err) {
             console.log('Error Ocurred hashing');
@@ -365,7 +365,7 @@ class AuthController {
         dob: 'required|date|before:today',
         nfc: 'string',
         campaign: 'required|numeric',
-        pin: 'size:4|required'
+       // pin: 'size:4|required' //disabled for now
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
@@ -424,7 +424,7 @@ class AuthController {
                 if (err) {
                   console.log('Error Ocurred hashing');
                 }
-                const encryptedPin = createHash(fields.pin);
+                const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
                 bcrypt.hash(fields.password, salt).then(async hash => {
                   const encryptedPassword = hash;
                   await db.User.create({
@@ -1105,7 +1105,7 @@ class AuthController {
     try {
       const rules = {
         'inviteeEmail*': 'email|required',
-        link: 'required|url'
+        link: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {

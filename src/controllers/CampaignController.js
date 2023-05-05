@@ -672,19 +672,34 @@ class CampaignController {
       const tokencount = await db.VoucherToken.findAndCountAll({where});
       const user = await UserService.getAllUsers();
       const campaign = await CampaignService.getAllCampaigns({OrganisationId});
-
+      const singleCampaign = await CampaignService.getCampaignById(campaign_id);
       let pages = Math.ceil(tokencount.count / limit);
       offset = limit * (page - 1);
       const tokens = await db.VoucherToken.findAll({
         where,
         order: [['updatedAt', 'ASC']]
       });
-      tokens.forEach(data => {
+      for (let data of tokens) {
+        if (singleCampaign.type !== 'item') {
+          const campaignAddress = await BlockchainService.setUserKeypair(
+            `campaign_${campaign_id}`
+          );
+          const beneficiaryAddress = await BlockchainService.setUserKeypair(
+            `user_${data.beneficiaryId}campaign_${campaign_id}`
+          );
+          const token = await BlockchainService.allowance(
+            campaignAddress.address,
+            beneficiaryAddress.address
+          );
+          const balance = Number(token.Allowed.split(',').join(''));
+          data.dataValues.amount = balance;
+        }
         var filteredKeywords = user.filter(
           user => user.id === data.beneficiaryId
         );
         data.dataValues.Beneficiary = filteredKeywords[0];
-      });
+      }
+
       tokens.forEach(data => {
         var filteredKeywords = user.filter(
           user => user.id === data.beneficiaryId
@@ -696,6 +711,7 @@ class CampaignController {
         var filteredKeywords = campaign.filter(
           camp => camp.id === data.campaignId
         );
+
         data.dataValues.Campaign = filteredKeywords[0];
       });
 

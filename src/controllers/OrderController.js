@@ -1,6 +1,6 @@
 const {Response, Logger} = require('../libs');
 const moment = require('moment');
-const {HttpStatusCode, compareHash} = require('../utils');
+const {HttpStatusCode, compareHash, AclRoles} = require('../utils');
 
 const {ProductBeneficiary} = require('../models');
 
@@ -37,6 +37,78 @@ class OrderController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server error: Please retry.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async approveBeneficiaryToSpend(req, res) {
+    const data = req.body;
+    try {
+      const [
+        campaign,
+        approvedBeneficiaries,
+        campaign_token,
+        beneficiaryWallet,
+        user
+      ] = await Promise.all([
+        CampaignService.getCampaignById(data.campaign_id),
+        BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
+        BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
+        WalletService.findUserCampaignWallet(
+          data.beneficiary_id,
+          data.campaign_id
+        ),
+        UserService.findSingleUser({
+          RoleId: AclRoles.Beneficiary,
+          id: data.beneficiary_id
+        })
+      ]);
+      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+        let amount = campaign.budget / approvedBeneficiaries.length;
+        await QueueService.approveOneBeneficiary(
+          campaign_token.privateKey,
+          beneficiaryWallet.address,
+          amount,
+          beneficiaryWallet.uuid,
+          campaign,
+          user
+        );
+      }
+
+      if (campaign.type === 'item' && !beneficiaryWallet.was_funded) {
+        await QueueService.approveNFTSpending(
+          data.beneficiary_id,
+          data.campaign_id,
+          campaign
+        );
+      }
+
+      if (!user) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Beneficiary not found'
+        );
+        Logger.error('Beneficiary not found');
+        return Response.send(res);
+      }
+      if (!campaign) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+        Logger.error('Campaign not found');
+        return Response.send(res);
+      }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Initializing payment');
+      Logger.info('Initializing payment');
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error,
+        error
       );
       return Response.send(res);
     }
@@ -97,12 +169,7 @@ class OrderController {
       const vendorWallet = await WalletService.findSingleWallet({
         UserId: data.order.Vendor.id
       });
-      const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${data.order.CampaignId}`
-      );
-      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
-        data.order.CampaignId
-      );
+
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(
         id,
         data.order.CampaignId
@@ -110,23 +177,6 @@ class OrderController {
       const campaign = await CampaignService.getCampaignById(
         data.order.CampaignId
       );
-      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
-        let amount = campaign.budget / approvedBeneficiaries.length;
-        await QueueService.approveOneBeneficiary(
-          campaign_token.privateKey,
-          beneficiaryWallet.address,
-          amount,
-          beneficiaryWallet.uuid,
-          campaign,
-          user
-        );
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Initializing payment please try again'
-        );
-        Logger.error('Initializing payment please try again');
-        return Response.send(res);
-      }
 
       const token = await BlockchainService.allowance(
         campaignWallet.address,

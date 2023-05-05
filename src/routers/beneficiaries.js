@@ -4,12 +4,14 @@ const {
   FieldAgentAuth,
   NgoSubAdminAuth,
   Auth,
-  FieldAgentBeneficiaryAuth
+  FieldAgentBeneficiaryAuth,
+  VendorBeneficiaryAuth
 } = require('../middleware');
 const {
   AuthController,
   BeneficiaryController,
-  CampaignController
+  CampaignController,
+  OrderController
 } = require('../controllers');
 
 const {
@@ -199,5 +201,12 @@ router
     ComplaintValidator.validate,
     CampaignController.addBeneficiaryComplaint
   );
+
+router.post(
+  '/approve-spending',
+  VendorBeneficiaryAuth,
+  BeneficiaryValidator.IsCampaignBeneficiary,
+  OrderController.approveBeneficiaryToSpend
+);
 
 module.exports = router;
