@@ -170,7 +170,7 @@ class AdminController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error.'
+        'Internal Server Error.' + error
       );
       return Response.send(res);
     }

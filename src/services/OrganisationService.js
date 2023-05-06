@@ -30,35 +30,33 @@ class OrganisationService {
   static async getAllOrganisations() {
     return User.findAll({
       where: {RoleId: AclRoles.NgoAdmin},
-      include: [
-        {
-          model: OrganisationMembers,
-          as: 'AssociatedOrganisations',
-          include: [
-            {
-              model: Organisation,
-              as: 'Organisation',
-              include: [
-                {
-                  where: {
-                    transaction_type: 'transfer',
-                    status: 'success',
-                    BeneficiaryId: null,
-                    VendorId: null
-                  },
-                  model: Transaction,
-                  as: 'Transactions'
+      include: {
+        model: OrganisationMembers,
+        as: 'AssociatedOrganisations',
+        include: [
+          {
+            model: Organisation,
+            as: 'Organisation',
+            include: [
+              {
+                where: {
+                  transaction_type: 'transfer',
+                  status: 'success',
+                  BeneficiaryId: null,
+                  VendorId: null
                 },
-                {
-                  where: {is_funded: true},
-                  model: Campaign,
-                  as: 'Campaigns'
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                model: Transaction,
+                as: 'Transactions'
+              },
+              {
+                where: {is_funded: true},
+                model: Campaign,
+                as: 'Campaigns'
+              }
+            ]
+          }
+        ]
+      }
     });
   }
 
