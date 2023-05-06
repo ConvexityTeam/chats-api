@@ -28,24 +28,32 @@ class OrganisationService {
   }
 
   static async getAllOrganisations() {
-    return Organisation.findAll({
-      include: [
-        {
-          where: {
-            transaction_type: 'transfer',
-            status: 'success',
-            BeneficiaryId: null,
-            VendorId: null
-          },
-          model: Transaction,
-          as: 'Transactions'
-        },
-        {
-          where: {is_funded: true},
-          model: Campaign,
-          as: 'Campaigns'
+    return User.findAll({
+      include: {
+        model: OrganisationMembers,
+        as: 'AssociatedOrganisations',
+        include: {
+          model: Organisation,
+          as: 'Organisation',
+          include: [
+            {
+              where: {
+                transaction_type: 'transfer',
+                status: 'success',
+                BeneficiaryId: null,
+                VendorId: null
+              },
+              model: Transaction,
+              as: 'Transactions'
+            },
+            {
+              where: {is_funded: true},
+              model: Campaign,
+              as: 'Campaigns'
+            }
+          ]
         }
-      ]
+      }
     });
   }
 
