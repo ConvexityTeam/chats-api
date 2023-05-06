@@ -29,31 +29,36 @@ class OrganisationService {
 
   static async getAllOrganisations() {
     return User.findAll({
-      include: {
-        model: OrganisationMembers,
-        as: 'AssociatedOrganisations',
-        include: {
-          model: Organisation,
-          as: 'Organisation',
+      where: {RoleId: AclRoles.NgoSubAdmin},
+      include: [
+        {
+          model: OrganisationMembers,
+          as: 'AssociatedOrganisations',
           include: [
             {
-              where: {
-                transaction_type: 'transfer',
-                status: 'success',
-                BeneficiaryId: null,
-                VendorId: null
-              },
-              model: Transaction,
-              as: 'Transactions'
-            },
-            {
-              where: {is_funded: true},
-              model: Campaign,
-              as: 'Campaigns'
+              model: Organisation,
+              as: 'Organisation',
+              include: [
+                {
+                  where: {
+                    transaction_type: 'transfer',
+                    status: 'success',
+                    BeneficiaryId: null,
+                    VendorId: null
+                  },
+                  model: Transaction,
+                  as: 'Transactions'
+                },
+                {
+                  where: {is_funded: true},
+                  model: Campaign,
+                  as: 'Campaigns'
+                }
+              ]
             }
           ]
         }
-      }
+      ]
     });
   }
 
