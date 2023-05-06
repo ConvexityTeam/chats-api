@@ -143,7 +143,7 @@ class AdminController {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
       for (let user of allNGOs) {
-        for (let ngo of user.AssociatedOrganisations.Organisation) {
+        for (let ngo of user.AssociatedOrganisations[0].Organisation) {
           const sum = ngo.Transactions.reduce((accumulator, object) => {
             return accumulator + object.amount;
           }, 0);
