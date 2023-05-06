@@ -147,10 +147,8 @@ class AdminController {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
-        for (let member of ngo.Member) {
-          const user = await UserService.findUser(member.UserId);
-          ngo.dataValues.status = user.status;
-        }
+        const user = await UserService.findUser(ngo.member.UserId);
+        ngo.dataValues.status = user.status;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
             campaign.id
