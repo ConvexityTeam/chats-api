@@ -143,7 +143,7 @@ class AdminController {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
       for (let user of allNGOs) {
-        for (let ngo of user.Organisation) {
+        for (let ngo of user.AssociatedOrganisations.Organisation) {
           const sum = ngo.Transactions.reduce((accumulator, object) => {
             return accumulator + object.amount;
           }, 0);
@@ -168,7 +168,10 @@ class AdminController {
       return Response.send(res);
     } catch (error) {
       console.log(error);
-      Response.setError(400, error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.'
+      );
       return Response.send(res);
     }
   }
