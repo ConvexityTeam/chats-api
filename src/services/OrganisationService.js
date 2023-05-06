@@ -31,7 +31,12 @@ class OrganisationService {
     return Organisation.findAll({
       include: [
         {
-          where: {transaction_type: 'transfer', status: 'success'},
+          where: {
+            transaction_type: 'transfer',
+            status: 'success',
+            BeneficiaryId: null,
+            VendorId: null
+          },
           model: Transaction,
           as: 'Transactions'
         },

@@ -141,6 +141,18 @@ class AdminController {
   static async getAllNGO(req, res) {
     try {
       const allNGOs = await OrganisationService.getAllOrganisations();
+      let sum = 0;
+      for (let ngo of allNGOs) {
+        for (transaction of ngo.Transactions) {
+          let disbursedSum = sum + transaction.sum;
+          ngo.dataValues.disbursedSum = disbursedSum;
+        }
+      }
+      // const disbursedSum = allNGOs.map(({Campaigns}) =>
+      //   Campaigns.reduce((accumulator, object) => {
+      //     return accumulator + object.salary;
+      //   }, 0)
+      // );
 
       if (allNGOs.length > 0) {
         Response.setSuccess(200, 'NGOs retrieved', allNGOs);
