@@ -142,24 +142,27 @@ class AdminController {
     try {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
-      for (let user of allNGOs) {
-        for (let ngo of user.AssociatedOrganisations[0].Organisation) {
-          const sum = ngo.Transactions.reduce((accumulator, object) => {
-            return accumulator + object.amount;
-          }, 0);
-          let count = 0;
-          for (let campaign of ngo.Campaigns) {
-            let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-              campaign.id
-            );
-            count = count + beneficiaries.length;
-          }
-          ngo.dataValues.beneficiary_count = count;
-          ngo.dataValues.disbursedSum = sum;
-          delete ngo.dataValues.Transactions;
-          delete ngo.dataValues.Campaigns;
+      for (let ngo of allNGOs) {
+        const sum = ngo.Transactions.reduce((accumulator, object) => {
+          return accumulator + object.amount;
+        }, 0);
+        let count = 0;
+        for (let member of ngo.Member) {
+          const user = await UserService.findUser(member.UserId);
+          ngo.dataValues.status = user.status;
         }
+        for (let campaign of ngo.Campaigns) {
+          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+            campaign.id
+          );
+          count = count + beneficiaries.length;
+        }
+        ngo.dataValues.beneficiary_count = count;
+        ngo.dataValues.disbursedSum = sum;
+        delete ngo.dataValues.Transactions;
+        delete ngo.dataValues.Campaigns;
       }
+
       if (allNGOs.length > 0) {
         Response.setSuccess(200, 'NGOs retrieved', allNGOs);
       } else {
@@ -170,7 +173,7 @@ class AdminController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error.' + error
+        'Internal Server Error.'
       );
       return Response.send(res);
     }
