@@ -4,6 +4,7 @@ const {
   Wallet,
   Organisation,
   Transaction,
+  Campaign,
   OrganisationMembers
 } = require('../models');
 const {
@@ -27,7 +28,20 @@ class OrganisationService {
   }
 
   static async getAllOrganisations() {
-    return Organisation.findAll();
+    return Organisation.findAll({
+      include: [
+        {
+          where: {transaction_type: 'transfer', status: 'success'},
+          model: Transaction,
+          as: 'Transactions'
+        },
+        {
+          where: {is_funded: true},
+          model: Campaign,
+          as: 'Campaigns'
+        }
+      ]
+    });
   }
 
   static async getOrganisationWallet(id) {

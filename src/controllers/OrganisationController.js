@@ -708,6 +708,7 @@ class OrganisationController {
           return Response.send(res);
         })
         .catch(err => {
+          Logger.error(err);
           throw err;
         });
     } catch (error) {
