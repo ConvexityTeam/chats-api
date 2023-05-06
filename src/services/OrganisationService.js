@@ -33,7 +33,7 @@ class OrganisationService {
         {
           where: {transaction_type: 'transfer', status: 'success'},
           model: Transaction,
-          as: 'transaction'
+          as: 'Transactions'
         },
         {
           where: {is_funded: true},
