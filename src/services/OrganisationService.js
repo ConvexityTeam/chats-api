@@ -29,7 +29,7 @@ class OrganisationService {
 
   static async getAllOrganisations() {
     return User.findAll({
-      where: {RoleId: AclRoles.NgoSubAdmin},
+      where: {RoleId: AclRoles.NgoAdmin},
       include: [
         {
           model: OrganisationMembers,
