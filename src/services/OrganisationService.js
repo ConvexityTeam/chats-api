@@ -42,6 +42,14 @@ class OrganisationService {
     });
   }
 
+  static async getOrganisation(id) {
+    return Organisation.findOne({
+      where: {
+        id: Number(id)
+      }
+    });
+  }
+
   static async getAllOrganisationWallet() {
     return Organisation.findAll({
       include: {

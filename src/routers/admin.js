@@ -31,7 +31,8 @@ router.post(
 
 
 router.post('/auth/login', AuthController.signInAdmin);
-router.get('/ngos', SuperAdminAuth, AdminController.getAllNGO);
+router.get('/ngos', SuperAdminAuth, AdminController.getAllNGO); 
+router.get('/ngo/:organisation_id', SuperAdminAuth, AdminController.getAnNGO);
 router.get('/ngos/:organisation_id/', SuperAdminAuth, AdminController.getNGODisbursedAndBeneficiaryTotal);
 router.get('/vendors', SuperAdminAuth, AdminController.getAllVendors);
 router.get('/vendors/:vendor_id/', SuperAdminAuth, AdminController.getVendorCampaignAndAmountTotal);

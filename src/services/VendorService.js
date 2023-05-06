@@ -384,6 +384,24 @@ class VendorService {
     });
   }
 
+  static async organisationVendorsAdmin(OrganisationId) {
+    const vendorIds = (
+      await OrganisationMembers.findAll({
+        where: {
+          OrganisationId,
+          role: OrgRoles.Vendor
+        }
+      })
+    ).map(m => m.UserId);
+    return User.findAll({
+      where: {
+        id: {
+          [Op.in]: [...vendorIds]
+        }
+      },
+      include: ['Wallet', 'Store']
+    });
+  }
   static async organisationDailyVendorStat(OrganisationId, date = new Date()) {
     const START = date.setHours(0, 0, 0, 0);
     const END = date.setHours(23, 59, 59);

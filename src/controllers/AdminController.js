@@ -198,6 +198,39 @@ class AdminController {
     }
   }
 
+  static async getAnNGO(req, res) {
+
+    const { organisation_id } = req.params;
+
+    try {
+      const organisation = await OrganisationService.getOrganisation(organisation_id);
+      let total = await TransactionService.getTotalTransactionAmountAdmin(organisation_id);
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
+      const vendors = await VendorService.organisationVendorsAdmin(organisation_id);
+      const vendorCount = Object.keys(vendors).length
+      const beneficiariesCount = Object.keys(beneficiaries).length
+
+      let spend_for_campaign = total.map(a => a.dataValues.amount);
+      let disbursedSum = 0;
+      for (let i = 0; i < spend_for_campaign.length; i++) {
+        disbursedSum += Math.floor(spend_for_campaign[i]);
+      }
+
+      Response.setSuccess(200, 'Organisation data retrieved', {
+        organisation,
+        disbursedSum,
+        beneficiariesCount,
+        vendorCount,
+      });
+
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(400, error);
+      return Response.send(res);
+    }
+  }
+
 
   static async getAllVendors(req, res) {
     try {
