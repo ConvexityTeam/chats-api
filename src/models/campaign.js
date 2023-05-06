@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Beneficiary,
         constraints: false
       });
-
       Campaign.hasMany(models.Wallet, {
         as: 'BeneficiariesWallets',
         foreignKey: 'CampaignId',
