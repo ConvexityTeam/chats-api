@@ -146,13 +146,14 @@ class AdminController {
         const sum = ngo.Transactions.reduce((accumulator, object) => {
           return accumulator + object.amount;
         }, 0);
-        let beneficiaries;
+        let count = 0;
         for (let campaign of ngo.Campaigns) {
-          beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
             campaign.id
-          ).length;
+          );
+          count = count + beneficiaries.length;
         }
-        ngo.dataValues.beneficiary_count = beneficiaries;
+        ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
         delete ngo.Transactions;
         delete ngo.Campaigns;
