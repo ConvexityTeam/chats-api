@@ -155,8 +155,8 @@ class AdminController {
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
-        delete ngo.Transactions;
-        delete ngo.Campaigns;
+        delete ngo.dataValues.Transactions;
+        delete ngo.dataValues.Campaigns;
       }
 
       if (allNGOs.length > 0) {
