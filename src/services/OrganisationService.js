@@ -32,9 +32,6 @@ class OrganisationService {
       include: [
         {
           where: {
-            // CampaignId: {
-            //   [Op.ne]: null
-            // },
             transaction_type: 'transfer',
             status: 'success',
             BeneficiaryId: null,
