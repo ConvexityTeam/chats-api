@@ -142,23 +142,24 @@ class AdminController {
     try {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
-      for (let ngo of allNGOs) {
-        const sum = ngo.Transactions.reduce((accumulator, object) => {
-          return accumulator + object.amount;
-        }, 0);
-        let count = 0;
-        for (let campaign of ngo.Campaigns) {
-          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-            campaign.id
-          );
-          count = count + beneficiaries.length;
+      for (let user of allNGOs) {
+        for (let ngo of user.Organisation) {
+          const sum = ngo.Transactions.reduce((accumulator, object) => {
+            return accumulator + object.amount;
+          }, 0);
+          let count = 0;
+          for (let campaign of ngo.Campaigns) {
+            let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id
+            );
+            count = count + beneficiaries.length;
+          }
+          ngo.dataValues.beneficiary_count = count;
+          ngo.dataValues.disbursedSum = sum;
+          delete ngo.dataValues.Transactions;
+          delete ngo.dataValues.Campaigns;
         }
-        ngo.dataValues.beneficiary_count = count;
-        ngo.dataValues.disbursedSum = sum;
-        delete ngo.dataValues.Transactions;
-        delete ngo.dataValues.Campaigns;
       }
-
       if (allNGOs.length > 0) {
         Response.setSuccess(200, 'NGOs retrieved', allNGOs);
       } else {
