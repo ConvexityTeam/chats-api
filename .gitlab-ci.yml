@@ -13,7 +13,7 @@ deploy_staging:
     - eval $(ssh-agent -s)
     - chmod 600 $SSH_PRIVATE_KEY
     - ssh-add $SSH_PRIVATE_KEY
-    - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && exit"
+    - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && docker image prune -a && exit"
   only:
     - develop
   tags:
