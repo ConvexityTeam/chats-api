@@ -29,11 +29,10 @@ class OrganisationService {
 
   static async getAllOrganisations() {
     return Organisation.findAll({
-      include: 'Member',
       include: [
         {
           model: OrganisationMembers,
-          as: 'Member'
+          as: 'Members'
         },
         {
           where: {
