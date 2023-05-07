@@ -32,6 +32,10 @@ class OrganisationService {
       include: 'Member',
       include: [
         {
+          model: OrganisationMembers,
+          as: 'Member'
+        },
+        {
           where: {
             transaction_type: 'transfer',
             status: 'success',
