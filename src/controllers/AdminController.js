@@ -147,7 +147,9 @@ class AdminController {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
-
+        const user = await UserService.findUser(ngo.Members[0].UserId);
+        ngo.dataValues.status = user.status;
+        ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
             campaign.id
@@ -158,6 +160,7 @@ class AdminController {
         ngo.dataValues.disbursedSum = sum;
         delete ngo.dataValues.Transactions;
         delete ngo.dataValues.Campaigns;
+        delete ngo.dataValues.Members;
       }
 
       if (allNGOs.length > 0) {
