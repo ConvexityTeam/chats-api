@@ -31,6 +31,7 @@ class OrganisationService {
     return Organisation.findAll({
       include: [
         {
+          where: {role: 'admin'},
           model: OrganisationMembers,
           as: 'Members'
         },
