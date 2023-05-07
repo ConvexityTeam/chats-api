@@ -1,5 +1,5 @@
 const db = require('../models');
-const {util, Response} = require('../libs');
+const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
@@ -147,7 +147,7 @@ class AdminController {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
-        const user = await UserService.findUser(ngo.member.UserId);
+        const user = await UserService.findUser(ngo.Member.UserId);
         ngo.dataValues.status = user.status;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
