@@ -14,7 +14,7 @@ const {
   VendorController
 } = require('../controllers');
 
-router.put('/update-user', AdminController.updateUserStatus);
+router.put('/update-user', SuperAdminAuth, AdminController.updateUserStatus);
 // router.post("/register", AuthCtrl.createUser);
 // router.post("/self-registration", AuthCtrl.normalRegistration);
 // router.post("/ngo-register", AuthCtrl.createAdminUser);
@@ -32,7 +32,7 @@ router.post(
 
 router.post('/auth/login', AuthController.signInAdmin);
 router.get('/ngos', SuperAdminAuth, AdminController.getAllNGO);
-// router.get('/ngo/:organisation_id', SuperAdminAuth, AdminController.get);
+// router.get('/ngo/:organisation_id', SuperAdminAuth, AdminController.getAnNGO);
 router.get(
   '/ngos/:organisation_id/',
   SuperAdminAuth,

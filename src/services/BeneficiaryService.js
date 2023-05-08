@@ -387,10 +387,42 @@ class BeneficiariesService {
     });
   }
 
+  static async findCampaignBeneficiary(UserId) {
+    return Beneficiary.findAll({
+      where: {
+        UserId,
+        CampaignId: {
+          [Op.ne]: null
+        }
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConst.publicAttr,
+          include: {
+            model: FormAnswer,
+            as: 'Answers'
+          }
+        }
+      ]
+    });
+  }
+
   static async getBeneficiariesAdmin() {
     return User.findAll({
       where: {
-        RoleId: 7
+        RoleId: AclRoles.Beneficiary
+      },
+      include: {
+        where: {
+          transaction_origin: 'store',
+          transaction_type: 'spent',
+          is_approved: true,
+          status: 'success'
+        },
+        model: Transaction,
+        as: 'OrderTransaction'
       }
     });
   }
