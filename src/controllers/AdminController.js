@@ -371,13 +371,6 @@ class AdminController {
       });
 
       for (let campaign of allCampaign) {
-        // const budget = campaign.reduce((accumulator, object) => {
-        //   return accumulator + object.budget;
-        // }, 0);
-        // const amount_disbursed = campaign.reduce((accumulator, object) => {
-        //   return accumulator + object.amount_disbursed;
-        // }, 0);
-
         campaign.dataValues.total_amount = campaign.budget;
         campaign.dataValues.total_amount_spent = campaign.amount_disbursed;
       }
