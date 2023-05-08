@@ -54,7 +54,7 @@ router.get(
   SuperAdminAuth,
   AdminController.getBeneficiaryAmountAndCampaignsTotal
 );
-router.get('/campaigns', AdminController.getAllCampaigns);
+router.get('/campaigns', SuperAdminAuth, AdminController.getAllCampaigns);
 router.get('/donors', SuperAdminAuth, AdminController.getAllDonors);
 router.get(
   '/donors/:donor_id/campaigns',
