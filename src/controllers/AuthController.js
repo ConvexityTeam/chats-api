@@ -1,4 +1,4 @@
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
 const {
   AclRoles,
   OrgRoles,
@@ -7,12 +7,12 @@ const {
   generateOrganisationId,
   encryptData
 } = require('../utils');
-const {Message} = require('@droidsolutions-oss/amqp-ts');
+const { Message } = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const {Response, Logger} = require('../libs');
-const {Beneficiary, Invites} = require('../models');
+const { Response, Logger } = require('../libs');
+const { Beneficiary, Invites } = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
@@ -85,7 +85,7 @@ class AuthController {
   }
 
   static async updateProfile(req, res, next) {
-    const {firstName, lastName, email, phone} = req.body;
+    const { firstName, lastName, email, phone } = req.body;
     const userId = req.body.userId;
     db.User.findOne({
       where: {
@@ -121,11 +121,53 @@ class AuthController {
         });
       });
   }
+  static async beneficiariesExcel(req, res) {
+  
+   var form = new formidable.IncomingForm({
+    multiples: true
+  });
+  form.parse(req, async (err, fields, files) => {
+    fields['today'] = new Date(Date.now()).toDateString();
+   //allowed file types .xls, .csv, .xlsx
+    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    const beneficiariesFile =null;
+      if (!files.beneficiaries_xls) {
+        Response.setError(400, 'Beneficiaries Records required');
+        return Response.send(res);
+      } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
+        Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
+        return Response.send(res);
+      }else {
+      //upload excel file
+    await uploadFile( files.beneficiaries_xls,'u-' + environ + '-' + user.id + '-i.' + extension,'convexity-beneficiaries-csv')
+    .then(url => {
+      user.update({
+        beneficiariesFile: url
+      });
+    });
+      //read uploaded excel file
+      console.log(beneficiariesFile);
+    //match records to the right column
+   // ensure that creator of beneficiary belongs to the organisation that owns campaing
+      }
+    }
+  
+  }
+
+
+static async beneficiariesKoboToolBox(req,res){
+const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
+//fetch from their url
+//read into json
+//match records to right data column 
+//save to db
+//send responses
+}
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
       const RoleId = AclRoles.Beneficiary;
-      const {phone, email, country, state, coordinates, device_imei} = req.body;
+      const { phone, email, country, state, coordinates, device_imei } = req.body;
       const files = req.file;
       const rules = {
         email: 'email|required',
@@ -144,8 +186,8 @@ class AuthController {
       } else {
         if (!files) {
         }
-        const userByEmail = await db.User.findOne({where: {email}});
-        const userDevice = await db.User.findOne({where: {device_imei}});
+        const userByEmail = await db.User.findOne({ where: { email } });
+        const userDevice = await db.User.findOne({ where: { device_imei } });
         if (userByEmail) {
           Response.setError(400, 'User With This Email Exist');
           return Response.send(res);
@@ -170,7 +212,7 @@ class AuthController {
             email,
             password,
             profile_pic,
-            location: JSON.stringify({country, state, coordinates})
+            location: JSON.stringify({ country, state, coordinates })
           });
 
           if (user) await QueueService.createWallet(user.id, 'user');
@@ -202,7 +244,7 @@ class AuthController {
         dob: 'required|date|before:today',
         nfc: 'string',
         campaign: 'required|numeric',
-       // pin: 'size:4|required' //pin validation disabled
+        // pin: 'size:4|required' //pin validation disabled
       };
 
       const validation = new Validator(fields, rules);
@@ -363,7 +405,7 @@ class AuthController {
         dob: 'required|date|before:today',
         nfc: 'string',
         campaign: 'required|numeric',
-       // pin: 'size:4|required' //disabled for now
+        // pin: 'size:4|required' //disabled for now
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
@@ -452,13 +494,13 @@ class AuthController {
                           uploadFile(
                             fingerprint,
                             'u-' +
-                              environ +
-                              '-' +
-                              user.id +
-                              '-fp-' +
-                              ++i +
-                              '.' +
-                              ext,
+                            environ +
+                            '-' +
+                            user.id +
+                            '-fp-' +
+                            ++i +
+                            '.' +
+                            ext,
                             'convexity-fingerprints'
                           )
                         );
@@ -1069,8 +1111,8 @@ class AuthController {
   // }
 
   static async sendInvite(req, res) {
-    const {inviteeEmail, message, link} = req.body;
-    const {organisation_id, campaign_id} = req.params;
+    const { inviteeEmail, message, link } = req.body;
+    const { organisation_id, campaign_id } = req.params;
     try {
       const rules = {
         'inviteeEmail*': 'email|required',
@@ -1123,7 +1165,7 @@ class AuthController {
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Invite sent to donor.',
-        {campaignId: campaign.id, is_public: campaign.is_public, user_exist}
+        { campaignId: campaign.id, is_public: campaign.is_public, user_exist }
       );
       return Response.send(res);
     } catch (error) {
@@ -1150,7 +1192,7 @@ class AuthController {
   }
 
   static async confirmInvite(req, res) {
-    const {token, campaignId} = req.params;
+    const { token, campaignId } = req.params;
     try {
       const rules = {
         token: 'required|string',
@@ -1163,7 +1205,7 @@ class AuthController {
       }
       const [campaign, token_exist] = await Promise.all([
         CampaignService.getCampaignById(campaignId),
-        db.Invites.findOne({where: {token}})
+        db.Invites.findOne({ where: { token } })
       ]);
       const userExist = await UserService.findSingleUser({
         email: token_exist.email
@@ -1193,7 +1235,7 @@ class AuthController {
         );
 
         const isAdded = await db.Invites.findOne({
-          where: {CampaignId: campaignId, token, isAdded: false}
+          where: { CampaignId: campaignId, token, isAdded: false }
         });
 
         if (!ngo) {
@@ -1232,7 +1274,7 @@ class AuthController {
           });
         }
 
-        await isAdded.update({isAdded: true});
+        await isAdded.update({ isAdded: true });
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
           'campaign invitation has been confirmed',
@@ -1273,7 +1315,7 @@ class AuthController {
       const [campaign, exist] = await Promise.all([
         CampaignService.getCampaignById(data.campaignId),
         db.Invites.findOne({
-          where: {email: data.email, isAdded: true, CampaignId: data.campaignId}
+          where: { email: data.email, isAdded: true, CampaignId: data.campaignId }
         })
       ]);
 

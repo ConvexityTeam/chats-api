@@ -38,10 +38,13 @@ router.post(
 );
 router.post(
   '/ngo-register',
-
   AuthController.createNgoAccount
 );
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
+//uploading beneficiaries via spreadsheet
+router.post('/register/beneficiaries-upload-spreadsheet', AuthController.beneficiariesExcel);
+//router.post('/register/kobo-tool-box', AuthController.beneficiariesKoboToolBox);
+
 router.post('/nin-verification', AuthController.verifyNin);
 router.post('/update-profile', Auth, AuthController.updateProfile);
 router.get('/user-detail/:id', Auth, AuthController.userDetails);
