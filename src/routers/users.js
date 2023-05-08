@@ -7,8 +7,8 @@ const {
   BeneficiaryAuth
 } = require('../middleware/auth');
 const UsersController = require('../controllers/UsersController');
-const {UserValidator} = require('../validators');
-const {IsUserVerified} = require('../middleware');
+const { UserValidator } = require('../validators');
+const { IsUserVerified } = require('../middleware');
 
 // Refactored
 
