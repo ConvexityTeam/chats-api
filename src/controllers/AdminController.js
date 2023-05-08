@@ -371,15 +371,15 @@ class AdminController {
       });
 
       for (let campaign of allCampaign) {
-        const budget = campaign.reduce((accumulator, object) => {
-          return accumulator + object.budget;
-        }, 0);
-        const amount_disbursed = campaign.reduce((accumulator, object) => {
-          return accumulator + object.amount_disbursed;
-        }, 0);
+        // const budget = campaign.reduce((accumulator, object) => {
+        //   return accumulator + object.budget;
+        // }, 0);
+        // const amount_disbursed = campaign.reduce((accumulator, object) => {
+        //   return accumulator + object.amount_disbursed;
+        // }, 0);
 
-        campaign.dataValues.total_amount = budget;
-        campaign.dataValues.total_amount_spent = amount_disbursed;
+        campaign.dataValues.total_amount = campaign.budget;
+        campaign.dataValues.total_amount_spent = campaign.amount_disbursed;
       }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
