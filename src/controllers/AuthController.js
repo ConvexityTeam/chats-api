@@ -121,196 +121,42 @@ class AuthController {
         });
       });
   }
-  static async uploadBeneficiariesExcel(req, res) {
-    //upload excel file
-    //read uploaded excel file
-    //match records to the right column
-   // ensure that creator of beneficiary belongs to the organisation that owns campaing
+  static async beneficiariesExcel(req, res) {
+  
    var form = new formidable.IncomingForm({
     multiples: true
   });
   form.parse(req, async (err, fields, files) => {
     fields['today'] = new Date(Date.now()).toDateString();
-    const rules = {
-      first_name: 'required|alpha',
-      last_name: 'required|alpha',
-      email: 'email',
-      referal_id: 'string',
-      phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-      gender: 'required|alpha|in:male,female',
-      address: 'string',
-      location: 'string',
-      password: 'required',
-      dob: 'required|date|before:today',
-      nfc: 'string',
-      campaign: 'required|numeric',
-      // pin: 'size:4|required' //disabled for now
-    };
-    const validation = new Validator(fields, rules);
-    if (validation.fails()) {
-      Response.setError(400, validation.errors);
-      return Response.send(res);
-    } else {
-      const allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
-
-      if (!files.profile_pic) {
-        Response.setError(400, 'Profile picture required');
+   //allowed file types .xls, .csv, .xlsx
+    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    const beneficiariesFile =null;
+      if (!files.beneficiaries_xls) {
+        Response.setError(400, 'Beneficiaries Records required');
         return Response.send(res);
-      }
-      // else if (!allowed_types.includes(files.profile_pic.type)) {
-      //   Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture");
-      //   return Response.send(res);
-      // }
-      if (files.fingerprints) {
-        if (files.fingerprints.length >= 6) {
-          var uploadFilePromises = [];
-
-          // files.fingerprints.forEach((fingerprint) => {
-          //   const limit = 2 * 1024 * 1024
-          //   if (!allowed_types.includes(fingerprint.type)) {
-          //     Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for fingerprints");
-          //     return Response.send(res);
-          //   }
-          //    if (fingerprint.size > limit) {
-          //     Response.setError(400, "Fingerprint file must not exceed 2MB");
-          //     return Response.send(res);
-          //   }
-          // })
-          let campaignExist = await db.Campaign.findOne({
-            where: {
-              id: fields.campaign,
-              type: 'campaign'
-            }
-          });
-
-          if (!campaignExist) {
-            Response.setError(400, 'Invalid Campaign ID');
-            return Response.send(res);
-          }
-          const user_exist = await db.User.findOne({
-            where: {
-              email: fields.email
-            }
-          });
-          if (user_exist) {
-            Response.setError(
-              400,
-              'Email Already Exists, Recover Your Account'
-            );
-            return Response.send(res);
-          } else {
-            bcrypt.genSalt(10, (err, salt) => {
-              if (err) {
-                console.log('Error Ocurred hashing');
-              }
-              const encryptedPin = createHash(fields.pin);
-              bcrypt.hash(fields.password, salt).then(async hash => {
-                const encryptedPassword = hash;
-                await db.User.create({
-                  RoleId: AclRoles.Beneficiary,
-                  first_name: fields.first_name,
-                  last_name: fields.last_name,
-                  phone: fields.phone,
-                  email: fields.email,
-                  password: encryptedPassword,
-                  gender: fields.gender,
-                  status: 'activated',
-                  location: fields.location,
-                  address: fields.address,
-                  referal_id: fields.referal_id,
-                  dob: fields.dob,
-                  pin: encryptedPin
-                })
-                  .then(async user => {
-                    await QueueService.createWallet(user.id, 'user');
-
-                    var i = 0;
-                    files.fingerprints.forEach(async fingerprint => {
-                      let ext = fingerprint.name.substring(
-                        fingerprint.name.lastIndexOf('.') + 1
-                      );
-                      uploadFilePromises.push(
-                        uploadFile(
-                          fingerprint,
-                          'u-' +
-                          environ +
-                          '-' +
-                          user.id +
-                          '-fp-' +
-                          ++i +
-                          '.' +
-                          ext,
-                          'convexity-fingerprints'
-                        )
-                      );
-                    });
-                    let extension = files.profile_pic.name.substring(
-                      files.profile_pic.name.lastIndexOf('.') + 1
-                    );
-                    await uploadFile(
-                      files.profile_pic,
-                      'u-' + environ + '-' + user.id + '-i.' + extension,
-                      'convexity-profile-images'
-                    ).then(url => {
-                      user.update({
-                        profile_pic: url
-                      });
-                    });
-                    // Promise.all(uploadFilePromises).then(responses => {
-                    //   responses.forEach(async url => {
-                    //     await user.createPrint({
-                    //       url: url
-                    //     });
-                    //   });
-                    // });
-                    // if (campaignExist.type === 'campaign') {
-                    //   await Beneficiary.create({
-                    //     UserId: user.id,
-                    //     CampaignId: campaignExist.id,
-                    //     approved: true,
-                    //     source: 'field app'
-                    //   }).then(async () => {
-                    //     await QueueService.createWallet(
-                    //       user.id,
-                    //       'user',
-                    //       fields.campaign
-                    //     );
-                    //   });
-                    // }
-                    // const data = await encryptData(
-                    //   JSON.stringify({
-                    //     id: user.id,
-                    //     email: fields.email,
-                    //     phone: fields.phone
-                    //   })
-                    // );
-                    Response.setSuccess(
-                      201,
-                      'Account Onboarded Successfully',
-                      user.id
-                    );
-                    return Response.send(res);
-                  })
-                  .catch(err => {
-                    Response.setError(500, err.message);
-                    return Response.send(res);
-                  });
-              });
-            });
-          }
-        } else {
-          Response.setError(400, 'Minimum of 6 Fingerprints Required');
-          return Response.send(res);
-        }
-      } else {
-        Response.setError(400, 'Fingerprints Required');
+      } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
+        Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
         return Response.send(res);
+      }else {
+      //upload excel file
+    await uploadFile( files.beneficiaries_xls,'u-' + environ + '-' + user.id + '-i.' + extension,'convexity-beneficiaries-csv')
+    .then(url => {
+      user.update({
+        beneficiariesFile: url
+      });
+    });
+      //read uploaded excel file
+      console.log(beneficiariesFile);
+    //match records to the right column
+   // ensure that creator of beneficiary belongs to the organisation that owns campaing
       }
     }
-  });
+  
   }
-static async newBeneficiariesKoboToolBox(req,res){
-const kTBoxURL='';
+
+
+static async beneficiariesKoboToolBox(req,res){
+const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
 //fetch from their url
 //read into json
 //match records to right data column 
