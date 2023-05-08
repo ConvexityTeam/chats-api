@@ -178,6 +178,46 @@ class AdminController {
       return Response.send(res);
     }
   }
+  static async updateUserStatus(req, res) {
+    try {
+      const allNGOs = await OrganisationService.getAllOrganisations();
+
+      for (let ngo of allNGOs) {
+        const sum = ngo.Transactions.reduce((accumulator, object) => {
+          return accumulator + object.amount;
+        }, 0);
+        let count = 0;
+        const user = await UserService.findUser(ngo.Members[0].UserId);
+        ngo.dataValues.status = user.status;
+        ngo.dataValues.UserId = user.id;
+        for (let campaign of ngo.Campaigns) {
+          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+            campaign.id
+          );
+          count = count + beneficiaries.length;
+        }
+        ngo.dataValues.beneficiary_count = count;
+        ngo.dataValues.disbursedSum = sum;
+        delete ngo.dataValues.Transactions;
+        delete ngo.dataValues.Campaigns;
+        delete ngo.dataValues.Members;
+      }
+
+      if (allNGOs.length > 0) {
+        Response.setSuccess(200, 'NGOs retrieved', allNGOs);
+      } else {
+        Response.setSuccess(200, 'No NGO found');
+      }
+      return Response.send(res);
+    } catch (error) {
+      console.log(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.'
+      );
+      return Response.send(res);
+    }
+  }
 
   static async getNGODisbursedAndBeneficiaryTotal(req, res) {
     const {organisation_id} = req.params;
@@ -213,10 +253,25 @@ class AdminController {
   static async getAllVendors(req, res) {
     try {
       const allVendors = await VendorService.getAllVendorsAdmin();
+
+      for (let vendor of allVendors) {
+        const sum = vendor.StoreTransactions.reduce((accumulator, object) => {
+          return accumulator + object.amount;
+        }, 0);
+        const campaign = await CampaignService.getVendorCampaigns(vendor.id);
+        vendor.dataValues.total_amount_sold = sum;
+        vendor.dataValues.total_campaign = campaign.length || null;
+        vendor.dataValues.total_ngos = vendor.Organisations.length;
+        delete vendor.dataValues.Organisations;
+        delete vendor.dataValues.StoreTransactions;
+      }
       Response.setSuccess(200, 'Vendors retrieved', allVendors);
       return Response.send(res);
     } catch (error) {
-      Response.setError(400, error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error' + error
+      );
       return Response.send(res);
     }
   }
@@ -254,6 +309,21 @@ class AdminController {
   static async getAllBeneficiaries(req, res) {
     try {
       const allBeneficiaries = await BeneficiaryService.getBeneficiariesAdmin();
+
+      for (let beneficiary of allBeneficiaries) {
+        const sum = beneficiary.OrderTransaction.reduce(
+          (accumulator, object) => {
+            return accumulator + object.amount;
+          },
+          0
+        );
+        const campaign = await BeneficiaryService.findCampaignBeneficiary(
+          beneficiary.id
+        );
+        beneficiary.dataValues.total_amount_spent = sum;
+        beneficiary.dataValues.total_campaign = campaign.length;
+        delete beneficiary.dataValues.OrderTransaction;
+      }
       Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
       return Response.send(res);
     } catch (error) {
@@ -297,9 +367,20 @@ class AdminController {
     try {
       const query = SanitizeObject(req.query, ['type']);
       const allCampaign = await CampaignService.getAllCampaigns({
-        ...query,
-        status: 'active'
+        ...query
       });
+
+      for (let campaign of allCampaign) {
+        const budget = campaign.reduce((accumulator, object) => {
+          return accumulator + object.budget;
+        }, 0);
+        const amount_disbursed = campaign.reduce((accumulator, object) => {
+          return accumulator + object.amount_disbursed;
+        }, 0);
+
+        campaign.dataValues.total_amount = budget;
+        campaign.dataValues.total_amount_spent = amount_disbursed;
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign retrieved',
@@ -309,7 +390,7 @@ class AdminController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.'
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -318,6 +399,45 @@ class AdminController {
   static async getAllDonors(req, res) {
     try {
       const allDonors = await OrganisationService.getAllDonorsAdmin();
+
+      for (let donor of allDonors) {
+        const transactions = await TransactionService.findTransactions({
+          OrganisationId: donor.id,
+          BeneficiaryId: null,
+          transaction_type: 'transfer',
+          is_approved: true,
+          status: 'success'
+        });
+        const userExist = await UserService.findByEmail(donor.email);
+        const sum = transactions.reduce((accumulator, object) => {
+          return accumulator + object.amount;
+        }, 0);
+        donor.dataValues.total_campaign = donor.associatedCampaigns.length;
+        const ngos = [
+          ...new Set(donor.associatedCampaigns.map(item => item.OrganisationId))
+        ];
+        donor.dataValues.total_donation = sum;
+        donor.dataValues.total_ngo = ngos.length;
+        donor.dataValues.UserId = userExist.id;
+        donor.dataValues.status = userExist.status;
+        delete donor.dataValues.associatedCampaigns;
+      }
+
+      // for (let users of allDonors) {
+      //   for (let organisation of users.Organisations) {
+      //     const campaign = await OrganisationService.getAssociatedCampaigns(
+      //       organisation.id
+      //     );
+      //     const sum = organisation.Transactions.reduce(
+      //       (accumulator, object) => {
+      //         return accumulator + object.amount;
+      //       },
+      //       0
+      //     );
+      //     organisation.dataValues.AssociatedCampaign = campaign;
+      //     organisation.dataValues.total_donation = sum;
+      //   }
+      // }
       if (allDonors.length > 0) {
         Response.setSuccess(200, 'Donors retrieved', allDonors);
       } else {

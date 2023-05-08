@@ -203,8 +203,8 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric',
-       // pin: 'size:4|required' //pin validation disabled
+        campaign: 'required|numeric'
+        // pin: 'size:4|required' //pin validation disabled
       };
 
       const validation = new Validator(fields, rules);
@@ -263,7 +263,7 @@ class AuthController {
             return Response.send(res);
           }
         }
-        const encryptedPin = createHash('0000');//setting default pin to zero //createHash(fields.pin);
+        const encryptedPin = createHash('0000'); //setting default pin to zero //createHash(fields.pin);
         bcrypt.genSalt(10, (err, salt) => {
           if (err) {
             console.log('Error Ocurred hashing');
@@ -364,8 +364,8 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric',
-       // pin: 'size:4|required' //disabled for now
+        campaign: 'required|numeric'
+        // pin: 'size:4|required' //disabled for now
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {

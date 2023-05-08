@@ -10,6 +10,7 @@ const {
   BankAccount,
   Order,
   Market,
+  Campaign,
   Wallet,
   Product,
   OrderProduct,
@@ -52,8 +53,25 @@ class VendorService {
   static async getAllVendorsAdmin() {
     return User.findAll({
       where: {
-        RoleId: 6
-      }
+        RoleId: AclRoles.Vendor
+      },
+      attributes: userConst.publicAttr,
+      include: [
+        {
+          model: Organisation,
+          as: 'Organisations'
+        },
+        {
+          where: {
+            transaction_origin: 'store',
+            transaction_type: 'spent',
+            is_approved: true,
+            status: 'success'
+          },
+          model: Transaction,
+          as: 'StoreTransactions'
+        }
+      ]
     });
   }
 

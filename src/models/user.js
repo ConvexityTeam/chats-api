@@ -31,6 +31,11 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Beneficiary
       });
 
+      User.hasMany(models.Campaign, {
+        as: 'VendorCampaigns',
+        foreignKey: 'UserId'
+      });
+
       User.hasMany(models.Complaint, {
         as: 'Complaints',
         foreignKey: 'UserId'

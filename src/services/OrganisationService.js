@@ -155,11 +155,35 @@ class OrganisationService {
     });
   }
 
-  static async getAllDonorsAdmin() {
-    return User.findAll({
+  static async getAssociatedCampaigns(id) {
+    return Organisation.findAll({
       where: {
-        RoleId: 8
+        id
+      },
+      order: [['createdAt', 'DESC']],
+      include: {
+        model: Campaign,
+        where: {
+          is_public: false
+        },
+        as: 'associatedCampaigns'
       }
+    });
+  }
+
+  static async getAllDonorsAdmin() {
+    return Organisation.findAll({
+      order: [['createdAt', 'DESC']],
+
+      include: [
+        {
+          model: Campaign,
+          where: {
+            is_public: false
+          },
+          as: 'associatedCampaigns'
+        }
+      ]
     });
   }
 
