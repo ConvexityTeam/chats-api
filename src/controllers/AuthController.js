@@ -156,9 +156,8 @@ class AuthController {
    // ensure that creator of beneficiary belongs to the organisation that owns campaing
       }
     });
-  }
-
   
+  }
 
 
 static async beneficiariesKoboToolBox(req,res){
@@ -593,11 +592,13 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
       Response.setError(400, validation.errors);
       return Response.send(res);
     } else {
+      /*
       const url_string = data.website_url;
       const domain = extractDomain(url_string);
       const email = data.email;
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       if (email.match(new RegExp(re))) {
+        */
         const userExist = await db.User.findOne({
           where: {
             email: data.email
@@ -676,10 +677,12 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
           Response.setError(400, 'Email Already Exists, Recover Your Account');
           return Response.send(res);
         }
+        /*
       } else {
         Response.setError(400, 'Email must end in @' + domain);
         return Response.send(res);
       }
+      */
     }
   }
 
