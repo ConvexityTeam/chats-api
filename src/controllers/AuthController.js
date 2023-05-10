@@ -150,9 +150,10 @@ class AuthController {
     //match records to the right column
    // ensure that creator of beneficiary belongs to the organisation that owns campaing
       }
-    }
-  
+    });
   }
+
+  
 
 
 static async beneficiariesKoboToolBox(req,res){
