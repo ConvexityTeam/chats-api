@@ -124,15 +124,22 @@ class AuthController {
   static async beneficiariesExcel(req, res) {
     //allowed file types .xls, .csv, .xlsx
     const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-   try{
-    if (req.file == undefined) {
-      return res.status(400).send("Please upload an excel file!");
-    }
-    console.log(req.file);
-   }catch (error) {
-      Response.setError(404, 'Beneficiaries Cannot Be Uploaded', error);
-      return Response.send(res);
-    }
+    const beneficiariesFile =null;
+      if (!files.beneficiaries_xls) {
+        Response.setError(400, 'Beneficiaries Records required');
+        return Response.send(res);
+      } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
+        Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
+        return Response.send(res);
+      }else {
+      //upload excel file
+   
+      //read uploaded excel file
+      console.log(beneficiariesFile);
+    //match records to the right column
+   // ensure that creator of beneficiary belongs to the organisation that owns campaing
+      }
+  
   }
 
 
@@ -820,7 +827,7 @@ class AuthController {
       return Response.send(res);
     }
   }
-/*
+/** 
   static async signInField(req, res) {
     try {
       const user = await db.User.findOne({
