@@ -122,15 +122,20 @@ class AuthController {
       });
   }
   static async beneficiariesExcel(req, res) {
+  var beneficiariesFile =null;
+    //allowed file types .xls, .csv, .xlsx
+    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
   
    var form = new formidable.IncomingForm({
     multiples: true
   });
+  
   form.parse(req, async (err, fields, files) => {
     fields['today'] = new Date(Date.now()).toDateString();
-   //allowed file types .xls, .csv, .xlsx
-    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-    const beneficiariesFile =null;
+   // console.log(files);
+ 
+     const extension = req.file.mimetype.split('/').pop();
+
       if (!files.beneficiaries_xls) {
         Response.setError(400, 'Beneficiaries Records required');
         return Response.send(res);
@@ -139,7 +144,7 @@ class AuthController {
         return Response.send(res);
       }else {
       //upload excel file
-    await uploadFile( files.beneficiaries_xls,'u-' + environ + '-' + user.id + '-i.' + extension,'convexity-beneficiaries-csv')
+    await uploadFile( files.beneficiaries_xls,'u-' + environ + '-' + '-i.' + extension,'convexity-beneficiaries-csv')
     .then(url => {
       user.update({
         beneficiariesFile: url
@@ -150,9 +155,10 @@ class AuthController {
     //match records to the right column
    // ensure that creator of beneficiary belongs to the organisation that owns campaing
       }
-    }
-  
+    });
   }
+
+  
 
 
 static async beneficiariesKoboToolBox(req,res){
