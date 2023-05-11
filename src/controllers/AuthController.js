@@ -121,53 +121,63 @@ class AuthController {
         });
       });
   }
-  static async beneficiariesExcel(req, res) {
-  var beneficiariesFile =null;
-    //allowed file types .xls, .csv, .xlsx
-    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+  static async beneficiariesExcel(req, res, next) {
+    try {
+      var beneficiariesFile = null;
   
-   var form = new formidable.IncomingForm({
-    multiples: true
-  });
-  
-  form.parse(req, async (err, fields, files) => {
-    fields['today'] = new Date(Date.now()).toDateString();
-   // console.log(files);
- 
-     const extension = req.file.mimetype.split('/').pop();
-
-      if (!files.beneficiaries_xls) {
-        Response.setError(400, 'Beneficiaries Records required');
-        return Response.send(res);
-      } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
-        Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
-        return Response.send(res);
-      }else {
-      //upload excel file
-    await uploadFile( files.beneficiaries_xls,'u-' + environ + '-' + '-i.' + extension,'convexity-beneficiaries-csv')
-    .then(url => {
-      user.update({
-        beneficiariesFile: url
+      var form = new formidable.IncomingForm({
+        multiples: true
       });
-    });
-      //read uploaded excel file
-      console.log(beneficiariesFile);
-    //match records to the right column
-   // ensure that creator of beneficiary belongs to the organisation that owns campaing
-      }
-    });
-  
+     
+   
+          form.parse(req, async (err, fields, files) => {
+            fields['today'] = new Date(Date.now()).toDateString();
+            
+            // console.log(req.file);
+            // console.log("=================================");
+            console.log(req.files);
+            //allowed file types .xls, .csv, .xlsx
+            const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+            /*
+            const extension = req.files.type.split('/').pop();
+      
+            if (!files.beneficiaries_xls) {
+              Response.setError(400, 'Beneficiaries Records required');
+              return Response.send(res);
+            } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
+              Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
+              return Response.send(res);
+            } else {
+              //upload excel file
+              await uploadFile(files.beneficiaries_xls, 'u-' + environ + '-' + '-i.' + extension, 'convexity-beneficiaries-csv')
+                .then(url => {
+                  user.update({
+                    beneficiariesFile: url
+                  });
+                });
+              //read uploaded excel file
+              console.log(beneficiariesFile);
+              //match records to the right column
+              // ensure that creator of beneficiary belongs to the organisation that owns campaing
+            }
+           */ 
+          });
+       
+    } catch (error) {
+      Response.setError(500, 'Uploading Of Beneficiaries failed. Please try again later.');
+    }
   }
 
 
-static async beneficiariesKoboToolBox(req,res){
-const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
-//fetch from their url
-//read into json
-//match records to right data column 
-//save to db
-//send responses
-}
+
+  static async beneficiariesKoboToolBox(req, res) {
+    const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
+    //fetch from their url
+    //read into json
+    //match records to right data column 
+    //save to db
+    //send responses
+  }
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
@@ -599,90 +609,90 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       if (email.match(new RegExp(re))) {
         */
-        const userExist = await db.User.findOne({
+      const userExist = await db.User.findOne({
+        where: {
+          email: data.email
+        }
+      });
+      if (!userExist) {
+        const organisationExist = await db.Organisation.findOne({
           where: {
-            email: data.email
+            [Op.or]: [
+              {
+                name: data.organisation_name
+              },
+              {
+                website_url: data.website_url
+              }
+            ]
           }
         });
-        if (!userExist) {
-          const organisationExist = await db.Organisation.findOne({
-            where: {
-              [Op.or]: [
-                {
-                  name: data.organisation_name
-                },
-                {
-                  website_url: data.website_url
-                }
-              ]
+        if (!organisationExist) {
+          bcrypt.genSalt(10, (err, salt) => {
+            if (err) {
+              console.log('Error Ocurred hashing');
             }
-          });
-          if (!organisationExist) {
-            bcrypt.genSalt(10, (err, salt) => {
-              if (err) {
-                console.log('Error Ocurred hashing');
-              }
-              bcrypt.hash(data.password, salt).then(async hash => {
-                const encryptedPassword = hash;
-                await db.User.create({
-                  RoleId: AclRoles.NgoAdmin,
-                  email: data.email,
-                  password: encryptedPassword
-                })
-                  .then(async _user => {
-                    user = _user;
-                    //QueueService.createWallet(user.id, 'user');
-                    await db.Organisation.create({
-                      name: data.organisation_name,
-                      email: data.email,
-                      website_url: data.website_url,
-                      registration_id: generateOrganisationId()
-                    }).then(async organisation => {
-                      await QueueService.createWallet(
-                        organisation.id,
-                        'organisation'
-                      );
-                      await organisation
-                        .createMember({
-                          UserId: user.id,
-                          role: OrgRoles.Admin
-                        })
-                        .then(() => {
-                          Response.setSuccess(
-                            201,
-                            'NGO and User registered successfully',
-                            {
-                              user: user.toObject(),
-                              organisation
-                            }
-                          );
-                          return Response.send(res);
-                        });
-                    });
-                  })
-                  .catch(err => {
-                    Response.setError(500, err);
-                    return Response.send(res);
+            bcrypt.hash(data.password, salt).then(async hash => {
+              const encryptedPassword = hash;
+              await db.User.create({
+                RoleId: AclRoles.NgoAdmin,
+                email: data.email,
+                password: encryptedPassword
+              })
+                .then(async _user => {
+                  user = _user;
+                  //QueueService.createWallet(user.id, 'user');
+                  await db.Organisation.create({
+                    name: data.organisation_name,
+                    email: data.email,
+                    website_url: data.website_url,
+                    registration_id: generateOrganisationId()
+                  }).then(async organisation => {
+                    await QueueService.createWallet(
+                      organisation.id,
+                      'organisation'
+                    );
+                    await organisation
+                      .createMember({
+                        UserId: user.id,
+                        role: OrgRoles.Admin
+                      })
+                      .then(() => {
+                        Response.setSuccess(
+                          201,
+                          'NGO and User registered successfully',
+                          {
+                            user: user.toObject(),
+                            organisation
+                          }
+                        );
+                        return Response.send(res);
+                      });
                   });
-              });
+                })
+                .catch(err => {
+                  Response.setError(500, err);
+                  return Response.send(res);
+                });
             });
-          } else {
-            Response.setError(
-              400,
-              'An Organisation with such name or website url already exist'
-            );
-            return Response.send(res);
-          }
+          });
         } else {
-          Response.setError(400, 'Email Already Exists, Recover Your Account');
+          Response.setError(
+            400,
+            'An Organisation with such name or website url already exist'
+          );
           return Response.send(res);
         }
-        /*
       } else {
-        Response.setError(400, 'Email must end in @' + domain);
+        Response.setError(400, 'Email Already Exists, Recover Your Account');
         return Response.send(res);
       }
-      */
+      /*
+    } else {
+      Response.setError(400, 'Email must end in @' + domain);
+      return Response.send(res);
+    }
+    */
     }
   }
 
@@ -865,7 +875,7 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
       return Response.send(res);
     }
   }
-
+/*
   // static async signInField(req, res) {
   //   try {
   //     const user = await db.User.findOne({
@@ -901,6 +911,7 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
   //     return Response.send(res);
   //   }
   // }
+  */
   static async signInBeneficiary(req, res) {
     try {
       const user = await db.User.findOne({
