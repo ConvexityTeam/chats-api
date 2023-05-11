@@ -128,7 +128,7 @@ class AuthController {
       if (!files.beneficiaries_xls) {
         Response.setError(400, 'Beneficiaries Records required');
         return Response.send(res);
-      } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
+      } else if (!allowed_types.includes(req.files.beneficiaries_xls.type)) {
         Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
         return Response.send(res);
       }else {
