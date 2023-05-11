@@ -1,3 +1,4 @@
+require("dotenv").config();
 const db = require('../models');
 const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
@@ -500,6 +501,8 @@ setInterval(async () => {
     }
   });
   let resp;
+  if (process.env.NODE_ENV === 'production') {
+
   await axios
     .get(
       `https://api.ng.termii.com/api/get-balance?api_key=${termiiConfig.api_key}`
@@ -515,6 +518,7 @@ setInterval(async () => {
     .catch(error => {
       console.log('error', error.message);
     });
+  }
 }, 3600000);
 
 setInterval(async () => {
@@ -557,7 +561,7 @@ setInterval(async () => {
       RoleId: AclRoles.SuperAdmin
     }
   });
-  if (process.env.NODE_ENV == 'production') {
+  if (process.env.NODE_ENV === 'production') {
     const balance = await BlockchainService.getNativeBalance(
       '0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63'
     );
