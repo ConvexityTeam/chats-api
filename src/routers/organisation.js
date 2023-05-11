@@ -322,7 +322,7 @@ router
   .get(
     FieldAgentAuth,
     ParamValidator.OrganisationId,
-    IsOrgMember,
+    // IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.getCampaign
   )
