@@ -551,7 +551,7 @@ class AuthController {
       const domain = extractDomain(url_string);
       const email = data.email;
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-      if (email.match(new RegExp(re))) {
+      // if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
           where: {
             email: data.email
@@ -630,10 +630,10 @@ class AuthController {
           Response.setError(400, 'Email Already Exists, Recover Your Account');
           return Response.send(res);
         }
-      } else {
-        Response.setError(400, 'Email must end in @' + domain);
-        return Response.send(res);
-      }
+      // } else {
+      //   Response.setError(400, 'Email must end in @' + domain);
+      //   return Response.send(res);
+      // }
     }
   }
 
