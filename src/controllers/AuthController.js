@@ -122,53 +122,30 @@ class AuthController {
       });
   }
   static async beneficiariesExcel(req, res) {
-  var beneficiariesFile =null;
     //allowed file types .xls, .csv, .xlsx
     const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-  
-   var form = new formidable.IncomingForm({
-    multiples: true
-  });
-  
-  form.parse(req, async (err, fields, files) => {
-    fields['today'] = new Date(Date.now()).toDateString();
-   // console.log(files);
- 
-     const extension = req.file.mimetype.split('/').pop();
-
-      if (!files.beneficiaries_xls) {
-        Response.setError(400, 'Beneficiaries Records required');
-        return Response.send(res);
-      } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
-        Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
-        return Response.send(res);
-      }else {
-      //upload excel file
-    await uploadFile( files.beneficiaries_xls,'u-' + environ + '-' + '-i.' + extension,'convexity-beneficiaries-csv')
-    .then(url => {
-      user.update({
-        beneficiariesFile: url
-      });
-    });
-      //read uploaded excel file
-      console.log(beneficiariesFile);
-    //match records to the right column
-   // ensure that creator of beneficiary belongs to the organisation that owns campaing
-      }
-    });
+   try{
+    if (req.file == undefined) {
+      return res.status(400).send("Please upload an excel file!");
+    }
+    console.log(req.file);
+   }catch (error) {
+      Response.setError(404, 'Beneficiaries Cannot Be Uploaded', error);
+      return Response.send(res);
+    }
   }
 
-  
 
 
-static async beneficiariesKoboToolBox(req,res){
-const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
-//fetch from their url
-//read into json
-//match records to right data column 
-//save to db
-//send responses
-}
+
+  static async beneficiariesKoboToolBox(req, res) {
+    const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
+    //fetch from their url
+    //read into json
+    //match records to right data column 
+    //save to db
+    //send responses
+  }
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
@@ -487,77 +464,58 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
                     referal_id: fields.referal_id,
                     dob: fields.dob,
                     pin: encryptedPin
+                  }).then(async user => {
+                    await QueueService.createWallet(user.id, 'user');
+                    var i = 0;
+                    files.fingerprints.forEach(async fingerprint => {
+                      let ext = fingerprint.name.substring(fingerprint.name.lastIndexOf('.') + 1);
+                      uploadFilePromises.push(uploadFile(fingerprint, 'u-' + environ + '-' + user.id + '-fp-' + ++i + '.' + ext, 'convexity-fingerprints'));
+                    });
+                    let extension = files.profile_pic.name.substring(files.profile_pic.name.lastIndexOf('.') + 1);
+                    await uploadFile(
+                      files.profile_pic,
+                      'u-' + environ + '-' + user.id + '-i.' + extension,
+                      'convexity-profile-images'
+                    ).then(url => {
+                      user.update({
+                        profile_pic: url
+                      });
+                    });
+                    Promise.all(uploadFilePromises).then(responses => {
+                      responses.forEach(async url => {
+                        await user.createPrint({
+                          url: url
+                        });
+                      });
+                    });
+                    if (campaignExist.type === 'campaign') {
+                      await Beneficiary.create({
+                        UserId: user.id,
+                        CampaignId: campaignExist.id,
+                        approved: true,
+                        source: 'field app'
+                      }).then(async () => {
+                        await QueueService.createWallet(
+                          user.id,
+                          'user',
+                          fields.campaign
+                        );
+                      });
+                    }
+                    // const data = await encryptData(
+                    //   JSON.stringify({
+                    //     id: user.id,
+                    //     email: fields.email,
+                    //     phone: fields.phone
+                    //   })
+                    // );
+                    Response.setSuccess(
+                      201,
+                      'Account Onboarded Successfully',
+                      user.id
+                    );
+                    return Response.send(res);
                   })
-                    .then(async user => {
-                      await QueueService.createWallet(user.id, 'user');
-
-                      var i = 0;
-                      files.fingerprints.forEach(async fingerprint => {
-                        let ext = fingerprint.name.substring(
-                          fingerprint.name.lastIndexOf('.') + 1
-                        );
-                        uploadFilePromises.push(
-                          uploadFile(
-                            fingerprint,
-                            'u-' +
-                            environ +
-                            '-' +
-                            user.id +
-                            '-fp-' +
-                            ++i +
-                            '.' +
-                            ext,
-                            'convexity-fingerprints'
-                          )
-                        );
-                      });
-                      let extension = files.profile_pic.name.substring(
-                        files.profile_pic.name.lastIndexOf('.') + 1
-                      );
-                      await uploadFile(
-                        files.profile_pic,
-                        'u-' + environ + '-' + user.id + '-i.' + extension,
-                        'convexity-profile-images'
-                      ).then(url => {
-                        user.update({
-                          profile_pic: url
-                        });
-                      });
-                      Promise.all(uploadFilePromises).then(responses => {
-                        responses.forEach(async url => {
-                          await user.createPrint({
-                            url: url
-                          });
-                        });
-                      });
-                      if (campaignExist.type === 'campaign') {
-                        await Beneficiary.create({
-                          UserId: user.id,
-                          CampaignId: campaignExist.id,
-                          approved: true,
-                          source: 'field app'
-                        }).then(async () => {
-                          await QueueService.createWallet(
-                            user.id,
-                            'user',
-                            fields.campaign
-                          );
-                        });
-                      }
-                      // const data = await encryptData(
-                      //   JSON.stringify({
-                      //     id: user.id,
-                      //     email: fields.email,
-                      //     phone: fields.phone
-                      //   })
-                      // );
-                      Response.setSuccess(
-                        201,
-                        'Account Onboarded Successfully',
-                        user.id
-                      );
-                      return Response.send(res);
-                    })
                     .catch(err => {
                       Response.setError(500, err.message);
                       return Response.send(res);
@@ -862,42 +820,43 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
       return Response.send(res);
     }
   }
+/*
+  static async signInField(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+      if (user && user.RoleId !== AclRoles.FieldAgent) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+      const data = await AuthService.login(user, req.body.password);
 
-  // static async signInField(req, res) {
-  //   try {
-  //     const user = await db.User.findOne({
-  //       where: {
-  //         email: req.body.email
-  //       },
-  //       include: {
-  //         model: db.OrganisationMembers,
-  //         as: 'AssociatedOrganisations',
-  //         include: {
-  //           model: db.Organisation,
-  //           as: 'Organisation'
-  //         }
-  //       }
-  //     });
-  //     if (user && user.RoleId !== AclRoles.FieldAgent) {
-  //       Response.setError(
-  //         HttpStatusCode.STATUS_FORBIDDEN,
-  //         'Access Denied, Unauthorised Access'
-  //       );
-  //       return Response.send(res);
-  //     }
-  //     const data = await AuthService.login(user, req.body.password);
-
-  //     Response.setSuccess(200, 'Login Successful.', data);
-  //     return Response.send(res);
-  //   } catch (error) {
-  //     const message =
-  //       error.status == 401
-  //         ? error.message
-  //         : 'Login failed. Please try again later.';
-  //     Response.setError(401, message);
-  //     return Response.send(res);
-  //   }
-  // }
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.';
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+  */
   static async signInBeneficiary(req, res) {
     try {
       const user = await db.User.findOne({
@@ -1101,21 +1060,21 @@ const kTBoxURL='https://[kpi]/api/v2/assets/{asset_uid}.json';
       return Response.send(res);
     }
   }
-
-  // static async resetPassword(req, res) {
-  //   try {
-  //     await AuthService.updatedPassord(req.user, req.body.password);
-  //     Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
-  //     return Response.send(res);
-  //   } catch (error) {
-  //     Response.setError(
-  //       HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-  //       'Reset password request failed. Please try again.'
-  //     );
-  //     return Response.send(res);
-  //   }
-  // }
-
+/*
+  static async resetPassword(req, res) {
+    try {
+      await AuthService.updatedPassord(req.user, req.body.password);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Reset password request failed. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+*/
   static async sendInvite(req, res) {
     const { inviteeEmail, message, link } = req.body;
     const { organisation_id, campaign_id } = req.params;
@@ -1463,5 +1422,6 @@ function extractDomain(url) {
 
   return domain;
 }
+
 
 module.exports = AuthController;
