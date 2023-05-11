@@ -121,52 +121,6 @@ class AuthController {
         });
       });
   }
-<<<<<<< HEAD
-  static async beneficiariesExcel(req, res, next) {
-    try {
-      var beneficiariesFile = null;
-  
-      var form = new formidable.IncomingForm({
-        multiples: true
-      });
-     
-   
-          form.parse(req, async (err, fields, files) => {
-            fields['today'] = new Date(Date.now()).toDateString();
-            
-            // console.log(req.file);
-            // console.log("=================================");
-            console.log(req.files);
-            //allowed file types .xls, .csv, .xlsx
-            const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-            /*
-            const extension = req.files.type.split('/').pop();
-      
-            if (!files.beneficiaries_xls) {
-              Response.setError(400, 'Beneficiaries Records required');
-              return Response.send(res);
-            } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
-              Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
-              return Response.send(res);
-            } else {
-              //upload excel file
-              await uploadFile(files.beneficiaries_xls, 'u-' + environ + '-' + '-i.' + extension, 'convexity-beneficiaries-csv')
-                .then(url => {
-                  user.update({
-                    beneficiariesFile: url
-                  });
-                });
-              //read uploaded excel file
-              console.log(beneficiariesFile);
-              //match records to the right column
-              // ensure that creator of beneficiary belongs to the organisation that owns campaing
-            }
-           */ 
-          });
-       
-    } catch (error) {
-      Response.setError(500, 'Uploading Of Beneficiaries failed. Please try again later.');
-=======
   static async beneficiariesExcel(req, res) {
     //allowed file types .xls, .csv, .xlsx
     const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
@@ -178,16 +132,11 @@ class AuthController {
    }catch (error) {
       Response.setError(404, 'Beneficiaries Cannot Be Uploaded', error);
       return Response.send(res);
->>>>>>> habeeb
     }
   }
 
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> habeeb
   static async beneficiariesKoboToolBox(req, res) {
     const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
     //fetch from their url
@@ -875,43 +824,6 @@ class AuthController {
     }
   }
 /*
-<<<<<<< HEAD
-  // static async signInField(req, res) {
-  //   try {
-  //     const user = await db.User.findOne({
-  //       where: {
-  //         email: req.body.email
-  //       },
-  //       include: {
-  //         model: db.OrganisationMembers,
-  //         as: 'AssociatedOrganisations',
-  //         include: {
-  //           model: db.Organisation,
-  //           as: 'Organisation'
-  //         }
-  //       }
-  //     });
-  //     if (user && user.RoleId !== AclRoles.FieldAgent) {
-  //       Response.setError(
-  //         HttpStatusCode.STATUS_FORBIDDEN,
-  //         'Access Denied, Unauthorised Access'
-  //       );
-  //       return Response.send(res);
-  //     }
-  //     const data = await AuthService.login(user, req.body.password);
-
-  //     Response.setSuccess(200, 'Login Successful.', data);
-  //     return Response.send(res);
-  //   } catch (error) {
-  //     const message =
-  //       error.status == 401
-  //         ? error.message
-  //         : 'Login failed. Please try again later.';
-  //     Response.setError(401, message);
-  //     return Response.send(res);
-  //   }
-  // }
-=======
   static async signInField(req, res) {
     try {
       const user = await db.User.findOne({
@@ -947,7 +859,6 @@ class AuthController {
       return Response.send(res);
     }
   }
->>>>>>> habeeb
   */
   static async signInBeneficiary(req, res) {
     try {
