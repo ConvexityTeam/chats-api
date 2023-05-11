@@ -121,6 +121,7 @@ class AuthController {
         });
       });
   }
+<<<<<<< HEAD
   static async beneficiariesExcel(req, res, next) {
     try {
       var beneficiariesFile = null;
@@ -165,11 +166,28 @@ class AuthController {
        
     } catch (error) {
       Response.setError(500, 'Uploading Of Beneficiaries failed. Please try again later.');
+=======
+  static async beneficiariesExcel(req, res) {
+    //allowed file types .xls, .csv, .xlsx
+    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+   try{
+    if (req.file == undefined) {
+      return res.status(400).send("Please upload an excel file!");
+    }
+    console.log(req.file);
+   }catch (error) {
+      Response.setError(404, 'Beneficiaries Cannot Be Uploaded', error);
+      return Response.send(res);
+>>>>>>> habeeb
     }
   }
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> habeeb
   static async beneficiariesKoboToolBox(req, res) {
     const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
     //fetch from their url
@@ -496,77 +514,58 @@ class AuthController {
                     referal_id: fields.referal_id,
                     dob: fields.dob,
                     pin: encryptedPin
+                  }).then(async user => {
+                    await QueueService.createWallet(user.id, 'user');
+                    var i = 0;
+                    files.fingerprints.forEach(async fingerprint => {
+                      let ext = fingerprint.name.substring(fingerprint.name.lastIndexOf('.') + 1);
+                      uploadFilePromises.push(uploadFile(fingerprint, 'u-' + environ + '-' + user.id + '-fp-' + ++i + '.' + ext, 'convexity-fingerprints'));
+                    });
+                    let extension = files.profile_pic.name.substring(files.profile_pic.name.lastIndexOf('.') + 1);
+                    await uploadFile(
+                      files.profile_pic,
+                      'u-' + environ + '-' + user.id + '-i.' + extension,
+                      'convexity-profile-images'
+                    ).then(url => {
+                      user.update({
+                        profile_pic: url
+                      });
+                    });
+                    Promise.all(uploadFilePromises).then(responses => {
+                      responses.forEach(async url => {
+                        await user.createPrint({
+                          url: url
+                        });
+                      });
+                    });
+                    if (campaignExist.type === 'campaign') {
+                      await Beneficiary.create({
+                        UserId: user.id,
+                        CampaignId: campaignExist.id,
+                        approved: true,
+                        source: 'field app'
+                      }).then(async () => {
+                        await QueueService.createWallet(
+                          user.id,
+                          'user',
+                          fields.campaign
+                        );
+                      });
+                    }
+                    // const data = await encryptData(
+                    //   JSON.stringify({
+                    //     id: user.id,
+                    //     email: fields.email,
+                    //     phone: fields.phone
+                    //   })
+                    // );
+                    Response.setSuccess(
+                      201,
+                      'Account Onboarded Successfully',
+                      user.id
+                    );
+                    return Response.send(res);
                   })
-                    .then(async user => {
-                      await QueueService.createWallet(user.id, 'user');
-
-                      var i = 0;
-                      files.fingerprints.forEach(async fingerprint => {
-                        let ext = fingerprint.name.substring(
-                          fingerprint.name.lastIndexOf('.') + 1
-                        );
-                        uploadFilePromises.push(
-                          uploadFile(
-                            fingerprint,
-                            'u-' +
-                            environ +
-                            '-' +
-                            user.id +
-                            '-fp-' +
-                            ++i +
-                            '.' +
-                            ext,
-                            'convexity-fingerprints'
-                          )
-                        );
-                      });
-                      let extension = files.profile_pic.name.substring(
-                        files.profile_pic.name.lastIndexOf('.') + 1
-                      );
-                      await uploadFile(
-                        files.profile_pic,
-                        'u-' + environ + '-' + user.id + '-i.' + extension,
-                        'convexity-profile-images'
-                      ).then(url => {
-                        user.update({
-                          profile_pic: url
-                        });
-                      });
-                      Promise.all(uploadFilePromises).then(responses => {
-                        responses.forEach(async url => {
-                          await user.createPrint({
-                            url: url
-                          });
-                        });
-                      });
-                      if (campaignExist.type === 'campaign') {
-                        await Beneficiary.create({
-                          UserId: user.id,
-                          CampaignId: campaignExist.id,
-                          approved: true,
-                          source: 'field app'
-                        }).then(async () => {
-                          await QueueService.createWallet(
-                            user.id,
-                            'user',
-                            fields.campaign
-                          );
-                        });
-                      }
-                      // const data = await encryptData(
-                      //   JSON.stringify({
-                      //     id: user.id,
-                      //     email: fields.email,
-                      //     phone: fields.phone
-                      //   })
-                      // );
-                      Response.setSuccess(
-                        201,
-                        'Account Onboarded Successfully',
-                        user.id
-                      );
-                      return Response.send(res);
-                    })
                     .catch(err => {
                       Response.setError(500, err.message);
                       return Response.send(res);
@@ -876,6 +875,7 @@ class AuthController {
     }
   }
 /*
+<<<<<<< HEAD
   // static async signInField(req, res) {
   //   try {
   //     const user = await db.User.findOne({
@@ -911,6 +911,43 @@ class AuthController {
   //     return Response.send(res);
   //   }
   // }
+=======
+  static async signInField(req, res) {
+    try {
+      const user = await db.User.findOne({
+        where: {
+          email: req.body.email
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
+      if (user && user.RoleId !== AclRoles.FieldAgent) {
+        Response.setError(
+          HttpStatusCode.STATUS_FORBIDDEN,
+          'Access Denied, Unauthorised Access'
+        );
+        return Response.send(res);
+      }
+      const data = await AuthService.login(user, req.body.password);
+
+      Response.setSuccess(200, 'Login Successful.', data);
+      return Response.send(res);
+    } catch (error) {
+      const message =
+        error.status == 401
+          ? error.message
+          : 'Login failed. Please try again later.';
+      Response.setError(401, message);
+      return Response.send(res);
+    }
+  }
+>>>>>>> habeeb
   */
   static async signInBeneficiary(req, res) {
     try {
@@ -1115,21 +1152,21 @@ class AuthController {
       return Response.send(res);
     }
   }
-
-  // static async resetPassword(req, res) {
-  //   try {
-  //     await AuthService.updatedPassord(req.user, req.body.password);
-  //     Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
-  //     return Response.send(res);
-  //   } catch (error) {
-  //     Response.setError(
-  //       HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-  //       'Reset password request failed. Please try again.'
-  //     );
-  //     return Response.send(res);
-  //   }
-  // }
-
+/*
+  static async resetPassword(req, res) {
+    try {
+      await AuthService.updatedPassord(req.user, req.body.password);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Reset password request failed. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+*/
   static async sendInvite(req, res) {
     const { inviteeEmail, message, link } = req.body;
     const { organisation_id, campaign_id } = req.params;
@@ -1477,5 +1514,6 @@ function extractDomain(url) {
 
   return domain;
 }
+
 
 module.exports = AuthController;
