@@ -16,7 +16,7 @@ const { Beneficiary, Invites } = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
-
+const readXlsxFile = require("read-excel-file/node");
 const AuthService = require('../services/AuthService');
 const amqp_1 = require('./../libs/RabbitMQ/Connection');
 const {
@@ -36,7 +36,7 @@ const ninVerificationQueue = amqp_1['default'].declareQueue(
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
-
+const __basedir = __dirname + "/..";
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
 class AuthController {
@@ -122,24 +122,59 @@ class AuthController {
       });
   }
   static async beneficiariesExcel(req, res) {
-    //allowed file types .xls, .csv, .xlsx
-    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-    const beneficiariesFile =null;
-      if (!files.beneficiaries_xls) {
-        Response.setError(400, 'Beneficiaries Records required');
-        return Response.send(res);
-      } else if (!allowed_types.includes(files.beneficiaries_xls.type)) {
-        Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
-        return Response.send(res);
-      }else {
-      //upload excel file
-   
-      //read uploaded excel file
-      console.log(beneficiariesFile);
-    //match records to the right column
-   // ensure that creator of beneficiary belongs to the organisation that owns campaing
+
+    try {
+
+      if (req.file == undefined) {
+        return res.status(400).send("Please upload an excel file!");
       }
-  
+
+      let path = __basedir + "/beneficiaries/upload/" + req.file.filename;
+
+      readXlsxFile(path).then((rows) => {
+        // skip header or first row
+        rows.shift();
+        let beneficiaries = [];
+        const encryptedPin = createHash('0000');
+        //loop through the file
+        rows.forEach((row) => {
+          let beneficiary = {
+            first_name: row[0],
+            last_name: row[1],
+            email: row[2],
+            phone: row[3],
+            gender: row[4],
+            address: row[5],
+            location: row[6],
+            dob: row[7],
+            RoleId: AclRoles.Beneficiary,
+            pin: encryptedPin,
+            status: 'activated',
+          };
+          beneficiaries.push(beneficiary);
+        });
+        // console.log(beneficiaries);
+
+        db.User.bulkCreate(tutorials).then(() => {
+          res.status(200).send({
+            message: "Beneficiaries Uploaded Successfully: " + req.file.originalname,
+          });
+        }).catch((error) => {
+          res.status(500).send({
+            message: "Fail to import Beneficairies into database!",
+            error: error.message,
+          });
+        });
+
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        message: "Could not upload the file: " + req.file.originalname,
+      });
+    }
+
+
   }
 
 
@@ -558,13 +593,13 @@ class AuthController {
       Response.setError(400, validation.errors);
       return Response.send(res);
     } else {
-      /*
+
       const url_string = data.website_url;
       const domain = extractDomain(url_string);
       const email = data.email;
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       if (email.match(new RegExp(re))) {
-        */
+
         const userExist = await db.User.findOne({
           where: {
             email: data.email
@@ -643,12 +678,12 @@ class AuthController {
           Response.setError(400, 'Email Already Exists, Recover Your Account');
           return Response.send(res);
         }
-        /*
+
       } else {
         Response.setError(400, 'Email must end in @' + domain);
         return Response.send(res);
       }
-      */
+
     }
   }
 
@@ -831,43 +866,43 @@ class AuthController {
       return Response.send(res);
     }
   }
-/** 
-  static async signInField(req, res) {
-    try {
-      const user = await db.User.findOne({
-        where: {
-          email: req.body.email
-        },
-        include: {
-          model: db.OrganisationMembers,
-          as: 'AssociatedOrganisations',
+  /** 
+    static async signInField(req, res) {
+      try {
+        const user = await db.User.findOne({
+          where: {
+            email: req.body.email
+          },
           include: {
-            model: db.Organisation,
-            as: 'Organisation'
+            model: db.OrganisationMembers,
+            as: 'AssociatedOrganisations',
+            include: {
+              model: db.Organisation,
+              as: 'Organisation'
+            }
           }
+        });
+        if (user && user.RoleId !== AclRoles.FieldAgent) {
+          Response.setError(
+            HttpStatusCode.STATUS_FORBIDDEN,
+            'Access Denied, Unauthorised Access'
+          );
+          return Response.send(res);
         }
-      });
-      if (user && user.RoleId !== AclRoles.FieldAgent) {
-        Response.setError(
-          HttpStatusCode.STATUS_FORBIDDEN,
-          'Access Denied, Unauthorised Access'
-        );
+        const data = await AuthService.login(user, req.body.password);
+  
+        Response.setSuccess(200, 'Login Successful.', data);
+        return Response.send(res);
+      } catch (error) {
+        const message =
+          error.status == 401
+            ? error.message
+            : 'Login failed. Please try again later.';
+        Response.setError(401, message);
         return Response.send(res);
       }
-      const data = await AuthService.login(user, req.body.password);
-
-      Response.setSuccess(200, 'Login Successful.', data);
-      return Response.send(res);
-    } catch (error) {
-      const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
-      Response.setError(401, message);
-      return Response.send(res);
     }
-  }
-  */
+    */
   static async signInBeneficiary(req, res) {
     try {
       const user = await db.User.findOne({
@@ -1071,21 +1106,21 @@ class AuthController {
       return Response.send(res);
     }
   }
-/*
-  static async resetPassword(req, res) {
-    try {
-      await AuthService.updatedPassord(req.user, req.body.password);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Reset password request failed. Please try again.'
-      );
-      return Response.send(res);
+  /*
+    static async resetPassword(req, res) {
+      try {
+        await AuthService.updatedPassord(req.user, req.body.password);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+        return Response.send(res);
+      } catch (error) {
+        Response.setError(
+          HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+          'Reset password request failed. Please try again.'
+        );
+        return Response.send(res);
+      }
     }
-  }
-*/
+  */
   static async sendInvite(req, res) {
     const { inviteeEmail, message, link } = req.body;
     const { organisation_id, campaign_id } = req.params;
