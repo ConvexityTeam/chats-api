@@ -122,41 +122,6 @@ class AuthController {
       });
   }
   static async beneficiariesExcel(req, res) {
-<<<<<<< HEAD
-    //allowed file types .xls, .csv, .xlsx
-    const allowed_types = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-<<<<<<< HEAD
-   try{
-    if (req.file == undefined) {
-      return res.status(400).send("Please upload an excel file!");
-    }
-    console.log(req.file);
-   }catch (error) {
-      Response.setError(404, 'Beneficiaries Cannot Be Uploaded', error);
-      return Response.send(res);
-=======
-    const beneficiariesFile =null;
-      if (!files.beneficiaries_xls) {
-        Response.setError(400, 'Beneficiaries Records required');
-        return Response.send(res);
-      } else if (!allowed_types.includes(req.files.beneficiaries_xls.type)) {
-        Response.setError(400, "Invalid File type. Only csv, xls, and xlsx files allowed for Beneficiaries Records");
-        return Response.send(res);
-      }else {
-      //upload excel file
-    await uploadFile( files.beneficiaries_xls,'u-' + environ + '-' + user.id + '-i.' + extension,'convexity-beneficiaries-csv')
-    .then(url => {
-      user.update({
-        beneficiariesFile: url
-      });
-    });
-      //read uploaded excel file
-      console.log(beneficiariesFile);
-    //match records to the right column
-   // ensure that creator of beneficiary belongs to the organisation that owns campaing
-      }
->>>>>>> da21ff8f92bef8cddccf8776fb8c42d80d334aa7
-=======
 
     try {
 
@@ -206,19 +171,12 @@ class AuthController {
       res.status(500).send({
         message: "Could not upload the file: " + req.file.originalname,
       });
->>>>>>> habeeb
     }
-  
   }
 
-<<<<<<< HEAD
 
-<<<<<<< HEAD
 
-=======
->>>>>>> da21ff8f92bef8cddccf8776fb8c42d80d334aa7
-=======
->>>>>>> habeeb
+
   static async beneficiariesKoboToolBox(req, res) {
     const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
     //fetch from their url
@@ -383,8 +341,8 @@ class AuthController {
             }).then(async user => {
                 await QueueService.createWallet(user.id, 'user');
                 const extension = files.profile_pic.name.substring(files.profile_pic.name.lastIndexOf('.') + 1);
-                await uploadFile(files.profile_pic,'u-' + environ + '-' + user.id + '-i.' + extension, 'convexity-profile-images')
-                .then(url => {
+                await uploadFile(files.profile_pic,'u-' + environ + '-' + user.id + '-i.' + extension,                  'convexity-profile-images'
+                ).then(url => {
                   user.update({profile_pic: url});
                 });
 
@@ -615,11 +573,7 @@ class AuthController {
       Response.setError(400, validation.errors);
       return Response.send(res);
     } else {
-<<<<<<< HEAD
-      /*
-=======
 
->>>>>>> habeeb
       const url_string = data.website_url;
       const domain = extractDomain(url_string);
       const email = data.email;
