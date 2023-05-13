@@ -122,7 +122,6 @@ class AuthController {
       });
   }
   static async beneficiariesExcel(req, res) {
-
     try {
 
       if (req.file == undefined) {
