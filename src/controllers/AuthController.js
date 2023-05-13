@@ -155,7 +155,7 @@ class AuthController {
         });
         // console.log(beneficiaries);
 
-        db.User.bulkCreate(tutorials).then(() => {
+        db.User.bulkCreate(beneficiaries).then(() => {
           res.status(200).send({
             message: "Beneficiaries Uploaded Successfully: " + req.file.originalname,
           });
@@ -165,7 +165,6 @@ class AuthController {
             error: error.message,
           });
         });
-
       });
     } catch (error) {
       console.log(error);
@@ -173,12 +172,7 @@ class AuthController {
         message: "Could not upload the file: " + req.file.originalname,
       });
     }
-
-
   }
-
-
-
 
   static async beneficiariesKoboToolBox(req, res) {
     const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
@@ -222,15 +216,8 @@ class AuthController {
           return Response.send(res);
         } else {
           const password = createHash(req.body.password);
-
           const extension = req.file.mimetype.split('/').pop();
-
-          const profile_pic = await uploadFile(
-            files,
-            'u-' + environ + '-' + email + '-i.' + extension,
-            'convexity-profile-images'
-          );
-
+          const profile_pic = await uploadFile(files,'u-' + environ + '-' + email + '-i.' + extension,'convexity-profile-images');
           const user = await UserService.addUser({
             RoleId,
             phone,
@@ -304,9 +291,7 @@ class AuthController {
         }
 
         let ninExist = await db.User.findOne({
-          where: {
-            nin: fields.nin
-          }
+          where: {nin: fields.nin}
         });
 
         if (ninExist) {
@@ -350,20 +335,12 @@ class AuthController {
               nfc: fields.nfc,
               dob: fields.dob,
               pin: encryptedPin
-            })
-              .then(async user => {
+            }).then(async user => {
                 await QueueService.createWallet(user.id, 'user');
-                const extension = files.profile_pic.name.substring(
-                  files.profile_pic.name.lastIndexOf('.') + 1
-                );
-                await uploadFile(
-                  files.profile_pic,
-                  'u-' + environ + '-' + user.id + '-i.' + extension,
-                  'convexity-profile-images'
-                ).then(url => {
-                  user.update({
-                    profile_pic: url
-                  });
+                const extension = files.profile_pic.name.substring(files.profile_pic.name.lastIndexOf('.') + 1);
+                await uploadFile(files.profile_pic,'u-' + environ + '-' + user.id + '-i.' + extension, 'convexity-profile-images')
+                .then(url => {
+                  user.update({profile_pic: url});
                 });
 
                 // ninVerificationQueue.send(
