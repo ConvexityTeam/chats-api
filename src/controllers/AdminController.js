@@ -323,8 +323,13 @@ class AdminController {
         );
         beneficiary.dataValues.total_amount_spent = sum;
         beneficiary.dataValues.total_campaign = campaign.length;
-        beneficiary.dataValues.organisationId = campaign
         delete beneficiary.dataValues.OrderTransaction;
+
+        const ngo = await BeneficiaryService.beneficiaryDetails(
+          beneficiary.id
+        );
+        beneficiary.dataValues.organisationId = ngo
+
       }
       Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
       return Response.send(res);
