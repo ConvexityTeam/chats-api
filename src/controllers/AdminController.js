@@ -325,11 +325,7 @@ class AdminController {
         beneficiary.dataValues.total_campaign = campaign.length;
         delete beneficiary.dataValues.OrderTransaction;
       }
-      const beneficiaryData = {
-        allBeneficiaries,
-        campaign
-      }
-      Response.setSuccess(200, 'Beneficiaries retrieved', beneficiaryData);
+      Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
       return Response.send(res);
     } catch (error) {
       Response.setError(400, error);

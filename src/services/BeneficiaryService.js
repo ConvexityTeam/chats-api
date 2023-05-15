@@ -397,6 +397,17 @@ class BeneficiariesService {
       },
       include: [
         {
+          model: Campaign,
+          as: 'Campaigns',
+          through: {
+            where: {
+              approved: true
+            }
+          },
+          attributes: [],
+          require: true
+        },
+        {
           model: User,
           as: 'User',
           attributes: userConst.publicAttr,
