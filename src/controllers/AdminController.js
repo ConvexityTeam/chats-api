@@ -325,7 +325,9 @@ class AdminController {
         beneficiary.dataValues.total_campaign = campaign.length;
         delete beneficiary.dataValues.OrderTransaction;
       }
-      Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
+      Response.setSuccess(200, 'Beneficiaries retrieved', {
+        allBeneficiaries,
+        campaign });
       return Response.send(res);
     } catch (error) {
       Response.setError(400, error);
