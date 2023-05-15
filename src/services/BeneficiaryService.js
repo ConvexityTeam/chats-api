@@ -397,17 +397,6 @@ class BeneficiariesService {
       },
       include: [
         {
-          model: Campaign,
-          as: 'Campaigns',
-          through: {
-            where: {
-              approved: true
-            }
-          },
-          attributes: [],
-          require: true
-        },
-        {
           model: User,
           as: 'User',
           attributes: userConst.publicAttr,
@@ -425,7 +414,19 @@ class BeneficiariesService {
       where: {
         RoleId: AclRoles.Beneficiary
       },
-      include: {
+      include: [
+        {
+          model: Campaign,
+          as: 'Campaigns',
+          through: {
+            where: {
+              approved: true
+            }
+          },
+          attributes: [],
+          require: true
+        },
+        {
         where: {
           transaction_origin: 'store',
           transaction_type: 'spent',
@@ -435,6 +436,7 @@ class BeneficiariesService {
         model: Transaction,
         as: 'OrderTransaction'
       }
+      ]
     });
   }
 
