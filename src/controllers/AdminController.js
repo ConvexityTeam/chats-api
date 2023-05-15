@@ -321,14 +321,15 @@ class AdminController {
         const campaign = await BeneficiaryService.findCampaignBeneficiary(
           beneficiary.id
         );
-        beneficiary.dataValues.total_amount_spent = sum;
-        beneficiary.dataValues.total_campaign = campaign.length;
-        delete beneficiary.dataValues.OrderTransaction;
-
         const ngo = await BeneficiaryService.beneficiaryDetails(
           beneficiary.id
         );
+        beneficiary.dataValues.total_amount_spent = sum;
+        beneficiary.dataValues.total_campaign = campaign.length;
         beneficiary.dataValues.organisationId = ngo
+        delete beneficiary.dataValues.OrderTransaction;
+
+
 
       }
       Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
