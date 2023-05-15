@@ -323,6 +323,7 @@ class AdminController {
         );
         beneficiary.dataValues.total_amount_spent = sum;
         beneficiary.dataValues.total_campaign = campaign.length;
+        beneficiary.dataValues.organisationId = campaign[0].OrganisationId;
         delete beneficiary.dataValues.OrderTransaction;
       }
       Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
