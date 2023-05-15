@@ -519,7 +519,7 @@ setInterval(async () => {
       console.log('error', error.message);
     });
   }
-}, 3600000);
+}, 86400000);
 
 setInterval(async () => {
   const user = await db.User.findOne({
