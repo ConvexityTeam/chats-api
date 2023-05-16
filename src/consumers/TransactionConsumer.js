@@ -407,10 +407,6 @@ RabbitMq['default']
             message
           );
 
-<<<<<<< HEAD
-          if (!mint) {
-            msg.nack();
-=======
           if (!minted) {
             mint = await BlockchainService.mintToken(
               organisation.address,
@@ -452,7 +448,6 @@ RabbitMq['default']
             confirmed = false;
             minted = false;
             msg.ack();
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
             return;
           }
           await update_transaction(
@@ -589,8 +584,6 @@ RabbitMq['default']
         );
 
         if (!transfer) {
-<<<<<<< HEAD
-=======
           await update_transaction({ status: 'failed' }, transactionId);
           msg.nack();
           has_run_once = false;
@@ -602,7 +595,6 @@ RabbitMq['default']
         );
         if (!confirm) {
           await update_transaction({ status: 'processing' }, transactionId);
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
           msg.nack();
           return;
         }
@@ -812,9 +804,6 @@ RabbitMq['default']
               lastIndex,
               token_type
             );
-<<<<<<< HEAD
-          }, index * 5000);
-=======
           if (!approve_to_spend) {
             await update_transaction({ status: 'failed' }, transaction.uuid);
             benefitIndex = index;
@@ -872,7 +861,7 @@ RabbitMq['default']
             });
             istoken = false;
           }
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
+
         }
         Logger.info('Sent for approving to spend');
         msg.ack();
@@ -1073,8 +1062,6 @@ RabbitMq['default']
           userWallet,
           campaignWallet
         );
-<<<<<<< HEAD
-=======
         await deductWalletAmount(amount, campaignWallet.uuid);
         await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction(
@@ -1308,11 +1295,7 @@ RabbitMq['default']
 
         if (!redeem) {
           msg.nack();
-<<<<<<< HEAD
-          return;
-=======
           await update_transaction({ status: 'failed' }, transaction.uuid);
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
         }
         await QueueService.confirmVRedeem(
           redeem.Redeemed,
@@ -1321,12 +1304,8 @@ RabbitMq['default']
           transaction.uuid,
           userWallet.uuid
         );
-<<<<<<< HEAD
-        Logger.info('VENDOR REDEEM HASH SENT FOR CONFIRMATION');
-=======
         // await deductWalletAmount(amount, userWallet.uuid);
         await update_transaction({ status: 'success' }, transaction.uuid);
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
         msg.ack();
       })
       .catch(error => {
@@ -1438,22 +1417,6 @@ RabbitMq['default']
         );
 
         if (!approve_to_spend) {
-<<<<<<< HEAD
-          msg.nack();
-          return;
-        }
-
-        await QueueService.confirmFundSingleB(
-          approve_to_spend.Approved,
-          transaction.uuid,
-          task_assignment.id,
-          beneficiaryWallet,
-          campaignWallet,
-          amount_disburse
-        );
-        Logger.info(
-          'HASH FOR FUNDING BENEFICIARY FOR COMPLETION OF TASK SENT FOR CONFIRMATION'
-=======
           await update_transaction({ status: 'failed' }, transaction.uuid);
           msg.nack();
           return;
@@ -1467,7 +1430,6 @@ RabbitMq['default']
         await TaskAssignment.update(
           { status: 'disbursed' },
           { where: { id: task_assignment.id } }
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
         );
 
         msg.ack();
@@ -1593,106 +1555,13 @@ RabbitMq['default']
           'vendorOrder'
         );
         if (!transfer) {
-<<<<<<< HEAD
-=======
           await update_transaction({ status: 'failed' }, transaction);
           await update_order(order.reference, { status: 'failed' });
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
           msg.nack();
           return null;
         }
 
-<<<<<<< HEAD
-        await QueueService.confirmVendorOrder(
-          transfer.TransferedFrom,
-          amount,
-          transaction,
-          order,
-          beneficiaryWallet,
-          campaignWallet,
-          vendorWallet
-        );
-        Logger.info('BENEFICIARY ORDER SENT FOR CONFIRMATION');
-        msg.ack();
-      })
-      .catch(error => {
-        Logger.error(`RabbitMq Error: ${error}`);
-      })
-
-      .then(_ => {
-        Logger.info(`Running Process For Vendor Order Queue`);
-      });
-    increaseGasVTransferFrom
-      .activateConsumer(async msg => {
-        const {keys, message} = msg.getContent();
-        const {
-          amount,
-          transactionId,
-          order,
-          beneficiaryWallet,
-          campaignWallet,
-          vendorWallet
-        } = message;
-
-        Logger.info(`Vendor transfer From: ${JSON.stringify(keys)}`);
-        const gasFee = await BlockchainService.reRunContract(
-          'token',
-          'transferFrom',
-          keys
-        );
-
-        if (!gasFee) {
-          msg.nack();
-          return;
-        }
-        await update_transaction(
-          {
-            transaction_hash: gasFee.retried
-          },
-          transactionId
-        );
-        await QueueService.confirmVendorOrder(
-          gasFee.retried,
-          amount,
-          transactionId,
-          order,
-          beneficiaryWallet,
-          campaignWallet,
-          vendorWallet
-        );
-        msg.ack();
-      })
-      .catch(error => {
-        Logger.error(`RabbitMq Error: ${error}`);
-      })
-
-      .then(_ => {
-        Logger.info(
-          `Running Process For Increasing Gas Fee for Vendor Order Queue`
-        );
-      });
-    confirmOrderQueue
-      .activateConsumer(async msg => {
-        const {
-          hash,
-          amount,
-          transactionId,
-          order,
-          beneficiaryWallet,
-          campaignWallet,
-          vendorWallet
-        } = msg.getContent();
-
-        const confirm = await BlockchainService.confirmTransaction(hash);
-
-        if (!confirm) {
-          msg.nack();
-          return;
-        }
-        await update_order(order.reference, {status: 'confirmed'});
-=======
         await update_order(order.reference, { status: 'confirmed' });
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
         await deductWalletAmount(amount, beneficiaryWallet.uuid);
         await deductWalletAmount(amount, campaignWallet.uuid);
         const token = await BlockchainService.balance(vendorWallet.address);
@@ -1700,13 +1569,8 @@ RabbitMq['default']
         // await addWalletAmount(amount, vendorWallet.uuid);
         await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
-<<<<<<< HEAD
-          {status: 'success', is_approved: true},
-          transactionId
-=======
           { status: 'success', is_approved: true },
           transaction
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
         );
         order.Cart.forEach(async prod => {
           await ProductBeneficiary.create({
@@ -1802,15 +1666,6 @@ RabbitMq['default']
           }
           hash = transferTo.Transfered;
         }
-<<<<<<< HEAD
-        await QueueService.confirmBFundingB(
-          hash,
-          amount,
-          senderWallet,
-          receiverWallet,
-          transactionId,
-          campaignWallet
-=======
 
         if (!confirm) {
           await update_transaction({ status: 'failed' }, transaction);
@@ -1829,7 +1684,6 @@ RabbitMq['default']
             transaction_hash: transfer.Transfered || transfer.TransferedFrom
           },
           transaction.uuid
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
         );
 
         Logger.info(
@@ -1999,7 +1853,6 @@ RabbitMq['default']
         );
       });
   })
-
   .catch(error => {
     console.log(`RabbitMq Error: ${error}`);
   });
