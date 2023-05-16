@@ -861,9 +861,9 @@ RabbitMq['default']
             });
             istoken = false;
           }
-=========
+
           }, index * 5000);
->>>>>>>>> Temporary merge branch 2
+
         }
         Logger.info('Sent for approving to spend');
         msg.ack();
