@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Beneficiary,
         constraints: false
       });
-
       Campaign.hasMany(models.Wallet, {
         as: 'BeneficiariesWallets',
         foreignKey: 'CampaignId',
@@ -79,6 +78,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('campaign', 'cash-for-work', 'item'),
       spending: DataTypes.STRING,
       collection_hash: DataTypes.STRING,
+      escrow_hash: DataTypes.STRING,
       description: DataTypes.TEXT,
       status: DataTypes.ENUM(
         'pending',
