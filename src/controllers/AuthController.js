@@ -173,9 +173,6 @@ class AuthController {
     }
   }
 
-
-
-
   static async beneficiariesKoboToolBox(req, res) {
     const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
     //fetch from their url
@@ -687,11 +684,34 @@ class AuthController {
       return Response.send(res);
     }
   }
-  static async verifiedEmail(req, res) {
+  static async confirmEmail(req, res) {
+    const { confirmationCode, campaignId } = req.params;
     try {
+      const rules = {
+        confirmationCode: 'required|string'
+      };
+      const validation = new Validator(req.params, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
 
+      // const userExist = await UserService.findSingleUser({
+      //   email: token_exist.email
+      // });
+      // let user_exist = false;
+      // if (userExist) {
+      //   user_exist = true;
+      // }
+      // const ngo = await OrganisationService.checkExist(token_exist.inviterId);
+   
+      return Response.send(res);
     } catch (error) {
-
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Please try again.'
+      );
+      return Response.send(res);
     }
   }
 

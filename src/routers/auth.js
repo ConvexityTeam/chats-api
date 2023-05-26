@@ -60,7 +60,7 @@ router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
 router.post('/2fa/toggle', Auth, AuthController.toggleTwoFactorAuth);
 router.post('/2fa/state2fa', Auth, AuthController.state2fa);
 
-router.get('/verify-email/',AuthController.verifyEmail);
+router.get('/verify-email/:confirmationCode',AuthController.confirmEmail);
 
 router
   .route('/password/reset')
