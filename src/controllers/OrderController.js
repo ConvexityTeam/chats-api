@@ -1,6 +1,6 @@
 const {Response, Logger} = require('../libs');
 const moment = require('moment');
-const {HttpStatusCode, compareHash} = require('../utils');
+const {HttpStatusCode, compareHash, AclRoles} = require('../utils');
 
 const {ProductBeneficiary} = require('../models');
 
@@ -16,6 +16,7 @@ const {
 } = require('../services');
 const db = require('../models');
 const Utils = require('../libs/Utils');
+const BeneficiariesService = require('../services/BeneficiaryService');
 class OrderController {
   static async getOrderByReference(req, res) {
     try {
@@ -36,6 +37,78 @@ class OrderController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server error: Please retry.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async approveBeneficiaryToSpend(req, res) {
+    const data = req.body;
+    try {
+      const [
+        campaign,
+        approvedBeneficiaries,
+        campaign_token,
+        beneficiaryWallet,
+        user
+      ] = await Promise.all([
+        CampaignService.getCampaignById(data.campaign_id),
+        BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
+        BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
+        WalletService.findUserCampaignWallet(
+          data.beneficiary_id,
+          data.campaign_id
+        ),
+        UserService.findSingleUser({
+          RoleId: AclRoles.Beneficiary,
+          id: data.beneficiary_id
+        })
+      ]);
+      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+        let amount = campaign.budget / approvedBeneficiaries.length;
+        await QueueService.approveOneBeneficiary(
+          campaign_token.privateKey,
+          beneficiaryWallet.address,
+          amount,
+          beneficiaryWallet.uuid,
+          campaign,
+          user
+        );
+      }
+
+      if (campaign.type === 'item' && !beneficiaryWallet.was_funded) {
+        await QueueService.approveNFTSpending(
+          data.beneficiary_id,
+          data.campaign_id,
+          campaign
+        );
+      }
+
+      if (!user) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Beneficiary not found'
+        );
+        Logger.error('Beneficiary not found');
+        return Response.send(res);
+      }
+      if (!campaign) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+        Logger.error('Campaign not found');
+        return Response.send(res);
+      }
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Initializing payment');
+      Logger.info('Initializing payment');
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error,
+        error
       );
       return Response.send(res);
     }
@@ -96,8 +169,12 @@ class OrderController {
       const vendorWallet = await WalletService.findSingleWallet({
         UserId: data.order.Vendor.id
       });
+
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(
         id,
+        data.order.CampaignId
+      );
+      const campaign = await CampaignService.getCampaignById(
         data.order.CampaignId
       );
 
@@ -134,10 +211,6 @@ class OrderController {
         Logger.error(`Campaign Wallet Not Found..`);
         return Response.send(res);
       }
-
-      const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
-      );
 
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
@@ -183,10 +256,12 @@ class OrderController {
   static async completeOrder(req, res) {
     try {
       const {reference} = req.params;
+
       const data = await VendorService.getOrder({reference});
       const campaign = await CampaignService.getCampaignById(
         data.order.CampaignId
       );
+
       if (!data) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -202,6 +277,9 @@ class OrderController {
         );
         return Response.send(res);
       }
+      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
+        data.order.CampaignId
+      );
 
       const [
         campaignWallet,
@@ -215,7 +293,6 @@ class OrderController {
         WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
         WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
       ]);
-
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
@@ -223,15 +300,23 @@ class OrderController {
       const beneficiary_token = await BlockchainService.setUserKeypair(
         `user_${req.user.id}campaign_${data.order.CampaignId}`
       );
-      if (!beneficiaryWallet.was_funded) {
+
+      if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
+        let amount = campaign.budget / approvedBeneficiaries.length;
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
           beneficiary_token.address,
-          beneficiaryWallet.amount,
+          amount,
           beneficiaryWallet.uuid,
           campaign,
           req.user
         );
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Initializing payment'
+        );
+        Logger.error('Initializing payment');
+        return Response.send(res);
       }
 
       const token = await BlockchainService.allowance(
@@ -240,34 +325,6 @@ class OrderController {
       );
 
       const balance = Number(token.Allowed.split(',').join(''));
-
-      if (!beneficiaryWallet) {
-        await QueueService.createWallet(
-          req.user.id,
-          'user',
-          data.order.CampaignId
-        );
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Beneficiary Wallet not found, Please Try Later'
-        );
-        return Response.send(res);
-      }
-      if (!vendorWallet) {
-        await QueueService.createWallet(data.order.Vendor.id, 'user');
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Vendor Wallet not found. Please try later'
-        );
-        return Response.send(res);
-      }
-      if (!campaignWallet) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign Wallet Not Found..'
-        );
-        return Response.send(res);
-      }
 
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(

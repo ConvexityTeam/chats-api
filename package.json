@@ -44,6 +44,7 @@
     "formidable": "^1.2.2",
     "g": "^2.0.1",
     "geoip-country": "^4.1.25",
+    "hashi-vault-js": "^0.4.13",
     "helmet": "^4.1.1",
     "js-sha512": "^0.8.0",
     "jsonwebtoken": "^9.0.0",

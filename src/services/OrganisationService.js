@@ -4,6 +4,7 @@ const {
   Wallet,
   Organisation,
   Transaction,
+  Campaign,
   OrganisationMembers
 } = require('../models');
 const {
@@ -27,7 +28,30 @@ class OrganisationService {
   }
 
   static async getAllOrganisations() {
-    return Organisation.findAll();
+    return Organisation.findAll({
+      include: [
+        {
+          where: {role: 'admin'},
+          model: OrganisationMembers,
+          as: 'Members'
+        },
+        {
+          where: {
+            transaction_type: 'transfer',
+            status: 'success',
+            BeneficiaryId: null,
+            VendorId: null
+          },
+          model: Transaction,
+          as: 'Transactions'
+        },
+        {
+          where: {is_funded: true},
+          model: Campaign,
+          as: 'Campaigns'
+        }
+      ]
+    });
   }
 
   static async getOrganisationWallet(id) {
@@ -38,6 +62,14 @@ class OrganisationService {
       include: {
         model: Wallet,
         as: 'Wallet'
+      }
+    });
+  }
+
+  static async getOrganisation(id) {
+    return Organisation.findOne({
+      where: {
+        id: Number(id)
       }
     });
   }
@@ -123,11 +155,35 @@ class OrganisationService {
     });
   }
 
-  static async getAllDonorsAdmin() {
-    return User.findAll({
+  static async getAssociatedCampaigns(id) {
+    return Organisation.findAll({
       where: {
-        RoleId: 8
+        id
+      },
+      order: [['createdAt', 'DESC']],
+      include: {
+        model: Campaign,
+        where: {
+          is_public: false
+        },
+        as: 'associatedCampaigns'
       }
+    });
+  }
+
+  static async getAllDonorsAdmin() {
+    return Organisation.findAll({
+      order: [['createdAt', 'DESC']],
+
+      include: [
+        {
+          model: Campaign,
+          where: {
+            is_public: false
+          },
+          as: 'associatedCampaigns'
+        }
+      ]
     });
   }
 

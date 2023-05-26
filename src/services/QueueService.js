@@ -50,7 +50,13 @@ const {
   INCREASE_MINTING_GAS,
   INCREASE_VTRANSFER_FROM_GAS,
   INCREASE_GAS_SINGLE_BENEFICIARY,
-  APPROVE_TO_SPEND_ONE_BENEFICIARY
+  APPROVE_TO_SPEND_ONE_BENEFICIARY,
+  INCREASE_GAS_FOR_NEW_COLLECTION,
+  INCREASE_GAS_FOR_MINTING_LIMIT,
+  INCREASE_GAS_MINT_NFT,
+  ESCROW_HASH,
+  APPROVE_NFT_SPENDING,
+  INCREASE_GAS_APPROVE_SPENDING
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -142,6 +148,10 @@ const deployNewCollection = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const deployEscrowCollection = RabbitMq['default'].declareQueue(ESCROW_HASH, {
+  durable: true
+});
 
 const nftMintingLimit = RabbitMq['default'].declareQueue(NFT_MINTING_LIMIT, {
   durable: true
@@ -354,10 +364,117 @@ const confirmOneBeneficiary = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const increaseGasNewCollection = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_NEW_COLLECTION,
+  {
+    durable: true
+  }
+);
+
+const increaseGasMintingLimit = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_MINTING_LIMIT,
+  {
+    durable: true
+  }
+);
+
+const increaseGasMintNFT = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_MINT_NFT,
+  {
+    durable: true
+  }
+);
+
+const approveNFTSpending = RabbitMq['default'].declareQueue(
+  APPROVE_NFT_SPENDING,
+  {
+    durable: true
+  }
+);
+
+const increaseGasApproveSpending = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_APPROVE_SPENDING,
+  {
+    durable: true
+  }
+);
 class QueueService {
+  static async increaseGasApproveSpending(
+    campaignPrivateKey,
+    campaignAddress,
+    beneficiaryAddress,
+    tokenId,
+    collectionAddress
+  ) {
+    const payload = {
+      campaignPrivateKey,
+      campaignAddress,
+      beneficiaryAddress,
+      tokenId,
+      collectionAddress
+    };
+    increaseGasApproveSpending.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async increaseGasMintNFT(collection, transaction, keys) {
+    const payload = {collection, transaction, keys};
+    increaseGasMintNFT.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async increaseGasMintingLimit(collection, keys, contractIndex) {
+    const payload = {collection, keys, contractIndex};
+    increaseGasMintingLimit.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasNewCollection(collection, keys) {
+    const payload = {collection, keys};
+    increaseGasNewCollection.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async confirmOneBeneficiary(hash, uuid, transactionId) {
     const payload = {hash, uuid, transactionId};
     confirmOneBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async approveNFTSpending(beneficiaryId, campaignId, campaign) {
+    const transaction = await Transaction.create({
+      reference: generateTransactionRef(),
+      BeneficiaryId: beneficiaryId,
+      CampaignId: campaignId,
+      amount,
+      status: 'processing',
+      is_approved: false,
+      OrganisationId: campaign.OrganisationId,
+      transaction_type: 'approval',
+      narration: 'Approve beneficiary spending',
+      transaction_origin: 'wallet'
+    });
+    const payload = {
+      beneficiaryId,
+      campaignId,
+      transactionId: transaction.uuid
+    };
+
+    approveNFTSpending.send(
       new Message(payload, {
         contentType: 'application/json'
       })
@@ -379,7 +496,9 @@ class QueueService {
       status: 'processing',
       is_approved: false,
       OrganisationId: campaign.OrganisationId,
-      transaction_type: 'approval'
+      transaction_type: 'approval',
+      narration: 'Approve beneficiary spending',
+      transaction_origin: 'wallet'
     });
     const payload = {
       campaignPrivateKey,
@@ -765,6 +884,14 @@ class QueueService {
   static async createCollection(collection) {
     const payload = {collection};
     deployNewCollection.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async createEscrow(collection) {
+    const payload = {collection};
+    deployEscrowCollection.send(
       new Message(payload, {
         contentType: 'application/json'
       })

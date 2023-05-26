@@ -25,8 +25,10 @@ const {
   MailerService,
   OrganisationService,
   CampaignService,
-  WalletService
+  WalletService,
+  BlockchainService
 } = require('../services');
+const BeneficiariesService = require('../services/BeneficiaryService');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
   {
@@ -312,7 +314,7 @@ class AuthController {
             return Response.send(res);
           }
         }
-        const encryptedPin = createHash('0000');//setting default pin to zero //createHash(fields.pin);
+        const encryptedPin = createHash('0000'); //setting default pin to zero //createHash(fields.pin);
         bcrypt.genSalt(10, (err, salt) => {
           if (err) {
             console.log('Error Ocurred hashing');
@@ -404,7 +406,7 @@ class AuthController {
         location: 'string',
         password: 'required',
         dob: 'required|date|before:today',
-        nfc: 'string',
+        nfc: 'string', 
         campaign: 'required|numeric',
         // pin: 'size:4|required' //disabled for now
       };
@@ -465,7 +467,7 @@ class AuthController {
                 if (err) {
                   console.log('Error Ocurred hashing');
                 }
-                const encryptedPin = createHash(fields.pin);
+                const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
                 bcrypt.hash(fields.password, salt).then(async hash => {
                   const encryptedPassword = hash;
                   await db.User.create({
@@ -574,7 +576,9 @@ class AuthController {
       const domain = extractDomain(url_string);
       const email = data.email;
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+     
       if (email.match(new RegExp(re))) {
+      // if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
           where: { email: data.email }
         });
@@ -634,12 +638,14 @@ class AuthController {
           Response.setError(400, 'Email Already Exists, Recover Your Account');
           return Response.send(res);
         }
-
       } else {
         Response.setError(400, 'Email must end in @' + domain);
         return Response.send(res);
       }
-
+      // } else {
+      //   Response.setError(400, 'Email must end in @' + domain);
+      //   return Response.send(res);
+      // }
     }
   }
 
@@ -911,13 +917,42 @@ class AuthController {
         );
         return Response.send(res);
       }
-      const wallet = await WalletService.findSingleWallet({
-        UserId: user.id,
-        CampaignId: null
-      });
-      if (!wallet) {
-        await QueueService.createWallet(user.id, 'user');
+
+      const beneficiaryWallets = await WalletService.findUserWallets(user.id);
+
+      for (let wallet of beneficiaryWallets) {
+        const campaign = await CampaignService.getCampaignById(
+          wallet.CampaignId
+        );
+        if (
+          wallet.CampaignId &&
+          campaign.type === 'campaign' &&
+          !wallet.was_funded
+        ) {
+          const [
+            campaign_token,
+            beneficiary_token,
+            campaignBeneficiary
+          ] = await Promise.all([
+            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+            BlockchainService.setUserKeypair(
+              `user_${user.id}campaign_${wallet.CampaignId}`
+            ),
+            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+          ]);
+
+          let amount = campaign.budget / campaignBeneficiary.length;
+          await QueueService.approveOneBeneficiary(
+            campaign_token.privateKey,
+            beneficiary_token.address,
+            amount,
+            wallet.uuid,
+            campaign,
+            user
+          );
+        }
       }
+
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -925,7 +960,7 @@ class AuthController {
       const message =
         error.status == 401
           ? error.message
-          : 'Login failed. Please try again later.';
+          : 'Login failed. Please try again later.' + error;
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1113,7 +1148,7 @@ class AuthController {
     try {
       const rules = {
         'inviteeEmail*': 'email|required',
-        link: 'required|url'
+        link: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {

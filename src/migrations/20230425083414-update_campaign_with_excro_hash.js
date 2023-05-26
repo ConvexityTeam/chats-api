@@ -9,10 +9,9 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     //await queryInterface.removeColumn('Campaigns', 'type');
-    await queryInterface.addColumn('Campaigns', 'is_processing', {
-      type: Sequelize.BOOLEAN,
-      allowNull: true,
-      defaultValue: true
+    await queryInterface.addColumn('Campaigns', 'escrow_hash', {
+      type: Sequelize.STRING,
+      allowNull: true
     });
     // await queryInterface.addColumn('Campaigns', 'minting_limit', {
     //   type: Sequelize.INTEGER,
@@ -29,6 +28,6 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     // await queryInterface.removeColumn('Campaigns', 'type');
-    await queryInterface.removeColumn('Campaigns', 'is_processing');
+    await queryInterface.removeColumn('Campaigns', 'escrow_hash');
   }
 };

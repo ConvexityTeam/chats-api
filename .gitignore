@@ -1,5 +1,5 @@
 node_modules
-=======
+
 # Logs
 logs
 *.log
@@ -106,9 +106,8 @@ dist
 
 # Upload temp folder
 temp
-<<<<<<< HEAD
+.gitignore
+
 # collection ignores
 "CHATS Collection.json"
-=======
-Convexity Humanitarian Aid Transfer System.postman_collection.json
->>>>>>> 2fb1ee60959818c820358d355744e74c98d21da8
+"Convexity Humanitarian Aid Transfer System.postman_collection.json"

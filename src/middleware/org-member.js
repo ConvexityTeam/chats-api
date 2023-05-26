@@ -34,7 +34,7 @@ const IsOrgMember = async (req, res, next) => {
       }
     });
 
-    if (!member && req.user.RoleId !== AclRoles.Donor) {
+    if (!member && req.user.RoleId !== (AclRoles.SuperAdmin || AclRoles.Donor)) {
       Response.setError(
         HttpStatusCode.STATUS_FORBIDDEN,
         'Access denied. Your not organisation member.'
