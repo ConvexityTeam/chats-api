@@ -1,3 +1,4 @@
+require("dotenv").config();
 const db = require('../models');
 const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
@@ -320,8 +321,12 @@ class AdminController {
         const campaign = await BeneficiaryService.findCampaignBeneficiary(
           beneficiary.id
         );
+        const ngo = await CampaignService.getCampaignWithBeneficiaries(
+          campaign[0].CampaignId
+        );
         beneficiary.dataValues.total_amount_spent = sum;
         beneficiary.dataValues.total_campaign = campaign.length;
+        beneficiary.dataValues.organisationId = ngo.OrganisationId
         delete beneficiary.dataValues.OrderTransaction;
       }
       Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
@@ -500,6 +505,8 @@ setInterval(async () => {
     }
   });
   let resp;
+  if (process.env.NODE_ENV === 'production') {
+
   await axios
     .get(
       `https://api.ng.termii.com/api/get-balance?api_key=${termiiConfig.api_key}`
@@ -515,7 +522,8 @@ setInterval(async () => {
     .catch(error => {
       console.log('error', error.message);
     });
-}, 3600000);
+  }
+}, 86400000);
 
 setInterval(async () => {
   const user = await db.User.findOne({
@@ -557,7 +565,7 @@ setInterval(async () => {
       RoleId: AclRoles.SuperAdmin
     }
   });
-  if (process.env.NODE_ENV == 'production') {
+  if (process.env.NODE_ENV === 'production') {
     const balance = await BlockchainService.getNativeBalance(
       '0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63'
     );

@@ -193,8 +193,8 @@ class CampaignService {
     return CampaignVendor.findAll({
       where: {
         VendorId
-      }
-      // include: ['Campaign']
+      },
+      include: ['Campaign']
     });
   }
 
@@ -274,7 +274,7 @@ class CampaignService {
           as: 'BeneficiariesWallets',
           attributes: walletConst.walletExcludes
         }
-      ]
+      ],
       // group: [
       //   'Campaign.id',
       //   'Beneficiaries.id',
@@ -369,6 +369,17 @@ class CampaignService {
           {model: User, as: 'Beneficiaries'}
         ]
       }
+      // where: {
+      //   ...where,
+      // },
+      // include: {
+      //   model: Campaign,
+      //   as: 'associatedCampaigns',
+      //   include: [
+      //   {model: Task, as: 'Jobs'},
+      //   {model: User, as: 'Beneficiaries'},
+      // ],
+      // }
     });
   }
 
