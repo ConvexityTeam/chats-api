@@ -838,7 +838,9 @@ class OrganisationController {
       }
 
       req.body.status = 'ongoing';
-      req.campaign.budget = Number(req.body.budget) + req.campaign.budget;
+      req.campaign.budget = req.body.budget
+        ? Number(req.body.budget) + req.campaign.budget
+        : req.campaign.budget;
       const newCampaign = await req.campaign.update(req.body);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
