@@ -64,7 +64,6 @@
     "qrcode": "^1.5.0",
     "randomstring": "^1.2.1",
     "rascal": "^13.0.0",
-    "read-excel-file": "^5.6.1",
     "redis": "^4.3.1",
     "regenerator-runtime": "^0.13.7",
     "request": "^2.88.2",
@@ -78,8 +77,7 @@
     "uuid": "^9.0.0",
     "validator": "^13.7.0",
     "validatorjs": "^3.22.1",
-    "winston": "^3.7.2",
-    "xlsx": "^0.18.5"
+    "winston": "^3.7.2"
   },
   "devDependencies": {
     "eslint-config-prettier": "^6.11.0",

@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { mailerConfig } = require('../config');
+const {mailerConfig} = require('../config');
 
 class MailerService {
   config = {};
@@ -70,10 +70,11 @@ class MailerService {
   sendPassword(to, name, password, vendor_id) {
     const body = `
     <div>
-      <p>Hi, ${name}\nYour CHATS account ${vendor_id
+      <p>Hi, ${name}\nYour CHATS account ${
+      vendor_id
         ? 'ID is: ' + vendor_id + ', password is: ' + password
         : 'password is: ' + password
-      }</p>
+    }</p>
       <p>Best,\nCHATS - Convexity</p>
     </div>
     `;
@@ -151,11 +152,13 @@ class MailerService {
     const body = `
     <div>
       <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
-      <p>We’ve given you access to campaign titled: ${campaign.title
+      <p>We’ve given you access to campaign titled: ${
+        campaign.title
       } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
-      <p>${exist
-        ? `If you want to login to confirm access, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
-        : `If you want to create an account, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
+      <p>${
+        exist
+          ? `If you want to login to confirm access, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
+          : `If you want to create an account, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
       }</p>
       <p>${message}</p>
       <p>Enjoy!</p>
@@ -248,41 +251,6 @@ class MailerService {
       from: this.config.from,
       to: [to, 'charles@withconvexity.com'],
       subject: 'Recharge Your Wallet Balance',
-      html: body
-    };
-
-    return new Promise((resolve, reject) => {
-      this.transporter.sendMail(options, (err, data) => {
-        if (!err) {
-          console.log('sent');
-          resolve(data);
-        } else {
-          reject(err);
-        }
-      });
-    });
-  }
-
-  sendEmailVerification(to, orgName) {
-    const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let confirmationCode = '';
-    for (let i = 0; i < 25; i++) {
-      confirmationCode += characters[Math.floor(Math.random() * characters.length)];
-    }
-
-    const body = `
-    <div>
-    <h2>Hello, ${orgName}</h2>
-    <p>Thank you for  creating an account on CHATS platform. 
-    Please confirm your email by clicking on the following link</p>
-    <a href=http://localhost:8081/confirm/${confirmationCode}> Click here</a>
-      <p>Best,\nCHATS - Convexity</p>
-    </div>
-    `;
-    const options = {
-      from: this.config.from,
-      to,
-      subject: 'Please confirm your account',
       html: body
     };
 

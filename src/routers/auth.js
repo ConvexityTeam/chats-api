@@ -1,13 +1,11 @@
 const router = require('express').Router();
 
 const {
-  
   Auth,
   NgoAdminAuth,
   IsOrgMember,
   IsRecaptchaVerified
 } = require('../middleware'); //Auhorization middleware
-const excelUploader = require('../middleware/excelUploader');
 const {AuthController, BeneficiaryController} = require('../controllers');
 const {
   AuthValidator,
@@ -18,7 +16,10 @@ const {
 
 // router.use(e2e);
 
-router.post('/:campaignId/confirm-campaign-invite/:token', AuthController.confirmInvite);
+router.post(
+  '/:campaignId/confirm-campaign-invite/:token',
+  AuthController.confirmInvite
+);
 
 router.post(
   '/:organisation_id/invite/:campaign_id',
@@ -37,13 +38,10 @@ router.post(
 );
 router.post(
   '/ngo-register',
+
   AuthController.createNgoAccount
 );
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
-//uploading beneficiaries via spreadsheet
-router.post('/register/beneficiaries-upload-spreadsheet',excelUploader.single('beneficiaries_xls'), AuthController.beneficiariesExcel);
-//router.post('/register/kobo-tool-box', AuthController.beneficiariesKoboToolBox);
-
 router.post('/nin-verification', AuthController.verifyNin);
 router.post('/update-profile', Auth, AuthController.updateProfile);
 router.get('/user-detail/:id', Auth, AuthController.userDetails);
@@ -59,8 +57,6 @@ router.post('/2fa/enable', Auth, AuthController.enableTwoFactorAuth);
 router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
 router.post('/2fa/toggle', Auth, AuthController.toggleTwoFactorAuth);
 router.post('/2fa/state2fa', Auth, AuthController.state2fa);
-
-router.get('/verify-email/:confirmationCode',AuthController.confirmEmail);
 
 router
   .route('/password/reset')
