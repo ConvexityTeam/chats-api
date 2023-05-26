@@ -824,7 +824,8 @@ class OrganisationController {
         'end_date',
         'description',
         'location',
-        'campaign_id'
+        'campaign_id',
+        'budget'
       ]);
       for (let prop in req.body) {
         if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
@@ -837,6 +838,7 @@ class OrganisationController {
       }
 
       req.body.status = 'ongoing';
+      req.campaign.budget = Number(req.body.budget) + req.campaign.budget;
       const newCampaign = await req.campaign.update(req.body);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
