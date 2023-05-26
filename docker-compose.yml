@@ -18,7 +18,7 @@ services:
     environment:
       - POSTGRES_DB=convexity
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=hab552
+      - POSTGRES_PASSWORD=postgres
     restart: unless-stopped
 
   backend:
