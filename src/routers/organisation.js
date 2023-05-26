@@ -62,6 +62,15 @@ router.get(
   CampaignController.campaignsWithOnboardedBeneficiary
 );
 router.post(
+  '/extend-campaign/:organisation_id',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignValidator.extendCampaign(),
+  OrganisationController.extendCampaign
+);
+router.post(
   '/:organisation_id/onboarded/:campaign_id/:replicaCampaignId',
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,

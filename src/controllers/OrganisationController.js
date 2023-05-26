@@ -366,7 +366,7 @@ class OrganisationController {
           assignmentTask.push(assignment);
         }
 
-        data.dataValues.ck8 = (await AwsService.getMnemonic(data.id)) || null;
+        // data.dataValues.ck8 = (await AwsService.getMnemonic(data.id)) || null;
 
         (data.dataValues.beneficiaries_count = data.Beneficiaries.length),
           (data.dataValues.task_count = data.Jobs.length);
@@ -813,6 +813,41 @@ class OrganisationController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         `Internal server error. Contact support. ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async extendCampaign(req, res) {
+    try {
+      const bodyAllowedList = new Set([
+        'end_date',
+        'description',
+        'location',
+        'campaign_id'
+      ]);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      req.body.status = 'ongoing';
+      const newCampaign = await req.campaign.update(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'campaign extended',
+        newCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
       );
       return Response.send(res);
     }

@@ -9,6 +9,20 @@ class CampaignValidator extends BaseValidator {
   static campaignTypes = ['campaign', 'cash-for-work', 'item'];
   static campaignStatuses = ['pending', 'active', 'paused', 'completed'];
 
+  static extendCampaign() {
+    return [
+      body('end_date')
+        .isDate({
+          format: 'DD-MM-YYYY',
+          strictMode: true
+        })
+        .withMessage(`Campaign start date should be a valid date.`)
+        .customSanitizer(formInputToDate)
+        .isAfter()
+        .withMessage('Campaign start date should be after today.')
+    ];
+  }
+
   static createCampaignRules() {
     return [
       body('title').not().isEmpty().withMessage(`Campaign title is required.`),
