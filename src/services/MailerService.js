@@ -265,7 +265,7 @@ class MailerService {
       });
     });
   }
-  sendEmailVerification(to, orgName) {
+ sendEmailVerification(to, orgName) {
     const URL = 'http://localhost:8081/v1/auth/verify-email/';
     const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let confirmationCode = '';
