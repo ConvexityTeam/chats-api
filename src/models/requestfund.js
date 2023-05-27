@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       donor_organisation_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       reason: DataTypes.STRING,
-      status: DataTypes.ENUM
+      status: DataTypes.ENUM('Pending', 'Approved', 'Rejected')
     },
     {
       sequelize,
