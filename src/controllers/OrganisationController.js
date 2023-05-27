@@ -818,6 +818,53 @@ class OrganisationController {
     }
   }
 
+  static async requestFund(req, res) {
+    try {
+      if (req.campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      if (req.campaign.budget === 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Insufficient Fund`
+        );
+        return Response.send(res);
+      }
+      const bodyAllowedList = new Set([
+        'reason',
+        'donor_organisation_id',
+        'campaign_id'
+      ]);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      const request = await db.RequestFund.create(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Request sent`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
   static async extendCampaign(req, res) {
     try {
       const bodyAllowedList = new Set([

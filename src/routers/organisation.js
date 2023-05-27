@@ -71,6 +71,14 @@ router.post(
   OrganisationController.extendCampaign
 );
 router.post(
+  '/request-withdrawal/:organisation_id',
+  DonorAuth,
+  ParamValidator.OrganisationId,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignValidator.requestFund(),
+  OrganisationController.requestFund
+);
+router.post(
   '/:organisation_id/onboarded/:campaign_id/:replicaCampaignId',
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
