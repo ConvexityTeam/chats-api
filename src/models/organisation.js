@@ -78,7 +78,8 @@ module.exports = (sequelize, DataTypes) => {
       registration_id: DataTypes.STRING,
       year_of_inception: DataTypes.STRING,
       profile_completed: DataTypes.BOOLEAN,
-      is_verified: DataTypes.BOOLEAN
+      is_verified: DataTypes.BOOLEAN,
+      about: DataTypes.STRING
     },
     {
       sequelize,
