@@ -10,8 +10,8 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       donor_organisation_id: {
+        type: Sequelize.INTEGER,
         allowNull: false,
-        type: Sequelize.UUID,
         references: {
           model: {
             tableName: 'Organisations'
@@ -20,8 +20,8 @@ module.exports = {
         }
       },
       campaign_id: {
+        type: Sequelize.INTEGER,
         allowNull: false,
-        type: Sequelize.UUID,
         references: {
           model: {
             tableName: 'Campaigns'
@@ -30,8 +30,8 @@ module.exports = {
         }
       },
       admin_id: {
-        allowNull: true,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: {
             tableName: 'Users'
