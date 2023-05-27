@@ -22,7 +22,25 @@ class CampaignValidator extends BaseValidator {
         .withMessage('Campaign start date should be after today.')
     ];
   }
-
+  static requestFund() {
+    return [
+      body('donor_organisation_id')
+        .notEmpty()
+        .withMessage('Donor organisation ID must not be empty')
+        .isInt()
+        .withMessage(`Donor organisation ID must be an integer`),
+      body('reason')
+        .notEmpty()
+        .withMessage('Reason for withdrawal is required.')
+        .isLength({
+          min: 5,
+          max: 200
+        })
+        .withMessage(
+          'Reason for withdrawal should be between 5 and 200 characters.'
+        )
+    ];
+  }
   static createCampaignRules() {
     return [
       body('title').not().isEmpty().withMessage(`Campaign title is required.`),
