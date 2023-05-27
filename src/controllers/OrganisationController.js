@@ -818,6 +818,26 @@ class OrganisationController {
     }
   }
 
+  static async withdrawalRequest(req, res) {
+    try {
+      const request = await db.RequestFund.findAll({
+        include: ['campaign']
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Donor withdrawal requests`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(JSON.stringify(error));
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support. ${error}`
+      );
+      return Response.send(res);
+    }
+  }
   static async requestFund(req, res) {
     try {
       if (req.campaign.is_funded) {
@@ -853,6 +873,75 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         `Request sent`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async approveOrReject(req, res) {
+    try {
+      const rules = {
+        campaign_id: 'required|numeric',
+        type: 'required|string|in:reject,approve',
+        request_id: 'required|numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(400, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      if (req.campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      if (req.campaign.budget === 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Insufficient Fund`
+        );
+        return Response.send(res);
+      }
+      const bodyAllowedList = new Set(['request_id', 'campaign_id', 'type']);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      const request = await db.RequestFund.findOne({
+        where: {
+          id: req.body.request_id,
+          campaign_id: req.body.campaign_id
+        }
+      });
+      if (!request) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Request not found'
+        );
+        return Response.send(res);
+      }
+      await request.update({
+        status: req.body.type === 'reject' ? 'Rejected' : 'Approved'
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Request ${req.body.type === 'reject' ? 'Rejected' : 'Approved'}`,
         request
       );
       return Response.send(res);

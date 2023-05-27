@@ -8,7 +8,20 @@ const BaseValidator = require('./BaseValidator');
 class CampaignValidator extends BaseValidator {
   static campaignTypes = ['campaign', 'cash-for-work', 'item'];
   static campaignStatuses = ['pending', 'active', 'paused', 'completed'];
+  static requestStatuses = ['approved', 'rejected'];
 
+  static approveOrRejectRequest() {
+    return [
+      body('type')
+        .not()
+        .isEmpty()
+        .withMessage(`Request type is required.`)
+        .isIn(this.requestStatuses)
+        .withMessage(
+          `Campaign type should be one of: [${this.requestStatuses.join(', ')}]`
+        )
+    ];
+  }
   static extendCampaign() {
     return [
       body('end_date')

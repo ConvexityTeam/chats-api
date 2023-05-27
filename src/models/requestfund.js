@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      RequestFund.hasOne(models.Campaign, {
+        foreignKey: 'id',
+        as: 'campaign'
+      });
     }
   }
   RequestFund.init(
