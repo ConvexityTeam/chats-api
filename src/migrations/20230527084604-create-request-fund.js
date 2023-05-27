@@ -16,7 +16,7 @@ module.exports = {
           model: {
             tableName: 'Organisations'
           },
-          key: 'uuid'
+          key: 'id'
         }
       },
       campaign_id: {
@@ -26,7 +26,7 @@ module.exports = {
           model: {
             tableName: 'Campaigns'
           },
-          key: 'uuid'
+          key: 'id'
         }
       },
       admin_id: {
@@ -36,7 +36,7 @@ module.exports = {
           model: {
             tableName: 'Users'
           },
-          key: 'uuid'
+          key: 'id'
         }
       },
       reason: {
