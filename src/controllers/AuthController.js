@@ -29,7 +29,12 @@ const {
   BlockchainService
 } = require('../services');
 const BeneficiariesService = require('../services/BeneficiaryService');
-const ninVerificationQueue = amqp_1['default'].declareQueue(  'nin_verification',  {    durable: true  });
+const ninVerificationQueue = amqp_1['default'].declareQueue(
+  'nin_verification',
+  {
+    durable: true
+  }
+);
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
@@ -82,7 +87,7 @@ class AuthController {
   }
 
   static async updateProfile(req, res, next) {
-    const {firstName, lastName, email, phone} = req.body;
+    const { firstName, lastName, email, phone } = req.body;
     const userId = req.body.userId;
     db.User.findOne({
       where: {
@@ -92,12 +97,11 @@ class AuthController {
       .then(user => {
         if (user !== null) {
           //if there is a user
-          return db.User.update(
-            {
-              firstName: firstName,
-              lastName: lastName,
-              phone: phone
-            },
+          return db.User.update({
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone
+          },
             {
               where: {
                 id: userId
@@ -110,15 +114,13 @@ class AuthController {
             });
           });
         }
-      })
-      .catch(err => {
+      }).catch(err => {
         res.status(404).json({
           status: 'error',
           error: err
         });
       });
   }
-
   static async beneficiariesExcel(req, res) {
     try {
 
@@ -183,7 +185,7 @@ class AuthController {
   static async beneficiaryRegisterSelf(req, res) {
     try {
       const RoleId = AclRoles.Beneficiary;
-      const {phone, email, country, state, coordinates, device_imei} = req.body;
+      const { phone, email, country, state, coordinates, device_imei } = req.body;
       const files = req.file;
       const rules = {
         email: 'email|required',
@@ -202,8 +204,8 @@ class AuthController {
       } else {
         if (!files) {
         }
-        const userByEmail = await db.User.findOne({where: {email}});
-        const userDevice = await db.User.findOne({where: {device_imei}});
+        const userByEmail = await db.User.findOne({ where: { email } });
+        const userDevice = await db.User.findOne({ where: { device_imei } });
         if (userByEmail) {
           Response.setError(400, 'User With This Email Exist');
           return Response.send(res);
@@ -213,22 +215,15 @@ class AuthController {
           return Response.send(res);
         } else {
           const password = createHash(req.body.password);
-
           const extension = req.file.mimetype.split('/').pop();
-
-          const profile_pic = await uploadFile(
-            files,
-            'u-' + environ + '-' + email + '-i.' + extension,
-            'convexity-profile-images'
-          );
-
+          const profile_pic = await uploadFile(files, 'u-' + environ + '-' + email + '-i.' + extension, 'convexity-profile-images');
           const user = await UserService.addUser({
             RoleId,
             phone,
             email,
             password,
             profile_pic,
-            location: JSON.stringify({country, state, coordinates})
+            location: JSON.stringify({ country, state, coordinates })
           });
 
           if (user) await QueueService.createWallet(user.id, 'user');
@@ -259,7 +254,7 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric'
+        campaign: 'required|numeric',
         // pin: 'size:4|required' //pin validation disabled
       };
 
@@ -295,9 +290,7 @@ class AuthController {
         }
 
         let ninExist = await db.User.findOne({
-          where: {
-            nin: fields.nin
-          }
+          where: { nin: fields.nin }
         });
 
         if (ninExist) {
@@ -341,56 +334,48 @@ class AuthController {
               nfc: fields.nfc,
               dob: fields.dob,
               pin: encryptedPin
-            })
-              .then(async user => {
-                await QueueService.createWallet(user.id, 'user');
-                const extension = files.profile_pic.name.substring(
-                  files.profile_pic.name.lastIndexOf('.') + 1
-                );
-                await uploadFile(
-                  files.profile_pic,
-                  'u-' + environ + '-' + user.id + '-i.' + extension,
-                  'convexity-profile-images'
-                ).then(url => {
-                  user.update({
-                    profile_pic: url
-                  });
+            }).then(async user => {
+              await QueueService.createWallet(user.id, 'user');
+              const extension = files.profile_pic.name.substring(files.profile_pic.name.lastIndexOf('.') + 1);
+              await uploadFile(files.profile_pic, 'u-' + environ + '-' + user.id + '-i.' + extension, 'convexity-profile-images'
+              ).then(url => {
+                user.update({ profile_pic: url });
+              });
+
+              // ninVerificationQueue.send(
+              //   new Message(user, {
+              //     contentType: "application/json"
+              //   })
+              // );
+              if (campaignExist.type === 'campaign') {
+                await Beneficiary.create({
+                  UserId: user.id,
+                  CampaignId: campaignExist.id,
+                  approved: true,
+                  source: 'field app'
+                }).then(async () => {
+                  await QueueService.createWallet(
+                    user.id,
+                    'user',
+                    fields.campaign
+                  );
                 });
+              }
+              // const data = await encryptData(
+              //   JSON.stringify({
+              //     id: user.id,
+              //     email: fields.email,
+              //     phone: fields.phone
+              //   })
+              // );
 
-                // ninVerificationQueue.send(
-                //   new Message(user, {
-                //     contentType: "application/json"
-                //   })
-                // );
-                if (campaignExist.type === 'campaign') {
-                  await Beneficiary.create({
-                    UserId: user.id,
-                    CampaignId: campaignExist.id,
-                    approved: true,
-                    source: 'field app'
-                  }).then(async () => {
-                    await QueueService.createWallet(
-                      user.id,
-                      'user',
-                      fields.campaign
-                    );
-                  });
-                }
-                // const data = await encryptData(
-                //   JSON.stringify({
-                //     id: user.id,
-                //     email: fields.email,
-                //     phone: fields.phone
-                //   })
-                // );
-
-                Response.setSuccess(
-                  201,
-                  'Account Onboarded Successfully',
-                  user.id
-                );
-                return Response.send(res);
-              })
+              Response.setSuccess(
+                201,
+                'Account Onboarded Successfully',
+                user.id
+              );
+              return Response.send(res);
+            })
               .catch(err => {
                 Response.setError(500, err);
                 return Response.send(res);
@@ -420,7 +405,7 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric'
+        campaign: 'required|numeric',
         // pin: 'size:4|required' //disabled for now
       };
       const validation = new Validator(fields, rules);
@@ -497,77 +482,58 @@ class AuthController {
                     referal_id: fields.referal_id,
                     dob: fields.dob,
                     pin: encryptedPin
+                  }).then(async user => {
+                    await QueueService.createWallet(user.id, 'user');
+                    var i = 0;
+                    files.fingerprints.forEach(async fingerprint => {
+                      let ext = fingerprint.name.substring(fingerprint.name.lastIndexOf('.') + 1);
+                      uploadFilePromises.push(uploadFile(fingerprint, 'u-' + environ + '-' + user.id + '-fp-' + ++i + '.' + ext, 'convexity-fingerprints'));
+                    });
+                    let extension = files.profile_pic.name.substring(files.profile_pic.name.lastIndexOf('.') + 1);
+                    await uploadFile(
+                      files.profile_pic,
+                      'u-' + environ + '-' + user.id + '-i.' + extension,
+                      'convexity-profile-images'
+                    ).then(url => {
+                      user.update({
+                        profile_pic: url
+                      });
+                    });
+                    Promise.all(uploadFilePromises).then(responses => {
+                      responses.forEach(async url => {
+                        await user.createPrint({
+                          url: url
+                        });
+                      });
+                    });
+                    if (campaignExist.type === 'campaign') {
+                      await Beneficiary.create({
+                        UserId: user.id,
+                        CampaignId: campaignExist.id,
+                        approved: true,
+                        source: 'field app'
+                      }).then(async () => {
+                        await QueueService.createWallet(
+                          user.id,
+                          'user',
+                          fields.campaign
+                        );
+                      });
+                    }
+                    // const data = await encryptData(
+                    //   JSON.stringify({
+                    //     id: user.id,
+                    //     email: fields.email,
+                    //     phone: fields.phone
+                    //   })
+                    // );
+                    Response.setSuccess(
+                      201,
+                      'Account Onboarded Successfully',
+                      user.id
+                    );
+                    return Response.send(res);
                   })
-                    .then(async user => {
-                      await QueueService.createWallet(user.id, 'user');
-
-                      var i = 0;
-                      files.fingerprints.forEach(async fingerprint => {
-                        let ext = fingerprint.name.substring(
-                          fingerprint.name.lastIndexOf('.') + 1
-                        );
-                        uploadFilePromises.push(
-                          uploadFile(
-                            fingerprint,
-                            'u-' +
-                              environ +
-                              '-' +
-                              user.id +
-                              '-fp-' +
-                              ++i +
-                              '.' +
-                              ext,
-                            'convexity-fingerprints'
-                          )
-                        );
-                      });
-                      let extension = files.profile_pic.name.substring(
-                        files.profile_pic.name.lastIndexOf('.') + 1
-                      );
-                      await uploadFile(
-                        files.profile_pic,
-                        'u-' + environ + '-' + user.id + '-i.' + extension,
-                        'convexity-profile-images'
-                      ).then(url => {
-                        user.update({
-                          profile_pic: url
-                        });
-                      });
-                      Promise.all(uploadFilePromises).then(responses => {
-                        responses.forEach(async url => {
-                          await user.createPrint({
-                            url: url
-                          });
-                        });
-                      });
-                      if (campaignExist.type === 'campaign') {
-                        await Beneficiary.create({
-                          UserId: user.id,
-                          CampaignId: campaignExist.id,
-                          approved: true,
-                          source: 'field app'
-                        }).then(async () => {
-                          await QueueService.createWallet(
-                            user.id,
-                            'user',
-                            fields.campaign
-                          );
-                        });
-                      }
-                      // const data = await encryptData(
-                      //   JSON.stringify({
-                      //     id: user.id,
-                      //     email: fields.email,
-                      //     phone: fields.phone
-                      //   })
-                      // );
-                      Response.setSuccess(
-                        201,
-                        'Account Onboarded Successfully',
-                        user.id
-                      );
-                      return Response.send(res);
-                    })
                     .catch(err => {
                       Response.setError(500, err.message);
                       return Response.send(res);
@@ -681,7 +647,6 @@ class AuthController {
     }
   }
 
-
   // Refactored Methods
 
   static async signIn(req, res) {
@@ -723,7 +688,6 @@ class AuthController {
       return Response.send(res);
     }
   }
-
   static async confirmEmail(req, res) {
     const confirmationCode = req.params.confirmationCode;
     
@@ -896,42 +860,43 @@ class AuthController {
       return Response.send(res);
     }
   }
-/*
-  static async signInField(req, res) {
-    try {
-      const user = await db.User.findOne({
-        where: {
-          email: req.body.email
-        },
-        include: {
-          model: db.OrganisationMembers,
-          as: 'AssociatedOrganisations',
+  /** 
+    static async signInField(req, res) {
+      try {
+        const user = await db.User.findOne({
+          where: {
+            email: req.body.email
+          },
           include: {
-            model: db.Organisation,
-            as: 'Organisation'
+            model: db.OrganisationMembers,
+            as: 'AssociatedOrganisations',
+            include: {
+              model: db.Organisation,
+              as: 'Organisation'
+            }
           }
+        });
+        if (user && user.RoleId !== AclRoles.FieldAgent) {
+          Response.setError(
+            HttpStatusCode.STATUS_FORBIDDEN,
+            'Access Denied, Unauthorised Access'
+          );
+          return Response.send(res);
         }
-      });
-      if (user && user.RoleId !== AclRoles.FieldAgent) {
-        Response.setError(
-          HttpStatusCode.STATUS_FORBIDDEN,
-          'Access Denied, Unauthorised Access'
-        );
+        const data = await AuthService.login(user, req.body.password);
+  
+        Response.setSuccess(200, 'Login Successful.', data);
+        return Response.send(res);
+      } catch (error) {
+        const message =
+          error.status == 401
+            ? error.message
+            : 'Login failed. Please try again later.';
+        Response.setError(401, message);
         return Response.send(res);
       }
-      const data = await AuthService.login(user, req.body.password);
-      Response.setSuccess(200, 'Login Successful.', data);
-      return Response.send(res);
-    } catch (error) {
-      const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
-      Response.setError(401, message);
-      return Response.send(res);
     }
-  }
-  */
+    */
   static async signInBeneficiary(req, res) {
     try {
       const user = await db.User.findOne({
@@ -1164,24 +1129,24 @@ class AuthController {
       return Response.send(res);
     }
   }
-/*
-  static async resetPassword(req, res) {
-    try {
-      await AuthService.updatedPassord(req.user, req.body.password);
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Reset password request failed. Please try again.'
-      );
-      return Response.send(res);
+  /*
+    static async resetPassword(req, res) {
+      try {
+        await AuthService.updatedPassord(req.user, req.body.password);
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+        return Response.send(res);
+      } catch (error) {
+        Response.setError(
+          HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+          'Reset password request failed. Please try again.'
+        );
+        return Response.send(res);
+      }
     }
-  }
-*/
+  */
   static async sendInvite(req, res) {
-    const {inviteeEmail, message, link} = req.body;
-    const {organisation_id, campaign_id} = req.params;
+    const { inviteeEmail, message, link } = req.body;
+    const { organisation_id, campaign_id } = req.params;
     try {
       const rules = {
         'inviteeEmail*': 'email|required',
@@ -1234,7 +1199,7 @@ class AuthController {
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Invite sent to donor.',
-        {campaignId: campaign.id, is_public: campaign.is_public, user_exist}
+        { campaignId: campaign.id, is_public: campaign.is_public, user_exist }
       );
       return Response.send(res);
     } catch (error) {
@@ -1261,7 +1226,7 @@ class AuthController {
   }
 
   static async confirmInvite(req, res) {
-    const {token, campaignId} = req.params;
+    const { token, campaignId } = req.params;
     try {
       const rules = {
         token: 'required|string',
@@ -1274,7 +1239,7 @@ class AuthController {
       }
       const [campaign, token_exist] = await Promise.all([
         CampaignService.getCampaignById(campaignId),
-        db.Invites.findOne({where: {token}})
+        db.Invites.findOne({ where: { token } })
       ]);
       const userExist = await UserService.findSingleUser({
         email: token_exist.email
@@ -1304,7 +1269,7 @@ class AuthController {
         );
 
         const isAdded = await db.Invites.findOne({
-          where: {CampaignId: campaignId, token, isAdded: false}
+          where: { CampaignId: campaignId, token, isAdded: false }
         });
 
         if (!ngo) {
@@ -1343,7 +1308,7 @@ class AuthController {
           });
         }
 
-        await isAdded.update({isAdded: true});
+        await isAdded.update({ isAdded: true });
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
           'campaign invitation has been confirmed',
@@ -1384,7 +1349,7 @@ class AuthController {
       const [campaign, exist] = await Promise.all([
         CampaignService.getCampaignById(data.campaignId),
         db.Invites.findOne({
-          where: {email: data.email, isAdded: true, CampaignId: data.campaignId}
+          where: { email: data.email, isAdded: true, CampaignId: data.campaignId }
         })
       ]);
 
@@ -1526,5 +1491,6 @@ function extractDomain(url) {
 
   return domain;
 }
+
 
 module.exports = AuthController;
