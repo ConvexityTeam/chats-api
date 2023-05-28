@@ -9,9 +9,9 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.addColumn('Campaigns', 'version_history', {
-      type: Sequelize.JSON,
+      type: Sequelize.ARRAY(Sequelize.JSON),
       after: 'status',
-      defaultValue: false
+      defaultValue: []
     });
   },
 
