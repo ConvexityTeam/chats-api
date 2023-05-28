@@ -16,7 +16,7 @@ const {
   OrganisationController
 } = require('../controllers');
 
-router.put('/update-user', SuperAdminAuth, AdminController.updateUserStatus);
+router.post('/update-status', SuperAdminAuth, AdminController.updateStatus);
 // router.post("/register", AuthCtrl.createUser);
 // router.post("/self-registration", AuthCtrl.normalRegistration);
 // router.post("/ngo-register", AuthCtrl.createAdminUser);
