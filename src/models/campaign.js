@@ -95,6 +95,7 @@ module.exports = (sequelize, DataTypes) => {
       contractIndex: DataTypes.INTEGER,
       amount_disbursed: DataTypes.FLOAT,
       location: DataTypes.STRING,
+      version_history: DataTypes.JSON,
       start_date: DataTypes.DATE,
       paused_date: DataTypes.DATE,
       end_date: DataTypes.DATE
