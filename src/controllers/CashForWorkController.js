@@ -71,9 +71,7 @@ class CashForWorkController {
           description: data.description,
           amount: data.amount
         };
-
         const newTask = await campaignExist.createJob(taskEntity);
-
         util.setSuccess(201, 'Task Added to Campaign Successfully');
         return util.send(res);
       }
@@ -1098,7 +1096,8 @@ class CashForWorkController {
     const {taskId} = req.body;
 
     try {
-      const tasks = await CampaignService.cashForWorkCampaignByApprovedBeneficiary;
+      const tasks =
+        await CampaignService.cashForWorkCampaignByApprovedBeneficiary;
       if (tasks.length <= 0) {
         Response.setSuccess(200, 'No Task Recieved', tasks);
         return Response.send(res);
