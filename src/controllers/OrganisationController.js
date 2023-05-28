@@ -821,8 +821,13 @@ class OrganisationController {
   static async withdrawalRequest(req, res) {
     try {
       const request = await db.RequestFund.findAll({
-        include: ['campaign']
+        include: {
+          model: db.Campaign,
+          as: 'campaign',
+          include: ['Organisation']
+        }
       });
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Donor withdrawal requests`,

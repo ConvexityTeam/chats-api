@@ -1,4 +1,4 @@
-require("dotenv").config();
+require('dotenv').config();
 const db = require('../models');
 const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
@@ -23,28 +23,52 @@ const SmsService = require('../services/SmsService');
 const {AclRoles} = require('../utils');
 
 class AdminController {
-  static async updateUserStatus(req, res) {
+  static async updateStatus(req, res) {
     const data = req.body;
-    const rules = {
-      userId: 'required|numeric',
-      status: 'required|string|in:activated,suspended,pending'
-    };
 
-    const validation = new Validator(data, rules);
-    if (validation.fails()) {
-      util.setError(422, validation.errors);
-      return util.send(res);
-    } else {
-      const userExist = await db.User.findOne({where: {id: data.userId}});
-      if (userExist) {
-        await userExist.update({status: data.status}).then(response => {
-          util.setError(200, 'User Updated');
-          return util.send(res);
-        });
-      } else {
-        util.setError(404, 'Invalid User Id', error);
-        return util.send(res);
+    try {
+      const rules = {
+        userId: 'required|numeric',
+        status: 'required|string|in:activated,suspended'
+      };
+
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
       }
+      const bodyAllowedList = new Set(['userId', 'status']);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      const userExist = await db.User.findOne({where: {id: data.userId}});
+      if (!userExist) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          `Invalid user ID`
+        );
+        return Response.send(res);
+      }
+      const updatesUser = await userExist.update({status: data.status});
+      Response.setError(
+        HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+        `Invalid user ID`,
+        updatesUser
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
     }
   }
 
@@ -326,7 +350,7 @@ class AdminController {
         );
         beneficiary.dataValues.total_amount_spent = sum;
         beneficiary.dataValues.total_campaign = campaign.length;
-        beneficiary.dataValues.organisationId = ngo.OrganisationId
+        beneficiary.dataValues.organisationId = ngo.OrganisationId;
         delete beneficiary.dataValues.OrderTransaction;
       }
       Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
@@ -506,22 +530,21 @@ setInterval(async () => {
   });
   let resp;
   if (process.env.NODE_ENV === 'production') {
-
-  await axios
-    .get(
-      `https://api.ng.termii.com/api/get-balance?api_key=${termiiConfig.api_key}`
-    )
-    .then(async result => {
-      resp = result.data;
-      if (resp.balance <= 100) {
-        await SmsService.sendAdminSmsCredit(user.phone, resp.balance);
-        await MailerService.sendAdminSmsCreditMail(user.email, resp.balance);
-        console.log('SMS balance is getting low');
-      }
-    })
-    .catch(error => {
-      console.log('error', error.message);
-    });
+    await axios
+      .get(
+        `https://api.ng.termii.com/api/get-balance?api_key=${termiiConfig.api_key}`
+      )
+      .then(async result => {
+        resp = result.data;
+        if (resp.balance <= 100) {
+          await SmsService.sendAdminSmsCredit(user.phone, resp.balance);
+          await MailerService.sendAdminSmsCreditMail(user.email, resp.balance);
+          console.log('SMS balance is getting low');
+        }
+      })
+      .catch(error => {
+        console.log('error', error.message);
+      });
   }
 }, 86400000);
 
