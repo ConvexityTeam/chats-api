@@ -265,12 +265,13 @@ class MailerService {
       });
     });
   }
- sendEmailVerification(to, orgName) {
-    const URL = 'http://localhost:8081/v1/auth/verify-email/';
-    const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  sendEmailVerification(to, orgName, url) {
+    const characters =
+      '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let confirmationCode = '';
     for (let i = 0; i < 25; i++) {
-      confirmationCode += characters[Math.floor(Math.random() * characters.length)];
+      confirmationCode +=
+        characters[Math.floor(Math.random() * characters.length)];
     }
 
     const body = `
@@ -278,7 +279,7 @@ class MailerService {
     <h2>Hello, ${orgName}</h2>
     <p>Thank you for  creating an account on CHATS platform. 
     Please confirm your email by clicking on the following link</p>
-    <a href=${URL}+${confirmationCode}> Click here</a>
+    <a href=${url}+${confirmationCode}> Click here</a>
       <p>Best,\n CHATS - Convexity</p>
     </div>
     `;
