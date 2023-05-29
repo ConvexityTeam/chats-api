@@ -977,16 +977,40 @@ class OrganisationController {
           return Response.send(res);
         }
       }
-
-      req.body.status = 'ongoing';
+      if (req.campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      const history = [];
+      const dateB = moment(req.campaign.createdAt);
+      const dateC = moment(req.body.end_date);
+      const d = new Date(req.body.end_date);
+      const newEndDate = moment(d).format('MMMM d, YYYY');
+      const extension_period = dateC.diff(dateB, 'days');
+      history.push({
+        extension_period,
+        newEndDate,
+        additional_budget: req.body.budget,
+        beneficiaries: 0
+      });
+      console.log(req.campaign.version_history, 'eq.campaign.version_history');
+      history.concat(req.campaign.version_history);
+      console.log(history, 'history');
+      req.campaign.version_history = history;
       req.campaign.budget = req.body.budget
         ? Number(req.body.budget) + req.campaign.budget
         : req.campaign.budget;
-      const newCampaign = await req.campaign.update(req.body);
+      const newCampaign = await db.Campaign.update(
+        {...req.campaign},
+        {where: {id: req.campaign.id}}
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'campaign extended',
-        newCampaign
+        req.campaign
       );
       return Response.send(res);
     } catch (error) {
