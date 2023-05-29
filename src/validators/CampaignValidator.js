@@ -188,6 +188,7 @@ class CampaignValidator extends BaseValidator {
   static async campaignBelongsToOrganisation(req, res, next) {
     try {
       const id = req.body.campaign_id || req.params.campaign_id;
+      console.log(req.params.campaign_id, 'req.params.campaign_id');
       const organisationId =
         req.body.organisation_id ||
         req.params.organisation_id ||
