@@ -128,9 +128,12 @@ class AuthController {
       if (req.file == undefined) {
         return res.status(400).send('Please upload an excel file!');
       }
-
+  const campaignId = req.body.campaign;
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
-
+     
+      let existingEmails =[];//existings
+      let createdSuccess = [];//successfully created
+      let createdFailed = [];//failed to create
       readXlsxFile(path).then(rows => {
         // skip header or first row
         rows.shift();
@@ -153,100 +156,57 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
+        // console.log(beneficiaries);
         //loop through all the beneficiaries list to populate them in the db
         beneficiaries.forEach(beneficiary=>{
           let campaignExist = await db.Campaign.findOne({
             where: {
-              id: fields.campaign,
+              id: campaignId,
               type: 'campaign'
             }
           });
-
           if (!campaignExist) {
             Response.setError(400, 'Invalid Campaign ID');
             return Response.send(res);
           }
           const user_exist = await db.User.findOne({
             where: {
-              email: fields.email
+              email: beneficiary.email
             }
           });
           if (user_exist) {
-            Response.setError(
-              400,
-              'Email Already Exists, Recover Your Account'
-            );
-            return Response.send(res);
+            //include the email in the existing list
+            existingEmails.push(beneficiary.email);
           } else {
             bcrypt.genSalt(10, (err, salt) => {
               if (err) {
                 console.log('Error Ocurred hashing');
               }
               const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
-              bcrypt.hash(fields.password, salt).then(async hash => {
+              bcrypt.hash(beneficiary.password, salt).then(async hash => {
                 const encryptedPassword = hash;
                 await db.User.create({
                   RoleId: AclRoles.Beneficiary,
-                  first_name: fields.first_name,
-                  last_name: fields.last_name,
-                  phone: fields.phone,
-                  email: fields.email,
+                  first_name: beneficiary.first_name,
+                  last_name: beneficiary.last_name,
+                  phone: beneficiary.phone,
+                  email: beneficiary.email,
                   password: encryptedPassword,
-                  gender: fields.gender,
+                  gender: beneficiary.gender,
                   status: 'activated',
-                  location: fields.location,
-                  address: fields.address,
-                  referal_id: fields.referal_id,
-                  dob: fields.dob,
+                  location: beneficiary.location,
+                  address: beneficiary.address,
+                  referal_id: beneficiary.referal_id,
+                  dob: beneficiary.dob,
                   pin: encryptedPin
-                })
-                  .then(async user => {
+                }).then(async user => {
                     await QueueService.createWallet(user.id, 'user');
-                    var i = 0;
-                    files.fingerprints.forEach(async fingerprint => {
-                      let ext = fingerprint.name.substring(
-                        fingerprint.name.lastIndexOf('.') + 1
-                      );
-                      uploadFilePromises.push(
-                        uploadFile(
-                          fingerprint,
-                          'u-' +
-                          environ +
-                          '-' +
-                          user.id +
-                          '-fp-' +
-                          ++i +
-                          '.' +
-                          ext,
-                          'convexity-fingerprints'
-                        )
-                      );
-                    });
-                    let extension = files.profile_pic.name.substring(
-                      files.profile_pic.name.lastIndexOf('.') + 1
-                    );
-                    await uploadFile(
-                      files.profile_pic,
-                      'u-' + environ + '-' + user.id + '-i.' + extension,
-                      'convexity-profile-images'
-                    ).then(url => {
-                      user.update({
-                        profile_pic: url
-                      });
-                    });
-                    Promise.all(uploadFilePromises).then(responses => {
-                      responses.forEach(async url => {
-                        await user.createPrint({
-                          url: url
-                        });
-                      });
-                    });
                     if (campaignExist.type === 'campaign') {
                       await Beneficiary.create({
                         UserId: user.id,
                         CampaignId: campaignExist.id,
                         approved: true,
-                        source: 'field app'
+                        source: 'Excel File Upload'
                       }).then(async () => {
                         await QueueService.createWallet(
                           user.id,
@@ -255,49 +215,25 @@ class AuthController {
                         );
                       });
                     }
-                    // const data = await encryptData(
-                    //   JSON.stringify({
-                    //     id: user.id,
-                    //     email: fields.email,
-                    //     phone: fields.phone
-                    //   })
-                    // );
-                    Response.setSuccess(
-                      201,
-                      'Account Onboarded Successfully',
-                      user.id
-                    );
-                    return Response.send(res);
-                  })
-                  .catch(err => {
-                    Response.setError(500, err.message);
-                    return Response.send(res);
+                    });
+                    createdSuccess.push(beneficiary.email);//add to success list
+                    Response.setSuccess(200,'Beneficiaries Uploaded Successfully:',user.id );
+                    // return Response.send(res);
+                  }).catch(err => {
+                     Response.setError(500, err.message);
+                    // return Response.send(res);
+                    createdFailed.push(beneficiary.email);
                   });
               });
-            });
           }
         });
-        // console.log(beneficiaries);
-        /*
-                db.User.bulkCreate(beneficiaries)
-                  .then(() => {
-                    res.status(200).send({
-                      message:
-                        'Beneficiaries Uploaded Successfully: ' + req.file.originalname
-                    });
-                  })
-                  .catch(error => {
-                    res.status(500).send({
-                      message: 'Fail to import Beneficairies into database!',
-                      error: error.message
-                    });
-                  });
-                  */
+        return Response.send(res);
       });
     } catch (error) {
       console.log(error);
       res.status(500).send({
-        message: 'Could not upload the file: ' + req.file.originalname
+        message: 'Fail to import Beneficairies into database!',
+        error: error.message
       });
     }
   }
