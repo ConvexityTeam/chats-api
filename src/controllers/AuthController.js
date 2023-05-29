@@ -1,4 +1,4 @@
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
 const {
   AclRoles,
   OrgRoles,
@@ -7,12 +7,12 @@ const {
   generateOrganisationId,
   encryptData
 } = require('../utils');
-const {Message} = require('@droidsolutions-oss/amqp-ts');
+const { Message } = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const {Response, Logger} = require('../libs');
-const {Beneficiary, Invites} = require('../models');
+const { Response, Logger } = require('../libs');
+const { Beneficiary, Invites } = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
@@ -87,7 +87,7 @@ class AuthController {
   }
 
   static async updateProfile(req, res, next) {
-    const {firstName, lastName, email, phone} = req.body;
+    const { firstName, lastName, email, phone } = req.body;
     const userId = req.body.userId;
     db.User.findOne({
       where: {
@@ -153,21 +153,146 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
-        // console.log(beneficiaries);
-
-        db.User.bulkCreate(beneficiaries)
-          .then(() => {
-            res.status(200).send({
-              message:
-                'Beneficiaries Uploaded Successfully: ' + req.file.originalname
-            });
-          })
-          .catch(error => {
-            res.status(500).send({
-              message: 'Fail to import Beneficairies into database!',
-              error: error.message
-            });
+        //loop through all the beneficiaries list to populate them in the db
+        beneficiaries.forEach(beneficiary=>{
+          let campaignExist = await db.Campaign.findOne({
+            where: {
+              id: fields.campaign,
+              type: 'campaign'
+            }
           });
+
+          if (!campaignExist) {
+            Response.setError(400, 'Invalid Campaign ID');
+            return Response.send(res);
+          }
+          const user_exist = await db.User.findOne({
+            where: {
+              email: fields.email
+            }
+          });
+          if (user_exist) {
+            Response.setError(
+              400,
+              'Email Already Exists, Recover Your Account'
+            );
+            return Response.send(res);
+          } else {
+            bcrypt.genSalt(10, (err, salt) => {
+              if (err) {
+                console.log('Error Ocurred hashing');
+              }
+              const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
+              bcrypt.hash(fields.password, salt).then(async hash => {
+                const encryptedPassword = hash;
+                await db.User.create({
+                  RoleId: AclRoles.Beneficiary,
+                  first_name: fields.first_name,
+                  last_name: fields.last_name,
+                  phone: fields.phone,
+                  email: fields.email,
+                  password: encryptedPassword,
+                  gender: fields.gender,
+                  status: 'activated',
+                  location: fields.location,
+                  address: fields.address,
+                  referal_id: fields.referal_id,
+                  dob: fields.dob,
+                  pin: encryptedPin
+                })
+                  .then(async user => {
+                    await QueueService.createWallet(user.id, 'user');
+                    var i = 0;
+                    files.fingerprints.forEach(async fingerprint => {
+                      let ext = fingerprint.name.substring(
+                        fingerprint.name.lastIndexOf('.') + 1
+                      );
+                      uploadFilePromises.push(
+                        uploadFile(
+                          fingerprint,
+                          'u-' +
+                          environ +
+                          '-' +
+                          user.id +
+                          '-fp-' +
+                          ++i +
+                          '.' +
+                          ext,
+                          'convexity-fingerprints'
+                        )
+                      );
+                    });
+                    let extension = files.profile_pic.name.substring(
+                      files.profile_pic.name.lastIndexOf('.') + 1
+                    );
+                    await uploadFile(
+                      files.profile_pic,
+                      'u-' + environ + '-' + user.id + '-i.' + extension,
+                      'convexity-profile-images'
+                    ).then(url => {
+                      user.update({
+                        profile_pic: url
+                      });
+                    });
+                    Promise.all(uploadFilePromises).then(responses => {
+                      responses.forEach(async url => {
+                        await user.createPrint({
+                          url: url
+                        });
+                      });
+                    });
+                    if (campaignExist.type === 'campaign') {
+                      await Beneficiary.create({
+                        UserId: user.id,
+                        CampaignId: campaignExist.id,
+                        approved: true,
+                        source: 'field app'
+                      }).then(async () => {
+                        await QueueService.createWallet(
+                          user.id,
+                          'user',
+                          fields.campaign
+                        );
+                      });
+                    }
+                    // const data = await encryptData(
+                    //   JSON.stringify({
+                    //     id: user.id,
+                    //     email: fields.email,
+                    //     phone: fields.phone
+                    //   })
+                    // );
+                    Response.setSuccess(
+                      201,
+                      'Account Onboarded Successfully',
+                      user.id
+                    );
+                    return Response.send(res);
+                  })
+                  .catch(err => {
+                    Response.setError(500, err.message);
+                    return Response.send(res);
+                  });
+              });
+            });
+          }
+        });
+        // console.log(beneficiaries);
+        /*
+                db.User.bulkCreate(beneficiaries)
+                  .then(() => {
+                    res.status(200).send({
+                      message:
+                        'Beneficiaries Uploaded Successfully: ' + req.file.originalname
+                    });
+                  })
+                  .catch(error => {
+                    res.status(500).send({
+                      message: 'Fail to import Beneficairies into database!',
+                      error: error.message
+                    });
+                  });
+                  */
       });
     } catch (error) {
       console.log(error);
@@ -189,7 +314,7 @@ class AuthController {
   static async beneficiaryRegisterSelf(req, res) {
     try {
       const RoleId = AclRoles.Beneficiary;
-      const {phone, email, country, state, coordinates, device_imei} = req.body;
+      const { phone, email, country, state, coordinates, device_imei } = req.body;
       const files = req.file;
       const rules = {
         email: 'email|required',
@@ -208,8 +333,8 @@ class AuthController {
       } else {
         if (!files) {
         }
-        const userByEmail = await db.User.findOne({where: {email}});
-        const userDevice = await db.User.findOne({where: {device_imei}});
+        const userByEmail = await db.User.findOne({ where: { email } });
+        const userDevice = await db.User.findOne({ where: { device_imei } });
         if (userByEmail) {
           Response.setError(400, 'User With This Email Exist');
           return Response.send(res);
@@ -231,7 +356,7 @@ class AuthController {
             email,
             password,
             profile_pic,
-            location: JSON.stringify({country, state, coordinates})
+            location: JSON.stringify({ country, state, coordinates })
           });
 
           if (user) await QueueService.createWallet(user.id, 'user');
@@ -298,7 +423,7 @@ class AuthController {
         }
 
         let ninExist = await db.User.findOne({
-          where: {nin: fields.nin}
+          where: { nin: fields.nin }
         });
 
         if (ninExist) {
@@ -353,7 +478,7 @@ class AuthController {
                   'u-' + environ + '-' + user.id + '-i.' + extension,
                   'convexity-profile-images'
                 ).then(url => {
-                  user.update({profile_pic: url});
+                  user.update({ profile_pic: url });
                 });
 
                 // ninVerificationQueue.send(
@@ -508,13 +633,13 @@ class AuthController {
                           uploadFile(
                             fingerprint,
                             'u-' +
-                              environ +
-                              '-' +
-                              user.id +
-                              '-fp-' +
-                              ++i +
-                              '.' +
-                              ext,
+                            environ +
+                            '-' +
+                            user.id +
+                            '-fp-' +
+                            ++i +
+                            '.' +
+                            ext,
                             'convexity-fingerprints'
                           )
                         );
@@ -609,14 +734,14 @@ class AuthController {
       if (email.match(new RegExp(re))) {
         // if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
-          where: {email: data.email}
+          where: { email: data.email }
         });
         if (!userExist) {
           const organisationExist = await db.Organisation.findOne({
             where: {
               [Op.or]: [
-                {name: data.organisation_name},
-                {website_url: data.website_url}
+                { name: data.organisation_name },
+                { website_url: data.website_url }
               ]
             }
           });
@@ -661,7 +786,7 @@ class AuthController {
                           Response.setSuccess(
                             201,
                             'NGO and User registered successfully',
-                            {user: user.toObject(), organisation}
+                            { user: user.toObject(), organisation }
                           );
                           return Response.send(res);
                         });
@@ -1188,8 +1313,8 @@ class AuthController {
     }
   */
   static async sendInvite(req, res) {
-    const {inviteeEmail, message, link} = req.body;
-    const {organisation_id, campaign_id} = req.params;
+    const { inviteeEmail, message, link } = req.body;
+    const { organisation_id, campaign_id } = req.params;
     try {
       const rules = {
         'inviteeEmail*': 'email|required',
@@ -1242,7 +1367,7 @@ class AuthController {
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Invite sent to donor.',
-        {campaignId: campaign.id, is_public: campaign.is_public, user_exist}
+        { campaignId: campaign.id, is_public: campaign.is_public, user_exist }
       );
       return Response.send(res);
     } catch (error) {
@@ -1269,7 +1394,7 @@ class AuthController {
   }
 
   static async confirmInvite(req, res) {
-    const {token, campaignId} = req.params;
+    const { token, campaignId } = req.params;
     try {
       const rules = {
         token: 'required|string',
@@ -1282,7 +1407,7 @@ class AuthController {
       }
       const [campaign, token_exist] = await Promise.all([
         CampaignService.getCampaignById(campaignId),
-        db.Invites.findOne({where: {token}})
+        db.Invites.findOne({ where: { token } })
       ]);
       const userExist = await UserService.findSingleUser({
         email: token_exist.email
@@ -1312,7 +1437,7 @@ class AuthController {
         );
 
         const isAdded = await db.Invites.findOne({
-          where: {CampaignId: campaignId, token, isAdded: false}
+          where: { CampaignId: campaignId, token, isAdded: false }
         });
 
         if (!ngo) {
@@ -1351,7 +1476,7 @@ class AuthController {
           });
         }
 
-        await isAdded.update({isAdded: true});
+        await isAdded.update({ isAdded: true });
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
           'campaign invitation has been confirmed',
@@ -1392,7 +1517,7 @@ class AuthController {
       const [campaign, exist] = await Promise.all([
         CampaignService.getCampaignById(data.campaignId),
         db.Invites.findOne({
-          where: {email: data.email, isAdded: true, CampaignId: data.campaignId}
+          where: { email: data.email, isAdded: true, CampaignId: data.campaignId }
         })
       ]);
 
