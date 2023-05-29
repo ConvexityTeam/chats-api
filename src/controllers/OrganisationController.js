@@ -35,6 +35,7 @@ const {
   TransactionService
 } = require('../services');
 const AwsUploadService = require('../services/AwsUploadService');
+const campaign = require('../models/campaign');
 
 const createWalletQueue = amqp['default'].declareQueue('createWallet', {
   durable: true
@@ -960,13 +961,39 @@ class OrganisationController {
   }
 
   static async extendCampaign(req, res) {
+    const {
+      end_date,
+      description,
+      location,
+      campaign_id,
+      additional_budget
+    } = req.body;
+    const today = moment();
+    const endDate = moment(end_date);
     try {
+      const rules = {
+        end_date: `required|date`,
+        campaign_id: 'required|numeric',
+        additional_budget: 'numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(400, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
+      if (today > endDate) {
+        Response.setError(400, 'The end date must be after today');
+        return Response.send(res);
+      }
+
       const bodyAllowedList = new Set([
         'end_date',
         'description',
         'location',
         'campaign_id',
-        'budget'
+        'additional_budget'
       ]);
       for (let prop in req.body) {
         if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
@@ -984,33 +1011,54 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      const history = [];
-      const dateB = moment(req.campaign.createdAt);
-      const dateC = moment(req.body.end_date);
-      const d = new Date(req.body.end_date);
-      const newEndDate = moment(d).format('MMMM d, YYYY');
+      const dateB = moment(req.campaign.updatedAt);
+      const dateC = moment(end_date);
+
       const extension_period = dateC.diff(dateB, 'days');
-      history.push({
-        extension_period,
-        newEndDate,
-        additional_budget: req.body.budget,
-        beneficiaries: 0
-      });
-      console.log(req.campaign.version_history, 'eq.campaign.version_history');
-      history.concat(req.campaign.version_history);
-      console.log(history, 'history');
-      req.campaign.version_history = history;
-      req.campaign.budget = req.body.budget
-        ? Number(req.body.budget) + req.campaign.budget
+
+      req.campaign.budget = additional_budget
+        ? Number(additional_budget) + req.campaign.budget
         : req.campaign.budget;
-      const newCampaign = await db.Campaign.update(
-        {...req.campaign},
-        {where: {id: req.campaign.id}}
-      );
+      const newCampaign = await req.campaign.update(req.body);
+      const history = await db.CampaignHistory.create({
+        extension_period,
+        new_end_date: end_date,
+        additional_budget,
+        campaign_id
+      });
+      newCampaign.dataValues.history = history;
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'campaign extended',
-        req.campaign
+        newCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+  static async campaignHistory(req, res) {
+    try {
+      const campaign = await CampaignService.campaignHistory(req.campaign.id);
+      for (let history of campaign.history) {
+        const date = moment(campaign.end_date).isSame(
+          history.new_end_date,
+          'day'
+        );
+        if (date) {
+          history.dataValues.currentCampaign = true;
+        } else {
+          history.dataValues.currentCampaign = false;
+        }
+      }
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'campaign history retrieved',
+        campaign
       );
       return Response.send(res);
     } catch (error) {
@@ -1021,7 +1069,6 @@ class OrganisationController {
       return Response.send(res);
     }
   }
-
   static async UpdateCampaignProduct(req, res) {
     const {ProductId} = req.body;
     try {

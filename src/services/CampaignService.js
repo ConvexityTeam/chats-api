@@ -20,6 +20,11 @@ const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
 
 class CampaignService {
+  static campaignHistory(id) {
+    return Campaign.findByPk(id, {
+      include: ['history']
+    });
+  }
   static getACampaignWithBeneficiaries(CampaignId, type) {
     return Campaign.findAll({
       where: {
@@ -274,7 +279,7 @@ class CampaignService {
           as: 'BeneficiariesWallets',
           attributes: walletConst.walletExcludes
         }
-      ],
+      ]
       // group: [
       //   'Campaign.id',
       //   'Beneficiaries.id',

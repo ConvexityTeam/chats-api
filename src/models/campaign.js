@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
           wallet_type: 'user'
         }
       });
+      Campaign.hasMany(models.CampaignHistory, {
+        as: 'history',
+        foreignKey: 'campaign_id'
+      });
       Campaign.hasOne(models.Wallet, {
         as: 'Wallet',
         foreignKey: 'CampaignId',
