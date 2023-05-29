@@ -4,7 +4,7 @@
   "description": "Convexity Humanitarian Aid Transfer System",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./src/test/ --recursive --exit",
+    "test": "mocha --recursive --exit",
     "start": "npm run db:migrate && node src/index.js",
     "start:dev": "nodemon src/index.js",
     "start:consumer": "node src/consumer.js",
@@ -30,8 +30,6 @@
     "aws-sdk": "^2.856.0",
     "axios": "^0.21.4",
     "bcryptjs": "^2.4.3",
-    "chai": "^4.3.7",
-    "chai-http": "^4.3.0",
     "chalk": "^4.1.2",
     "connect-multiparty": "^2.2.0",
     "core-js": "^3.6.5",
@@ -66,7 +64,6 @@
     "qrcode": "^1.5.0",
     "randomstring": "^1.2.1",
     "rascal": "^13.0.0",
-    "read-excel-file": "^5.6.1",
     "redis": "^4.3.1",
     "regenerator-runtime": "^0.13.7",
     "request": "^2.88.2",
@@ -80,8 +77,7 @@
     "uuid": "^9.0.0",
     "validator": "^13.7.0",
     "validatorjs": "^3.22.1",
-    "winston": "^3.7.2",
-    "xlsx": "^0.18.5"
+    "winston": "^3.7.2"
   },
   "devDependencies": {
     "eslint-config-prettier": "^6.11.0",
