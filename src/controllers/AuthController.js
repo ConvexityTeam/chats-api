@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const {Op} = require('sequelize');
 const {
   AclRoles,
   OrgRoles,
@@ -7,12 +7,12 @@ const {
   generateOrganisationId,
   encryptData
 } = require('../utils');
-const { Message } = require('@droidsolutions-oss/amqp-ts');
+const {Message} = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { Response, Logger } = require('../libs');
-const { Beneficiary, Invites } = require('../models');
+const {Response, Logger} = require('../libs');
+const {Beneficiary, Invites} = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
@@ -87,7 +87,7 @@ class AuthController {
   }
 
   static async updateProfile(req, res, next) {
-    const { firstName, lastName, email, phone } = req.body;
+    const {firstName, lastName, email, phone} = req.body;
     const userId = req.body.userId;
     db.User.findOne({
       where: {
@@ -128,12 +128,12 @@ class AuthController {
       if (req.file == undefined) {
         return res.status(400).send('Please upload an excel file!');
       }
-  const campaignId = req.body.campaign;
+      const campaignId = req.body.campaign;
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
-     
-      let existingEmails =[];//existings
-      let createdSuccess = [];//successfully created
-      let createdFailed = [];//failed to create
+
+      let existingEmails = []; //existings
+      let createdSuccess = []; //successfully created
+      let createdFailed = []; //failed to create
       readXlsxFile(path).then(rows => {
         // skip header or first row
         rows.shift();
@@ -158,7 +158,7 @@ class AuthController {
         });
         // console.log(beneficiaries);
         //loop through all the beneficiaries list to populate them in the db
-        beneficiaries.forEach(beneficiary=>{
+        beneficiaries.forEach(async beneficiary => {
           let campaignExist = await db.Campaign.findOne({
             where: {
               id: campaignId,
@@ -183,23 +183,25 @@ class AuthController {
                 console.log('Error Ocurred hashing');
               }
               const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
-              bcrypt.hash(beneficiary.password, salt).then(async hash => {
-                const encryptedPassword = hash;
-                await db.User.create({
-                  RoleId: AclRoles.Beneficiary,
-                  first_name: beneficiary.first_name,
-                  last_name: beneficiary.last_name,
-                  phone: beneficiary.phone,
-                  email: beneficiary.email,
-                  password: encryptedPassword,
-                  gender: beneficiary.gender,
-                  status: 'activated',
-                  location: beneficiary.location,
-                  address: beneficiary.address,
-                  referal_id: beneficiary.referal_id,
-                  dob: beneficiary.dob,
-                  pin: encryptedPin
-                }).then(async user => {
+              bcrypt
+                .hash(beneficiary.password, salt)
+                .then(async hash => {
+                  const encryptedPassword = hash;
+                  await db.User.create({
+                    RoleId: AclRoles.Beneficiary,
+                    first_name: beneficiary.first_name,
+                    last_name: beneficiary.last_name,
+                    phone: beneficiary.phone,
+                    email: beneficiary.email,
+                    password: encryptedPassword,
+                    gender: beneficiary.gender,
+                    status: 'activated',
+                    location: beneficiary.location,
+                    address: beneficiary.address,
+                    referal_id: beneficiary.referal_id,
+                    dob: beneficiary.dob,
+                    pin: encryptedPin
+                  }).then(async user => {
                     await QueueService.createWallet(user.id, 'user');
                     if (campaignExist.type === 'campaign') {
                       await Beneficiary.create({
@@ -215,16 +217,21 @@ class AuthController {
                         );
                       });
                     }
-                    });
-                    createdSuccess.push(beneficiary.email);//add to success list
-                    Response.setSuccess(200,'Beneficiaries Uploaded Successfully:',user.id );
-                    // return Response.send(res);
-                  }).catch(err => {
-                     Response.setError(500, err.message);
-                    // return Response.send(res);
-                    createdFailed.push(beneficiary.email);
                   });
-              });
+                  createdSuccess.push(beneficiary.email); //add to success list
+                  Response.setSuccess(
+                    200,
+                    'Beneficiaries Uploaded Successfully:',
+                    user.id
+                  );
+                  // return Response.send(res);
+                })
+                .catch(err => {
+                  Response.setError(500, err.message);
+                  // return Response.send(res);
+                  createdFailed.push(beneficiary.email);
+                });
+            });
           }
         });
         return Response.send(res);
@@ -250,7 +257,7 @@ class AuthController {
   static async beneficiaryRegisterSelf(req, res) {
     try {
       const RoleId = AclRoles.Beneficiary;
-      const { phone, email, country, state, coordinates, device_imei } = req.body;
+      const {phone, email, country, state, coordinates, device_imei} = req.body;
       const files = req.file;
       const rules = {
         email: 'email|required',
@@ -269,8 +276,8 @@ class AuthController {
       } else {
         if (!files) {
         }
-        const userByEmail = await db.User.findOne({ where: { email } });
-        const userDevice = await db.User.findOne({ where: { device_imei } });
+        const userByEmail = await db.User.findOne({where: {email}});
+        const userDevice = await db.User.findOne({where: {device_imei}});
         if (userByEmail) {
           Response.setError(400, 'User With This Email Exist');
           return Response.send(res);
@@ -292,7 +299,7 @@ class AuthController {
             email,
             password,
             profile_pic,
-            location: JSON.stringify({ country, state, coordinates })
+            location: JSON.stringify({country, state, coordinates})
           });
 
           if (user) await QueueService.createWallet(user.id, 'user');
@@ -359,7 +366,7 @@ class AuthController {
         }
 
         let ninExist = await db.User.findOne({
-          where: { nin: fields.nin }
+          where: {nin: fields.nin}
         });
 
         if (ninExist) {
@@ -414,7 +421,7 @@ class AuthController {
                   'u-' + environ + '-' + user.id + '-i.' + extension,
                   'convexity-profile-images'
                 ).then(url => {
-                  user.update({ profile_pic: url });
+                  user.update({profile_pic: url});
                 });
 
                 // ninVerificationQueue.send(
@@ -569,13 +576,13 @@ class AuthController {
                           uploadFile(
                             fingerprint,
                             'u-' +
-                            environ +
-                            '-' +
-                            user.id +
-                            '-fp-' +
-                            ++i +
-                            '.' +
-                            ext,
+                              environ +
+                              '-' +
+                              user.id +
+                              '-fp-' +
+                              ++i +
+                              '.' +
+                              ext,
                             'convexity-fingerprints'
                           )
                         );
@@ -670,14 +677,14 @@ class AuthController {
       if (email.match(new RegExp(re))) {
         // if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
-          where: { email: data.email }
+          where: {email: data.email}
         });
         if (!userExist) {
           const organisationExist = await db.Organisation.findOne({
             where: {
               [Op.or]: [
-                { name: data.organisation_name },
-                { website_url: data.website_url }
+                {name: data.organisation_name},
+                {website_url: data.website_url}
               ]
             }
           });
@@ -722,7 +729,7 @@ class AuthController {
                           Response.setSuccess(
                             201,
                             'NGO and User registered successfully',
-                            { user: user.toObject(), organisation }
+                            {user: user.toObject(), organisation}
                           );
                           return Response.send(res);
                         });
@@ -1249,8 +1256,8 @@ class AuthController {
     }
   */
   static async sendInvite(req, res) {
-    const { inviteeEmail, message, link } = req.body;
-    const { organisation_id, campaign_id } = req.params;
+    const {inviteeEmail, message, link} = req.body;
+    const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
         'inviteeEmail*': 'email|required',
@@ -1303,7 +1310,7 @@ class AuthController {
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Invite sent to donor.',
-        { campaignId: campaign.id, is_public: campaign.is_public, user_exist }
+        {campaignId: campaign.id, is_public: campaign.is_public, user_exist}
       );
       return Response.send(res);
     } catch (error) {
@@ -1330,7 +1337,7 @@ class AuthController {
   }
 
   static async confirmInvite(req, res) {
-    const { token, campaignId } = req.params;
+    const {token, campaignId} = req.params;
     try {
       const rules = {
         token: 'required|string',
@@ -1343,7 +1350,7 @@ class AuthController {
       }
       const [campaign, token_exist] = await Promise.all([
         CampaignService.getCampaignById(campaignId),
-        db.Invites.findOne({ where: { token } })
+        db.Invites.findOne({where: {token}})
       ]);
       const userExist = await UserService.findSingleUser({
         email: token_exist.email
@@ -1373,7 +1380,7 @@ class AuthController {
         );
 
         const isAdded = await db.Invites.findOne({
-          where: { CampaignId: campaignId, token, isAdded: false }
+          where: {CampaignId: campaignId, token, isAdded: false}
         });
 
         if (!ngo) {
@@ -1412,7 +1419,7 @@ class AuthController {
           });
         }
 
-        await isAdded.update({ isAdded: true });
+        await isAdded.update({isAdded: true});
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
           'campaign invitation has been confirmed',
@@ -1453,7 +1460,7 @@ class AuthController {
       const [campaign, exist] = await Promise.all([
         CampaignService.getCampaignById(data.campaignId),
         db.Invites.findOne({
-          where: { email: data.email, isAdded: true, CampaignId: data.campaignId }
+          where: {email: data.email, isAdded: true, CampaignId: data.campaignId}
         })
       ]);
 
