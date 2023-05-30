@@ -16,7 +16,7 @@ const {Beneficiary, Invites} = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
-const readXlsxFile = require('read-excel-file/node');
+
 const AuthService = require('../services/AuthService');
 const amqp_1 = require('./../libs/RabbitMQ/Connection');
 const {
@@ -38,7 +38,7 @@ const ninVerificationQueue = amqp_1['default'].declareQueue(
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
-const __basedir = __dirname + '/..';
+
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
 class AuthController {
@@ -123,6 +123,7 @@ class AuthController {
         });
       });
   }
+<<<<<<< src/controllers/AuthController.js
   static async beneficiariesExcel(req, res) {
     try {
       if (req.file == undefined) {
@@ -253,6 +254,8 @@ class AuthController {
     //save to db
     //send responses
   }
+=======
+>>>>>>> src/controllers/AuthController.js
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
@@ -287,12 +290,15 @@ class AuthController {
           return Response.send(res);
         } else {
           const password = createHash(req.body.password);
+
           const extension = req.file.mimetype.split('/').pop();
+
           const profile_pic = await uploadFile(
             files,
             'u-' + environ + '-' + email + '-i.' + extension,
             'convexity-profile-images'
           );
+
           const user = await UserService.addUser({
             RoleId,
             phone,
@@ -567,6 +573,7 @@ class AuthController {
                   })
                     .then(async user => {
                       await QueueService.createWallet(user.id, 'user');
+
                       var i = 0;
                       files.fingerprints.forEach(async fingerprint => {
                         let ext = fingerprint.name.substring(
@@ -673,9 +680,7 @@ class AuthController {
       const domain = extractDomain(url_string);
       const email = data.email;
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-
-      if (email.match(new RegExp(re))) {
-        // if (email.match(new RegExp(re))) {
+      // if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
           where: {email: data.email}
         });
@@ -701,13 +706,6 @@ class AuthController {
                   password: encryptedPassword
                 })
                   .then(async _user => {
-                    //send a verification email to the organisation
-                    let host = req.hostname;
-                    await MailerService.sendEmailVerification(
-                      data.email,
-                      data.organisation_name,
-                      host + '/email-verification/'
-                    );
                     user = _user;
                     //QueueService.createWallet(user.id, 'user');
                     await db.Organisation.create({
@@ -752,10 +750,6 @@ class AuthController {
           Response.setError(400, 'Email Already Exists, Recover Your Account');
           return Response.send(res);
         }
-      } else {
-        Response.setError(400, 'Email must end in @' + domain);
-        return Response.send(res);
-      }
       // } else {
       //   Response.setError(400, 'Email must end in @' + domain);
       //   return Response.send(res);
@@ -801,38 +795,6 @@ class AuthController {
           ? error.message
           : 'Login failed. Please try again later.';
       Response.setError(401, message);
-      return Response.send(res);
-    }
-  }
-  static async confirmEmail(req, res) {
-    const confirmationCode = req.params.confirmationCode;
-
-    try {
-      /*
-      const rules = {
-        confirmationCode: 'required|string'
-      };
-      const validation = new Validator(req.params, rules);
-      if (validation.fails()) {
-        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
-        return Response.send(res);
-      }
-      const userExist = await UserService.findSingleUser({
-        email: token_exist.email
-      });
-      let user_exist = false;
-      if (userExist) {
-        user_exist = true;
-      }
-      const ngo = await OrganisationService.checkExist(token_exist.inviterId);
-      */
-      console.log(confirmationCode);
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error. Please try again.'
-      );
       return Response.send(res);
     }
   }
@@ -974,43 +936,42 @@ class AuthController {
       return Response.send(res);
     }
   }
-  /** 
-    static async signInField(req, res) {
-      try {
-        const user = await db.User.findOne({
-          where: {
-            email: req.body.email
-          },
-          include: {
-            model: db.OrganisationMembers,
-            as: 'AssociatedOrganisations',
-            include: {
-              model: db.Organisation,
-              as: 'Organisation'
-            }
-          }
-        });
-        if (user && user.RoleId !== AclRoles.FieldAgent) {
-          Response.setError(
-            HttpStatusCode.STATUS_FORBIDDEN,
-            'Access Denied, Unauthorised Access'
-          );
-          return Response.send(res);
-        }
-        const data = await AuthService.login(user, req.body.password);
-  
-        Response.setSuccess(200, 'Login Successful.', data);
-        return Response.send(res);
-      } catch (error) {
-        const message =
-          error.status == 401
-            ? error.message
-            : 'Login failed. Please try again later.';
-        Response.setError(401, message);
-        return Response.send(res);
-      }
-    }
-    */
+
+  // static async signInField(req, res) {
+  //   try {
+  //     const user = await db.User.findOne({
+  //       where: {
+  //         email: req.body.email
+  //       },
+  //       include: {
+  //         model: db.OrganisationMembers,
+  //         as: 'AssociatedOrganisations',
+  //         include: {
+  //           model: db.Organisation,
+  //           as: 'Organisation'
+  //         }
+  //       }
+  //     });
+  //     if (user && user.RoleId !== AclRoles.FieldAgent) {
+  //       Response.setError(
+  //         HttpStatusCode.STATUS_FORBIDDEN,
+  //         'Access Denied, Unauthorised Access'
+  //       );
+  //       return Response.send(res);
+  //     }
+  //     const data = await AuthService.login(user, req.body.password);
+
+  //     Response.setSuccess(200, 'Login Successful.', data);
+  //     return Response.send(res);
+  //   } catch (error) {
+  //     const message =
+  //       error.status == 401
+  //         ? error.message
+  //         : 'Login failed. Please try again later.';
+  //     Response.setError(401, message);
+  //     return Response.send(res);
+  //   }
+  // }
   static async signInBeneficiary(req, res) {
     try {
       const user = await db.User.findOne({
@@ -1045,14 +1006,17 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [campaign_token, beneficiary_token, campaignBeneficiary] =
-            await Promise.all([
-              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-              BlockchainService.setUserKeypair(
-                `user_${user.id}campaign_${wallet.CampaignId}`
-              ),
-              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-            ]);
+          const [
+            campaign_token,
+            beneficiary_token,
+            campaignBeneficiary
+          ] = await Promise.all([
+            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+            BlockchainService.setUserKeypair(
+              `user_${user.id}campaign_${wallet.CampaignId}`
+            ),
+            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+          ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
@@ -1240,21 +1204,21 @@ class AuthController {
       return Response.send(res);
     }
   }
-  /*
-    static async resetPassword(req, res) {
-      try {
-        await AuthService.updatedPassord(req.user, req.body.password);
-        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
-        return Response.send(res);
-      } catch (error) {
-        Response.setError(
-          HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-          'Reset password request failed. Please try again.'
-        );
-        return Response.send(res);
-      }
-    }
-  */
+
+  // static async resetPassword(req, res) {
+  //   try {
+  //     await AuthService.updatedPassord(req.user, req.body.password);
+  //     Response.setSuccess(HttpStatusCode.STATUS_OK, 'Password changed.');
+  //     return Response.send(res);
+  //   } catch (error) {
+  //     Response.setError(
+  //       HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+  //       'Reset password request failed. Please try again.'
+  //     );
+  //     return Response.send(res);
+  //   }
+  // }
+
   static async sendInvite(req, res) {
     const {inviteeEmail, message, link} = req.body;
     const {organisation_id, campaign_id} = req.params;

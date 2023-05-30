@@ -5,16 +5,18 @@ const {SuperAdminAuth, IsOrgMember} = require('../middleware');
 const {
   OrganisationValidator,
   ParamValidator,
-  FileValidator
+  FileValidator,
+  CampaignValidator
 } = require('../validators');
 const AdminController = require('../controllers/AdminController');
 const {
   AuthController,
   NgoController,
-  VendorController
+  VendorController,
+  OrganisationController
 } = require('../controllers');
 
-router.put('/update-user', SuperAdminAuth, AdminController.updateUserStatus);
+router.post('/update-status', SuperAdminAuth, AdminController.updateStatus);
 // router.post("/register", AuthCtrl.createUser);
 // router.post("/self-registration", AuthCtrl.normalRegistration);
 // router.post("/ngo-register", AuthCtrl.createAdminUser);
@@ -28,6 +30,19 @@ router.post(
   //IsOrgMember,
   FileValidator.checkProfileSelfie(),
   AdminController.verifyAccount
+);
+
+router.get(
+  '/withdrawal-requests',
+  SuperAdminAuth,
+  OrganisationController.withdrawalRequest
+);
+router.post(
+  '/approve-reject-request/:organisation_id',
+  SuperAdminAuth,
+  ParamValidator.OrganisationId,
+  CampaignValidator.campaignBelongsToOrganisation,
+  OrganisationController.approveOrReject
 );
 
 router.post('/auth/login', AuthController.signInAdmin);
