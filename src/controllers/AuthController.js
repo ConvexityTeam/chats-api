@@ -768,6 +768,74 @@ class AuthController {
       // }
     }
   }
+  static async confirmEmail(req, res) {
+    const confirmationCode = req.body.confirmationCode;
+    
+    try { 
+    
+      /*
+      const rules = {
+        confirmationCode: 'required|string'
+      };
+      const validation = new Validator(req.params, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const userExist = await UserService.findSingleUser({
+        email: token_exist.email
+      });
+      let user_exist = false;
+      if (userExist) {
+        user_exist = true;
+      }
+      const ngo = await OrganisationService.checkExist(token_exist.inviterId);
+      */
+     console.log(confirmationCode);
+      return Response.send(res);
+
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async resendMail(req,res){
+    const confirmationCode = req.params.confirmationCode;
+    
+    try { 
+    
+      /*
+      const rules = {
+        confirmationCode: 'required|string'
+      };
+      const validation = new Validator(req.params, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const userExist = await UserService.findSingleUser({
+        email: token_exist.email
+      });
+      let user_exist = false;
+      if (userExist) {
+        user_exist = true;
+      }
+      const ngo = await OrganisationService.checkExist(token_exist.inviterId);
+      */
+     console.log(confirmationCode);
+      return Response.send(res);
+
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
 
   // Refactored Methods
 

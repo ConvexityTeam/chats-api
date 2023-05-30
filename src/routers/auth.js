@@ -36,8 +36,10 @@ router.post(
   FileValidator.checkProfilePic(),
   AuthController.beneficiaryRegisterSelf
 );
+
 router.post('/ngo-register',AuthController.createNgoAccount);
-router.post('/verify-email/',AuthController.createNgoAccount);
+router.post('/resend-email-confirmation/',AuthController.resendMail);
+router.post('/verify-email/:confirmationCode',AuthController.confirmEmail);
 
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
 router.post('/nin-verification', AuthController.verifyNin);
