@@ -3,7 +3,8 @@ const {
   HttpStatusCode,
   SanitizeObject,
   generateOrganisationId,
-  generateProductRef
+  generateProductRef,
+  GenerateSecrete
 } = require('../utils');
 
 const moment = require('moment');
@@ -366,11 +367,11 @@ class OrganisationController {
           });
           assignmentTask.push(assignment);
         }
+        //(await AwsService.getMnemonic(data.id)) || null;
+        data.dataValues.ck8 = GenerateSecrete();
 
-        // data.dataValues.ck8 = (await AwsService.getMnemonic(data.id)) || null;
-
-        (data.dataValues.beneficiaries_count = data.Beneficiaries.length),
-          (data.dataValues.task_count = data.Jobs.length);
+        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
+        data.dataValues.task_count = data.Jobs.length;
         data.dataValues.completed_task = completed_task;
       }
       function isExist(id) {
