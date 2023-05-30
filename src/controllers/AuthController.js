@@ -711,10 +711,11 @@ class AuthController {
                   RoleId: AclRoles.NgoAdmin,
                   email: data.email,
                   password: encryptedPassword
-                })
-                  .then(async _user => {
-                    user = _user;
-                    //QueueService.createWallet(user.id, 'user');
+                }).then(async _user => {
+                  const verifyLink = req.hostname+'/verify-email/';
+                  //send a verification email to the organisation
+                  await MailerService.sendEmailVerification(data.email, data.organisation_name,verifyLink);
+                  user = _user;
                     await db.Organisation.create({
                       name: data.organisation_name,
                       email: data.email,
