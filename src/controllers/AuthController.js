@@ -123,7 +123,6 @@ class AuthController {
         });
       });
   }
-<<<<<<< src/controllers/AuthController.js
   static async beneficiariesExcel(req, res) {
     try {
       if (req.file == undefined) {
@@ -254,8 +253,6 @@ class AuthController {
     //save to db
     //send responses
   }
-=======
->>>>>>> src/controllers/AuthController.js
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
