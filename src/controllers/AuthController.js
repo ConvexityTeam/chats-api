@@ -668,7 +668,8 @@ class AuthController {
       organisation_name: 'required|string',
       email: 'required|email',
       password: 'required',
-      website_url: 'required|url'
+      website_url: 'required|url',
+      host_url:'required|url'
     };
     const validation = new Validator(data, rules, {
       url: 'Only valid url with https or http allowed'
@@ -712,7 +713,7 @@ class AuthController {
                   email: data.email,
                   password: encryptedPassword
                 }).then(async _user => {
-                  const verifyLink = req.hostname+'/verify-email/';
+                  const verifyLink = data.host_url+'/email-verification/?confirmationCode=';
                   //send a verification email to the organisation
                   await MailerService.sendEmailVerification(data.email, data.organisation_name,verifyLink);
                   user = _user;
