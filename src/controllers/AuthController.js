@@ -369,7 +369,9 @@ class AuthController {
         }
 
         let ninExist = await db.User.findOne({
-          where: {nin: fields.nin}
+          where: {
+            nin: fields.nin
+          }
         });
 
         if (ninExist) {
@@ -424,7 +426,9 @@ class AuthController {
                   'u-' + environ + '-' + user.id + '-i.' + extension,
                   'convexity-profile-images'
                 ).then(url => {
-                  user.update({profile_pic: url});
+                  user.update({
+                    profile_pic: url
+                  });
                 });
 
                 // ninVerificationQueue.send(
@@ -679,14 +683,20 @@ class AuthController {
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       // if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
-          where: {email: data.email}
+          where: {
+            email: data.email
+          }
         });
         if (!userExist) {
           const organisationExist = await db.Organisation.findOne({
             where: {
               [Op.or]: [
-                {name: data.organisation_name},
-                {website_url: data.website_url}
+                {
+                  name: data.organisation_name
+                },
+                {
+                  website_url: data.website_url
+                }
               ]
             }
           });
@@ -724,7 +734,10 @@ class AuthController {
                           Response.setSuccess(
                             201,
                             'NGO and User registered successfully',
-                            {user: user.toObject(), organisation}
+                            {
+                              user: user.toObject(),
+                              organisation
+                            }
                           );
                           return Response.send(res);
                         });
