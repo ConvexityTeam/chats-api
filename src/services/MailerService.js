@@ -279,17 +279,17 @@ class MailerService {
     <h2>Hello, ${orgName}</h2>
     <p>Thank you for  creating an account on CHATS platform. 
     Please confirm your email by clicking on the following link</p>
-    <a href=${url}+${confirmationCode}> Click here</a>
+    <a href="${url}+${confirmationCode}"> Click here</a>
       <p>Best,\n CHATS - Convexity</p>
     </div>
     `;
     const options = {
       from: this.config.from,
-      to: [to, 'talk2hb1@gmail.com'],
+      to:to,
       subject: 'Please confirm your account',
       html: body
     };
-
+  
     return new Promise((resolve, reject) => {
       this.transporter.sendMail(options, (err, data) => {
         if (!err) {
