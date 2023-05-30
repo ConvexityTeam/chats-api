@@ -123,6 +123,139 @@ class AuthController {
         });
       });
   }
+<<<<<<< src/controllers/AuthController.js
+  static async beneficiariesExcel(req, res) {
+    try {
+      if (req.file == undefined) {
+        return res.status(400).send('Please upload an excel file!');
+      }
+      const campaignId = req.body.campaign;
+      let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
+
+      let existingEmails = []; //existings
+      let createdSuccess = []; //successfully created
+      let createdFailed = []; //failed to create
+      readXlsxFile(path).then(rows => {
+        // skip header or first row
+        rows.shift();
+        let beneficiaries = [];
+        const encryptedPin = createHash('0000');
+        //loop through the file
+        rows.forEach(row => {
+          let beneficiary = {
+            first_name: row[0],
+            last_name: row[1],
+            email: row[2],
+            phone: row[3],
+            gender: row[4],
+            address: row[5],
+            location: row[6],
+            dob: row[7],
+            RoleId: AclRoles.Beneficiary,
+            pin: encryptedPin,
+            status: 'activated'
+          };
+          beneficiaries.push(beneficiary);
+        });
+        // console.log(beneficiaries);
+        //loop through all the beneficiaries list to populate them in the db
+        beneficiaries.forEach(async beneficiary => {
+          let campaignExist = await db.Campaign.findOne({
+            where: {
+              id: campaignId,
+              type: 'campaign'
+            }
+          });
+          if (!campaignExist) {
+            Response.setError(400, 'Invalid Campaign ID');
+            return Response.send(res);
+          }
+          const user_exist = await db.User.findOne({
+            where: {
+              email: beneficiary.email
+            }
+          });
+          if (user_exist) {
+            //include the email in the existing list
+            existingEmails.push(beneficiary.email);
+          } else {
+            bcrypt.genSalt(10, (err, salt) => {
+              if (err) {
+                console.log('Error Ocurred hashing');
+              }
+              const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
+              bcrypt
+                .hash(beneficiary.password, salt)
+                .then(async hash => {
+                  const encryptedPassword = hash;
+                  await db.User.create({
+                    RoleId: AclRoles.Beneficiary,
+                    first_name: beneficiary.first_name,
+                    last_name: beneficiary.last_name,
+                    phone: beneficiary.phone,
+                    email: beneficiary.email,
+                    password: encryptedPassword,
+                    gender: beneficiary.gender,
+                    status: 'activated',
+                    location: beneficiary.location,
+                    address: beneficiary.address,
+                    referal_id: beneficiary.referal_id,
+                    dob: beneficiary.dob,
+                    pin: encryptedPin
+                  }).then(async user => {
+                    await QueueService.createWallet(user.id, 'user');
+                    if (campaignExist.type === 'campaign') {
+                      await Beneficiary.create({
+                        UserId: user.id,
+                        CampaignId: campaignExist.id,
+                        approved: true,
+                        source: 'Excel File Upload'
+                      }).then(async () => {
+                        await QueueService.createWallet(
+                          user.id,
+                          'user',
+                          fields.campaign
+                        );
+                      });
+                    }
+                  });
+                  createdSuccess.push(beneficiary.email); //add to success list
+                  Response.setSuccess(
+                    200,
+                    'Beneficiaries Uploaded Successfully:',
+                    user.id
+                  );
+                  // return Response.send(res);
+                })
+                .catch(err => {
+                  Response.setError(500, err.message);
+                  // return Response.send(res);
+                  createdFailed.push(beneficiary.email);
+                });
+            });
+          }
+        });
+        return Response.send(res);
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        message: 'Fail to import Beneficairies into database!',
+        error: error.message
+      });
+    }
+  }
+
+  static async beneficiariesKoboToolBox(req, res) {
+    const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
+    //fetch from their url
+    //read into json
+    //match records to right data column
+    //save to db
+    //send responses
+  }
+=======
+>>>>>>> src/controllers/AuthController.js
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
@@ -239,9 +372,7 @@ class AuthController {
         }
 
         let ninExist = await db.User.findOne({
-          where: {
-            nin: fields.nin
-          }
+          where: {nin: fields.nin}
         });
 
         if (ninExist) {
@@ -296,9 +427,7 @@ class AuthController {
                   'u-' + environ + '-' + user.id + '-i.' + extension,
                   'convexity-profile-images'
                 ).then(url => {
-                  user.update({
-                    profile_pic: url
-                  });
+                  user.update({profile_pic: url});
                 });
 
                 // ninVerificationQueue.send(
@@ -553,20 +682,14 @@ class AuthController {
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       // if (email.match(new RegExp(re))) {
         const userExist = await db.User.findOne({
-          where: {
-            email: data.email
-          }
+          where: {email: data.email}
         });
         if (!userExist) {
           const organisationExist = await db.Organisation.findOne({
             where: {
               [Op.or]: [
-                {
-                  name: data.organisation_name
-                },
-                {
-                  website_url: data.website_url
-                }
+                {name: data.organisation_name},
+                {website_url: data.website_url}
               ]
             }
           });
@@ -604,10 +727,7 @@ class AuthController {
                           Response.setSuccess(
                             201,
                             'NGO and User registered successfully',
-                            {
-                              user: user.toObject(),
-                              organisation
-                            }
+                            {user: user.toObject(), organisation}
                           );
                           return Response.send(res);
                         });
