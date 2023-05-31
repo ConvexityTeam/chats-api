@@ -901,7 +901,7 @@ class AuthController {
                 expiresIn: '24hr'
               }
             );
-            console.log(orgDetails);
+            
             const verifyLink =
               data.host_url + '/email-verification/?confirmationCode=' + token;
             //else resend token to user
@@ -913,8 +913,7 @@ class AuthController {
               .then(() => {
                 Response.setSuccess(
                   200,
-                  'A new confirmation token sent to the provided email address ' +
-                    orgDetails.name
+                  'A new confirmation token sent to the provided email address '
                 );
                 return Response.send(res);
               })
