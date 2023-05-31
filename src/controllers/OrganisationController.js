@@ -822,18 +822,17 @@ class OrganisationController {
 
   static async withdrawalRequest(req, res) {
     try {
-      const request = await db.RequestFund.findAll({
-        include: {
-          model: db.Campaign,
-          as: 'campaign',
-          include: ['Organisation']
-        }
-      });
-
+      const requests = await db.RequestFund.findAll();
+      for (let request of requests) {
+        const campaign = await CampaignService.getCampaignById(
+          request.campaign_id
+        );
+        request.dataValues.campaign = campaign;
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Donor withdrawal requests`,
-        request
+        requests
       );
       return Response.send(res);
     } catch (error) {
@@ -847,14 +846,17 @@ class OrganisationController {
   }
   static async requestFund(req, res) {
     try {
-      if (req.campaign.is_funded) {
+      const campaign = await CampaignService.getCampaignById(
+        req.body.campaign_id
+      );
+      if (campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           `Campaign Already Funded`
         );
         return Response.send(res);
       }
-      if (req.campaign.budget === 0) {
+      if (campaign.budget === 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           `Insufficient Fund`
@@ -905,14 +907,17 @@ class OrganisationController {
         Response.setError(400, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      if (req.campaign.is_funded) {
+      const campaign = await CampaignService.getCampaignById(
+        req.body.campaign_id
+      );
+      if (campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           `Campaign Already Funded`
         );
         return Response.send(res);
       }
-      if (req.campaign.budget === 0) {
+      if (campaign.budget === 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           `Insufficient Fund`
