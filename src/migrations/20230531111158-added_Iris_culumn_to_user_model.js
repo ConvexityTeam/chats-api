@@ -8,17 +8,9 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    //await queryInterface.removeColumn('Campaigns', 'status');
-    await queryInterface.addColumn('Campaigns', 'status', {
-      type: Sequelize.ENUM(
-        'pending',
-        'ongoing',
-        'active',
-        'paused',
-        'completed',
-        'ended'
-      ),
-      defaultValue: 'pending'
+    await queryInterface.addColumn('Users', 'iris', {
+      type: Sequelize.TEXT,
+      after: 'tfa_secret'
     });
   },
 
@@ -29,6 +21,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.removeColumn('Campaigns', 'status');
+    await queryInterface.removeColumn('Users', 'iris');
   }
 };

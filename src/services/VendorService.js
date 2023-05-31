@@ -10,6 +10,7 @@ const {
   BankAccount,
   Order,
   Market,
+  Campaign,
   Wallet,
   Product,
   OrderProduct,
@@ -52,8 +53,25 @@ class VendorService {
   static async getAllVendorsAdmin() {
     return User.findAll({
       where: {
-        RoleId: 6
-      }
+        RoleId: AclRoles.Vendor
+      },
+      attributes: userConst.publicAttr,
+      include: [
+        {
+          model: Organisation,
+          as: 'Organisations'
+        },
+        {
+          where: {
+            transaction_origin: 'store',
+            transaction_type: 'spent',
+            is_approved: true,
+            status: 'success'
+          },
+          model: Transaction,
+          as: 'StoreTransactions'
+        }
+      ]
     });
   }
 
@@ -384,6 +402,24 @@ class VendorService {
     });
   }
 
+  static async organisationVendorsAdmin(OrganisationId) {
+    const vendorIds = (
+      await OrganisationMembers.findAll({
+        where: {
+          OrganisationId,
+          role: OrgRoles.Vendor
+        }
+      })
+    ).map(m => m.UserId);
+    return User.findAll({
+      where: {
+        id: {
+          [Op.in]: [...vendorIds]
+        }
+      },
+      include: ['Wallet', 'Store']
+    });
+  }
   static async organisationDailyVendorStat(OrganisationId, date = new Date()) {
     const START = date.setHours(0, 0, 0, 0);
     const END = date.setHours(23, 59, 59);

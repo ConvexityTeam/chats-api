@@ -265,6 +265,35 @@ class MailerService {
       });
     });
   }
+  sendEmailVerification(to, orgName, url) {
+    
+    const body = `
+    <div>
+    <h2>Hello, ${orgName}</h2>
+    <p>Thank you for  creating an account on CHATS platform. 
+    Please confirm your email by clicking on the following link</p>
+    <a href="${url}"> Click here</a>
+      <p>Best,\n CHATS - Convexity</p>
+    </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to:to,
+      subject: 'Please confirm your account',
+      html: body
+    };
+  
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          console.log('NGO Verification Mail Sent');
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
 }
 
 module.exports = new MailerService();

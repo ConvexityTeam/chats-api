@@ -1,7 +1,7 @@
 'use strict';
 const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class AssociatedCampaign extends Model {
+  class RequestFund extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -9,17 +9,23 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      RequestFund.hasOne(models.Campaign, {
+        foreignKey: 'id',
+        as: 'campaign'
+      });
     }
   }
-  AssociatedCampaign.init(
+  RequestFund.init(
     {
-      DonorId: DataTypes.INTEGER,
-      CampaignId: DataTypes.INTEGER
+      donor_organisation_id: DataTypes.INTEGER,
+      campaign_id: DataTypes.INTEGER,
+      reason: DataTypes.STRING,
+      status: DataTypes.ENUM('Pending', 'Approved', 'Rejected')
     },
     {
       sequelize,
-      modelName: 'AssociatedCampaign'
+      modelName: 'RequestFund'
     }
   );
-  return AssociatedCampaign;
+  return RequestFund;
 };

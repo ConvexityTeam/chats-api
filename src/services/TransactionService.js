@@ -143,6 +143,18 @@ class TransactionService {
     });
   }
 
+  static async getVendorTransaction(VendorId) {
+    return Transaction.findAll({
+      where: {
+        VendorId,
+        BeneficiaryId: {
+          [Op.ne]: null
+        },
+        transaction_type: 'spent'
+      }
+    });
+  }
+
   static async getAllTransactions() {
     try {
       return await Transaction.findAll();

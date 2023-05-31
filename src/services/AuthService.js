@@ -12,6 +12,24 @@ const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
 
+// const Vault = require('hashi-vault-js');
+
+// const vault = new Vault({
+//   https: true,
+//   baseUrl: '172.25.16.0/v1',
+//   rootPath: 'secret',
+//   timeout: 5000,
+//   proxy: false
+// });
+
+// async function func() {
+//   const token = await vault.loginWithUserpass(
+//     process.env.VAULT_USER,
+//     process.env.VAULT_PASS
+//   ).client_token;
+//   return token;
+// }
+
 class AuthService {
   static async login(data, _password, roleId = null) {
     const error = new Error();

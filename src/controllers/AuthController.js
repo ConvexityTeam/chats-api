@@ -123,6 +123,136 @@ class AuthController {
         });
       });
   }
+  static async beneficiariesExcel(req, res) {
+    try {
+      if (req.file == undefined) {
+        return res.status(400).send('Please upload an excel file!');
+      }
+      const campaignId = req.body.campaign;
+      let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
+
+      let existingEmails = []; //existings
+      let createdSuccess = []; //successfully created
+      let createdFailed = []; //failed to create
+      readXlsxFile(path).then(rows => {
+        // skip header or first row
+        rows.shift();
+        let beneficiaries = [];
+        const encryptedPin = createHash('0000');
+        //loop through the file
+        rows.forEach(row => {
+          let beneficiary = {
+            first_name: row[0],
+            last_name: row[1],
+            email: row[2],
+            phone: row[3],
+            gender: row[4],
+            address: row[5],
+            location: row[6],
+            dob: row[7],
+            RoleId: AclRoles.Beneficiary,
+            pin: encryptedPin,
+            status: 'activated'
+          };
+          beneficiaries.push(beneficiary);
+        });
+        // console.log(beneficiaries);
+        //loop through all the beneficiaries list to populate them in the db
+        beneficiaries.forEach(async beneficiary => {
+          let campaignExist = await db.Campaign.findOne({
+            where: {
+              id: campaignId,
+              type: 'campaign'
+            }
+          });
+          if (!campaignExist) {
+            Response.setError(400, 'Invalid Campaign ID');
+            return Response.send(res);
+          }
+          const user_exist = await db.User.findOne({
+            where: {
+              email: beneficiary.email
+            }
+          });
+          if (user_exist) {
+            //include the email in the existing list
+            existingEmails.push(beneficiary.email);
+          } else {
+            bcrypt.genSalt(10, (err, salt) => {
+              if (err) {
+                console.log('Error Ocurred hashing');
+              }
+              const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
+              bcrypt
+                .hash(beneficiary.password, salt)
+                .then(async hash => {
+                  const encryptedPassword = hash;
+                  await db.User.create({
+                    RoleId: AclRoles.Beneficiary,
+                    first_name: beneficiary.first_name,
+                    last_name: beneficiary.last_name,
+                    phone: beneficiary.phone,
+                    email: beneficiary.email,
+                    password: encryptedPassword,
+                    gender: beneficiary.gender,
+                    status: 'activated',
+                    location: beneficiary.location,
+                    address: beneficiary.address,
+                    referal_id: beneficiary.referal_id,
+                    dob: beneficiary.dob,
+                    pin: encryptedPin
+                  }).then(async user => {
+                    await QueueService.createWallet(user.id, 'user');
+                    if (campaignExist.type === 'campaign') {
+                      await Beneficiary.create({
+                        UserId: user.id,
+                        CampaignId: campaignExist.id,
+                        approved: true,
+                        source: 'Excel File Upload'
+                      }).then(async () => {
+                        await QueueService.createWallet(
+                          user.id,
+                          'user',
+                          fields.campaign
+                        );
+                      });
+                    }
+                  });
+                  createdSuccess.push(beneficiary.email); //add to success list
+                  Response.setSuccess(
+                    200,
+                    'Beneficiaries Uploaded Successfully:',
+                    user.id
+                  );
+                  // return Response.send(res);
+                })
+                .catch(err => {
+                  Response.setError(500, err.message);
+                  // return Response.send(res);
+                  createdFailed.push(beneficiary.email);
+                });
+            });
+          }
+        });
+        return Response.send(res);
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        message: 'Fail to import Beneficairies into database!',
+        error: error.message
+      });
+    }
+  }
+
+  static async beneficiariesKoboToolBox(req, res) {
+    const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
+    //fetch from their url
+    //read into json
+    //match records to right data column
+    //save to db
+    //send responses
+  }
 
   static async beneficiaryRegisterSelf(req, res) {
     try {
@@ -203,8 +333,8 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric',
-       // pin: 'size:4|required' //pin validation disabled
+        campaign: 'required|numeric'
+        // pin: 'size:4|required' //pin validation disabled
       };
 
       const validation = new Validator(fields, rules);
@@ -263,7 +393,7 @@ class AuthController {
             return Response.send(res);
           }
         }
-        const encryptedPin = createHash('0000');//setting default pin to zero //createHash(fields.pin);
+        const encryptedPin = createHash('0000'); //setting default pin to zero //createHash(fields.pin);
         bcrypt.genSalt(10, (err, salt) => {
           if (err) {
             console.log('Error Ocurred hashing');
@@ -284,7 +414,8 @@ class AuthController {
               referal_id: fields.referal_id,
               nfc: fields.nfc,
               dob: fields.dob,
-              pin: encryptedPin
+              pin: encryptedPin,
+              iris: fields.iris
             })
               .then(async user => {
                 await QueueService.createWallet(user.id, 'user');
@@ -364,8 +495,8 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric',
-       // pin: 'size:4|required' //disabled for now
+        campaign: 'required|numeric'
+        // pin: 'size:4|required' //disabled for now
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
@@ -440,7 +571,8 @@ class AuthController {
                     address: fields.address,
                     referal_id: fields.referal_id,
                     dob: fields.dob,
-                    pin: encryptedPin
+                    pin: encryptedPin,
+                    iris: fields.iris
                   })
                     .then(async user => {
                       await QueueService.createWallet(user.id, 'user');
@@ -534,29 +666,34 @@ class AuthController {
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
-    const rules = {
-      organisation_name: 'required|string',
-      email: 'required|email',
-      password: 'required',
-      website_url: 'required|url'
-    };
-    const validation = new Validator(data, rules, {
-      url: 'Only valid url with https or http allowed'
-    });
-    if (validation.fails()) {
-      Response.setError(400, validation.errors);
-      return Response.send(res);
-    } else {
-      const url_string = data.website_url;
-      const domain = extractDomain(url_string);
-      const email = data.email;
-      const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-      if (email.match(new RegExp(re))) {
+    
+    try {
+      const rules = {
+        organisation_name: 'required|string',
+        email: 'required|email',
+        password: 'required',
+        website_url: 'required|url',
+        host_url: 'required|url'
+      };
+      const validation = new Validator(data, rules, {
+        url: 'Only valid url with https or http allowed'
+      });
+   
+      if (validation.fails()) {
+        Response.setError(400, validation.errors);
+        return Response.send(res);
+      } else {
+        const url_string = data.website_url;
+        const domain = extractDomain(url_string);
+        const email = data.email;
+        const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+   
         const userExist = await db.User.findOne({
           where: {
             email: data.email
           }
         });
+        console.log(userExist);
         if (!userExist) {
           const organisationExist = await db.Organisation.findOne({
             where: {
@@ -580,8 +717,29 @@ class AuthController {
                 await db.User.create({
                   RoleId: AclRoles.NgoAdmin,
                   email: data.email,
-                  password: encryptedPassword
+                  password: encryptedPassword,
+                  status: 'pending'
                 })
+                  .then(async _user => {
+                    //generate Token
+                    const token = jwt.sign(
+                      {email: data.email},
+                      process.env.SECRET_KEY,
+                      {expiresIn: '24hr'}
+                    );
+                    const verifyLink =
+                      data.host_url +
+                      '/email-verification/?confirmationCode=' +
+                      token;
+                    //send a verification email to the organisation
+                    await MailerService.sendEmailVerification(
+                      data.email,
+                      data.organisation_name,
+                      verifyLink
+                    );
+                    user = _user;
+                    password: encryptedPassword;
+                  })
                   .then(async _user => {
                     user = _user;
                     //QueueService.createWallet(user.id, 'user');
@@ -630,10 +788,148 @@ class AuthController {
           Response.setError(400, 'Email Already Exists, Recover Your Account');
           return Response.send(res);
         }
-      } else {
-        Response.setError(400, 'Email must end in @' + domain);
-        return Response.send(res);
       }
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async confirmEmail(req, res) {
+    const confirmationCode = req.body.confirmationCode;
+    try {
+      //verify token
+      jwt.verify(
+        confirmationCode,
+        process.env.SECRET_KEY,
+        async (err, payload) => {
+          if (err) {
+            //if token was tampered with or invalid
+            console.log(err);
+            Response.setError(
+              HttpStatusCode.STATUS_BAD_REQUEST,
+              'Email verification failed Possibly the link is invalid or Expired'
+            );
+            return Response.send(res);
+          }
+
+          //fetch users records from the database
+          const userExist = await db.User.findOne({
+            where: {email: payload.email}
+          });
+          if (!userExist) {
+            // if users email doesnt exist then
+            console.log(err);
+            Response.setError(
+              HttpStatusCode.STATUS_BAD_REQUEST,
+              'Email verification failed Possibly the link is invalid or Expired'
+            );
+            return Response.send(res);
+          }
+          //update users status to verified
+          db.User.update({status: 'activated'}, {where: {email: payload.email}})
+            .then(() => {
+              Response.setSuccess(
+                200,
+                'User With Email: ' + payload.email + ' Account Activated!'
+              );
+              return Response.send(res);
+            })
+            .catch(err => {
+              console.log(err);
+              reject(
+                new Error('Users Account Activation Failed!. Please retry.')
+              );
+            });
+        }
+      );
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async resendMail(req, res) {
+    //get payload
+    const data = req.body;
+    try {
+      const rules = {
+        email: 'required|email',
+        host_url: 'required|url'
+      };
+      //validate payload
+      const validation = new Validator(data, rules, {
+        host_url: 'Only valid url with https or http allowed'
+      });
+      if (validation.fails()) {
+        Response.setError(400, validation.errors);
+        return Response.send(res);
+      } else {
+        //get users email from db
+        const userExist = await db.User.findOne({
+          where: {
+            email: data.email
+          }
+        });
+
+        // if users email doesnt exist then
+        if (!userExist) {
+          console.log(err);
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Users Account Does Not Exist, Please Register The Account!'
+          );
+          return Response.send(res);
+        }
+        const orgDetails = db.Organisation.findOne({
+          where: {
+            email: data.email
+          }
+        });
+        if (!orgDetails) {
+          console.log(err);
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Users Account Does Not Exist, Please Register The Account!'
+          );
+          return Response.send(res);
+        } else {
+          //generate Token
+          const token = jwt.sign({email: data.email}, process.env.SECRET_KEY, {
+            expiresIn: '24hr'
+          });
+          const verifyLink =
+            data.host_url + '/email-verification/?confirmationCode=' + token;
+          //else resend token to user
+          MailerService.sendEmailVerification(
+            data.email,
+            orgDetails.organisation_name,
+            verifyLink
+          )
+            .then(() => {
+              Response.setSuccess(
+                200,
+                'A new confirmation token sent to the provided email address'
+              );
+              return Response.send(res);
+            })
+            .catch(err => {
+              Response.setError(500, err);
+              return Response.send(res);
+            });
+        }
+      }
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Please try again.'
+      );
+      return Response.send(res);
     }
   }
 
@@ -886,17 +1182,14 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [
-            campaign_token,
-            beneficiary_token,
-            campaignBeneficiary
-          ] = await Promise.all([
-            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-            BlockchainService.setUserKeypair(
-              `user_${user.id}campaign_${wallet.CampaignId}`
-            ),
-            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-          ]);
+          const [campaign_token, beneficiary_token, campaignBeneficiary] =
+            await Promise.all([
+              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+              BlockchainService.setUserKeypair(
+                `user_${user.id}campaign_${wallet.CampaignId}`
+              ),
+              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+            ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(

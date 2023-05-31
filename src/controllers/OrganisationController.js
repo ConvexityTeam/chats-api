@@ -3,7 +3,8 @@ const {
   HttpStatusCode,
   SanitizeObject,
   generateOrganisationId,
-  generateProductRef
+  generateProductRef,
+  GenerateSecrete
 } = require('../utils');
 
 const moment = require('moment');
@@ -35,6 +36,7 @@ const {
   TransactionService
 } = require('../services');
 const AwsUploadService = require('../services/AwsUploadService');
+const campaign = require('../models/campaign');
 
 const createWalletQueue = amqp['default'].declareQueue('createWallet', {
   durable: true
@@ -365,11 +367,11 @@ class OrganisationController {
           });
           assignmentTask.push(assignment);
         }
+        //(await AwsService.getMnemonic(data.id)) || null;
+        data.dataValues.ck8 = GenerateSecrete();
 
-        data.dataValues.ck8 = (await AwsService.getMnemonic(data.id)) || null;
-
-        (data.dataValues.beneficiaries_count = data.Beneficiaries.length),
-          (data.dataValues.task_count = data.Jobs.length);
+        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
+        data.dataValues.task_count = data.Jobs.length;
         data.dataValues.completed_task = completed_task;
       }
       function isExist(id) {
@@ -708,6 +710,7 @@ class OrganisationController {
           return Response.send(res);
         })
         .catch(err => {
+          Logger.error(err);
           throw err;
         });
     } catch (error) {
@@ -817,6 +820,256 @@ class OrganisationController {
     }
   }
 
+  static async withdrawalRequest(req, res) {
+    try {
+      const request = await db.RequestFund.findAll({
+        include: {
+          model: db.Campaign,
+          as: 'campaign',
+          include: ['Organisation']
+        }
+      });
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Donor withdrawal requests`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(JSON.stringify(error));
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support. ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+  static async requestFund(req, res) {
+    try {
+      if (req.campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      if (req.campaign.budget === 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Insufficient Fund`
+        );
+        return Response.send(res);
+      }
+      const bodyAllowedList = new Set([
+        'reason',
+        'donor_organisation_id',
+        'campaign_id'
+      ]);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      const request = await db.RequestFund.create(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Request sent`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async approveOrReject(req, res) {
+    try {
+      const rules = {
+        campaign_id: 'required|numeric',
+        type: 'required|string|in:reject,approve',
+        request_id: 'required|numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(400, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      if (req.campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      if (req.campaign.budget === 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Insufficient Fund`
+        );
+        return Response.send(res);
+      }
+      const bodyAllowedList = new Set(['request_id', 'campaign_id', 'type']);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      const request = await db.RequestFund.findOne({
+        where: {
+          id: req.body.request_id,
+          campaign_id: req.body.campaign_id
+        }
+      });
+      if (!request) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Request not found'
+        );
+        return Response.send(res);
+      }
+      await request.update({
+        status: req.body.type === 'reject' ? 'Rejected' : 'Approved'
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Request ${req.body.type === 'reject' ? 'Rejected' : 'Approved'}`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async extendCampaign(req, res) {
+    const {
+      end_date,
+      description,
+      location,
+      campaign_id,
+      additional_budget
+    } = req.body;
+    const today = moment();
+    const endDate = moment(end_date);
+    try {
+      const rules = {
+        end_date: `required|date`,
+        campaign_id: 'required|numeric',
+        additional_budget: 'numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(400, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
+      if (today > endDate) {
+        Response.setError(400, 'The end date must be after today');
+        return Response.send(res);
+      }
+
+      const bodyAllowedList = new Set([
+        'end_date',
+        'description',
+        'location',
+        'campaign_id',
+        'additional_budget'
+      ]);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+      if (req.campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      const dateB = moment(req.campaign.updatedAt);
+      const dateC = moment(end_date);
+
+      const extension_period = dateC.diff(dateB, 'days');
+
+      req.campaign.budget = additional_budget
+        ? Number(additional_budget) + req.campaign.budget
+        : req.campaign.budget;
+      const newCampaign = await req.campaign.update(req.body);
+      const history = await db.CampaignHistory.create({
+        extension_period,
+        new_end_date: end_date,
+        additional_budget,
+        campaign_id
+      });
+      newCampaign.dataValues.history = history;
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'campaign extended',
+        newCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+  static async campaignHistory(req, res) {
+    try {
+      const campaign = await CampaignService.campaignHistory(req.campaign.id);
+      for (let history of campaign.history) {
+        const date = moment(campaign.end_date).isSame(
+          history.new_end_date,
+          'day'
+        );
+        if (date) {
+          history.dataValues.currentCampaign = true;
+        } else {
+          history.dataValues.currentCampaign = false;
+        }
+      }
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'campaign history retrieved',
+        campaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
   static async UpdateCampaignProduct(req, res) {
     const {ProductId} = req.body;
     try {

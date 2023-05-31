@@ -18,13 +18,16 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Beneficiary,
         constraints: false
       });
-
       Campaign.hasMany(models.Wallet, {
         as: 'BeneficiariesWallets',
         foreignKey: 'CampaignId',
         scope: {
           wallet_type: 'user'
         }
+      });
+      Campaign.hasMany(models.CampaignHistory, {
+        as: 'history',
+        foreignKey: 'campaign_id'
       });
       Campaign.hasOne(models.Wallet, {
         as: 'Wallet',
