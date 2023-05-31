@@ -156,7 +156,7 @@ module.exports = (sequelize, DataTypes) => {
       is_public: DataTypes.BOOLEAN,
       is_tfa_enabled: DataTypes.BOOLEAN,
       tfa_secret: DataTypes.STRING,
-      iris: DataTypes.STRING,
+      iris: DataTypes.TEXT,
       last_login: DataTypes.DATE,
       profile_pic: DataTypes.STRING,
       nfc: DataTypes.STRING,

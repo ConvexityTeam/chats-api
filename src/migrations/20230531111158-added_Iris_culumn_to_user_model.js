@@ -9,7 +9,7 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.addColumn('Users', 'iris', {
-      type: Sequelize.STRING,
+      type: Sequelize.TEXT,
       after: 'tfa_secret'
     });
   },
