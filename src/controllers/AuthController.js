@@ -663,6 +663,10 @@ class AuthController {
     });
   }
 
+  static async createN(req, res) {
+    try {
+    } catch (error) {}
+  }
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
@@ -693,7 +697,7 @@ class AuthController {
             email: data.email
           }
         });
-        console.log(userExist);
+
         if (!userExist) {
           const organisationExist = await db.Organisation.findOne({
             where: {
@@ -731,17 +735,18 @@ class AuthController {
                       '/email-verification/?confirmationCode=' +
                       token;
                     //send a verification email to the organisation
-                    await MailerService.sendEmailVerification(
-                      data.email,
-                      data.organisation_name,
-                      verifyLink
-                    );
+                    // await MailerService.sendEmailVerification(
+                    //   data.email,
+                    //   data.organisation_name,
+                    //   verifyLink
+                    // );
                     user = _user;
-                    password: encryptedPassword;
+                    // password: encryptedPassword;
                   })
                   .then(async _user => {
+                    console.log(_user, '_user');
                     user = _user;
-                    //QueueService.createWallet(user.id, 'user');
+                    await QueueService.createWallet(user.id, 'user');
                     await db.Organisation.create({
                       name: data.organisation_name,
                       email: data.email,
@@ -1188,14 +1193,17 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [campaign_token, beneficiary_token, campaignBeneficiary] =
-            await Promise.all([
-              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-              BlockchainService.setUserKeypair(
-                `user_${user.id}campaign_${wallet.CampaignId}`
-              ),
-              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-            ]);
+          const [
+            campaign_token,
+            beneficiary_token,
+            campaignBeneficiary
+          ] = await Promise.all([
+            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+            BlockchainService.setUserKeypair(
+              `user_${user.id}campaign_${wallet.CampaignId}`
+            ),
+            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+          ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
