@@ -717,8 +717,7 @@ class AuthController {
                 await db.User.create({
                   RoleId: AclRoles.NgoAdmin,
                   email: data.email,
-                  password: encryptedPassword,
-                  status: 'pending'
+                  password: encryptedPassword              
                 })
                   .then(async _user => {
                     //generate Token
@@ -829,7 +828,7 @@ class AuthController {
             return Response.send(res);
           }
           //update users status to verified
-          db.User.update({status: 'activated'}, {where: {email: payload.email}})
+          db.User.update({status: 'activated',is_email_verified:true}, {where: {email: payload.email}})
             .then(() => {
               Response.setSuccess(
                 200,
