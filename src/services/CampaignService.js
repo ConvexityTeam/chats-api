@@ -66,7 +66,9 @@ class CampaignService {
   }
 
   static getCampaignById(id) {
-    return Campaign.findByPk(id);
+    return Campaign.findByPk(id, {
+      include: ['Organisation']
+    });
   }
   static getPubCampaignById(id) {
     return Campaign.findOne({where: {id, is_public: true}});
@@ -361,30 +363,21 @@ class CampaignService {
         id
       },
       order: [['createdAt', 'DESC']],
-      include: {
-        model: Campaign,
-        where: {
-          ...where,
-          is_public: false
-        },
-        as: 'associatedCampaigns',
+      include: [
+        {
+          model: Campaign,
+          where: {
+            ...where,
+            is_public: false
+          },
+          as: 'associatedCampaigns',
 
-        include: [
-          {model: Task, as: 'Jobs'},
-          {model: User, as: 'Beneficiaries'}
-        ]
-      }
-      // where: {
-      //   ...where,
-      // },
-      // include: {
-      //   model: Campaign,
-      //   as: 'associatedCampaigns',
-      //   include: [
-      //   {model: Task, as: 'Jobs'},
-      //   {model: User, as: 'Beneficiaries'},
-      // ],
-      // }
+          include: [
+            {model: Task, as: 'Jobs'},
+            {model: User, as: 'Beneficiaries'}
+          ]
+        }
+      ]
     });
   }
 

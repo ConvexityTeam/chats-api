@@ -662,7 +662,13 @@ class AuthController {
       }
     });
   }
- 
+
+
+  static async createN(req, res) {
+    try {
+    } catch (error) {}
+  }
+
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
@@ -1176,14 +1182,17 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [campaign_token, beneficiary_token, campaignBeneficiary] =
-            await Promise.all([
-              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-              BlockchainService.setUserKeypair(
-                `user_${user.id}campaign_${wallet.CampaignId}`
-              ),
-              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-            ]);
+          const [
+            campaign_token,
+            beneficiary_token,
+            campaignBeneficiary
+          ] = await Promise.all([
+            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+            BlockchainService.setUserKeypair(
+              `user_${user.id}campaign_${wallet.CampaignId}`
+            ),
+            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+          ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
