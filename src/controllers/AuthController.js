@@ -414,7 +414,8 @@ class AuthController {
               referal_id: fields.referal_id,
               nfc: fields.nfc,
               dob: fields.dob,
-              pin: encryptedPin
+              pin: encryptedPin,
+              iris: fields.iris
             })
               .then(async user => {
                 await QueueService.createWallet(user.id, 'user');
@@ -570,7 +571,8 @@ class AuthController {
                     address: fields.address,
                     referal_id: fields.referal_id,
                     dob: fields.dob,
-                    pin: encryptedPin
+                    pin: encryptedPin,
+                    iris: fields.iris
                   })
                     .then(async user => {
                       await QueueService.createWallet(user.id, 'user');
@@ -682,85 +684,84 @@ class AuthController {
       const email = data.email;
       const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       // if (email.match(new RegExp(re))) {
-        const userExist = await db.User.findOne({
+      const userExist = await db.User.findOne({
+        where: {
+          email: data.email
+        }
+      });
+      if (!userExist) {
+        const organisationExist = await db.Organisation.findOne({
           where: {
-            email: data.email
+            [Op.or]: [
+              {
+                name: data.organisation_name
+              },
+              {
+                website_url: data.website_url
+              }
+            ]
           }
         });
-        if (!userExist) {
-          const organisationExist = await db.Organisation.findOne({
-            where: {
-              [Op.or]: [
-                {
-                  name: data.organisation_name
-                },
-                {
-                  website_url: data.website_url
-                }
-              ]
+        if (!organisationExist) {
+          bcrypt.genSalt(10, (err, salt) => {
+            if (err) {
+              console.log('Error Ocurred hashing');
             }
-          });
-          if (!organisationExist) {
-            bcrypt.genSalt(10, (err, salt) => {
-              if (err) {
-                console.log('Error Ocurred hashing');
-              }
-              bcrypt.hash(data.password, salt).then(async hash => {
-                const encryptedPassword = hash;
-                await db.User.create({
-                  RoleId: AclRoles.NgoAdmin,
-                  email: data.email,
-                  password: encryptedPassword
-                }).then(async _user => {
-                  const verifyLink = req.hostname+'/verify-email/';
-                  //send a verification email to the organisation
-                  await MailerService.sendEmailVerification(data.email, data.organisation_name,verifyLink);
+            bcrypt.hash(data.password, salt).then(async hash => {
+              const encryptedPassword = hash;
+              await db.User.create({
+                RoleId: AclRoles.NgoAdmin,
+                email: data.email,
+                password: encryptedPassword
+              })
+                .then(async _user => {
                   user = _user;
-                    await db.Organisation.create({
-                      name: data.organisation_name,
-                      email: data.email,
-                      website_url: data.website_url,
-                      registration_id: generateOrganisationId()
-                    }).then(async organisation => {
-                      await QueueService.createWallet(
-                        organisation.id,
-                        'organisation'
-                      );
-                      await organisation
-                        .createMember({
-                          UserId: user.id,
-                          role: OrgRoles.Admin
-                        })
-                        .then(() => {
-                          Response.setSuccess(
-                            201,
-                            'NGO and User registered successfully',
-                            {
-                              user: user.toObject(),
-                              organisation
-                            }
-                          );
-                          return Response.send(res);
-                        });
-                    });
-                  })
-                  .catch(err => {
-                    Response.setError(500, err);
-                    return Response.send(res);
+                  //QueueService.createWallet(user.id, 'user');
+                  await db.Organisation.create({
+                    name: data.organisation_name,
+                    email: data.email,
+                    website_url: data.website_url,
+                    registration_id: generateOrganisationId()
+                  }).then(async organisation => {
+                    await QueueService.createWallet(
+                      organisation.id,
+                      'organisation'
+                    );
+                    await organisation
+                      .createMember({
+                        UserId: user.id,
+                        role: OrgRoles.Admin
+                      })
+                      .then(() => {
+                        Response.setSuccess(
+                          201,
+                          'NGO and User registered successfully',
+                          {
+                            user: user.toObject(),
+                            organisation
+                          }
+                        );
+                        return Response.send(res);
+                      });
                   });
-              });
+                })
+                .catch(err => {
+                  Response.setError(500, err);
+                  return Response.send(res);
+                });
             });
-          } else {
-            Response.setError(
-              400,
-              'An Organisation with such name or website url already exist'
-            );
-            return Response.send(res);
-          }
+          });
         } else {
-          Response.setError(400, 'Email Already Exists, Recover Your Account');
+          Response.setError(
+            400,
+            'An Organisation with such name or website url already exist'
+          );
           return Response.send(res);
         }
+      } else {
+        Response.setError(400, 'Email Already Exists, Recover Your Account');
+        return Response.send(res);
+      }
       // } else {
       //   Response.setError(400, 'Email must end in @' + domain);
       //   return Response.send(res);
