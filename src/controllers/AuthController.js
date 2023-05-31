@@ -817,7 +817,7 @@ class AuthController {
             console.log(err);
             Response.setError(
               HttpStatusCode.STATUS_BAD_REQUEST,
-              'Email verification failed Possibly the link is invalid or Expired'
+              'Email verification failed, Account Not Found'
             );
             return Response.send(res);
           }
