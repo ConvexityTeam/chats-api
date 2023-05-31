@@ -914,7 +914,7 @@ class AuthController {
               .then(() => {
                 Response.setSuccess(
                   200,
-                  'A new confirmation token sent to the provided email address'
+                  'A new confirmation token sent to the provided email address '+orgDetails.name
                 );
                 return Response.send(res);
               })
