@@ -66,7 +66,9 @@ class CampaignService {
   }
 
   static getCampaignById(id) {
-    return Campaign.findByPk(id);
+    return Campaign.findByPk(id, {
+      include: ['Organisation']
+    });
   }
   static getPubCampaignById(id) {
     return Campaign.findOne({where: {id, is_public: true}});
