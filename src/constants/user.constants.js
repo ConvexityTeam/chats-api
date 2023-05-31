@@ -9,5 +9,6 @@ exports.publicAttr = [
   'location',
   'profile_pic',
   'iris',
+  'status',
   'dob'
 ];
