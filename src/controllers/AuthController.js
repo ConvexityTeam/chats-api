@@ -666,7 +666,7 @@ class AuthController {
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
-    
+
     try {
       const rules = {
         organisation_name: 'required|string',
@@ -678,7 +678,7 @@ class AuthController {
       const validation = new Validator(data, rules, {
         url: 'Only valid url with https or http allowed'
       });
-   
+
       if (validation.fails()) {
         Response.setError(400, validation.errors);
         return Response.send(res);
@@ -687,7 +687,7 @@ class AuthController {
         const domain = extractDomain(url_string);
         const email = data.email;
         const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-   
+
         const userExist = await db.User.findOne({
           where: {
             email: data.email
@@ -717,8 +717,7 @@ class AuthController {
                 await db.User.create({
                   RoleId: AclRoles.NgoAdmin,
                   email: data.email,
-                  password: encryptedPassword,
-                  status: 'pending'
+                  password: encryptedPassword
                 })
                   .then(async _user => {
                     //generate Token
@@ -829,7 +828,10 @@ class AuthController {
             return Response.send(res);
           }
           //update users status to verified
-          db.User.update({status: 'activated'}, {where: {email: payload.email}})
+          db.User.update(
+            {status: 'activated', is_email_verified: true},
+            {where: {email: payload.email}}
+          )
             .then(() => {
               Response.setSuccess(
                 200,
@@ -876,7 +878,6 @@ class AuthController {
             email: data.email
           }
         });
-
         // if users email doesnt exist then
         if (!userExist) {
           console.log(err);
@@ -885,43 +886,48 @@ class AuthController {
             'Users Account Does Not Exist, Please Register The Account!'
           );
           return Response.send(res);
-        }
-        const orgDetails = db.Organisation.findOne({
-          where: {
-            email: data.email
-          }
-        });
-        if (!orgDetails) {
-          console.log(err);
-          Response.setError(
-            HttpStatusCode.STATUS_BAD_REQUEST,
-            'Users Account Does Not Exist, Please Register The Account!'
-          );
-          return Response.send(res);
         } else {
-          //generate Token
-          const token = jwt.sign({email: data.email}, process.env.SECRET_KEY, {
-            expiresIn: '24hr'
+          const orgDetails = db.Organisation.findOne({
+            where: {
+              email: data.email
+            }
           });
-          const verifyLink =
-            data.host_url + '/email-verification/?confirmationCode=' + token;
-          //else resend token to user
-          MailerService.sendEmailVerification(
-            data.email,
-            orgDetails.organisation_name,
-            verifyLink
-          )
-            .then(() => {
-              Response.setSuccess(
-                200,
-                'A new confirmation token sent to the provided email address'
-              );
-              return Response.send(res);
-            })
-            .catch(err => {
-              Response.setError(500, err);
-              return Response.send(res);
-            });
+          if (!orgDetails) {
+            console.log(err);
+            Response.setError(
+              HttpStatusCode.STATUS_BAD_REQUEST,
+              'Users Account Does Not Exist, Please Register The Account!'
+            );
+            return Response.send(res);
+          } else {
+            //generate Token
+            const token = jwt.sign(
+              {email: data.email},
+              process.env.SECRET_KEY,
+              {
+                expiresIn: '24hr'
+              }
+            );
+            const verifyLink =
+              data.host_url + '/email-verification/?confirmationCode=' + token;
+            //else resend token to user
+            MailerService.sendEmailVerification(
+              data.email,
+              orgDetails.name,
+              verifyLink
+            )
+              .then(() => {
+                Response.setSuccess(
+                  200,
+                  'A new confirmation token sent to the provided email address'
+                );
+                return Response.send(res);
+              })
+              .catch(err => {
+                Response.setError(500, err);
+                return Response.send(res);
+              });
+          }
         }
       }
     } catch (error) {
