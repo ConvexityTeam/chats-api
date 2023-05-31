@@ -361,30 +361,21 @@ class CampaignService {
         id
       },
       order: [['createdAt', 'DESC']],
-      include: {
-        model: Campaign,
-        where: {
-          ...where,
-          is_public: false
-        },
-        as: 'associatedCampaigns',
+      include: [
+        {
+          model: Campaign,
+          where: {
+            ...where,
+            is_public: false
+          },
+          as: 'associatedCampaigns',
 
-        include: [
-          {model: Task, as: 'Jobs'},
-          {model: User, as: 'Beneficiaries'}
-        ]
-      }
-      // where: {
-      //   ...where,
-      // },
-      // include: {
-      //   model: Campaign,
-      //   as: 'associatedCampaigns',
-      //   include: [
-      //   {model: Task, as: 'Jobs'},
-      //   {model: User, as: 'Beneficiaries'},
-      // ],
-      // }
+          include: [
+            {model: Task, as: 'Jobs'},
+            {model: User, as: 'Beneficiaries'}
+          ]
+        }
+      ]
     });
   }
 

@@ -287,38 +287,41 @@ class OrganisationController {
         OrganisationService.getOrganisationWallet(organisation.id),
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
-      for (let campaign of campaigns.associatedCampaigns) {
-        if (new Date(campaign.end_date) < new Date())
-          campaign.update({status: 'completed'});
-        for (let task of campaign.Jobs) {
-          const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'}
-          });
-          assignmentTask.push(assignment);
-        }
 
-        (campaign.dataValues.beneficiaries_count =
-          campaign.Beneficiaries.length),
-          (campaign.dataValues.task_count = campaign.Jobs.length);
-        campaign.dataValues.completed_task = completed_task;
+      if (campaigns?.associatedCampaigns) {
+        for (let campaign of campaigns.associatedCampaigns) {
+          if (new Date(campaign.end_date) < new Date())
+            campaign.update({status: 'completed'});
+          for (let task of campaign.Jobs) {
+            const assignment = await db.TaskAssignment.findOne({
+              where: {TaskId: task.id, status: 'completed'}
+            });
+            assignmentTask.push(assignment);
+          }
 
-        campaign.dataValues.iDonate = false;
-        const campaignW = await CampaignService.getCampaignWallet(
-          campaign.id,
-          organisation.id
-        );
-        if (
-          campaignW !== null &&
-          campaignW.Wallet &&
-          organisationW !== null &&
-          organisationW.Wallet
-        ) {
-          for (let tran of transaction) {
-            if (
-              tran.ReceiverWalletId === campaignW.Wallet.uuid &&
-              tran.SenderWalletId === organisationW.Wallet.uuid
-            ) {
-              campaign.dataValues.iDonate = true;
+          (campaign.dataValues.beneficiaries_count =
+            campaign.Beneficiaries.length),
+            (campaign.dataValues.task_count = campaign.Jobs.length);
+          campaign.dataValues.completed_task = completed_task;
+
+          campaign.dataValues.iDonate = false;
+          const campaignW = await CampaignService.getCampaignWallet(
+            campaign.id,
+            organisation.id
+          );
+          if (
+            campaignW !== null &&
+            campaignW.Wallet &&
+            organisationW !== null &&
+            organisationW.Wallet
+          ) {
+            for (let tran of transaction) {
+              if (
+                tran.ReceiverWalletId === campaignW.Wallet.uuid &&
+                tran.SenderWalletId === organisationW.Wallet.uuid
+              ) {
+                campaign.dataValues.iDonate = true;
+              }
             }
           }
         }
@@ -330,13 +333,14 @@ class OrganisationController {
         }
         return false;
       }
-      campaigns.associatedCampaigns.forEach(data => {
+      campaigns?.associatedCampaigns.forEach(data => {
         data.Jobs.forEach(task => {
           if (isExist(task.id)) {
             data.dataValues.completed_task++;
           }
         });
       });
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
