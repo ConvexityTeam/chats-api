@@ -663,10 +663,12 @@ class AuthController {
     });
   }
 
+
   static async createN(req, res) {
     try {
     } catch (error) {}
   }
+
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
