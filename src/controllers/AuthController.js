@@ -663,7 +663,6 @@ class AuthController {
     });
   }
 
-
   static async createN(req, res) {
     try {
     } catch (error) {}
@@ -881,7 +880,7 @@ class AuthController {
           );
           return Response.send(res);
         } else {
-          const orgDetails = db.Organisation.findOne({
+          const orgDetails = await db.Organisation.findOne({
             where: {
               email: data.email
             }
@@ -914,7 +913,8 @@ class AuthController {
               .then(() => {
                 Response.setSuccess(
                   200,
-                  'A new confirmation token sent to the provided email address '+orgDetails.name
+                  'A new confirmation token sent to the provided email address ' +
+                    orgDetails.name
                 );
                 return Response.send(res);
               })
@@ -1183,17 +1183,14 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [
-            campaign_token,
-            beneficiary_token,
-            campaignBeneficiary
-          ] = await Promise.all([
-            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-            BlockchainService.setUserKeypair(
-              `user_${user.id}campaign_${wallet.CampaignId}`
-            ),
-            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-          ]);
+          const [campaign_token, beneficiary_token, campaignBeneficiary] =
+            await Promise.all([
+              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+              BlockchainService.setUserKeypair(
+                `user_${user.id}campaign_${wallet.CampaignId}`
+              ),
+              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+            ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
