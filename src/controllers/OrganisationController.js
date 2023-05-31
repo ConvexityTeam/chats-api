@@ -305,6 +305,7 @@ class OrganisationController {
           campaign.dataValues.completed_task = completed_task;
 
           campaign.dataValues.iDonate = false;
+          campaign.dataValues.amount_donated = 0;
           const campaignW = await CampaignService.getCampaignWallet(
             campaign.id,
             organisation.id
@@ -321,6 +322,7 @@ class OrganisationController {
                 tran.SenderWalletId === organisationW.Wallet.uuid
               ) {
                 campaign.dataValues.iDonate = true;
+                campaign.dataValues.amount_donated = tran.amount;
               }
             }
           }
