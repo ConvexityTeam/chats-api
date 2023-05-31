@@ -662,7 +662,7 @@ class AuthController {
       }
     });
   }
-
+  /*
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
@@ -771,6 +771,7 @@ class AuthController {
                     });
                   })
                   .catch(err => {
+                    console.log(err);
                     Response.setError(500, err);
                     return Response.send(res);
                   });
@@ -796,6 +797,128 @@ class AuthController {
       return Response.send(res);
     }
   }
+  */
+  static async createNgoAccount(req, res) {
+    let user = null;
+    const data = req.body;
+    const rules = {
+      organisation_name: 'required|string',
+      email: 'required|email',
+      password: 'required',
+      website_url: 'required|url'
+    };
+    const validation = new Validator(data, rules, {
+      url: 'Only valid url with https or http allowed'
+    });
+    if (validation.fails()) {
+      Response.setError(400, validation.errors);
+      return Response.send(res);
+    } else {
+      const url_string = data.website_url;
+      const domain = extractDomain(url_string);
+      const email = data.email;
+      const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+      // if (email.match(new RegExp(re))) {
+      const userExist = await db.User.findOne({
+        where: {
+          email: data.email
+        }
+      });
+      if (!userExist) {
+        const organisationExist = await db.Organisation.findOne({
+          where: {
+            [Op.or]: [
+              {
+                name: data.organisation_name
+              },
+              {
+                website_url: data.website_url
+              }
+            ]
+          }
+        });
+        if (!organisationExist) {
+          bcrypt.genSalt(10, (err, salt) => {
+            if (err) {
+              console.log('Error Ocurred hashing');
+            }
+            bcrypt.hash(data.password, salt).then(async hash => {
+              const encryptedPassword = hash;
+              await db.User.create({
+                RoleId: AclRoles.NgoAdmin,
+                email: data.email,
+                password: encryptedPassword
+              })
+                .then(async _user => {
+                  user = _user;
+                  //QueueService.createWallet(user.id, 'user');
+                  await db.Organisation.create({
+                    name: data.organisation_name,
+                    email: data.email,
+                    website_url: data.website_url,
+                    registration_id: generateOrganisationId()
+                  }).then(async organisation => {
+                    await QueueService.createWallet(
+                      organisation.id,
+                      'organisation'
+                    );
+                    await organisation
+                      .createMember({
+                        UserId: user.id,
+                        role: OrgRoles.Admin
+                      })
+                      .then(async () => {
+                        const token = jwt.sign(
+                          {email: data.email},
+                          process.env.SECRET_KEY,
+                          {expiresIn: '24hr'}
+                        );
+                        const verifyLink =
+                          data.host_url +
+                          '/email-verification/?confirmationCode=' +
+                          token;
+
+                        await MailerService.sendEmailVerification(
+                          data.email,
+                          data.organisation_name,
+                          verifyLink
+                        );
+                        Response.setSuccess(
+                          201,
+                          'NGO and User registered successfully',
+                          {
+                            user: user.toObject(),
+                            organisation
+                          }
+                        );
+                        return Response.send(res);
+                      });
+                  });
+                })
+                .catch(err => {
+                  Response.setError(500, err);
+                  return Response.send(res);
+                });
+            });
+          });
+        } else {
+          Response.setError(
+            400,
+            'An Organisation with such name or website url already exist'
+          );
+          return Response.send(res);
+        }
+      } else {
+        Response.setError(400, 'Email Already Exists, Recover Your Account');
+        return Response.send(res);
+      }
+      // } else {
+      //   Response.setError(400, 'Email must end in @' + domain);
+      //   return Response.send(res);
+      // }
+    }
+  }
+
   static async confirmEmail(req, res) {
     const confirmationCode = req.body.confirmationCode;
     try {
