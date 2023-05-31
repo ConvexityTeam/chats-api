@@ -902,6 +902,7 @@ class AuthController {
                 expiresIn: '24hr'
               }
             );
+            console.log(orgDetails);
             const verifyLink =
               data.host_url + '/email-verification/?confirmationCode=' + token;
             //else resend token to user
