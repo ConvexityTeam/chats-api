@@ -15,6 +15,7 @@ const {
   VendorController,
   OrganisationController
 } = require('../controllers');
+const TransactionsController = require('../controllers/TransactionsController');
 
 router.post('/update-status', SuperAdminAuth, AdminController.updateStatus);
 // router.post("/register", AuthCtrl.createUser);
@@ -71,6 +72,11 @@ router.get(
 );
 router.get('/campaigns', SuperAdminAuth, AdminController.getAllCampaigns);
 router.get('/donors', SuperAdminAuth, AdminController.getAllDonors);
+router.get(
+  '/vendor-transactions/:vendor_id',
+  SuperAdminAuth,
+  TransactionsController.vendorTransaction
+);
 router.get(
   '/donors/:donor_id/campaigns',
   SuperAdminAuth,
