@@ -414,7 +414,8 @@ class AuthController {
               referal_id: fields.referal_id,
               nfc: fields.nfc,
               dob: fields.dob,
-              pin: encryptedPin
+              pin: encryptedPin,
+              iris: fields.iris
             })
               .then(async user => {
                 await QueueService.createWallet(user.id, 'user');
@@ -570,7 +571,8 @@ class AuthController {
                     address: fields.address,
                     referal_id: fields.referal_id,
                     dob: fields.dob,
-                    pin: encryptedPin
+                    pin: encryptedPin,
+                    iris: fields.iris
                   })
                     .then(async user => {
                       await QueueService.createWallet(user.id, 'user');
@@ -732,6 +734,11 @@ class AuthController {
                     verifyLink
                   );
                   user = _user;
+                password: encryptedPassword
+              })
+                .then(async _user => {
+                  user = _user;
+                  //QueueService.createWallet(user.id, 'user');
                   await db.Organisation.create({
                     name: data.organisation_name,
                     email: data.email,

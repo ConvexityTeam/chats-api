@@ -692,7 +692,7 @@ class CampaignController {
             beneficiaryAddress.address
           );
           const balance = Number(token.Allowed.split(',').join(''));
-          data.dataValues.amount = balance;
+          data.dataValues.amount = balance || data.amount;
         }
         var filteredKeywords = user.filter(
           user => user.id === data.beneficiaryId
