@@ -5,6 +5,7 @@ const {
   VendorService,
   CampaignService,
   BlockchainService,
+  OrderService,
   UserService
 } = require('../services');
 const Validator = require('validatorjs');
@@ -530,6 +531,31 @@ class VendorController {
         );
         return Response.send(res);
       }
+
+      for (let transaction of transactions.rows) {
+        if (transaction.narration === 'Vendor Order') {
+          const order = await OrderService.productPurchasedBy(
+            transaction.OrderId
+          );
+          const product = order.Cart[0].Product;
+          transaction.dataValues.type = product.type;
+          transaction.dataValues.tag = product.tag;
+          const beneficiary = await UserService.getAUser(
+            transaction.BeneficiaryId
+          );
+          transaction.dataValues.beneficiary_name =
+            beneficiary.first_name + ' ' + beneficiary.last_name;
+          transaction.dataValues.narration = `Payment from (${
+            beneficiary.first_name + ' ' + beneficiary.last_name
+          })`;
+          transaction.dataValues.transaction_type = 'credit';
+        }
+        if (transaction.dataValues.ReceiverWallet === null)
+          delete transaction.dataValues.ReceiverWallet;
+        if (transaction.dataValues.SenderWallet === null)
+          delete transaction.dataValues.SenderWallet;
+      }
+
       transactions.rows.forEach(transaction => {
         transaction.dataValues.BlockchainXp_Link = `https://testnet.bscscan.com/token/0xa31d8a40a2127babad4935163ff7ce0bbd42a377?a=${vendor.address}`;
       });
@@ -573,6 +599,13 @@ class VendorController {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign already completed'
+        );
+        return Response.send(res);
+      }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
         );
         return Response.send(res);
       }

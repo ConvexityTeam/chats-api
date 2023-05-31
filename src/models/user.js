@@ -31,6 +31,11 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Beneficiary
       });
 
+      // User.hasMany(models.Campaign, {
+      //   as: 'VendorCampaigns',
+      //   foreignKey: 'UserId'
+      // });
+
       User.hasMany(models.Complaint, {
         as: 'Complaints',
         foreignKey: 'UserId'
@@ -151,6 +156,7 @@ module.exports = (sequelize, DataTypes) => {
       is_public: DataTypes.BOOLEAN,
       is_tfa_enabled: DataTypes.BOOLEAN,
       tfa_secret: DataTypes.STRING,
+      iris: DataTypes.TEXT,
       last_login: DataTypes.DATE,
       profile_pic: DataTypes.STRING,
       nfc: DataTypes.STRING,

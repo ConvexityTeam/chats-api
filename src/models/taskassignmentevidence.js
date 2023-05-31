@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class TaskAssignmentEvidence extends Model {
     /**
@@ -16,19 +14,21 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'TaskAssignmentId'
       });
     }
-  };
+  }
 
-
-  
-  TaskAssignmentEvidence.init({
-    TaskAssignmentId: DataTypes.INTEGER,
-    comment: DataTypes.TEXT,
-    uploads: DataTypes.ARRAY(DataTypes.STRING),
-    type: DataTypes.ENUM('image', 'video', null),
-    source: DataTypes.ENUM('beneficiary', 'field_agent', 'vendor')
-  }, {
-    sequelize,
-    modelName: 'TaskAssignmentEvidence',
-  });
+  TaskAssignmentEvidence.init(
+    {
+      TaskAssignmentId: DataTypes.INTEGER,
+      comment: DataTypes.TEXT,
+      uploads: DataTypes.ARRAY(DataTypes.STRING),
+      type: DataTypes.ENUM('image', 'video', null),
+      source: DataTypes.ENUM('beneficiary', 'field_agent', 'vendor'),
+      location: DataTypes.JSON
+    },
+    {
+      sequelize,
+      modelName: 'TaskAssignmentEvidence'
+    }
+  );
   return TaskAssignmentEvidence;
 };

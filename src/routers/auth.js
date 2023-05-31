@@ -7,15 +7,13 @@ const {
   IsRecaptchaVerified
 } = require('../middleware'); //Auhorization middleware
 const {AuthController, BeneficiaryController} = require('../controllers');
-
-const multer = require('../middleware/multer-config'); //for uploading of profile picture and fingerprint
-const e2e = require('../middleware/e2e'); //End2End Encryption middleware
 const {
   AuthValidator,
   CampaignValidator,
   ParamValidator,
   FileValidator
 } = require('../validators');
+
 // router.use(e2e);
 
 router.post(
@@ -38,11 +36,11 @@ router.post(
   FileValidator.checkProfilePic(),
   AuthController.beneficiaryRegisterSelf
 );
-router.post(
-  '/ngo-register',
 
-  AuthController.createNgoAccount
-);
+router.post('/ngo-register',AuthController.createNgoAccount);
+router.post('/resend-email-confirmation/',AuthController.resendMail);
+router.post('/verify-email/',AuthController.confirmEmail);
+
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
 router.post('/nin-verification', AuthController.verifyNin);
 router.post('/update-profile', Auth, AuthController.updateProfile);

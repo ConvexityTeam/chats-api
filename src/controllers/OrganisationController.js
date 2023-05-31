@@ -3,7 +3,8 @@ const {
   HttpStatusCode,
   SanitizeObject,
   generateOrganisationId,
-  generateProductRef
+  generateProductRef,
+  GenerateSecrete
 } = require('../utils');
 
 const moment = require('moment');
@@ -27,12 +28,15 @@ const {
   OrganisationService,
   BeneficiaryService,
   VendorService,
+  BlockchainService,
   ProductService,
   WalletService,
   ZohoService,
+  AwsService,
   TransactionService
 } = require('../services');
 const AwsUploadService = require('../services/AwsUploadService');
+const campaign = require('../models/campaign');
 
 const createWalletQueue = amqp['default'].declareQueue('createWallet', {
   durable: true
@@ -196,7 +200,8 @@ class OrganisationController {
           createdAt: campaign.createdAt,
           updatedAt: campaign.updatedAt,
           beneficiaries_count: beneficiaries_count,
-          Jobs: campaign.Jobs
+          Jobs: campaign.Jobs,
+          ck8: (await AwsUploadService.getMnemonic(campaign.id)) || null
         });
       }
       Response.setSuccess(
@@ -282,38 +287,44 @@ class OrganisationController {
         OrganisationService.getOrganisationWallet(organisation.id),
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
-      for (let campaign of campaigns.associatedCampaigns) {
-        if (new Date(campaign.end_date) < new Date())
-          campaign.update({status: 'completed'});
-        for (let task of campaign.Jobs) {
-          const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'}
-          });
-          assignmentTask.push(assignment);
-        }
 
-        (campaign.dataValues.beneficiaries_count =
-          campaign.Beneficiaries.length),
-          (campaign.dataValues.task_count = campaign.Jobs.length);
-        campaign.dataValues.completed_task = completed_task;
+      if (campaigns?.associatedCampaigns) {
+        for (let campaign of campaigns.associatedCampaigns) {
+          if (new Date(campaign.end_date) < new Date())
+            campaign.update({status: 'completed'});
+          for (let task of campaign.Jobs) {
+            const assignment = await db.TaskAssignment.findOne({
+              where: {TaskId: task.id, status: 'completed'}
+            });
+            assignmentTask.push(assignment);
+          }
 
-        campaign.dataValues.iDonate = false;
-        const campaignW = await CampaignService.getCampaignWallet(
-          campaign.id,
-          organisation.id
-        );
-        if (
-          campaignW !== null &&
-          campaignW.Wallet &&
-          organisationW !== null &&
-          organisationW.Wallet
-        ) {
-          for (let tran of transaction) {
-            if (
-              tran.ReceiverWalletId === campaignW.Wallet.uuid &&
-              tran.SenderWalletId === organisationW.Wallet.uuid
-            ) {
-              campaign.dataValues.iDonate = true;
+          (campaign.dataValues.beneficiaries_count =
+            campaign.Beneficiaries.length),
+            (campaign.dataValues.task_count = campaign.Jobs.length);
+          campaign.dataValues.completed_task = completed_task;
+
+          campaign.dataValues.iDonate = false;
+          campaign.dataValues.amount_donated = 0;
+          const campaignW = await CampaignService.getCampaignWallet(
+            campaign.id,
+            organisation.id
+          );
+          if (
+            campaignW !== null &&
+            campaignW.Wallet &&
+            organisationW !== null &&
+            organisationW.Wallet
+          ) {
+            for (let tran of transaction) {
+              if (
+                tran.ReceiverWalletId === campaignW.Wallet.uuid &&
+                tran.SenderWalletId === organisationW.Wallet.uuid
+              ) {
+                campaign.dataValues.iDonate = true;
+                campaign.dataValues.amount_donated = tran.amount;
+                campaign.dataValues.donation_date = tran.createdAt;
+              }
             }
           }
         }
@@ -325,13 +336,14 @@ class OrganisationController {
         }
         return false;
       }
-      campaigns.associatedCampaigns.forEach(data => {
+      campaigns?.associatedCampaigns.forEach(data => {
         data.Jobs.forEach(task => {
           if (isExist(task.id)) {
             data.dataValues.completed_task++;
           }
         });
       });
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
@@ -355,16 +367,18 @@ class OrganisationController {
 
       for (let data of campaigns) {
         if (new Date(data.end_date) < new Date())
-          data.update({status: 'completed'});
+          data.update({status: 'ended'});
         for (let task of data.Jobs) {
           const assignment = await db.TaskAssignment.findOne({
             where: {TaskId: task.id, status: 'completed'}
           });
           assignmentTask.push(assignment);
         }
+        //(await AwsService.getMnemonic(data.id)) || null;
+        data.dataValues.ck8 = GenerateSecrete();
 
-        (data.dataValues.beneficiaries_count = data.Beneficiaries.length),
-          (data.dataValues.task_count = data.Jobs.length);
+        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
+        data.dataValues.task_count = data.Jobs.length;
         data.dataValues.completed_task = completed_task;
       }
       function isExist(id) {
@@ -391,7 +405,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -646,6 +660,11 @@ class OrganisationController {
     } catch (error) {}
   }
 
+  static createItemCampaign(req, res) {
+    try {
+    } catch (error) {}
+  }
+
   static async createCampaign(req, res) {
     try {
       const rules = {
@@ -673,18 +692,23 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+      data.is_processing = false;
       CampaignService.addCampaign({
         ...data,
         spending,
         OrganisationId,
         status: 'pending'
       })
-        .then(campaign => {
-          QueueService.createWallet(
+        .then(async campaign => {
+          await QueueService.createWallet(
             OrganisationId,
             'organisation',
             campaign.id
           );
+          campaign.type === 'item'
+            ? await QueueService.createCollection(campaign)
+            : await QueueService.createEscrow(campaign);
+          AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',
@@ -693,6 +717,7 @@ class OrganisationController {
           return Response.send(res);
         })
         .catch(err => {
+          Logger.error(err);
           throw err;
         });
     } catch (error) {
@@ -717,11 +742,15 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+
       const products = await Promise.all(
         body.map(async _body => {
-          const data = SanitizeObject(_body, ['type', 'tag', 'cost']);
+          const data = SanitizeObject(
+            _body,
+            ['type', 'tag', 'cost'] || ['type', 'tag']
+          );
           data.product_ref = generateProductRef();
-
+          data.cost = data.type === 'item' ? 1 : data.cost;
           const createdProduct = await db.Product.create({
             ...data,
             CampaignId: campaign.id
@@ -798,6 +827,261 @@ class OrganisationController {
     }
   }
 
+  static async withdrawalRequest(req, res) {
+    try {
+      const requests = await db.RequestFund.findAll();
+      for (let request of requests) {
+        const campaign = await CampaignService.getCampaignById(
+          request.campaign_id
+        );
+        request.dataValues.campaign = campaign;
+      }
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Donor withdrawal requests`,
+        requests
+      );
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(JSON.stringify(error));
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support. ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+  static async requestFund(req, res) {
+    try {
+      const campaign = await CampaignService.getCampaignById(
+        req.body.campaign_id
+      );
+      if (campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      if (campaign.budget === 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Insufficient Fund`
+        );
+        return Response.send(res);
+      }
+      const bodyAllowedList = new Set([
+        'reason',
+        'donor_organisation_id',
+        'campaign_id'
+      ]);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      const request = await db.RequestFund.create(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Request sent`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async approveOrReject(req, res) {
+    try {
+      const rules = {
+        campaign_id: 'required|numeric',
+        type: 'required|string|in:reject,approve',
+        request_id: 'required|numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(400, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const campaign = await CampaignService.getCampaignById(
+        req.body.campaign_id
+      );
+      if (campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      if (campaign.budget === 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Insufficient Fund`
+        );
+        return Response.send(res);
+      }
+      const bodyAllowedList = new Set(['request_id', 'campaign_id', 'type']);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+
+      const request = await db.RequestFund.findOne({
+        where: {
+          id: req.body.request_id,
+          campaign_id: req.body.campaign_id
+        }
+      });
+      if (!request) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Request not found'
+        );
+        return Response.send(res);
+      }
+      await request.update({
+        status: req.body.type === 'reject' ? 'Rejected' : 'Approved'
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Request ${req.body.type === 'reject' ? 'Rejected' : 'Approved'}`,
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async extendCampaign(req, res) {
+    const {
+      end_date,
+      description,
+      location,
+      campaign_id,
+      additional_budget
+    } = req.body;
+    const today = moment();
+    const endDate = moment(end_date);
+    try {
+      const rules = {
+        end_date: `required|date`,
+        campaign_id: 'required|numeric',
+        additional_budget: 'numeric'
+      };
+
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(400, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
+      if (today > endDate) {
+        Response.setError(400, 'The end date must be after today');
+        return Response.send(res);
+      }
+
+      const bodyAllowedList = new Set([
+        'end_date',
+        'description',
+        'location',
+        'campaign_id',
+        'additional_budget'
+      ]);
+      for (let prop in req.body) {
+        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'unexpected parameter in POST body'
+          );
+          return Response.send(res);
+        }
+      }
+      if (req.campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign Already Funded`
+        );
+        return Response.send(res);
+      }
+      const dateB = moment(req.campaign.updatedAt);
+      const dateC = moment(end_date);
+
+      const extension_period = dateC.diff(dateB, 'days');
+
+      req.campaign.budget = additional_budget
+        ? Number(additional_budget) + req.campaign.budget
+        : req.campaign.budget;
+      const newCampaign = await req.campaign.update(req.body);
+      const history = await db.CampaignHistory.create({
+        extension_period,
+        new_end_date: end_date,
+        additional_budget,
+        campaign_id
+      });
+      newCampaign.dataValues.history = history;
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'campaign extended',
+        newCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+  static async campaignHistory(req, res) {
+    try {
+      const campaign = await CampaignService.campaignHistory(req.campaign.id);
+      for (let history of campaign.history) {
+        const date = moment(campaign.end_date).isSame(
+          history.new_end_date,
+          'day'
+        );
+        if (date) {
+          history.dataValues.currentCampaign = true;
+        } else {
+          history.dataValues.currentCampaign = false;
+        }
+      }
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'campaign history retrieved',
+        campaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
+      );
+      return Response.send(res);
+    }
+  }
   static async UpdateCampaignProduct(req, res) {
     const {ProductId} = req.body;
     try {
@@ -988,9 +1272,15 @@ class OrganisationController {
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId
       );
-      // const form = await CampaignService.findCampaignFormBeneficiary(
-      //   CampaignId
-      // );
+
+      beneficiaries.forEach(beneficiary => {
+        beneficiary.User.Answers.forEach(answer => {
+          if (answer.campaignId == CampaignId) {
+            beneficiary.dataValues.User.dataValues.Answers = [answer];
+          }
+        });
+      });
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
@@ -1000,7 +1290,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.' + error
       );
       return Response.send(res);
     }
@@ -1253,10 +1543,55 @@ class OrganisationController {
   static async getOrganisationBeneficiaryDetails(req, res) {
     try {
       const id = req.params.beneficiary_id;
-      const beneficiary = await BeneficiaryService.organisationBeneficiaryDetails(
-        id,
-        req.organisation.id
-      );
+      let total_wallet_spent = 0;
+      let total_wallet_balance = 0;
+      let total_wallet_received = 0;
+
+      const [beneficiary, transaction] = await Promise.all([
+        BeneficiaryService.organisationBeneficiaryDetails(
+          id,
+          req.organisation.id
+        ),
+        TransactionService.findTransactions({
+          BeneficiaryId: id,
+          is_approved: true
+        })
+      ]);
+
+      for (let tran of transaction) {
+        if (
+          tran.narration === 'Vendor Order' ||
+          tran.transaction_type === 'withdrawal'
+        ) {
+          total_wallet_spent += tran.amount;
+        }
+        if (
+          tran.BeneficiaryId == id &&
+          tran.OrganisationId == req.organisation.id
+        ) {
+          total_wallet_received += tran.amount;
+        }
+      }
+      for (let campaign of beneficiary.Campaigns) {
+        for (let wallet of campaign.BeneficiariesWallets) {
+          if (wallet.CampaignId && wallet.address) {
+            const campaignWallet = await WalletService.findUserCampaignWallet(
+              wallet.UserId,
+              wallet.CampaignId
+            );
+            const token = await BlockchainService.allowance(
+              campaignWallet.address,
+              wallet.address
+            );
+            const balance = Number(token.Allowed.split(',').join(''));
+            total_wallet_balance += balance;
+          }
+        }
+      }
+      beneficiary.dataValues.total_wallet_spent = total_wallet_spent;
+      beneficiary.dataValues.total_wallet_balance = total_wallet_balance;
+      beneficiary.dataValues.total_wallet_received = total_wallet_received;
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiary Details.',
@@ -1266,7 +1601,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.'
+        'Server Error: Unexpected error occured.' + error
       );
       return Response.send(res);
     }
@@ -1297,7 +1632,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.'
+        'Server Error. Please retry.' + error
       );
       return Response.send(res);
     }
@@ -2191,6 +2526,7 @@ class OrganisationController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       }
+      data.departmentId = '661286000000006907';
       const createdTicket = await ZohoService.createTicket(data);
       //const generate = await ZohoService.generatingToken()
       Response.setSuccess(201, 'Ticket Created Successfully', createdTicket);

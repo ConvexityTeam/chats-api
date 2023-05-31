@@ -5,18 +5,38 @@ const {v4: uuidv4} = require('uuid');
 const {createHash, GenerateOtp} = require('../utils');
 const bcrypt = require('bcryptjs');
 const moment = require('moment');
+const redis = require('redis');
 const jwt = require('jsonwebtoken');
 const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
 
+// const Vault = require('hashi-vault-js');
+
+// const vault = new Vault({
+//   https: true,
+//   baseUrl: '172.25.16.0/v1',
+//   rootPath: 'secret',
+//   timeout: 5000,
+//   proxy: false
+// });
+
+// async function func() {
+//   const token = await vault.loginWithUserpass(
+//     process.env.VAULT_USER,
+//     process.env.VAULT_PASS
+//   ).client_token;
+//   return token;
+// }
+
 class AuthService {
   static async login(data, _password, roleId = null) {
     const error = new Error();
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
       if (data) {
         const {password, tfa_secret, ...user} = data.toJSON();
+
         if (bcrypt.compareSync(_password, password)) {
           if (user.status == 'suspended') {
             error.status = 401;
@@ -50,7 +70,6 @@ class AuthService {
             token
           });
         }
-
         error.status = 401;
         error.message = 'Invalid login credentials';
         reject(error);
@@ -200,10 +219,10 @@ class AuthService {
       request_ip
     });
     await MailerService.sendOTP(otp, reset.ref, user.email, name);
-    await SmsService.sendOtp(
-      user.phone,
-      `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`
-    );
+    // await SmsService.sendOtp(
+    //   user.phone,
+    //   `Hi ${name}, your CHATS reset password OTP is: ${otp} and ref is: ${reset.ref}`
+    // );
     return reset;
   }
 
