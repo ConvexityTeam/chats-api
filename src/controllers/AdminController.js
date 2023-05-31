@@ -57,11 +57,8 @@ class AdminController {
         return Response.send(res);
       }
       const updatesUser = await userExist.update({status: data.status});
-      Response.setError(
-        HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-        `Invalid user ID`,
-        updatesUser
-      );
+      updatesUser.dataValues.password = null;
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, `User status updated`);
       return Response.send(res);
     } catch (error) {
       Response.setError(
