@@ -323,6 +323,7 @@ class OrganisationController {
               ) {
                 campaign.dataValues.iDonate = true;
                 campaign.dataValues.amount_donated = tran.amount;
+                campaign.dataValues.donation_date = tran.createdAt;
               }
             }
           }
