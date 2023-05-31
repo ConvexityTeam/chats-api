@@ -7,7 +7,6 @@ const {
   Product,
   Transaction,
   Market,
-  FormAnswer,
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
@@ -227,16 +226,12 @@ class BeneficiariesService {
       attributes: userConst.publicAttr,
       include: [
         {
-          order: [['createdAt', 'ASC']],
           model: Campaign,
           as: 'Campaigns',
           require: true,
           where: {
             OrganisationId
-          },
-          include: [
-            {where: {UserId: id}, model: Wallet, as: 'BeneficiariesWallets'}
-          ]
+          }
         }
       ]
     });
@@ -286,7 +281,6 @@ class BeneficiariesService {
           include: ['Organisation']
         },
         {
-          order: [['createdAt', 'ASC']],
           model: Wallet,
           as: 'Wallets'
         }
@@ -378,32 +372,7 @@ class BeneficiariesService {
           model: User,
           as: 'User',
           attributes: userConst.publicAttr,
-          include: {
-            model: FormAnswer,
-            as: 'Answers'
-          }
-        }
-      ]
-    });
-  }
-
-  static async findCampaignBeneficiary(UserId) {
-    return Beneficiary.findAll({
-      where: {
-        UserId,
-        CampaignId: {
-          [Op.ne]: null
-        }
-      },
-      include: [
-        {
-          model: User,
-          as: 'User',
-          attributes: userConst.publicAttr,
-          include: {
-            model: FormAnswer,
-            as: 'Answers'
-          }
+          include: ['Answers']
         }
       ]
     });
@@ -412,17 +381,7 @@ class BeneficiariesService {
   static async getBeneficiariesAdmin() {
     return User.findAll({
       where: {
-        RoleId: AclRoles.Beneficiary
-      },
-      include: {
-        where: {
-          transaction_origin: 'store',
-          transaction_type: 'spent',
-          is_approved: true,
-          status: 'success'
-        },
-        model: Transaction,
-        as: 'OrderTransaction'
+        RoleId: 7
       }
     });
   }
@@ -631,7 +590,8 @@ class BeneficiariesService {
               model: Wallet,
               as: 'Wallets',
               where: {
-                CampaignId
+                CampaignId,
+                was_funded: false
               }
             }
           ]

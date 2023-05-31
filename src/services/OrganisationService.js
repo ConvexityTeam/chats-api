@@ -4,7 +4,6 @@ const {
   Wallet,
   Organisation,
   Transaction,
-  Campaign,
   OrganisationMembers
 } = require('../models');
 const {
@@ -28,30 +27,7 @@ class OrganisationService {
   }
 
   static async getAllOrganisations() {
-    return Organisation.findAll({
-      include: [
-        {
-          where: {role: 'admin'},
-          model: OrganisationMembers,
-          as: 'Members'
-        },
-        {
-          where: {
-            transaction_type: 'transfer',
-            status: 'success',
-            BeneficiaryId: null,
-            VendorId: null
-          },
-          model: Transaction,
-          as: 'Transactions'
-        },
-        {
-          where: {is_funded: true},
-          model: Campaign,
-          as: 'Campaigns'
-        }
-      ]
-    });
+    return Organisation.findAll();
   }
 
   static async getOrganisationWallet(id) {
@@ -62,14 +38,6 @@ class OrganisationService {
       include: {
         model: Wallet,
         as: 'Wallet'
-      }
-    });
-  }
-
-  static async getOrganisation(id) {
-    return Organisation.findOne({
-      where: {
-        id: Number(id)
       }
     });
   }
@@ -93,6 +61,7 @@ class OrganisationService {
   }
 
   static async addDonor(data, user, inviteeId) {
+    console.log(inviteeId, 'iddd');
     return Organisation.create(data).then(organisation => {
       organisation.createMember({
         UserId: user.id,
@@ -155,38 +124,15 @@ class OrganisationService {
     });
   }
 
-  static async getAssociatedCampaigns(id) {
-    return Organisation.findAll({
-      where: {
-        id
-      },
-      order: [['createdAt', 'DESC']],
-      include: {
-        model: Campaign,
-        where: {
-          is_public: false
-        },
-        as: 'associatedCampaigns'
-      }
-    });
-  }
-
   static async getAllDonorsAdmin() {
-    return Organisation.findAll({
-      order: [['createdAt', 'DESC']],
-
-      include: [
-        {
-          model: Campaign,
-          where: {
-            is_public: false
-          },
-          as: 'associatedCampaigns'
-        }
-      ]
+    return User.findAll({
+      where: {
+        RoleId: 8,
+      },
     });
   }
 
+  
   static async isMemberUser(user) {
     return OrganisationMembers.findOne({
       where: {
@@ -223,9 +169,9 @@ class OrganisationService {
             UserId: account.id
           });
         })
-        .then(async _store => {
+        .then(_store => {
           store = _store;
-          await QueueService.createWallet(account.id, 'user');
+          QueueService.createWallet(account.id, 'user');
           MailerService.verify(
             data.email,
             data.first_name + ' ' + data.last_name,

@@ -1,5 +1,7 @@
 'use strict';
-const {Model} = require('sequelize');
+const {
+  Model
+} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Transaction extends Model {
     /**
@@ -38,47 +40,32 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'VendorId',
         as: 'Vendor'
       });
-      Transaction.belongsTo(models.BankAccount, {
-        foreignKey: 'BankId',
-        as: 'Bank'
-      });
     }
-  }
-  Transaction.init(
-    {
-      uuid: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
-      },
-      reference: DataTypes.STRING,
-      SenderWalletId: DataTypes.UUID,
-      ReceiverWalletId: DataTypes.UUID,
-      OrderId: DataTypes.INTEGER,
-      VendorId: DataTypes.INTEGER,
-      BeneficiaryId: DataTypes.INTEGER,
-      OrganisationId: DataTypes.INTEGER,
-      CampaignId: DataTypes.INTEGER,
-      BankId: DataTypes.INTEGER,
-      transaction_type: DataTypes.ENUM(
-        'deposit',
-        'withdrawal',
-        'transfer',
-        'approval',
-        'spent'
-      ),
-      transaction_origin: DataTypes.ENUM('store', 'wallet'),
-      transaction_hash: DataTypes.STRING,
-      amount: DataTypes.FLOAT,
-      status: DataTypes.ENUM('success', 'processing', 'declined', 'failed'),
-      is_approved: DataTypes.BOOLEAN,
-      narration: DataTypes.STRING,
-      log: DataTypes.TEXT
+  };
+  Transaction.init({
+    uuid: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
     },
-    {
-      sequelize,
-      modelName: 'Transaction'
-    }
-  );
+    reference: DataTypes.STRING,
+    SenderWalletId: DataTypes.UUID,
+    ReceiverWalletId: DataTypes.UUID,
+    OrderId: DataTypes.INTEGER,
+    VendorId: DataTypes.INTEGER,
+    BeneficiaryId: DataTypes.INTEGER,
+    OrganisationId: DataTypes.INTEGER,
+    transaction_type: DataTypes.ENUM('deposit', 'withdrawal', 'transfer', 'approval', 'spent'),
+    transaction_origin: DataTypes.ENUM('store', 'wallet'),
+    transaction_hash: DataTypes.STRING,
+    amount: DataTypes.FLOAT,
+    status: DataTypes.ENUM('success', 'processing', 'declined', 'failed'),
+    is_approved: DataTypes.BOOLEAN,
+    narration: DataTypes.STRING,
+    log: DataTypes.TEXT
+  }, {
+    sequelize,
+    modelName: 'Transaction',
+  });
   return Transaction;
 };

@@ -6,54 +6,9 @@ const {HttpStatusCode, formInputToDate} = require('../utils');
 const BaseValidator = require('./BaseValidator');
 
 class CampaignValidator extends BaseValidator {
-  static campaignTypes = ['campaign', 'cash-for-work', 'item'];
+  static campaignTypes = ['campaign', 'cash-for-work'];
   static campaignStatuses = ['pending', 'active', 'paused', 'completed'];
-  static requestStatuses = ['approved', 'rejected'];
 
-  static approveOrRejectRequest() {
-    return [
-      body('type')
-        .not()
-        .isEmpty()
-        .withMessage(`Request type is required.`)
-        .isIn(this.requestStatuses)
-        .withMessage(
-          `Campaign type should be one of: [${this.requestStatuses.join(', ')}]`
-        )
-    ];
-  }
-  static extendCampaign() {
-    return [
-      body('end_date')
-        .isDate({
-          format: 'DD-MM-YYYY',
-          strictMode: true
-        })
-        .withMessage(`Campaign start date should be a valid date.`)
-        .customSanitizer(formInputToDate)
-        .isAfter()
-        .withMessage('Campaign start date should be after today.')
-    ];
-  }
-  static requestFund() {
-    return [
-      body('donor_organisation_id')
-        .notEmpty()
-        .withMessage('Donor organisation ID must not be empty')
-        .isInt()
-        .withMessage(`Donor organisation ID must be an integer`),
-      body('reason')
-        .notEmpty()
-        .withMessage('Reason for withdrawal is required.')
-        .isLength({
-          min: 5,
-          max: 200
-        })
-        .withMessage(
-          'Reason for withdrawal should be between 5 and 200 characters.'
-        )
-    ];
-  }
   static createCampaignRules() {
     return [
       body('title').not().isEmpty().withMessage(`Campaign title is required.`),
@@ -70,19 +25,11 @@ class CampaignValidator extends BaseValidator {
         .isEmpty()
         .withMessage(`Campaign description is required.`),
       body('budget')
-        .optional({
-          nullable: true,
-          checkFalsy: true
-        })
+        .not()
+        .isEmpty()
+        .withMessage(`Campaign budget is required.`)
         .isDecimal()
-        .withMessage(`Campaign budget must be a valid decimal`),
-      body('minting_limit')
-        .optional({
-          nullable: true,
-          checkFalsy: true
-        })
-        .isNumeric()
-        .withMessage(`Campaign budget must be a valid number`),
+        .withMessage(`Campaign buget must be a valid decimal`),
       body('location').optional({
         nullable: true,
         checkFalsy: true
@@ -149,7 +96,7 @@ class CampaignValidator extends BaseValidator {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Error occured. Contact support.' + error
+        'Error occured. Contact support.'
       );
       return Response.send(res);
     }
@@ -188,7 +135,6 @@ class CampaignValidator extends BaseValidator {
   static async campaignBelongsToOrganisation(req, res, next) {
     try {
       const id = req.body.campaign_id || req.params.campaign_id;
-      console.log(req.params.campaign_id, 'req.params.campaign_id');
       const organisationId =
         req.body.organisation_id ||
         req.params.organisation_id ||

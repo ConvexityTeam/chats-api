@@ -157,8 +157,8 @@ class MailerService {
       } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
       <p>${
         exist
-          ? `If you want to login to confirm access, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
-          : `If you want to create an account, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
+          ? `If you want to login to confirm access, please click on the following link: ${link}&token=${token}&first_timer=false&is_public=${campaign.is_public}`
+          : `If you want to create an account, please click on the following link: ${link}&token=${token}&first_timer=false&is_public=${campaign.is_public}`
       }</p>
       <p>${message}</p>
       <p>Enjoy!</p>
@@ -195,7 +195,7 @@ class MailerService {
     `;
     const options = {
       from: this.config.from,
-      to: [to, 'charles@withconvexity.com'],
+      to: [to, "charles@withconvexity.com"],
       subject: 'Recharge Your Wallet Balance',
       html: body
     };
@@ -222,7 +222,7 @@ class MailerService {
     `;
     const options = {
       from: this.config.from,
-      to: [to, 'charles@withconvexity.com'],
+      to: [to, "charles@withconvexity.com"],
       subject: 'Recharge Your Wallet Balance',
       html: body
     };
@@ -231,62 +231,6 @@ class MailerService {
       this.transporter.sendMail(options, (err, data) => {
         if (!err) {
           console.log('sent');
-          resolve(data);
-        } else {
-          reject(err);
-        }
-      });
-    });
-  }
-
-  sendAdminBlockchainCreditMail(to, amount) {
-    const body = `
-    <div>
-      <p>Hello Admin,</p>
-      <p>This is to inform you that your Blockchain service balance that covers for gas is running low. Current balance is ${amount}. Please recharge your account</p>
-      <p>CHATS - Convexity</p>
-    </div>
-    `;
-    const options = {
-      from: this.config.from,
-      to: [to, 'charles@withconvexity.com'],
-      subject: 'Recharge Your Wallet Balance',
-      html: body
-    };
-
-    return new Promise((resolve, reject) => {
-      this.transporter.sendMail(options, (err, data) => {
-        if (!err) {
-          console.log('sent');
-          resolve(data);
-        } else {
-          reject(err);
-        }
-      });
-    });
-  }
-  sendEmailVerification(to, orgName, url) {
-    
-    const body = `
-    <div>
-    <h2>Hello, ${orgName}</h2>
-    <p>Thank you for  creating an account on CHATS platform. 
-    Please confirm your email by clicking on the following link</p>
-    <a href="${url}"> Click here</a>
-      <p>Best,\n CHATS - Convexity</p>
-    </div>
-    `;
-    const options = {
-      from: this.config.from,
-      to:to,
-      subject: 'Please confirm your account',
-      html: body
-    };
-  
-    return new Promise((resolve, reject) => {
-      this.transporter.sendMail(options, (err, data) => {
-        if (!err) {
-          console.log('NGO Verification Mail Sent');
           resolve(data);
         } else {
           reject(err);

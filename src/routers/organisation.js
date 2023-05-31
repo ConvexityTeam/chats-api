@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+const {Router} = require('express');
 const {
   WalletController,
   OrganisationController,
@@ -62,32 +63,6 @@ router.get(
   CampaignController.campaignsWithOnboardedBeneficiary
 );
 router.post(
-  '/extend-campaign/:organisation_id',
-  NgoSubAdminAuth,
-  ParamValidator.OrganisationId,
-  IsOrgMember,
-  CampaignValidator.campaignBelongsToOrganisation,
-  CampaignValidator.extendCampaign(),
-  OrganisationController.extendCampaign
-);
-router.get(
-  '/:campaign_id/campaign-history/:organisation_id',
-  NgoSubAdminAuth,
-  ParamValidator.OrganisationId,
-  IsOrgMember,
-  CampaignValidator.campaignBelongsToOrganisation,
-  OrganisationController.campaignHistory
-);
-router.post(
-  '/request-withdrawal/:organisation_id',
-  DonorAuth,
-  ParamValidator.OrganisationId,
-  CampaignValidator.campaignBelongsToOrganisation,
-  CampaignValidator.requestFund(),
-  OrganisationController.requestFund
-);
-
-router.post(
   '/:organisation_id/onboarded/:campaign_id/:replicaCampaignId',
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
@@ -142,7 +117,7 @@ router.get(
 router
   .route('/:organisation_id/wallets/transactions/:reference?')
   .get(
-    FieldAgentAuth,
+    NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     ParamValidator.ReferenceOptional,
@@ -335,15 +310,6 @@ router
   );
 
 router
-  .route('/:organisation_id/private/campaigns/:campaign_id')
-  .get(
-    DonorAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
-    CampaignValidator.campaignBelongsToOrganisation,
-    CampaignController.getPrivateCampaign
-  );
-router
   .route('/:organisation_id/campaigns/:campaign_id')
   .get(
     FieldAgentAuth,
@@ -404,13 +370,13 @@ router
 router
   .route('/:organisation_id/campaign_form')
   .post(
-    FieldAgentAuth,
+    NgoAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignController.campaignForm
   )
   .get(
-    FieldAgentAuth,
+    NgoAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
     CampaignController.getCampaignForm

@@ -4,7 +4,7 @@ const {
   TaskUsers,
   User,
   TaskProgress,
-  TaskProgressEvidence
+  TaskProgressEvidence,
 } = require('../models');
 const {publicAttr} = require('../constants/user.constants');
 
@@ -15,16 +15,14 @@ class TaskService {
     const campaign = await Campaign.findOne({
       where: {
         id: campaignId,
-        type: 'cash-for-work'
-      }
+        type: 'cash-for-work',
+      },
     });
 
     if (!campaign) throw new Error('Invalid campaign id');
 
     if (campaign.status == 'completed')
       throw new Error('Campaign is already completed');
-    if (campaign.status == 'ended')
-      throw new Error('Campaign is already ended');
 
     const _tasks = tasks.map(task => {
       task.CampaignId = campaignId;
@@ -37,30 +35,30 @@ class TaskService {
   static async getCashForWorkTasks(params) {
     return Task.findAll({
       where: {
-        CampaignId: params.campaign_id
+        CampaignId: params.campaign_id,
       },
       include: [
         {
           model: User,
           as: 'AssignedWorkers',
-          attributes: publicAttr
-        }
-      ]
+          attributes: publicAttr,
+        },
+      ],
     });
   }
 
   static async getCashForBeneficiaries(params) {
     return Task.findOne({
       where: {
-        id: params.task_id
+        id: params.task_id,
       },
       include: [
         {
           model: User,
           as: 'AssignedWorkers',
-          attributes: publicAttr
-        }
-      ]
+          attributes: publicAttr,
+        },
+      ],
     });
   }
 
@@ -79,7 +77,7 @@ class TaskService {
     } else
       return await TaskProgressEvidence.create({
         TaskProgressId: taskProgressId,
-        imageUrl
+        imageUrl,
       });
   }
 }

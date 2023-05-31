@@ -44,7 +44,6 @@ module.exports = (sequelize, DataTypes) => {
       privateKey: DataTypes.STRING,
       bantuAddress: DataTypes.STRING,
       bantuPrivateKey: DataTypes.STRING,
-      tokenIds: DataTypes.JSON,
       CampaignId: DataTypes.INTEGER,
       OrganisationId: DataTypes.INTEGER,
       wallet_type: DataTypes.ENUM('user', 'organisation'),

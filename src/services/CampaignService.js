@@ -20,11 +20,6 @@ const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
 
 class CampaignService {
-  static campaignHistory(id) {
-    return Campaign.findByPk(id, {
-      include: ['history']
-    });
-  }
   static getACampaignWithBeneficiaries(CampaignId, type) {
     return Campaign.findAll({
       where: {
@@ -66,9 +61,7 @@ class CampaignService {
   }
 
   static getCampaignById(id) {
-    return Campaign.findByPk(id, {
-      include: ['Organisation']
-    });
+    return Campaign.findByPk(id);
   }
   static getPubCampaignById(id) {
     return Campaign.findOne({where: {id, is_public: true}});
@@ -117,8 +110,8 @@ class CampaignService {
         CampaignId,
         UserId,
         source
-      }).then(async newBeneficiary => {
-        await QueueService.createWallet(UserId, 'user', CampaignId);
+      }).then(newBeneficiary => {
+        QueueService.createWallet(UserId, 'user', CampaignId);
         return newBeneficiary;
       });
     });
@@ -219,12 +212,12 @@ class CampaignService {
       ]
     });
   }
-  static getPrivateCampaignWithBeneficiaries(id) {
+
+  static getCampaignWithBeneficiaries(id) {
     return Campaign.findOne({
-      order: [['createdAt', 'ASC']],
+      order: [['updatedAt', 'ASC']],
       where: {
-        id,
-        is_public: false
+        id
       },
       // attributes: {
       //   include: [
@@ -253,41 +246,6 @@ class CampaignService {
         'Jobs.id',
         'BeneficiariesWallets.uuid'
       ]
-    });
-  }
-  static getCampaignWithBeneficiaries(id) {
-    return Campaign.findOne({
-      order: [['createdAt', 'DESC']],
-      where: {
-        id
-      },
-      // attributes: {
-      //   include: [
-      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-      //   ]
-      // },
-      include: [
-        {
-          model: User,
-          as: 'Beneficiaries',
-          attributes: userConst.publicAttr,
-          through: {
-            attributes: []
-          }
-        },
-        {model: Task, as: 'Jobs'},
-        {
-          model: Wallet,
-          as: 'BeneficiariesWallets',
-          attributes: walletConst.walletExcludes
-        }
-      ]
-      // group: [
-      //   'Campaign.id',
-      //   'Beneficiaries.id',
-      //   'Jobs.id',
-      //   'BeneficiariesWallets.uuid'
-      // ]
     });
   }
 
@@ -341,7 +299,7 @@ class CampaignService {
   static getPublicCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
-      order: [['createdAt', 'DESC']],
+      order: [['updatedAt', 'ASC']],
       where: {
         ...where
       },
@@ -356,28 +314,36 @@ class CampaignService {
       ]
     });
   }
-  static getPrivateCampaigns(queryClause = {}, id) {
-    let where = queryClause;
+  static getPrivateCampaigns(query, id) {
     return Organisation.findOne({
       where: {
         id
       },
-      order: [['createdAt', 'DESC']],
-      include: [
-        {
-          model: Campaign,
-          where: {
-            ...where,
-            is_public: false
-          },
-          as: 'associatedCampaigns',
+      order: [['updatedAt', 'ASC']],
+      include: {
+        model: Campaign,
+        where: {
+          ...query,
+          is_public: false
+        },
+        as: 'associatedCampaigns',
 
-          include: [
-            {model: Task, as: 'Jobs'},
-            {model: User, as: 'Beneficiaries'}
-          ]
-        }
-      ]
+        include: [
+          {model: Task, as: 'Jobs'},
+          {model: User, as: 'Beneficiaries'}
+        ]
+      }
+      // where: {
+      //   ...where,
+      // },
+      // include: {
+      //   model: Campaign,
+      //   as: 'associatedCampaigns',
+      //   include: [
+      //   {model: Task, as: 'Jobs'},
+      //   {model: User, as: 'Beneficiaries'},
+      // ],
+      // }
     });
   }
 
@@ -386,7 +352,7 @@ class CampaignService {
       where: {
         id
       },
-      order: [['updatedAt', 'DESC']],
+      order: [['updatedAt', 'ASC']],
       include: {
         model: Campaign,
         where: {
@@ -425,7 +391,7 @@ class CampaignService {
   static getCampaigns(queryClause = {}) {
     const where = queryClause;
     return Campaign.findAll({
-      order: [['createdAt', 'DESC']],
+      order: [['updatedAt', 'ASC']],
       where: {
         ...where
       },
@@ -476,7 +442,6 @@ class CampaignService {
 
   static async getAllCampaigns(queryClause = null) {
     return Campaign.findAll({
-      order: [['createdAt', 'DESC']],
       where: {
         ...queryClause
       },
@@ -570,7 +535,6 @@ class CampaignService {
 
   static cashForWorkCampaignByApprovedBeneficiary() {
     return Campaign.findAll({
-      order: [['createdAt', 'DESC']],
       where: {
         type: 'cash-for-work'
       },
@@ -676,18 +640,12 @@ class CampaignService {
       where: {title}
     });
   }
-  static async findCampaignFormByCampaignId(id) {
-    return await Campaign.findOne({
-      where: {id},
-      include: ['campaign_form']
-    });
-  }
   static async campaignForm(data) {
     return await CampaignForm.create(data);
   }
   static async getCampaignForm(organisationId) {
     return await CampaignForm.findAll({
-      order: [['createdAt', 'DESC']],
+      order: [['updatedAt', 'ASC']],
       where: {organisationId},
       include: ['campaigns']
     });

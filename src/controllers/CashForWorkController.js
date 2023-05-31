@@ -11,14 +11,9 @@ const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {Response, Logger} = require('../libs');
 const {AclRoles} = require('../utils');
 const {async} = require('regenerator-runtime');
-const {
-  BlockchainService,
-  ZohoService,
-  WalletService,
-  QueueService
-} = require('../services');
+const {BlockchainService, ZohoService} = require('../services');
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
-  durable: true
+  durable: true,
 });
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
@@ -34,7 +29,7 @@ class CashForWorkController {
         description: 'required|string',
         campaign: 'required|numeric',
         amount: 'required|numeric',
-        approval: 'required|string|in:supervisor,both'
+        approval: 'required|string|in:supervisor,both',
       };
 
       const validation = new Validator(data, rules);
@@ -45,7 +40,7 @@ class CashForWorkController {
       } else {
         const campaignExist = await db.Campaign.findOne({
           where: {id: data.campaign, type: 'cash-for-work'},
-          include: {model: db.Tasks, as: 'Jobs'}
+          include: {model: db.Tasks, as: 'Jobs'},
         });
 
         if (!campaignExist) {
@@ -60,7 +55,7 @@ class CashForWorkController {
           if (names.includes(String(data.name).toLowerCase())) {
             util.setError(
               400,
-              'A Task with the same name already exist for this Campaign'
+              'A Task with the same name already exist for this Campaign',
             );
             return util.send(res);
           }
@@ -69,7 +64,7 @@ class CashForWorkController {
         const taskEntity = {
           name: data.name,
           description: data.description,
-          amount: data.amount
+          amount: data.amount,
         };
 
         const newTask = await campaignExist.createJob(taskEntity);
@@ -91,8 +86,8 @@ class CashForWorkController {
         include: {
           model: db.Tasks,
           as: 'Jobs',
-          attributes: {exclude: ['CampaignId']}
-        }
+          attributes: {exclude: ['CampaignId']},
+        },
       });
 
       util.setSuccess(200, 'Tasks', {tasks: campaignExist.Jobs});
@@ -106,9 +101,9 @@ class CashForWorkController {
   static async getAllCashForWork(req, res) {
     const cashforworks = await db.Campaign.findAll({
       where: {
-        type: 'cash-for-work'
+        type: 'cash-for-work',
       },
-      include: {model: db.Tasks, as: 'Jobs'}
+      include: {model: db.Tasks, as: 'Jobs'},
     });
 
     const cashForWorkArray = [];
@@ -138,7 +133,7 @@ class CashForWorkController {
         start_date: cashforwork.start_date,
         end_date: cashforwork.end_date,
         createdAt: cashforwork.createdAt,
-        updatedAt: cashforwork.updatedAt
+        updatedAt: cashforwork.updatedAt,
       };
 
       cashForWorkArray.push(cashForWorkDetail);
@@ -154,7 +149,7 @@ class CashForWorkController {
       const cashforwork = await db.Campaign.findOne({
         where: {
           id,
-          type: 'cash-for-work'
+          type: 'cash-for-work',
         },
         include: {
           model: db.Tasks,
@@ -167,11 +162,11 @@ class CashForWorkController {
               as: 'CompletionRequest',
               include: {
                 model: db.TaskProgressEvidence,
-                as: 'Evidences'
-              }
-            }
-          }
-        }
+                as: 'Evidences',
+              },
+            },
+          },
+        },
       });
 
       const jobs = cashforwork.Jobs;
@@ -198,7 +193,7 @@ class CashForWorkController {
         start_date: cashforwork.start_date,
         end_date: cashforwork.end_date,
         createdAt: cashforwork.createdAt,
-        updatedAt: cashforwork.updatedAt
+        updatedAt: cashforwork.updatedAt,
       };
 
       util.setSuccess(200, 'Cash-for-work Retrieved', {cashForWorkDetail});
@@ -215,13 +210,13 @@ class CashForWorkController {
 
       const task = await db.Tasks.findOne({
         where: {
-          id: taskId
+          id: taskId,
         },
         attributes: {exclude: ['CampaignId']},
         include: [
           {
             model: db.Campaign,
-            as: 'Campaign'
+            as: 'Campaign',
           },
           {
             model: db.TaskUsers,
@@ -248,21 +243,21 @@ class CashForWorkController {
                     'tfa_secret',
                     'bvn',
                     'nin',
-                    'pin'
-                  ]
-                }
+                    'pin',
+                  ],
+                },
               },
               {
                 model: db.TaskProgress,
                 as: 'CompletionRequest',
                 include: {
                   model: db.TaskProgressEvidence,
-                  as: 'Evidences'
-                }
-              }
-            ]
-          }
-        ]
+                  as: 'Evidences',
+                },
+              },
+            ],
+          },
+        ],
       });
 
       util.setSuccess(200, 'Task Retrieved', {task});
@@ -283,11 +278,11 @@ class CashForWorkController {
         users: 'required|array',
         taskId: 'required|numeric',
         'users.*.UserId': 'required|numeric',
-        'users.*.type': 'required|string|in:supervisor,worker'
+        'users.*.type': 'required|string|in:supervisor,worker',
       };
 
       const validation = new Validator(data, rules, {
-        array: ':attribute field must be an array'
+        array: ':attribute field must be an array',
       });
 
       if (validation.fails()) {
@@ -301,9 +296,9 @@ class CashForWorkController {
         const users = await db.User.findAll({
           where: {
             id: {
-              [Op.in]: usersIds
-            }
-          }
+              [Op.in]: usersIds,
+            },
+          },
         });
 
         if (users.length !== usersIds.length) {
@@ -313,7 +308,7 @@ class CashForWorkController {
 
         const task = await db.Tasks.findOne({
           where: {id: data.taskId},
-          include: {model: db.TaskUsers, as: 'AssociatedWorkers'}
+          include: {model: db.TaskUsers, as: 'AssociatedWorkers'},
         });
 
         if (!task) {
@@ -339,7 +334,7 @@ class CashForWorkController {
         data.users.forEach(async element => {
           await task.createAssociatedWorker({
             UserId: element.UserId,
-            type: element.type
+            type: element.type,
           });
         });
 
@@ -358,7 +353,7 @@ class CashForWorkController {
       const rules = {
         taskId: 'required|numeric',
         userId: 'required|numeric',
-        description: 'required|string'
+        description: 'required|string',
       };
 
       const validation = new Validator(fields, rules);
@@ -386,20 +381,20 @@ class CashForWorkController {
         if (task.status === 'fulfilled') {
           util.setError(
             400,
-            'Task has been fulfilled. No need for an approval request'
+            'Task has been fulfilled. No need for an approval request',
           );
           return util.send(res);
         }
 
         const workerRecord = await db.TaskUsers.findOne({
           where: {TaskId: fields.taskId, UserId: fields.userId},
-          include: {model: db.TaskProgress, as: 'CompletionRequest'}
+          include: {model: db.TaskProgress, as: 'CompletionRequest'},
         });
 
         if (!workerRecord) {
           util.setError(
             400,
-            'Task Id is Invalid/User has not been added to this task'
+            'Task Id is Invalid/User has not been added to this task',
           );
           return util.send(res);
         }
@@ -407,7 +402,7 @@ class CashForWorkController {
         if (task.approval === 'supervisor' && workerRecord.type === 'worker') {
           util.setError(
             400,
-            'Only Supervisors can submit approval Request for this campaign'
+            'Only Supervisors can submit approval Request for this campaign',
           );
           return util.send(res);
         }
@@ -415,8 +410,8 @@ class CashForWorkController {
         const records = await db.TaskUsers.findAll({
           where: {
             UserId: fields.userId,
-            TaskId: fields.taskId
-          }
+            TaskId: fields.taskId,
+          },
         });
 
         const recordIds = records.map(element => {
@@ -426,15 +421,15 @@ class CashForWorkController {
         const request = await db.TaskProgress.findOne({
           where: {
             TaskUserId: {
-              [Op.in]: recordIds
-            }
-          }
+              [Op.in]: recordIds,
+            },
+          },
         });
 
         if (request) {
           util.setError(
             400,
-            'Progress Report has already been submitted for this task'
+            'Progress Report has already been submitted for this task',
           );
           return util.send(res);
         }
@@ -447,8 +442,8 @@ class CashForWorkController {
             uploadFile(
               image,
               'pge-' + environ + '-' + fields.taskId + ++i + '.' + ext,
-              'convexity-progress-evidence'
-            )
+              'convexity-progress-evidence',
+            ),
           );
         });
 
@@ -480,7 +475,7 @@ class CashForWorkController {
       const data = req.body;
       const rules = {
         userId: 'required|numeric',
-        taskId: 'required|numeric'
+        taskId: 'required|numeric',
       };
 
       const validation = new Validator(data, rules);
@@ -493,8 +488,8 @@ class CashForWorkController {
           where: {
             UserId: data.userId,
             TaskId: data.taskId,
-            type: 'supervisor'
-          }
+            type: 'supervisor',
+          },
         });
 
         if (!workerRecord) {
@@ -521,7 +516,7 @@ class CashForWorkController {
       const data = req.body;
 
       const rules = {
-        taskId: 'required|numeric'
+        taskId: 'required|numeric',
       };
 
       const validation = new Validator(data, rules);
@@ -538,18 +533,18 @@ class CashForWorkController {
               model: db.Campaign,
               include: {
                 model: db.OrganisationMembers,
-                as: 'OrganisationMember'
-              }
+                as: 'OrganisationMember',
+              },
             },
             {
               model: db.TaskUsers,
-              as: 'AssociatedWorkers'
+              as: 'AssociatedWorkers',
             },
             {
               model: db.Transaction,
-              as: 'Transaction'
-            }
-          ]
+              as: 'Transaction',
+            },
+          ],
         });
 
         if (!taskExist) {
@@ -561,8 +556,8 @@ class CashForWorkController {
           where: {
             OrganisationId:
               taskExist.Campaign.OrganisationMember.OrganisationId,
-            UserId: req.user.id
-          }
+            UserId: req.user.id,
+          },
         });
 
         if (taskExist.Transaction.length) {
@@ -583,7 +578,7 @@ class CashForWorkController {
         if (!taskExist.AssociatedWorkers.length) {
           util.setError(
             422,
-            'No Worker Added to Task, Therefore Wages cannot be paid'
+            'No Worker Added to Task, Therefore Wages cannot be paid',
           );
           return util.send(res);
         }
@@ -595,19 +590,19 @@ class CashForWorkController {
         const workersWallets = await db.Wallet.findAll({
           where: {
             AccountUserId: {
-              [Op.in]: userIds
+              [Op.in]: userIds,
             },
             CampaignId: null,
-            AccountUserType: 'user'
-          }
+            AccountUserType: 'user',
+          },
         });
 
         const ngoWallet = await db.Wallet.findOne({
           where: {
             AccountUserId: taskExist.Campaign.OrganisationMember.OrganisationId,
             CampaignId: taskExist.Campaign.id,
-            AccountUserType: 'organisation'
-          }
+            AccountUserType: 'organisation',
+          },
         });
 
         const totalAmount = taskExist.amount * workersWallets.length;
@@ -615,7 +610,7 @@ class CashForWorkController {
         if (totalAmount > ngoWallet.balance) {
           util.setError(
             400,
-            'Ngo Wallet Balance is insufficient for this transaction'
+            'Ngo Wallet Balance is insufficient for this transaction',
           );
           return util.send(res);
         }
@@ -626,7 +621,7 @@ class CashForWorkController {
               walletSenderId: ngoWallet.uuid,
               walletRecieverId: wallet.uuid,
               amount: taskExist.amount,
-              narration: 'Wages for ' + taskExist.name + ' task '
+              narration: 'Wages for ' + taskExist.name + ' task ',
             })
             .then(transaction => {
               transferToQueue.send(
@@ -636,10 +631,10 @@ class CashForWorkController {
                     senderPass: ngoWallet.privateKey,
                     reciepientAddress: wallet.address,
                     amount: taskExist.amount,
-                    transaction: transaction.uuid
+                    transaction: transaction.uuid,
                   },
-                  {contentType: 'application/json'}
-                )
+                  {contentType: 'application/json'},
+                ),
               );
             });
         });
@@ -661,9 +656,9 @@ class CashForWorkController {
         include: [
           {
             model: db.TaskAssignmentEvidence,
-            as: 'SubmittedEvidences'
-          }
-        ]
+            as: 'SubmittedEvidences',
+          },
+        ],
       });
 
       if (beneficiary) {
@@ -687,9 +682,9 @@ class CashForWorkController {
         include: [
           {
             model: db.TaskAssignmentEvidence,
-            as: 'SubmittedEvidences'
-          }
-        ]
+            as: 'SubmittedEvidences',
+          },
+        ],
       });
 
       if (beneficiary) {
@@ -709,7 +704,7 @@ class CashForWorkController {
     const data = req.body;
     const rules = {
       UserId: 'required|numeric',
-      TaskId: 'required|numeric'
+      TaskId: 'required|numeric',
     };
 
     const validation = new Validator(data, rules);
@@ -720,11 +715,11 @@ class CashForWorkController {
         return util.send(res);
       } else {
         const exist = await db.User.findOne({
-          where: {RoleId: AclRoles.Beneficiary, id: data.UserId}
+          where: {RoleId: AclRoles.Beneficiary, id: data.UserId},
         });
         const count = await db.TaskAssignment.findAll();
         const assigned = await db.TaskAssignment.findOne({
-          where: {UserId: data.UserId, TaskId: data.TaskId}
+          where: {UserId: data.UserId, TaskId: data.TaskId},
         });
         if (assigned) {
           util.setError(400, 'you have already pick a this task');
@@ -736,14 +731,14 @@ class CashForWorkController {
               id: count.length + 1,
               UserId: data.UserId,
               status: 'in progress',
-              TaskId: data.TaskId
+              TaskId: data.TaskId,
             });
             if (TaskAssignment) {
               await db.Task.update(
                 {
-                  assigned: task.assigned + 1
+                  assigned: task.assigned + 1,
                 },
-                {where: {id: data.TaskId}}
+                {where: {id: data.TaskId}},
               );
               util.setSuccess(200, 'Success Picking Task', TaskAssignment);
               return util.send(res);
@@ -754,7 +749,7 @@ class CashForWorkController {
           } else
             util.setSuccess(
               400,
-              `Only ${task.assignment_count} entries are allowed on this task`
+              `Only ${task.assignment_count} entries are allowed on this task`,
             );
         } else {
           util.setSuccess(404, 'Beneficiary Not Found');
@@ -828,7 +823,7 @@ class CashForWorkController {
     const rules = {
       TaskAssignmentId: 'required|numeric',
       comment: 'required|string',
-      type: 'required|string'
+      type: 'required|string',
     };
 
     try {
@@ -842,7 +837,7 @@ class CashForWorkController {
         return Response.send(res);
       }
       const isTaskExist = await db.TaskAssignment.findOne({
-        where: {id: TaskAssignmentId, UserId: req.user.id}
+        where: {id: TaskAssignmentId, UserId: req.user.id},
       });
       if (!isTaskExist) {
         Response.setError(422, 'Task Assignment Not Found');
@@ -870,10 +865,10 @@ class CashForWorkController {
               file.originalname +
               '-i.' +
               extension,
-            'convexity-progress-evidence'
+            'convexity-progress-evidence',
           );
           uploadArray.push(url);
-        })
+        }),
       );
 
       if (uploadArray.length) {
@@ -881,9 +876,9 @@ class CashForWorkController {
           await db.TaskAssignmentEvidence.update(
             {
               ...req.body,
-              uploads: uploadArray
+              uploads: uploadArray,
             },
-            {where: {id: TaskAssignmentId}}
+            {where: {id: TaskAssignmentId}},
           );
         }
         await db.TaskAssignmentEvidence.create({
@@ -891,22 +886,22 @@ class CashForWorkController {
           TaskAssignmentId,
           comment,
           type,
-          source: 'beneficiary'
+          source: 'beneficiary',
         });
         await db.TaskAssignment.update(
           {
-            uploaded_evidence: true
+            uploaded_evidence: true,
           },
-          {where: {UserId: isTaskExist.UserId}}
+          {where: {UserId: isTaskExist.UserId}},
         );
         await db.TaskAssignment.update(
           {status: 'completed'},
-          {where: {id: TaskAssignmentId}}
+          {where: {id: TaskAssignmentId}},
         );
         Response.setSuccess(
           200,
           'Success Uploading  Task Evidence',
-          uploadArray
+          uploadArray,
         );
         return Response.send(res);
       }
@@ -922,12 +917,9 @@ class CashForWorkController {
     let {beneficiaryId} = req.params;
     const files = req.files;
     const rules = {
-      'location.longitude': 'required|numeric',
-      'location.latitude': 'required|numeric',
-      'location.time_stamp': 'required|date',
       TaskAssignmentId: 'required|numeric',
       comment: 'required|string',
-      type: 'required|string'
+      type: 'required|string',
     };
 
     try {
@@ -942,7 +934,7 @@ class CashForWorkController {
         return Response.send(res);
       }
       const isTaskExist = await db.TaskAssignment.findOne({
-        where: {id: TaskAssignmentId, UserId: beneficiaryId}
+        where: {id: TaskAssignmentId, UserId: beneficiaryId},
       });
       if (!isTaskExist) {
         Response.setError(422, 'Task Assignment Not Found');
@@ -971,10 +963,10 @@ class CashForWorkController {
               file.originalname +
               '-i.' +
               extension,
-            'convexity-progress-evidence'
+            'convexity-progress-evidence',
           );
           uploadArray.push(url);
-        })
+        }),
       );
 
       if (uploadArray.length) {
@@ -982,9 +974,9 @@ class CashForWorkController {
           await db.TaskAssignmentEvidence.update(
             {
               ...req.body,
-              uploads: uploadArray
+              uploads: uploadArray,
             },
-            {where: {id: TaskAssignmentId}}
+            {where: {id: TaskAssignmentId}},
           );
         }
         await db.TaskAssignmentEvidence.create({
@@ -992,22 +984,22 @@ class CashForWorkController {
           TaskAssignmentId,
           comment,
           type,
-          source: 'field_agent'
+          source: 'field_agent',
         });
         await db.TaskAssignment.update(
           {
-            uploaded_evidence: true
+            uploaded_evidence: true,
           },
-          {where: {UserId: isTaskExist.UserId}}
+          {where: {UserId: isTaskExist.UserId}},
         );
         await db.TaskAssignment.update(
           {status: 'completed'},
-          {where: {id: TaskAssignmentId}}
+          {where: {id: TaskAssignmentId}},
         );
         Response.setSuccess(
           200,
           'Success Uploading  Task Evidence',
-          uploadArray
+          uploadArray,
         );
         return Response.send(res);
       }
@@ -1024,7 +1016,7 @@ class CashForWorkController {
       const rules = {
         TaskAssignmentId: 'required|numeric',
         comment: 'required|string',
-        type: 'required|string'
+        type: 'required|string',
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -1036,14 +1028,14 @@ class CashForWorkController {
           return Response.send(res);
         } else {
           const task = await db.TaskAssignment.findOne({
-            where: {TaskId: TaskAssignmentId}
+            where: {TaskId: TaskAssignmentId},
           });
           if (task) {
             const extension = req.file.mimetype.split('/').pop();
             await uploadFile(
               files,
               'pge-' + environ + '-' + TaskAssignmentId + '-i.' + extension,
-              'convexity-progress-evidence'
+              'convexity-progress-evidence',
             )
               .then(async url => {
                 await db.TaskAssignmentEvidence.create({
@@ -1051,7 +1043,7 @@ class CashForWorkController {
                   TaskAssignmentId,
                   comment,
                   type,
-                  source: 'vendor'
+                  source: 'vendor',
                 });
               })
               .catch(err => {
@@ -1078,7 +1070,7 @@ class CashForWorkController {
     try {
       const tasks = await db.TaskAssignment.findAll({
         where: {TaskId: taskId},
-        include: {model: db.Task, as: 'Task'}
+        include: {model: db.Task, as: 'Task'},
       });
       if (tasks.length <= 0) {
         Response.setSuccess(200, 'No Task Recieved', tasks);
@@ -1116,7 +1108,7 @@ class CashForWorkController {
     const {UserId} = req.body;
     try {
       const rules = {
-        UserId: 'required|numeric'
+        UserId: 'required|numeric',
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -1127,8 +1119,8 @@ class CashForWorkController {
           where: {UserId},
           include: [
             {model: db.Task, as: 'Task'},
-            {model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'}
-          ]
+            {model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'},
+          ],
         });
         if (tasks.length <= 0) {
           Response.setSuccess(200, 'No Task Recieved', tasks);
@@ -1149,7 +1141,7 @@ class CashForWorkController {
     try {
       const rules = {
         user_id: 'required|numeric',
-        task_id: 'required|numeric'
+        task_id: 'required|numeric',
       };
 
       const validation = new Validator(req.params, rules);
@@ -1157,24 +1149,16 @@ class CashForWorkController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       }
-
       const user = await db.User.findByPk(user_id, {
-        attributes: userConst.publicAttr
+        attributes: userConst.publicAttr,
       });
       const assignment = await db.TaskAssignment.findOne({
-        where: {UserId: user_id, TaskId: task_id}
+        where: {UserId: user_id, TaskId: task_id},
       });
       const task_exist = await db.Task.findByPk(task_id);
       const submittedEvidence = await db.TaskAssignmentEvidence.findOne({
-        where: {TaskAssignmentId: assignment.id}
+        where: {TaskAssignmentId: assignment.id},
       });
-      const beneficiaryWallet = await WalletService.findUserCampaignWallet(
-        user_id,
-        task_exist.CampaignId
-      );
-      if (!beneficiaryWallet) {
-        await QueueService.createWallet(user_id, 'user', task_exist.CampaignId);
-      }
       if (!assignment) {
         Response.setSuccess(404, 'No Task Found', []);
         return Response.send(res);
@@ -1199,7 +1183,7 @@ class CashForWorkController {
     const {UserId, approved_by, approved_at} = req.body;
     try {
       const rules = {
-        UserId: 'required|numeric'
+        UserId: 'required|numeric',
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -1211,7 +1195,7 @@ class CashForWorkController {
           Response.setError(
             404,
             `User With This ID ${UserId}: Not Found`,
-            tasks
+            tasks,
           );
           return Response.send(res);
         }
@@ -1220,9 +1204,9 @@ class CashForWorkController {
             approved: true,
             approved_by,
             approved_by_agent: true,
-            approved_at
+            approved_at,
           },
-          {where: {UserId}}
+          {where: {UserId}},
         );
         Response.setSuccess(200, 'Task Approved Success');
         return Response.send(res);
@@ -1238,7 +1222,7 @@ class CashForWorkController {
     const {UserId, approved_by, approved_at} = req.body;
     try {
       const rules = {
-        UserId: 'required|numeric'
+        UserId: 'required|numeric',
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -1250,7 +1234,7 @@ class CashForWorkController {
           Response.setError(
             404,
             `User With This ID ${UserId}: Not Found`,
-            tasks
+            tasks,
           );
           return Response.send(res);
         }
@@ -1259,9 +1243,9 @@ class CashForWorkController {
             approved: true,
             approved_by,
             approved_by_vendor: true,
-            approved_at
+            approved_at,
           },
-          {where: {UserId}}
+          {where: {UserId}},
         );
         Response.setSuccess(200, 'Task Approved Success');
         return Response.send(res);

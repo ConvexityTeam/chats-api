@@ -51,8 +51,8 @@ class ZohoService {
       );
       const zoho = await ZohoToken.findByPk(1);
       data.expires_in = addMinutes();
-      await zoho.update(data);
-      Logger.info(`Generated Zoho Code`);
+      const updated = await zoho.update(data);
+      Logger.info(`Generated Zoho Code: ${JSON.stringify(updated)}`);
       return data;
     } catch (error) {
       Logger.error(`Error Generating Zoho Code: ${error}`);
@@ -63,7 +63,7 @@ class ZohoService {
   static async createTicket(ticket) {
     try {
       const zoho = await ZohoToken.findByPk(1);
-      if (moment().isBefore(zoho.expires_in)) {
+      if (moment().isAfter(zoho.expires_in)) {
         await this.refreshingAccessToken(zoho.refresh_token);
       }
       Logger.info('Creating Zoho Ticket');

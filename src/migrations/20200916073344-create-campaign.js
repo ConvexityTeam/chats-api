@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Campaigns', {
@@ -8,16 +8,16 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      // formId: {
-      //   type: Sequelize.INTEGER,
-      //   allowNull: true,
-      //   references: {
-      //     model: {
-      //       tableName: 'CampaignForms'
-      //     },
-      //     key: 'id'
-      //   }
-      // },
+      formId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: {
+            tableName: 'CampaignForms'
+          },
+          key: 'id'
+        }
+      },
       OrganisationMemberId: {
         allowNull: false,
         type: Sequelize.INTEGER,
@@ -72,6 +72,6 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Campaigns');
-  }
+    await queryInterface.dropTable("Campaigns");
+  },
 };

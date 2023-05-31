@@ -7,7 +7,7 @@ const {
   User,
   OrderProduct,
   Order,
-  Product
+  Product,
 } = require('../models');
 
 const Op = Sequelize.Op;
@@ -23,7 +23,6 @@ class OrderService {
     order,
     vendor,
     amount,
-    type
   ) {
     order.update({status: 'processing'});
     const transaction = await Transaction.create({
@@ -37,29 +36,18 @@ class OrderService {
       OrderId: order.id,
       VendorId: vendor.id,
       BeneficiaryId: beneficiaryWallet.UserId,
-      narration: 'Vendor Order'
+      narration: 'Vendor Order',
     });
-    if (type === 'item') {
-      QueueService.processNFTOrder(
-        beneficiaryWallet,
-        vendorWallet,
-        campaignWallet,
-        order,
-        vendor,
-        amount,
-        transaction.uuid
-      );
-    } else {
-      QueueService.processOrder(
-        beneficiaryWallet,
-        vendorWallet,
-        campaignWallet,
-        order,
-        vendor,
-        amount,
-        transaction.uuid
-      );
-    }
+
+    QueueService.processOrder(
+      beneficiaryWallet,
+      vendorWallet,
+      campaignWallet,
+      order,
+      vendor,
+      amount,
+      transaction.uuid,
+    );
 
     // Queue for process
     return transaction;
@@ -73,7 +61,7 @@ class OrderService {
           model: User,
           as: 'Vendor',
           attributes: userConst.publicAttr,
-          include: ['Store']
+          include: ['Store'],
         },
         {
           model: OrderProduct,
@@ -87,27 +75,27 @@ class OrderService {
                   model: User,
                   as: 'ProductBeneficiaries',
                   attributes: userConst.publicAttr,
-                  through: {where: {OrganisationId}}
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  through: {where: {OrganisationId}},
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
     return gender;
   }
 
-  static async productPurchasedBy(id) {
-    const product = await Order.findOne({
-      where: {id},
+  static async productPurchasedBy(OrganisationId) {
+    const product = await Order.findAll({
+      where: {status: 'confirmed'},
       include: [
         {
           model: User,
           as: 'Vendor',
           attributes: userConst.publicAttr,
-          include: ['Store']
+          include: ['Store'],
         },
 
         {
@@ -121,13 +109,13 @@ class OrderService {
                 {
                   model: User,
                   as: 'ProductBeneficiaries',
-                  attributes: userConst.publicAttr
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  attributes: userConst.publicAttr,
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
     return product;

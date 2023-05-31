@@ -1,36 +1,7 @@
 const TransactionService = require('../services/TransactionService');
 const util = require('../libs/Utils');
-const {HttpStatusCode} = require('../utils');
-const {Response} = require('../libs');
-const BeneficiariesService = require('../services/BeneficiaryService');
-const {UserService} = require('../services');
 
 class TransactionsController {
-  static async vendorTransaction(req, res) {
-    try {
-      const transactions = await TransactionService.getVendorTransaction(
-        req.params.vendor_id
-      );
-      for (let transaction of transactions) {
-        const beneficiary = await UserService.findBeneficiary(
-          transaction.BeneficiaryId
-        );
-        transaction.dataValues.beneficiary = beneficiary;
-      }
-      Response.setSuccess(
-        HttpStatusCode.STATUS_OK,
-        `vendor transactions retrieved`,
-        transactions
-      );
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support. ${error}`
-      );
-      return Response.send(res);
-    }
-  }
   static async getAllTransactions(req, res) {
     try {
       const allTransaction = await TransactionService.getAllTransactions();
@@ -54,7 +25,7 @@ class TransactionsController {
     const newTransaction = req.body;
     try {
       const createdTransaction = await TransactionService.addTransaction(
-        newTransaction
+        newTransaction,
       );
       util.setSuccess(201, 'Transaction Added!', createdTransaction);
       return util.send(res);
@@ -84,7 +55,7 @@ class TransactionsController {
     try {
       const updateTransaction = await TransactionService.updateTransaction(
         id,
-        alteredTransaction
+        alteredTransaction,
       );
       if (!updateTransaction) {
         util.setError(404, `Cannot find Transaction with the id: ${id}`);
@@ -108,7 +79,7 @@ class TransactionsController {
     try {
       const updateTransaction = await TransactionService.updateTransaction(
         id,
-        alteredTransaction
+        alteredTransaction,
       );
       if (!updateTransaction) {
         util.setError(404, `Cannot find Transaction with the id: ${id}`);
@@ -177,7 +148,7 @@ class TransactionsController {
 
     try {
       const TransactionToDelete = await TransactionService.deleteTransaction(
-        id
+        id,
       );
 
       if (TransactionToDelete) {

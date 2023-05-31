@@ -4,7 +4,7 @@ const fileSystem = require('fs');
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
 async function uploadFile(fileName, fileKey, bucket) {
@@ -14,7 +14,7 @@ async function uploadFile(fileName, fileKey, bucket) {
       Key: fileKey,
       ACL: 'public-read',
       Body: fileSystem.createReadStream(fileName.path),
-      ContentType: fileName.type
+      ContentType: fileName.type,
     };
     await s3.upload(params, function (s3Err, data) {
       if (s3Err) {

@@ -5,35 +5,27 @@ const {Op} = require('sequelize');
 class TransactionService {
   static async findOrgnaisationTransactions(
     OrganisationId,
-    extraClause = null
+    extraClause = null,
   ) {
     return Transaction.findAll({
       where: {
         ...extraClause,
-        OrganisationId
+        OrganisationId,
       },
-      attributes: [
-        'reference',
-        'amount',
-        'status',
-        'transaction_type',
-        'createdAt',
-        'updatedAt'
-      ],
+      attributes: ['reference','amount', 'status', 'transaction_type', 'createdAt', 'updatedAt'],
       include: [
         {
           model: Wallet,
           as: 'ReceiverWallet',
           attributes: [],
-
           include: [
             {
               model: User,
               as: 'User',
               attributes: userConst.publicAttr,
               attributes: []
-            }
-          ]
+            },
+          ],
         },
         {
           model: Wallet,
@@ -45,43 +37,11 @@ class TransactionService {
               as: 'User',
               attributes: userConst.publicAttr,
               attributes: []
-            }
-          ]
-        }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
-  }
-
-  static async findTransactions(where) {
-    return Transaction.findAll({
-      where,
-      include: [
-        {
-          model: Wallet,
-          as: 'ReceiverWallet',
-          attributes: [],
-          include: [
-            {
-              model: User,
-              as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
+            },
+          ],
         },
-        {
-          model: Wallet,
-          as: 'SenderWallet',
-          attributes: [],
-          include: [
-            {
-              model: User,
-              as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
-        }
-      ]
+      ],
+      order: [['createdAt', 'DESC']],
     });
   }
 
@@ -97,9 +57,9 @@ class TransactionService {
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
+              attributes: userConst.publicAttr,
+            },
+          ],
         },
         {
           model: Wallet,
@@ -109,11 +69,11 @@ class TransactionService {
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
-        }
-      ]
+              attributes: userConst.publicAttr,
+            },
+          ],
+        },
+      ],
     });
   }
 
@@ -121,7 +81,7 @@ class TransactionService {
     return Transaction.findAll({
       where,
       attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
-      raw: true
+      raw: true,
     });
   }
 
@@ -129,8 +89,8 @@ class TransactionService {
     return Transaction.findAll({
       where: {
         OrganisationId,
-        transaction_type: 'transfer'
-      }
+        transaction_type: 'transfer',
+      },
     });
   }
 
@@ -138,22 +98,11 @@ class TransactionService {
     return Transaction.findAll({
       where: {
         BeneficiaryId,
-        transaction_type: 'spent'
-      }
+        transaction_type: 'spent',
+      },
     });
   }
 
-  static async getVendorTransaction(VendorId) {
-    return Transaction.findAll({
-      where: {
-        VendorId,
-        BeneficiaryId: {
-          [Op.ne]: null
-        },
-        transaction_type: 'spent'
-      }
-    });
-  }
 
   static async getAllTransactions() {
     try {
@@ -176,15 +125,15 @@ class TransactionService {
     try {
       const TransactionToUpdate = await Transaction.findOne({
         where: {
-          id: Number(id)
-        }
+          id: Number(id),
+        },
       });
 
       if (TransactionToUpdate) {
         await Transaction.update(updateTransaction, {
           where: {
-            id: Number(id)
-          }
+            id: Number(id),
+          },
         });
 
         return updateTransaction;
@@ -200,8 +149,8 @@ class TransactionService {
     try {
       const theTransaction = await Transaction.findOne({
         where: {
-          id: Number(id)
-        }
+          id: Number(id),
+        },
       });
 
       return theTransaction;
@@ -217,10 +166,10 @@ class TransactionService {
           [Op.or]: [
             {
               BeneficiaryId: id,
-              VendorId: id
-            }
-          ]
-        }
+              VendorId: id,
+            },
+          ],
+        },
       });
 
       return theTransaction;
@@ -232,15 +181,15 @@ class TransactionService {
     try {
       const TransactionToDelete = await Transaction.findOne({
         where: {
-          id: Number(id)
-        }
+          id: Number(id),
+        },
       });
 
       if (TransactionToDelete) {
         const deletedTransaction = await Transaction.destroy({
           where: {
-            id: Number(id)
-          }
+            id: Number(id),
+          },
         });
         return deletedTransaction;
       }
