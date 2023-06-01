@@ -1605,7 +1605,6 @@ class AuthController {
       const email = data.email;
       if (url_string) {
         const domain = extractDomain(url_string);
-
         const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
         if (!email.match(new RegExp(re))) {
           Response.setError(400, 'Email must end in @' + domain);
@@ -1682,6 +1681,7 @@ class AuthController {
       const user = await UserService.addUser({
         RoleId: AclRoles.Donor,
         email: data.email,
+        status:'activated',
         password
       });
 
