@@ -75,10 +75,10 @@ networks:
     driver: bridge
     name: gateway
   rabbitmq:
-    internal: true
+    internal: true 
   postgres:
     internal: true
 
 volumes:
   postgres:
-    external: true
+    external: false

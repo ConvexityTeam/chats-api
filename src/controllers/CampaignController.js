@@ -406,6 +406,17 @@ class CampaignController {
         return Response.send(res);
       }
 
+      for (let user of realBeneficiaries) {
+        user.dataValues.formAnswer = null;
+        if (user.formAnswer) {
+          const answers = await CampaignService.findCampaignFormAnswer({
+            campaignId: campaign_id,
+            beneficiaryId: user.UserId
+          });
+          user.dataValues.formAnswer = answers;
+        }
+      }
+
       if (campaign.type === 'item') {
         await QueueService.fundNFTBeneficiaries(
           campaign,

@@ -636,10 +636,12 @@ class CampaignService {
         id: Number(id),
         OrganisationId
       },
-      include: {
-        model: Wallet,
-        as: 'Wallet'
-      }
+      include: [
+        {
+          model: Wallet,
+          as: 'Wallet'
+        }
+      ]
       // include: ["Beneficiaries"],
     });
   }
@@ -659,6 +661,16 @@ class CampaignService {
     return await CampaignForm.findOne({
       where: {id},
       include: ['campaigns']
+    });
+  }
+  static async findCampaignFormAnswer(where) {
+    return await FormAnswer.findOne({
+      where
+    });
+  }
+  static async findCampaignFormAnswers(where) {
+    return await FormAnswer.findAll({
+      where
     });
   }
   static async findCampaignFormBeneficiary(id) {
