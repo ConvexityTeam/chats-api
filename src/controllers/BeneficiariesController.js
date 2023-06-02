@@ -1207,13 +1207,38 @@ class BeneficiariesController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const question = await CampaignService.findCampaignFormByCampaignId(id);
-      if (!question && question.campaign_form) {
+      const beneficiary = await BeneficiaryService.fetchCampaignBeneficiary(
+        id,
+        data.beneficiaryId
+      );
+      if (!beneficiary) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign not found'
+          "Beneficiary dos'nt belong to campaign"
         );
+        return Response.send(res);
       }
+      const formAnswer = await CampaignService.findCampaignFormAnswer({
+        campaignId: id,
+        beneficiaryId: data.beneficiaryId
+      });
+      if (formAnswer) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Survey already submitted for this form'
+        );
+        return Response.send(res);
+      }
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+
+      if (question && !question.campaign_form) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          "Campaign dos'nt have a form"
+        );
+        return Response.send(res);
+      }
+
       req.body.campaignId = id;
       const createdForm = await CampaignService.formAnswer(req.body);
       Response.setSuccess(
