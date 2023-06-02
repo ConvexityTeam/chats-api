@@ -1032,6 +1032,8 @@ class OrganisationController {
       req.campaign.budget = additional_budget
         ? Number(additional_budget) + req.campaign.budget
         : req.campaign.budget;
+      req.body.status =
+        req.campaign.type === 'cash-for-work' ? 'active' : 'ongoing';
       const newCampaign = await req.campaign.update(req.body);
       const history = await db.CampaignHistory.create({
         extension_period,
