@@ -1179,6 +1179,7 @@ class QueueService {
       transaction_type: 'transfer',
       SenderWalletId: OrgWallet.uuid,
       ReceiverWalletId: campaignWallet.uuid,
+      CampaignId: campaign.id,
       OrganisationId: campaign.OrganisationId,
       narration: 'Approve Campaign Funding'
     });
