@@ -436,8 +436,7 @@ class CampaignController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`,
-        realBeneficiaries
+        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`
       );
       return Response.send(res);
     } catch (error) {

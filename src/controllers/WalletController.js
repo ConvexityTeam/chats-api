@@ -21,6 +21,15 @@ class WalletController {
         const transactions = await TransactionService.findOrgnaisationTransactions(
           OrganisationId
         );
+        for (let tran of transactions) {
+          if (tran.CampaignId) {
+            const campaign = await CampaignService.getCampaignById(
+              tran.CampaignId
+            );
+            tran.dataValues.campaign_name = campaign.title;
+            tran.dataValues.funded_with = null;
+          }
+        }
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Organisation Transactions',
@@ -39,6 +48,17 @@ class WalletController {
           'Transaction not found.'
         );
         return Response.send(res);
+      }
+
+      for (let transaction of transactions) {
+        console.log(transaction.CampaignId, 'transaction.CampaignId');
+        if (typeof transaction.CampaignId === 'number') {
+          const campaign = await CampaignService.getACampaign(
+            transaction.CampaignId,
+            req.organisation.id
+          );
+          transaction.dataValues.campaign_name = campaign.title;
+        }
       }
 
       Response.setSuccess(
@@ -96,9 +116,6 @@ class WalletController {
       const wallet = await WalletService.findMainOrganisationWallet(
         OrganisationId
       );
-      if (!wallet) {
-        await QueueService.createWallet(OrganisationId, 'organisation');
-      }
 
       const MainWallet = wallet.toObject();
       total_deposit = total_deposit || 0;
