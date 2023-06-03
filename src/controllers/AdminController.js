@@ -1,7 +1,7 @@
 require('dotenv').config();
 const db = require('../models');
-const {util, Response, Logger} = require('../libs');
-const {HttpStatusCode} = require('../utils');
+const { util, Response, Logger } = require('../libs');
+const { HttpStatusCode } = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
 const {
@@ -13,14 +13,14 @@ const {
   TransactionService,
   BlockchainService
 } = require('../services');
-const {SanitizeObject} = require('../utils');
+const { SanitizeObject } = require('../utils');
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 const axios = require('axios');
-const {termiiConfig} = require('../config');
-const {async} = require('regenerator-runtime');
+const { termiiConfig } = require('../config');
+const { async } = require('regenerator-runtime');
 const MailerService = require('../services/MailerService');
 const SmsService = require('../services/SmsService');
-const {AclRoles} = require('../utils');
+const { AclRoles } = require('../utils');
 
 class AdminController {
   static async updateStatus(req, res) {
@@ -48,7 +48,7 @@ class AdminController {
         }
       }
 
-      const userExist = await db.User.findOne({where: {id: data.userId}});
+      const userExist = await db.User.findOne({ where: { id: data.userId } });
       if (!userExist) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -56,7 +56,7 @@ class AdminController {
         );
         return Response.send(res);
       }
-      const updatesUser = await userExist.update({status: data.status});
+      const updatesUser = await userExist.update({ status: data.status });
       updatesUser.dataValues.password = null;
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, `User status updated`);
       return Response.send(res);
@@ -82,10 +82,10 @@ class AdminController {
       return util.send(res);
     } else {
       const campaignExist = await db.Campaign.findOne({
-        where: {id: data.campaignId}
+        where: { id: data.campaignId }
       });
       if (campaignExist) {
-        await campaignExist.update({status: data.status}).then(response => {
+        await campaignExist.update({ status: data.status }).then(response => {
           util.setError(200, 'Campaign Status Updated');
           return util.send(res);
         });
@@ -98,7 +98,7 @@ class AdminController {
 
   static async verifyAccount(req, res) {
     try {
-      const {userprofile_id} = req.params;
+      const { userprofile_id } = req.params;
       const data = req.body;
       data.country = 'Nigeria';
       data.currency = 'NGN';
@@ -142,7 +142,7 @@ class AdminController {
           status: 'activated',
           is_nin_verified: true
         },
-        {where: {id: organisation.id}}
+        { where: { id: organisation.id } }
       );
 
       Response.setSuccess(
@@ -242,7 +242,7 @@ class AdminController {
   }
 
   static async getNGODisbursedAndBeneficiaryTotal(req, res) {
-    const {organisation_id} = req.params;
+    const { organisation_id } = req.params;
 
     try {
       let total = await TransactionService.getTotalTransactionAmountAdmin(
@@ -299,7 +299,7 @@ class AdminController {
   }
 
   static async getVendorCampaignAndAmountTotal(req, res) {
-    const {vendor_id} = req.params;
+    const { vendor_id } = req.params;
     try {
       const transactions = await VendorService.vendorsTransactionsAdmin(
         vendor_id
@@ -359,7 +359,7 @@ class AdminController {
   }
 
   static async getBeneficiaryAmountAndCampaignsTotal(req, res) {
-    const {beneficiary_id} = req.params;
+    const { beneficiary_id } = req.params;
 
     try {
       let total = await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
