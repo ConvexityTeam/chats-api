@@ -14,7 +14,12 @@ const Validator = require('validatorjs');
 const {Response} = require('../libs');
 
 const moment = require('moment');
-const {HttpStatusCode, compareHash, BeneficiarySource} = require('../utils');
+const {
+  HttpStatusCode,
+  compareHash,
+  BeneficiarySource,
+  AclRoles
+} = require('../utils');
 const {type} = require('../libs/Utils');
 class BeneficiariesController {
   static async getAllUsers(req, res) {
@@ -1245,6 +1250,46 @@ class BeneficiariesController {
         HttpStatusCode.STATUS_OK,
         'Questionnaire submitted',
         createdForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async adminRegisterBeneficiary(req, res) {
+    const data = req.body;
+    try {
+      const rules = {
+        first_name: 'required|alpha',
+        last_name: 'required|alpha',
+        email: 'required|email',
+        phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/']
+      };
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      data.RoleId = AclRoles.Beneficiary;
+      const beneficiary = await UserService.findByEmail(data.email);
+      if (beneficiary) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Email already taken'
+        );
+        return Response.send(res);
+      }
+      const createdBeneficiary = await UserService.addUser(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Beneficiary registered successfully',
+        createdBeneficiary
       );
       return Response.send(res);
     } catch (error) {

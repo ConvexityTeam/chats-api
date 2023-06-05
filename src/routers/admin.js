@@ -16,10 +16,17 @@ const {
   OrganisationController
 } = require('../controllers');
 const TransactionsController = require('../controllers/TransactionsController');
+const BeneficiariesController = require('../controllers/BeneficiariesController');
+const UsersController = require('../controllers/UsersController');
 
 router.post('/update-status', SuperAdminAuth, AdminController.updateStatus);
 // router.post("/register", AuthCtrl.createUser);
-// router.post("/self-registration", AuthCtrl.normalRegistration);
+router.post(
+  '/register-beneficiary',
+  SuperAdminAuth,
+  BeneficiariesController.adminRegisterBeneficiary
+);
+router.post('/register-vendor', UsersController.createVendor);
 // router.post("/ngo-register", AuthCtrl.createAdminUser);
 // router.post("/register/special-case", AuthCtrl.specialCaseRegistration);
 router.post('/update-profile', AuthController.updateProfile);

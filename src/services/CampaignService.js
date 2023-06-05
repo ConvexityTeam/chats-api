@@ -688,6 +688,11 @@ class CampaignService {
       where: {title}
     });
   }
+  static async findCampaignFormById(id) {
+    return await CampaignForm.findOne({
+      where: {id}
+    });
+  }
   static async findCampaignFormByCampaignId(id) {
     return await Campaign.findOne({
       where: {id},
