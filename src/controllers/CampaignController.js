@@ -1173,6 +1173,15 @@ class CampaignController {
       );
       const onboard = [];
 
+      const campaign = await CampaignService.getCampaignById(campaign_id);
+
+      if (campaign.formId) {
+        Response.setError(
+          HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+          `Campaign Has a Form Please Onboard Beneficiary From Field App`
+        );
+        return Response.send(res);
+      }
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
           setTimeout(async () => {

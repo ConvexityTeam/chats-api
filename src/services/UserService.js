@@ -7,6 +7,9 @@ const {Logger} = require('../libs');
 const {userConst} = require('../constants');
 
 class UserService {
+  static async createUser(data) {
+    return await User.create(data);
+  }
   static async getAllUsers() {
     try {
       return await User.findAll({

@@ -4,7 +4,8 @@ const {
   compareHash,
   createHash,
   SanitizeObject,
-  HttpStatusCode
+  HttpStatusCode,
+  AclRoles
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -65,6 +66,61 @@ class UsersController {
       return Response.send(res);
     } catch (error) {
       Response.setError(500, error.message);
+      return Response.send(res);
+    }
+  }
+
+  static async createVendor(req, res) {
+    const {
+      first_name,
+      last_name,
+      email,
+      phone,
+      address,
+      location,
+      store_name
+    } = req.body;
+    try {
+      const rules = {
+        first_name: 'required|alpha',
+        last_name: 'required|alpha',
+        email: 'required|email',
+        phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+        store_name: 'required|string',
+        address: 'required|string',
+        location: 'required|string'
+      };
+
+      const validation = new Validator(req.body, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const createdVendor = await UserService.createUser({
+        RoleId: AclRoles.Vendor,
+        first_name,
+        last_name,
+        email,
+        phone
+      });
+      await db.Market.create({
+        store_name,
+        address,
+        location,
+        UserId: createdVendor.id
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Vendor Account Created.',
+        createdVendor
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support' + error
+      );
       return Response.send(res);
     }
   }
