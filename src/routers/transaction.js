@@ -10,6 +10,7 @@ router.get(
 );
 router.get('/', Auth, TransactionsController.getAllTransactions);
 router.get('/:id', Auth, TransactionsController.getATransaction);
+router.get('/getBlockDetails/:hashkey', TransactionsController.getBlockTransactions);
 router.post('/', Auth, TransactionsController.addTransaction);
 router.put('/:id', Auth, TransactionsController.updatedTransaction);
 router.delete('/:id', Auth, TransactionsController.deleteTransaction);

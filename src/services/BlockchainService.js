@@ -813,6 +813,20 @@ class BlockchainService {
       Logger.error(`Error Creating Wallet Address: ${error} `);
     }
   }
+  static async getTransactionDetails(address) {
+    let transDetails = [];
+    try {
+      provider.getHistory(address).then(history => {
+        history.forEach(tx => {
+          console.log(tx);
+          transDetails.push(tx);
+        });
+      });
+      return transDetails;
+    } catch (error) {
+      Logger.error(`Error Transaction Details: ${error} `);
+    }
+  }
 }
 
 // async function fuc() {
