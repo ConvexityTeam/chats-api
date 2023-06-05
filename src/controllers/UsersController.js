@@ -104,6 +104,7 @@ class UsersController {
         email,
         phone
       });
+      await QueueService.createWallet(createdVendor.id, 'user');
       await db.Market.create({
         store_name,
         address,

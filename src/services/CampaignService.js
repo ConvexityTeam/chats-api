@@ -67,7 +67,19 @@ class CampaignService {
 
   static getCampaignById(id) {
     return Campaign.findByPk(id, {
-      include: ['Organisation']
+      include: ['Organisation'],
+      include: {
+        model: User,
+        as: 'Beneficiaries',
+        attributes: [
+          'first_name',
+          'last_name',
+          'gender',
+          'marital_status',
+          'dob',
+          'location'
+        ]
+      }
     });
   }
   static getPubCampaignById(id) {
