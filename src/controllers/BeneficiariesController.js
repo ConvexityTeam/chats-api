@@ -1286,6 +1286,7 @@ class BeneficiariesController {
         return Response.send(res);
       }
       const createdBeneficiary = await UserService.addUser(data);
+      await QueueService.createWallet(createdBeneficiary.id, 'user');
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Beneficiary registered successfully',

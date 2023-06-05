@@ -13,7 +13,8 @@ const {
   AuthController,
   NgoController,
   VendorController,
-  OrganisationController
+  OrganisationController,
+  CampaignController
 } = require('../controllers');
 const TransactionsController = require('../controllers/TransactionsController');
 const BeneficiariesController = require('../controllers/BeneficiariesController');
@@ -26,7 +27,9 @@ router.post(
   SuperAdminAuth,
   BeneficiariesController.adminRegisterBeneficiary
 );
+
 router.post('/register-vendor', UsersController.createVendor);
+router.get('/campaign-info/:campaign_id', CampaignController.campaignInfo);
 // router.post("/ngo-register", AuthCtrl.createAdminUser);
 // router.post("/register/special-case", AuthCtrl.specialCaseRegistration);
 router.post('/update-profile', AuthController.updateProfile);
