@@ -1176,13 +1176,13 @@ class CampaignController {
 
       const campaign = await CampaignService.getCampaignById(campaign_id);
 
-      if (campaign.formId) {
-        Response.setError(
-          HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-          `Campaign Has a Form Please Onboard Beneficiary From Field App`
-        );
-        return Response.send(res);
-      }
+      // if (campaign.formId) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Campaign Has a Form Please Onboard Beneficiary From Field App`
+      //   );
+      //   return Response.send(res);
+      // }
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
           setTimeout(async () => {
@@ -1215,6 +1215,43 @@ class CampaignController {
     }
   }
 
+  static async withdrawFund(req, res) {
+    const id = req.params.campaign_id;
+    try {
+      const campaign = await CampaignService.getCampaignById(id);
+      if (!campaign.is_funded) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign not funded`
+        );
+        return Response.send(res);
+      }
+      if (!campaign.status === 'ongoing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Campaign already ongoing`
+        );
+        return Response.send(res);
+      }
+
+      await QueueService.withHoldFunds(
+        campaign.id,
+        campaign.OrganisationId,
+        campaign.budget
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Campaign funds withdrawal processing`
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
   static async campaignInfo(req, res) {
     try {
       let eighteenTo29 = 0;

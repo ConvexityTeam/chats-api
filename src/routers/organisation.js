@@ -95,6 +95,15 @@ router.post(
   ParamValidator.CampaignIdOptional,
   CampaignController.importBeneficiary
 );
+router.post(
+  '/:organisation_id/campaign-withdrawal/:campaign_id',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  ParamValidator.CampaignIdOptional,
+  CampaignController.withdrawFund
+);
+
 router.get(
   '/beneficiaries-summary/:id',
   OrganisationController.getBeneficiariesFinancials
