@@ -24,16 +24,10 @@ class SubscriptionsControllers {
   }
   static async updateSubscriptions(req, res) {
     try {
-        
-    } catch (error) {
-        
-    }
+    } catch (error) {}
   }
   static async deleteSubscriptions(req, res) {
     try {
-        
-    } catch (error) {
-        
-    }
+    } catch (error) {}
   }
 }
