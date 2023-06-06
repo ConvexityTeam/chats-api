@@ -16,7 +16,7 @@ class TransactionService {
         'reference',
         'amount',
         'status',
-        'CampaignId',
+        'transaction_hash',
         'transaction_type',
         'createdAt',
         'updatedAt'
