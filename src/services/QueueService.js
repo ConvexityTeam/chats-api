@@ -56,7 +56,9 @@ const {
   INCREASE_GAS_MINT_NFT,
   ESCROW_HASH,
   APPROVE_NFT_SPENDING,
-  INCREASE_GAS_APPROVE_SPENDING
+  INCREASE_GAS_APPROVE_SPENDING,
+  CONFIRM_WITHHOLDING_FUND,
+  WITHHOLD_FUND_GAS_ERROR
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -287,6 +289,12 @@ const sendBForRedeem = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+const confirmWithHoldFundsQueue = RabbitMq['default'].declareQueue(
+  CONFIRM_WITHHOLDING_FUND,
+  {
+    durable: true
+  }
+);
 
 const increaseAllowance = RabbitMq['default'].declareQueue(
   INCREASE_ALLOWANCE_GAS,
@@ -395,6 +403,13 @@ const approveNFTSpending = RabbitMq['default'].declareQueue(
 
 const increaseGasApproveSpending = RabbitMq['default'].declareQueue(
   INCREASE_GAS_APPROVE_SPENDING,
+  {
+    durable: true
+  }
+);
+
+const increaseGasWithHoldFunds = RabbitMq['default'].declareQueue(
+  WITHHOLD_FUND_GAS_ERROR,
   {
     durable: true
   }
@@ -527,6 +542,14 @@ class QueueService {
   static async increaseGasFeeVTransferFrom(keys, message) {
     const payload = {keys, message};
     increaseGasFeeVTransferFrom.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async increaseGasWithHoldFunds(keys, message) {
+    const payload = {keys, message};
+    increaseGasWithHoldFunds.send(
       new Message(payload, {
         contentType: 'application/json'
       })
@@ -992,6 +1015,15 @@ class QueueService {
   static async confirmAndCreateWallet(content, keyPair) {
     const payload = {content, keyPair};
     confirmAndCreateWalletQueue.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async confirmWithHoldFunds(data) {
+    const payload = data;
+    confirmWithHoldFundsQueue.send(
       new Message(payload, {
         contentType: 'application/json'
       })
