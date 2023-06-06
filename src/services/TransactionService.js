@@ -16,6 +16,7 @@ class TransactionService {
         'reference',
         'amount',
         'status',
+        'transaction_hash',
         'transaction_type',
         'createdAt',
         'updatedAt'

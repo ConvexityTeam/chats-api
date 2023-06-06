@@ -202,10 +202,18 @@ class TransactionsController {
     }
   }
   static async getBlockChainTransactionDetails(req, res) {
-    const haskKey = req.params.hashKey;
+    const trans_hash = req.params.transaction_hash;
     try {
-      let blockChains = await BlockchainService.getTransactionDetails(haskKey);
-      util.setSuccess(200, 'Transaction retrieved', blockChains);
+      // console.log(`Transaction Hash: ${trans_hash}`);
+      let blockChains = await BlockchainService.getTransactionDetails(
+        trans_hash
+      );
+      if (!blockChains) {
+        util.setSuccess(200, 'Transaction yet to be Mined ', blockChains);
+        return util.send(res);
+      }
+
+      util.setSuccess(200, 'Transaction Details Retrieved', blockChains);
       return util.send(res);
     } catch (error) {
       util.setError(400, error);
