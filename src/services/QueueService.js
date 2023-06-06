@@ -58,7 +58,8 @@ const {
   APPROVE_NFT_SPENDING,
   INCREASE_GAS_APPROVE_SPENDING,
   CONFIRM_WITHHOLDING_FUND,
-  WITHHOLD_FUND_GAS_ERROR
+  WITHHOLD_FUND_GAS_ERROR,
+  WITHHELD_FUND
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -295,6 +296,9 @@ const confirmWithHoldFundsQueue = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+const withHoldFundsQueue = RabbitMq['default'].declareQueue(WITHHELD_FUND, {
+  durable: true
+});
 
 const increaseAllowance = RabbitMq['default'].declareQueue(
   INCREASE_ALLOWANCE_GAS,
@@ -1020,10 +1024,32 @@ class QueueService {
       })
     );
   }
-
   static async confirmWithHoldFunds(data) {
     const payload = data;
     confirmWithHoldFundsQueue.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async withHoldFunds(campaign_id, organisation_id, amount) {
+    const transaction = await Transaction.create({
+      amount: amount,
+      reference: generateTransactionRef(),
+      status: 'processing',
+      transaction_origin: 'wallet',
+      transaction_type: 'withdrawal',
+      CampaignId: campaign_id,
+      OrganisationId: organisation_id,
+      narration: 'Campaign wallet withdrawal to organization wallet'
+    });
+    const payload = {
+      campaign_id,
+      organisation_id,
+      transactionId: transaction.uuid,
+      amount
+    };
+    withHoldFundsQueue.send(
       new Message(payload, {
         contentType: 'application/json'
       })
