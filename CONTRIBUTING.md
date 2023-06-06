@@ -44,7 +44,7 @@ Provide a descriptive title and detailed description of your changes in the merg
 
 Contribution Approval and Merging:
 
-Once your pull request has been reviewed and approved by the project maintainers, it will be merged into the main branch.
+Once your merge request has been reviewed and approved by the project maintainers, it will be merged into the main branch.
 Congratulations! Your contribution is now part of the project.
 
 

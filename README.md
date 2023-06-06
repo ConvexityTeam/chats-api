@@ -37,3 +37,32 @@ CHATS(Convexity Humanitarian Aid Transfer Solution), enables the transparent tra
     -run `docker volume create postgres` (This creates docker volume for PostgresSQL Database)
     -run `docker-compose up --build` to build and start all services
 
+
+
+# Convexity Humanitarian Aid Transfer Solution (CHATS) Starting Guide
+
+Create a New Branch:
+
+Create a new branch on your local machine.
+
+Make Changes:
+
+Implement your desired changes or additions to the codebase.
+Ensure that your code follows the project's coding conventions and style guidelines.
+
+Test Your Changes:
+
+Before submitting your contribution, make sure to test your changes thoroughly.
+
+Commit and Push:
+
+Commit your changes with clear and descriptive commit messages.
+Push your commits to the branch you created on your forked repository.
+
+
+Create a Merge Request (MR):
+
+Go to the original repository and locate the "Merge Requests" section.
+Click on "New merge request" to create a new merge request from your branch to the original repository's main branch.
+Provide a descriptive title and detailed description of your changes in the merge request.
+
