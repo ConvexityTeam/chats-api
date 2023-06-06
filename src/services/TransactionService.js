@@ -1,5 +1,5 @@
 const {userConst} = require('../constants');
-const {Transaction, Sequelize, Wallet, User} = require('../models');
+const {Transaction, Sequelize, Campaign, Wallet, User} = require('../models');
 const {Op} = require('sequelize');
 
 class TransactionService {

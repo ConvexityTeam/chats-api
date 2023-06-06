@@ -367,23 +367,12 @@ class BeneficiariesService {
     });
   }
 
-  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
-    return Beneficiary.findAll({
+  static async fetchCampaignBeneficiary(CampaignId, UserId) {
+    return Beneficiary.findOne({
       where: {
-        ...extraClause,
+        UserId,
         CampaignId
-      },
-      include: [
-        {
-          model: User,
-          as: 'User',
-          attributes: userConst.publicAttr,
-          include: {
-            model: FormAnswer,
-            as: 'Answers'
-          }
-        }
-      ]
+      }
     });
   }
 
@@ -408,7 +397,25 @@ class BeneficiariesService {
       ]
     });
   }
-
+  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
+    return Beneficiary.findAll({
+      where: {
+        ...extraClause,
+        CampaignId
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConst.publicAttr,
+          include: {
+            model: FormAnswer,
+            as: 'Answers'
+          }
+        }
+      ]
+    });
+  }
   static async getBeneficiariesAdmin() {
     return User.findAll({
       where: {

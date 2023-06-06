@@ -67,7 +67,19 @@ class CampaignService {
 
   static getCampaignById(id) {
     return Campaign.findByPk(id, {
-      include: ['Organisation']
+      include: ['Organisation'],
+      include: {
+        model: User,
+        as: 'Beneficiaries',
+        attributes: [
+          'first_name',
+          'last_name',
+          'gender',
+          'marital_status',
+          'dob',
+          'location'
+        ]
+      }
     });
   }
   static getPubCampaignById(id) {
@@ -636,10 +648,12 @@ class CampaignService {
         id: Number(id),
         OrganisationId
       },
-      include: {
-        model: Wallet,
-        as: 'Wallet'
-      }
+      include: [
+        {
+          model: Wallet,
+          as: 'Wallet'
+        }
+      ]
       // include: ["Beneficiaries"],
     });
   }
@@ -661,6 +675,16 @@ class CampaignService {
       include: ['campaigns']
     });
   }
+  static async findCampaignFormAnswer(where) {
+    return await FormAnswer.findOne({
+      where
+    });
+  }
+  static async findCampaignFormAnswers(where) {
+    return await FormAnswer.findAll({
+      where
+    });
+  }
   static async findCampaignFormBeneficiary(id) {
     return await CampaignForm.findOne({
       where: {id},
@@ -674,6 +698,11 @@ class CampaignService {
   static async findCampaignFormByTitle(title) {
     return await CampaignForm.findOne({
       where: {title}
+    });
+  }
+  static async findCampaignFormById(id) {
+    return await CampaignForm.findOne({
+      where: {id}
     });
   }
   static async findCampaignFormByCampaignId(id) {
