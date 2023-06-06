@@ -1,9 +1,9 @@
 const TransactionService = require('../services/TransactionService');
 const util = require('../libs/Utils');
-const { HttpStatusCode } = require('../utils');
-const { Response } = require('../libs');
+const {HttpStatusCode} = require('../utils');
+const {Response} = require('../libs');
 const BeneficiariesService = require('../services/BeneficiaryService');
-const { UserService } = require('../services');
+const {UserService, BlockchainService} = require('../services');
 
 class TransactionsController {
   static async vendorTransaction(req, res) {
@@ -71,12 +71,12 @@ class TransactionsController {
    */
   static async newInvoice(req, res) {
     try {
-    } catch (error) { }
+    } catch (error) {}
   }
 
   static async updatedTransaction(req, res) {
     const alteredTransaction = req.body;
-    const { id } = req.params;
+    const {id} = req.params;
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
       return util.send(res);
@@ -100,7 +100,7 @@ class TransactionsController {
 
   static async updateTransaction(req, res) {
     const alteredTransaction = req.body;
-    const { id } = req.params;
+    const {id} = req.params;
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
       return util.send(res);
@@ -123,7 +123,7 @@ class TransactionsController {
   }
 
   static async getATransaction(req, res) {
-    const { id } = req.params;
+    const {id} = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
@@ -146,7 +146,7 @@ class TransactionsController {
   }
 
   static async getUserATransaction(req, res) {
-    const { id } = req.params;
+    const {id} = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
@@ -168,7 +168,7 @@ class TransactionsController {
   }
 
   static async deleteTransaction(req, res) {
-    const { id } = req.params;
+    const {id} = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please provide a numeric value');
@@ -201,7 +201,17 @@ class TransactionsController {
       return util.send(res);
     }
   }
+  static async getBlockChainTransactionDetails(req, res) {
+    const haskKey = req.params.hashKey;
+    try {
+      let blockChains = await BlockchainService.getTransactionDetails(haskKey);
+      util.setSuccess(200, 'Transaction retrieved', blockChains);
+      return util.send(res);
+    } catch (error) {
+      util.setError(400, error);
+      return util.send(res);
+    }
+  }
 }
-
 
 module.exports = TransactionsController;
