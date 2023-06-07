@@ -38,7 +38,7 @@ class MailerService {
       });
     });
   }
-  verify(to, name, password, vendor_id) {
+  async verify(to, name, password, vendor_id) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
         if (!err) {
@@ -266,7 +266,6 @@ class MailerService {
     });
   }
   sendEmailVerification(to, orgName, url) {
-    
     const body = `
     <div>
     <h2>Hello, ${orgName}</h2>
@@ -278,11 +277,11 @@ class MailerService {
     `;
     const options = {
       from: this.config.from,
-      to:to,
+      to: to,
       subject: 'Please confirm your account',
       html: body
     };
-  
+
     return new Promise((resolve, reject) => {
       this.transporter.sendMail(options, (err, data) => {
         if (!err) {
