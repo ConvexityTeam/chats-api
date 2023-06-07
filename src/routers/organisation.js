@@ -7,6 +7,7 @@ const {
   ComplaintController
 } = require('../controllers');
 const CashForWorkController = require('../controllers/CashForWorkController');
+const UsersController = require('../controllers/UsersController');
 
 const {
   DonorAuth,
@@ -324,7 +325,7 @@ router
     IsOrgMember,
     OrganisationController.getAllOrgCampaigns
   );
-
+router.post('/group-beneficiaries', UsersController.groupAccount);
 router
   .route('/donations/private_donor/campaigns/all')
   .get(DonorAuth, OrganisationController.getAllPrivateDonorCampaigns);

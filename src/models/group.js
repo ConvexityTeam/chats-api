@@ -14,7 +14,6 @@ module.exports = (sequelize, DataTypes) => {
   Group.init(
     {
       group_name: DataTypes.STRING,
-      group_category: DataTypes.STRING,
       representative_id: DataTypes.INTEGER,
       group_category: DataTypes.ENUM(
         'family',

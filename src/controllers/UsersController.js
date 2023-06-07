@@ -159,8 +159,55 @@ class UsersController {
     }
   }
   static async groupAccount(req, res) {
+    const {group, representative, member} = req.body;
     try {
-      const group = await UserService.createUser();
+      const rules = {
+        'representative.first_name': 'required|alpha',
+        'representative.last_name': 'required|alpha',
+        'representative.gender': 'required|in:male,female',
+        'representative.email': 'required|email',
+        'representative.dob': 'required|date',
+        'representative.phone': ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+        'member.*.full_name': 'required|string',
+        'member.*.dob': 'required|date',
+        'member.*.full_name': 'required|string',
+        'group.group_name': 'required|string',
+        'group.group_category': 'required|string'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const data = member;
+      const find = await UserService.findByEmail(representative.email);
+      if (find) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Email already taken'
+        );
+        return Response.send(res);
+      }
+      const result = await db.sequelize.transaction(async t => {
+        representative.RoleId = AclRoles.Beneficiary;
+        // representative.password = createHash()
+        const rep = await db.User.create(representative, {transaction: t});
+        group.representative_id = rep.id;
+        const grouping = await db.Group.create(group, {transaction: t});
+        for (let mem of data) {
+          mem.group_id = grouping.id;
+        }
+        const members = await db.Member.bulkCreate(data, {transaction: t});
+        rep.dataValues.group = grouping;
+        rep.dataValues.members = members;
+        return rep;
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Group Created',
+        result
+      );
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
