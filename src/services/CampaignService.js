@@ -357,7 +357,7 @@ class CampaignService {
       where: {
         ...where
       },
-
+      include: ['Organisation'],
       include: [
         {model: Task, as: 'Jobs'},
         {
