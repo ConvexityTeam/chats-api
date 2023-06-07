@@ -9,23 +9,35 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      full_name: {
+      group_name: {
         type: Sequelize.STRING,
         allowNull: false
       },
-      profile_pic: {
-        type: Sequelize.STRING
-      },
-      dob: {
-        type: Sequelize.DATE,
+      group_category: {
+        type: Sequelize.ENUM(
+          'family',
+          'community',
+          'interest-group',
+          'associations'
+        ),
         allowNull: false
       },
-      group_id: {
+      representative_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
             tableName: 'Users'
+          },
+          key: 'id'
+        }
+      },
+      member_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Members'
           },
           key: 'id'
         }
