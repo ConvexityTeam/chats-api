@@ -48,6 +48,7 @@ RabbitMq['default']
         const campaignKeys = await BlockchainService.setUserKeypair(
           `campaign_${campaign_id}`
         );
+        Logger.info('Process 1');
         const transfer = await BlockchainService.transferTo(
           campaignKeys.privateKey,
           organizationKeys.address,
@@ -60,16 +61,19 @@ RabbitMq['default']
           },
           'withHoldFunds'
         );
+        Logger.info('Process 2');
         if (!transfer) {
           msg.nack();
           return;
         }
+        Logger.info('Process 3');
         await ConsumerFunction.update_transaction(
           {
             transaction_hash: transfer.Transfered
           },
           transactionId
         );
+        Logger.info('Process' + transfer.Transfered);
         await QueueService.confirmWithHoldFunds({
           transactionId,
           transaction_hash: transfer.Transfered,

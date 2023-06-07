@@ -1174,7 +1174,7 @@ class CampaignController {
       );
       const onboard = [];
 
-      const campaign = await CampaignService.getCampaignById(campaign_id);
+      //const campaign = await CampaignService.getCampaignById(campaign_id);
 
       // if (campaign.formId) {
       //   Response.setError(

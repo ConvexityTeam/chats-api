@@ -13,6 +13,8 @@ services:
   backend:
     depends_on:
       - rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     container_name: backend
     build:
       context: .
@@ -33,6 +35,8 @@ services:
     command: npm run start:dev
 
   consumer:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - rabbitmq
       - backend

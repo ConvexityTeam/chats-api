@@ -333,7 +333,7 @@ router.get(
   '/donations/public_donor/campaigns/all',
   OrganisationController.getAllPublicDonorCampaigns
 );
-
+router.get('/public-ngos', OrganisationController.getAllNGOs);
 router
   .route('/:organisation_id/cash4works')
   .get(
