@@ -32,16 +32,6 @@ module.exports = {
           key: 'id'
         }
       },
-      member_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Members'
-          },
-          key: 'id'
-        }
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
