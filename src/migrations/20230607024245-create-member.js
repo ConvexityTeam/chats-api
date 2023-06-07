@@ -20,6 +20,16 @@ module.exports = {
       profile_pic: {
         type: Sequelize.STRING
       },
+      group_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Groups'
+          },
+          key: 'id'
+        }
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
