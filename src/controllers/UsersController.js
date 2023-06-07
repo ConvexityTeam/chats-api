@@ -158,7 +158,17 @@ class UsersController {
       return Response.send(res);
     }
   }
-
+  static async groupAccount(req, res) {
+    try {
+      const group = await UserService.createUser();
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async addBankAccount(req, res) {
     try {
       const data = SanitizeObject(req.body, ['account_number', 'bank_code']);
