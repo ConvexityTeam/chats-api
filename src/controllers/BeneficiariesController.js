@@ -5,7 +5,9 @@ const {
   QueueService,
   OrganisationService,
   BlockchainService,
-  UserService
+  UserService,
+  MailerService,
+  SmsService
 } = require('../services');
 const util = require('../libs/Utils');
 const db = require('../models');
@@ -18,7 +20,9 @@ const {
   HttpStatusCode,
   compareHash,
   BeneficiarySource,
-  AclRoles
+  AclRoles,
+  generateRandom,
+  createHash
 } = require('../utils');
 const {type} = require('../libs/Utils');
 class BeneficiariesController {
@@ -1263,6 +1267,8 @@ class BeneficiariesController {
 
   static async adminRegisterBeneficiary(req, res) {
     const data = req.body;
+
+    const {first_name, last_name, email, phone} = req.body;
     try {
       const rules = {
         first_name: 'required|alpha',
@@ -1276,6 +1282,8 @@ class BeneficiariesController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+      const rawPassword = generateRandom(8);
+      const password = createHash(rawPassword);
       data.RoleId = AclRoles.Beneficiary;
       const beneficiary = await UserService.findByEmail(data.email);
       if (beneficiary) {
@@ -1285,7 +1293,18 @@ class BeneficiariesController {
         );
         return Response.send(res);
       }
+      req.body.password = password;
       const createdBeneficiary = await UserService.addUser(data);
+      await MailerService.verify(
+        email,
+        first_name + ' ' + last_name,
+        rawPassword
+      );
+      createdBeneficiary.dataValues.password = null;
+      await SmsService.sendOtp(
+        phone,
+        `Hi, ${first_name}  ${last_name} your CHATS account password is: ${rawPassword}`
+      );
       await QueueService.createWallet(createdBeneficiary.id, 'user');
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
