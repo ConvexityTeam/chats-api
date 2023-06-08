@@ -24,6 +24,7 @@ services:
       - NODE_ENV=development
     ports: 
       - 8080:8080
+      - 2345:2345
     expose:
       - 8080
     networks:
@@ -31,21 +32,21 @@ services:
       - rabbitmq
     restart: unless-stopped
     command: npm run start:dev
-  postgres:
-      image: postgres:11-alpine
-      container_name: postgres
-      networks:
-        - postgres
-      volumes:
-        - postgres:/var/lib/postgresql/data
-        - /etc/localtime:/etc/localtime:ro
-      environment:
-        - POSTGRES_DB=staging-chats
-        - POSTGRES_USER=stagechats
-        - POSTGRES_PASSWORD=HHt45eifP9puW
-        - POSTGRES_PORT=2345
-        - POSTGRES_HOST=localhost
-      restart: unless-stopped
+  # postgres:
+  #     image: postgres:11-alpine
+  #     container_name: postgres
+  #     networks:
+  #       - postgres
+  #     volumes:
+  #       - postgres:/var/lib/postgresql/data
+  #       - /etc/localtime:/etc/localtime:ro
+  #     environment:
+  #       - POSTGRES_DB=staging-chats
+  #       - POSTGRES_USER=stagechats
+  #       - POSTGRES_PASSWORD=HHt45eifP9puW
+  #       - POSTGRES_PORT=2345
+  #       - POSTGRES_HOST=localhost
+  #     restart: unless-stopped
 
   consumer:
     depends_on:
@@ -72,8 +73,8 @@ networks:
   gateway:
     driver: bridge
     name: gateway
-  postgres:
-    internal: true
+  # postgres:
+  #   internal: true
   rabbitmq:
     internal: true
 volumes:
