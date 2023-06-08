@@ -13,8 +13,6 @@ services:
   backend:
     depends_on:
       - rabbitmq
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     container_name: backend
     build:
       context: .
@@ -33,10 +31,23 @@ services:
       - rabbitmq
     restart: unless-stopped
     command: npm run start:dev
+  postgres:
+      image: postgres:11-alpine
+      container_name: postgres
+      networks:
+        - postgres
+      volumes:
+        - postgres:/var/lib/postgresql/data
+        - /etc/localtime:/etc/localtime:ro
+      environment:
+        - POSTGRES_DB=staging-chats
+        - POSTGRES_USER=stagechats
+        - POSTGRES_PASSWORD=HHt45eifP9puW
+        - POSTGRES_PORT=2345
+        - POSTGRES_HOST=localhost
+      restart: unless-stopped
 
   consumer:
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - rabbitmq
       - backend
@@ -61,5 +72,10 @@ networks:
   gateway:
     driver: bridge
     name: gateway
+  postgres:
+    internal: true
   rabbitmq:
     internal: true
+volumes:
+  postgres:
+    external: false
