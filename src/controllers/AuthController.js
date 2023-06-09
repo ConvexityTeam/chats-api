@@ -790,9 +790,8 @@ class AuthController {
   }
 
   static async confirmEmail(req, res) {
-    const confirmationCode = req.body.confirmationCode;
+    const confirmationCode = req.params.confirmationCode;
     try {
-      //verify token
       if (!confirmationCode) {
         //if token is missing
         Response.setError(
@@ -809,7 +808,7 @@ class AuthController {
             console.log(err);
             Response.setError(
               HttpStatusCode.STATUS_BAD_REQUEST,
-              'Email verification failed Possibly the link is invalid or Expired'
+              'Email Verification Failed, Email Could not be verified!!!'
             );
             return Response.send(res);
           }
