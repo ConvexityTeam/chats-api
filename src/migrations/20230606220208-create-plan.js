@@ -54,8 +54,7 @@ module.exports = {
         defaultValue: false
       },
       beneficiaries_onboarding: {
-        type: Sequelize.ENUM,
-        defaultValue: ['FIELD AGENTS', 'SELF ONBOARDING']
+        type: Sequelize.ENUM('FIELD AGENTS', 'SELF ONBOARDING')
       },
       features: {
         type: Sequelize.JSON,
