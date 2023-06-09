@@ -97,7 +97,7 @@ router.post(
   CampaignController.importBeneficiary
 );
 router.post(
-  '/:organisation_id/campaign-withdrawal/:campaign_id',
+  '/:organisation_id/campaign-funds-withdrawal/:campaign_id',
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,

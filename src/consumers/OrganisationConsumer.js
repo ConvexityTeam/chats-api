@@ -1,11 +1,25 @@
+const {
+  Sequelize,
+  Transaction,
+  Wallet,
+  VoucherToken,
+  Campaign,
+  TaskAssignment,
+  ProductBeneficiary,
+  Order
+} = require('../models');
 const {RabbitMq, Logger} = require('../libs');
 const {
   WITHHELD_FUND,
   CONFIRM_WITHHOLDING_FUND,
   WITHHOLD_FUND_GAS_ERROR
 } = require('../constants/queues.constant');
-const {BlockchainService, QueueService} = require('../services');
-const ConsumerFunction = require('../utils/consumerFunctions');
+const {
+  BlockchainService,
+  QueueService,
+  WalletService,
+  TransactionService
+} = require('../services');
 
 //Donor/NGO to withheld fund if don't want to donate again
 const withHoldFund = RabbitMq['default'].declareQueue(WITHHELD_FUND, {
@@ -29,6 +43,39 @@ const increaseGasHoldFund = RabbitMq['default'].declareQueue(
     prefetch: 1
   }
 );
+
+//#################UPDATES FUNCTIONS######################
+
+const update_transaction = async (args, uuid) => {
+  console.log(args, uuid, 'args, uuid');
+  const transaction = await TransactionService.findTransaction({uuid});
+  console.log(transaction, 'transaction');
+  if (!transaction) return null;
+  await transaction.update(args);
+  return transaction;
+};
+
+const addWalletAmount = async (amount, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    balance: Sequelize.literal(`balance + ${amount}`),
+    fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+  });
+  Logger.info(`Wallet amount added with ${amount}`);
+  return wallet;
+};
+
+const deductWalletAmount = async (amount, uuid) => {
+  const wallet = await Wallet.findOne({where: {uuid}});
+  if (!wallet) return null;
+  await wallet.update({
+    balance: Sequelize.literal(`balance - ${amount}`),
+    fiat_balance: Sequelize.literal(`fiat_balance - ${amount}`)
+  });
+  Logger.info(`Wallet amount deducted with ${amount}`);
+  return wallet;
+};
 //Consumers
 RabbitMq['default']
   .completeConfiguration()
@@ -42,13 +89,12 @@ RabbitMq['default']
           transactionId,
           amount
         } = msg.getContent();
-        const organizationKeys = await BlockchainService.setUserKeypair(
-          `organisation_${organisation_id}`
-        );
-        const campaignKeys = await BlockchainService.setUserKeypair(
-          `campaign_${campaign_id}`
-        );
+        const [organizationKeys, campaignKeys] = await Promise.all([
+          BlockchainService.setUserKeypair(`organisation_${organisation_id}`),
+          BlockchainService.setUserKeypair(`campaign_${campaign_id}`)
+        ]);
         Logger.info('Process 1');
+        const stringBalance = amount.toString();
         const transfer = await BlockchainService.transferTo(
           campaignKeys.privateKey,
           organizationKeys.address,
@@ -57,23 +103,25 @@ RabbitMq['default']
             transactionId,
             campaign_id,
             organisation_id,
-            amount
+            stringBalance
           },
           'withHoldFunds'
         );
+
         Logger.info('Process 2');
         if (!transfer) {
           msg.nack();
           return;
         }
         Logger.info('Process 3');
-        await ConsumerFunction.update_transaction(
+
+        await update_transaction(
           {
             transaction_hash: transfer.Transfered
           },
           transactionId
         );
-        Logger.info('Process' + transfer.Transfered);
+        Logger.info('transaction_hash: ');
         await QueueService.confirmWithHoldFunds({
           transactionId,
           transaction_hash: transfer.Transfered,
@@ -81,6 +129,7 @@ RabbitMq['default']
           organisation_id,
           amount
         });
+        Logger.info('Transfered to NGO');
       })
       .then(() => {
         Logger.info('Running consumer for withholding funds');
@@ -92,8 +141,14 @@ RabbitMq['default']
     //confirm if transaction has been mined on the blockchain
     confirmHoldFund
       .activateConsumer(async msg => {
-        const {transactionId, transaction_hash, campaign_id} = msg.getContent();
-
+        const {
+          transactionId,
+          transaction_hash,
+          campaign_id,
+          organisation_id,
+          amount
+        } = msg.getContent();
+        Logger.info('Confirming Withdraw fund');
         const confirmed = await BlockchainService.confirmTransaction(
           transaction_hash
         );
@@ -105,7 +160,7 @@ RabbitMq['default']
         await update_campaign(campaign_id, {
           is_funded: false,
           is_processing: false,
-          budget: 0
+          amount_disburse: 0
         });
         await update_transaction(
           {
@@ -114,6 +169,17 @@ RabbitMq['default']
           },
           transactionId
         );
+        const organisationW = WalletService.findMainOrganisationWallet(
+          organisation_id
+        );
+        const campaignW = WalletService.findSingleWallet({
+          CampaignId: campaign_id,
+          OrganisationId: organisation_id
+        });
+
+        await addWalletAmount(amount, organisationW.uuid);
+        await deductWalletAmount(amount, campaignW.uuid);
+        Logger.info('Confirmed Withdraw fund');
       })
       .then(() => {
         Logger.info('Running consumer for confirming withholding funds');
@@ -129,18 +195,21 @@ RabbitMq['default']
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'transfer',
-          keys
+          {
+            ...keys,
+            amount: keys.amount.toString()
+          }
         );
 
         if (!gasFee) {
           msg.nack();
           return;
         }
-        await ConsumerFunction.update_transaction(
+        await update_transaction(
           {
             transaction_hash: gasFee.retried
           },
-          transactionId
+          message.transactionId
         );
         await QueueService.confirmWithHoldFunds({
           ...message,

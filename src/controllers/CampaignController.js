@@ -448,6 +448,7 @@ class CampaignController {
       return Response.send(res);
     }
   }
+
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
@@ -1226,28 +1227,38 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (!campaign.status === 'ongoing') {
+      if (campaign.status !== 'ended') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign already ongoing`
+          `Campaign has not ended yet`
         );
         return Response.send(res);
       }
 
-      await QueueService.withHoldFunds(
-        campaign.id,
-        campaign.OrganisationId,
-        campaign.budget
+      const campaignKeys = await BlockchainService.setUserKeypair(
+        `campaign_${id}`
       );
+      const token = await BlockchainService.balance(campaignKeys.address);
+      const balance = Number(token.Balance.split(',').join(''));
+
+      if (balance === 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          `Insufficient fund, campaign wallet balance is 0`
+        );
+        return Response.send(res);
+      }
+      await QueueService.withHoldFunds(id, campaign.OrganisationId, balance);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        `Campaign funds withdrawal processing`
+        'Funds withdrawal processing',
+        balance
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        `Internal server error. Contact support.` + error
       );
       return Response.send(res);
     }
