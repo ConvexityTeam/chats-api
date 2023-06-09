@@ -9,14 +9,47 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      organisationId: {
-        type: Sequelize.STRING
-      },
+
       isActive: {
         type: Sequelize.BOOLEAN
       },
       planId: {
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Plans'
+          },
+          key: 'id'
+        }
+      },
+      organisationId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Organisations'
+          },
+          key: 'id'
+        }
+      },
+      status: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        defaultValue: 'active'
+      },
+      amount: {
+        type: Sequelize.FLOAT,
+        defaultValue: 0.0,
+        allowNull: false
+      },
+      startDate: {
+        type: Sequelize.DATE,
+        allowNull: false
+      },
+      endDate: {
+        type: Sequelize.DATE,
+        allowNull: false
       },
       createdAt: {
         allowNull: false,
