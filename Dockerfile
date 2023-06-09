@@ -1,6 +1,6 @@
 FROM node:14
 RUN apt-get update && apt-get install -y openssh-client
-COPY id_rsa /root/id_rsa
+# COPY id_rsa /root/id_rsa
 WORKDIR /app
 COPY package.json ./
 RUN npm i
