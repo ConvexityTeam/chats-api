@@ -799,20 +799,21 @@ class AuthController {
           'Confirmation Token Missing!!!'
         );
       }
+      // console.log('Confirmation Code: ' + confirmationCode);
       jwt.verify(
         confirmationCode,
         process.env.SECRET_KEY,
         async (err, payload) => {
           if (err) {
             //if token was tampered with or invalid
-            console.log(err);
+            // console.log(err);
             Response.setError(
               HttpStatusCode.STATUS_BAD_REQUEST,
               'Email Verification Failed, Email Could not be verified!!!'
             );
             return Response.send(res);
           }
-
+          // console.log(payload);
           //fetch users records from the database
           const userExist = await db.User.findOne({
             where: {email: payload.email}
