@@ -27,7 +27,10 @@ module.exports = (sequelize, DataTypes) => {
       is_unlimited_campaign_cost: DataTypes.BOOLEAN,
       unconditional_voucher_number: DataTypes.NUMBER,
       is_unlimited_unconditional_voucher: DataTypes.BOOLEAN,
-      beneficiaries_onboarding: DataTypes.ENUM('FIELD AGENTS', 'SELF ONBOARDING'),
+      beneficiaries_onboarding: DataTypes.ENUM(
+        'FIELD AGENTS',
+        'SELF ONBOARDING'
+      ),
       features: DataTypes.JSON,
       isActive: DataTypes.BOOLEAN
     },
