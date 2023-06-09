@@ -813,7 +813,7 @@ class AuthController {
             );
             return Response.send(res);
           }
-          // console.log(payload);
+          console.log(payload);
           //fetch users records from the database
           const userExist = await db.User.findOne({
             where: {email: payload.email}
@@ -827,6 +827,7 @@ class AuthController {
             );
             return Response.send(res);
           }
+          console.log(userExist);
           //update users status to verified
           db.User.update(
             {status: 'activated', is_email_verified: true},
