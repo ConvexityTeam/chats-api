@@ -745,7 +745,7 @@ class AuthController {
                         );
                         const verifyLink =
                           data.host_url +
-                          '/email-verification/?confirmationCode=' +
+                          '/email-verification?confirmationCode=' +
                           token;
 
                         await MailerService.sendEmailVerification(
@@ -793,6 +793,13 @@ class AuthController {
     const confirmationCode = req.body.confirmationCode;
     try {
       //verify token
+      if (!confirmationCode) {
+        //if token is missing
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Confirmation Token Missing!!!'
+        );
+      }
       jwt.verify(
         confirmationCode,
         process.env.SECRET_KEY,
@@ -901,7 +908,7 @@ class AuthController {
                 expiresIn: '24hr'
               }
             );
-            
+
             const verifyLink =
               data.host_url + '/email-verification/?confirmationCode=' + token;
             //else resend token to user
@@ -1681,7 +1688,7 @@ class AuthController {
       const user = await UserService.addUser({
         RoleId: AclRoles.Donor,
         email: data.email,
-        status:'activated',
+        status: 'activated',
         password
       });
 
