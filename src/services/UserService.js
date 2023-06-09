@@ -1,6 +1,5 @@
 const {User, BankAccount, OrganisationMembers} = require('../models');
 const axios = require('axios');
-const geoIp = require('geoip-country');
 const Axios = axios.create();
 const {AclRoles} = require('../utils');
 const {Logger} = require('../libs');
