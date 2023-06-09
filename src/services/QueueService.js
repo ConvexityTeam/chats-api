@@ -1034,7 +1034,7 @@ class QueueService {
   }
   static async withHoldFunds(campaign_id, organisation_id, amount) {
     const transaction = await Transaction.create({
-      amount: amount,
+      amount,
       reference: generateTransactionRef(),
       status: 'processing',
       transaction_origin: 'wallet',
