@@ -667,6 +667,7 @@ class AuthController {
     try {
     } catch (error) {}
   }
+
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
@@ -815,7 +816,7 @@ class AuthController {
             console.log(err);
             Response.setError(
               HttpStatusCode.STATUS_BAD_REQUEST,
-              'Email verification failed Possibly the link is invalid or Expired'
+              'Email verification failed, Account Not Found'
             );
             return Response.send(res);
           }
@@ -879,7 +880,7 @@ class AuthController {
           );
           return Response.send(res);
         } else {
-          const orgDetails = db.Organisation.findOne({
+          const orgDetails = await db.Organisation.findOne({
             where: {
               email: data.email
             }
@@ -900,6 +901,7 @@ class AuthController {
                 expiresIn: '24hr'
               }
             );
+            
             const verifyLink =
               data.host_url + '/email-verification/?confirmationCode=' + token;
             //else resend token to user
@@ -911,7 +913,7 @@ class AuthController {
               .then(() => {
                 Response.setSuccess(
                   200,
-                  'A new confirmation token sent to the provided email address'
+                  'A new confirmation token sent to the provided email address '
                 );
                 return Response.send(res);
               })
@@ -1180,17 +1182,14 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [
-            campaign_token,
-            beneficiary_token,
-            campaignBeneficiary
-          ] = await Promise.all([
-            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-            BlockchainService.setUserKeypair(
-              `user_${user.id}campaign_${wallet.CampaignId}`
-            ),
-            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-          ]);
+          const [campaign_token, beneficiary_token, campaignBeneficiary] =
+            await Promise.all([
+              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+              BlockchainService.setUserKeypair(
+                `user_${user.id}campaign_${wallet.CampaignId}`
+              ),
+              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+            ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
@@ -1606,7 +1605,6 @@ class AuthController {
       const email = data.email;
       if (url_string) {
         const domain = extractDomain(url_string);
-
         const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
         if (!email.match(new RegExp(re))) {
           Response.setError(400, 'Email must end in @' + domain);
@@ -1683,6 +1681,7 @@ class AuthController {
       const user = await UserService.addUser({
         RoleId: AclRoles.Donor,
         email: data.email,
+        status:'activated',
         password
       });
 

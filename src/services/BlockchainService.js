@@ -813,6 +813,27 @@ class BlockchainService {
       Logger.error(`Error Creating Wallet Address: ${error} `);
     }
   }
+  static async getTransactionDetails(hash, bind, message) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        Logger.info('Confirming transaction ' + hash);
+        const data = await provider.getTransactionReceipt(hash);
+        if (!data) {
+          Logger.info(`Transaction yet to be mined`);
+        } else {
+          Logger.info('Transaction confirmed and mined ' + data);
+        }
+        resolve(data);
+      } catch (error) {
+        Logger.error(`Error confirming transaction: ${error}`);
+        const id = setTimeout(async () => {
+          await this.requeueMessage(bind, message);
+        }, RERUN_QUEUE_AFTER);
+        clearTimeout(id);
+        reject(error);
+      }
+    });
+  }
 }
 
 // async function fuc() {
