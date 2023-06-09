@@ -18,6 +18,17 @@ module.exports = (sequelize, DataTypes) => {
   Plan.init(
     {
       name: DataTypes.STRING,
+      conditional_voucher_number: DataTypes.NUMBER,
+      is_unlimited_conditional_voucher: DataTypes.BOOLEAN,
+      beneficiaries_number: DataTypes.NUMBER,
+      is_unlimited_beneficiaries: DataTypes.BOOLEAN,
+      plan_cost: DataTypes.FLOAT,
+      campaign_cost_cap: DataTypes.FLOAT,
+      is_unlimited_campaign_cost: DataTypes.BOOLEAN,
+      unconditional_voucher_number: DataTypes.NUMBER,
+      is_unlimited_unconditional_voucher: DataTypes.BOOLEAN,
+      beneficiaries_onboarding: DataTypes.ENUM('FIELD AGENTS', 'SELF ONBOARDING'),
+      features: DataTypes.JSON,
       isActive: DataTypes.BOOLEAN
     },
     {

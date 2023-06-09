@@ -38,7 +38,7 @@ module.exports = {
         defaultValue: 0.0
       },
       campaign_cost_cap: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.FLOAT,
         allowNull: false
       },
       is_unlimited_campaign_cost: {
