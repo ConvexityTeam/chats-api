@@ -820,25 +820,25 @@ class AuthController {
           });
           if (!userExist) {
             // if users email doesnt exist then
-            console.log(err);
+            // console.log(err);
             Response.setError(
               HttpStatusCode.STATUS_BAD_REQUEST,
               'Email verification failed, Account Not Found'
             );
             return Response.send(res);
           }
-          console.log(userExist);
+          // console.log(userExist);
           //update users status to verified
           db.User.update(
             {status: 'activated', is_email_verified: true},
             {where: {email: payload.email}}
           )
             .then(() => {
-              Response.setSuccess(
-                HttpStatusCode.STATUS_OK,
-                'User With Email: ' + payload.email + ' Account Activated!',
-                {email: payload.email}
-              );
+              res.status(HttpStatusCode.STATUS_OK).json({
+                status: 'success',
+                message:
+                  'User With Email: ' + payload.email + ' Account Activated!'
+              });
               return Response.send(res);
             })
             .catch(err => {
