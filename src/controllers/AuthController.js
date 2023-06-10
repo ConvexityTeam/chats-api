@@ -836,7 +836,8 @@ class AuthController {
             .then(() => {
               Response.setSuccess(
                 200,
-                'User With Email: ' + payload.email + ' Account Activated!'
+                'User With Email: ' + payload.email + ' Account Activated!',
+                {email: payload.email}
               );
               return Response.send(res);
             })
@@ -921,7 +922,8 @@ class AuthController {
               .then(() => {
                 Response.setSuccess(
                   200,
-                  'A new confirmation token sent to the provided email address '
+                  'A new confirmation token sent to the provided email address ',
+                  {email: data.email}
                 );
                 return Response.send(res);
               })
