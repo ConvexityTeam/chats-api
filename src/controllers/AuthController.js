@@ -834,11 +834,13 @@ class AuthController {
             {where: {email: payload.email}}
           )
             .then(() => {
-              res.status(HttpStatusCode.STATUS_OK).json({
-                status: 'success',
-                message:
-                  'User With Email: ' + payload.email + ' Account Activated!'
-              });
+              Response.setSuccess(
+                HttpStatusCode.STATUS_OK,
+                'User With Email: ' + payload.email + ' Account Activated!',
+                {
+                  email: payload.email
+                }
+              );
               return Response.send(res);
             })
             .catch(err => {
