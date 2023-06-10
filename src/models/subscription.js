@@ -21,9 +21,13 @@ module.exports = (sequelize, DataTypes) => {
   }
   Subscription.init(
     {
-      organisationId: DataTypes.STRING,
       isActive: DataTypes.BOOLEAN,
-      planId: DataTypes.STRING
+      planId: DataTypes.INTEGER,
+      organisationId: DataTypes.INTEGER,
+      status: DataTypes.STRING,
+      amount: DataTypes.FLOAT,
+      startDate: DataTypes.DATE,
+      endDate: DataTypes.DATE
     },
     {
       sequelize,
