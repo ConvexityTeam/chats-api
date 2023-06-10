@@ -790,7 +790,7 @@ class AuthController {
   }
 
   static async confirmEmail(req, res) {
-    const confirmationCode = req.query.confirmationCode;
+    const confirmationCode = req.params.confirmationCode;
     try {
       if (!confirmationCode) {
         //if token is missing
