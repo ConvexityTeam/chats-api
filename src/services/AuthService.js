@@ -40,7 +40,7 @@ class AuthService {
         if (bcrypt.compareSync(_password, password)) {
           //Emaial has not be verified yet
 
-          if ((user.is_email_verified = false)) {
+          if (user.is_email_verified == false) {
             error.status = 401;
             error.message = 'Email Account has not been Verified.';
             reject(error);
