@@ -40,12 +40,12 @@ class AuthService {
         if (bcrypt.compareSync(_password, password)) {
           //Emaial has not be verified yet
 
-          if (user.is_email_verified == false) {
-            error.status = 401;
-            error.message = 'Email Account has not been Verified.';
-            reject(error);
-            return;
-          }
+          // if (user.is_email_verified == false) {
+          //   error.status = 401;
+          //   error.message = 'Email Account has not been Verified.';
+          //   reject(error);
+          //   return;
+          // }
 
           if (user.status == 'suspended') {
             error.status = 401;
