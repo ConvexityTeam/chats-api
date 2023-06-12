@@ -748,11 +748,11 @@ class AuthController {
                           '/email-verification?confirmationCode=' +
                           token;
 
-                        // await MailerService.sendEmailVerification(
-                        //   data.email,
-                        //   data.organisation_name,
-                        //   verifyLink
-                        // );
+                        await MailerService.sendEmailVerification(
+                          data.email,
+                          data.organisation_name,
+                          verifyLink
+                        );
                         Response.setSuccess(
                           201,
                           'NGO and User registered successfully',
