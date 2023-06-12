@@ -743,16 +743,23 @@ class AuthController {
                           process.env.SECRET_KEY,
                           {expiresIn: '24hr'}
                         );
+<<<<<<< HEAD
+                        // const verifyLink =
+                        //   data.host_url +
+                        //   '/email-verification/?confirmationCode=' +
+                        //   token;
+=======
                         const verifyLink =
                           data.host_url +
                           '/email-verification?confirmationCode=' +
                           token;
+>>>>>>> 1886d34110333b958f58eb4d3c3e6f9da486b8f4
 
-                        await MailerService.sendEmailVerification(
-                          data.email,
-                          data.organisation_name,
-                          verifyLink
-                        );
+                        // await MailerService.sendEmailVerification(
+                        //   data.email,
+                        //   data.organisation_name,
+                        //   verifyLink
+                        // );
                         Response.setSuccess(
                           201,
                           'NGO and User registered successfully',
@@ -1202,14 +1209,17 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [campaign_token, beneficiary_token, campaignBeneficiary] =
-            await Promise.all([
-              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-              BlockchainService.setUserKeypair(
-                `user_${user.id}campaign_${wallet.CampaignId}`
-              ),
-              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-            ]);
+          const [
+            campaign_token,
+            beneficiary_token,
+            campaignBeneficiary
+          ] = await Promise.all([
+            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+            BlockchainService.setUserKeypair(
+              `user_${user.id}campaign_${wallet.CampaignId}`
+            ),
+            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+          ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
