@@ -325,7 +325,11 @@ router
     IsOrgMember,
     OrganisationController.getAllOrgCampaigns
   );
-router.post('/group-beneficiaries', UsersController.groupAccount);
+router.post(
+  '/group-beneficiaries',
+  FieldAgentAuth,
+  UsersController.groupAccount
+);
 router
   .route('/donations/private_donor/campaigns/all')
   .get(DonorAuth, OrganisationController.getAllPrivateDonorCampaigns);

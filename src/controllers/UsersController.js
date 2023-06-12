@@ -159,15 +159,23 @@ class UsersController {
     }
   }
   static async groupAccount(req, res) {
-    const {group, representative, member} = req.body;
+    const {group, representative, member, campaignId} = req.body;
     try {
       const rules = {
         'representative.first_name': 'required|alpha',
         'representative.last_name': 'required|alpha',
         'representative.gender': 'required|in:male,female',
         'representative.email': 'required|email',
+        'representative.phone': [
+          'required',
+          'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'
+        ],
+        'representative.address': 'string',
+        'representative.location': 'string',
+        'representative.password': 'required',
         'representative.dob': 'required|date',
-        'representative.phone': ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+        'representative.nfc': 'string',
+        'representative.campaign': 'required|numeric',
         'member.*.full_name': 'required|string',
         'member.*.dob': 'required|date',
         'member.*.full_name': 'required|string',

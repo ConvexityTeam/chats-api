@@ -813,7 +813,6 @@ class AuthController {
             );
             return Response.send(res);
           }
-          console.log(payload);
           //fetch users records from the database
           const userExist = await db.User.findOne({
             where: {email: payload.email}
@@ -964,24 +963,11 @@ class AuthController {
       });
 
       const data = await AuthService.login(user, req.body.password.trim());
-      // if (
-      //   user.RoleId === AclRoles.Donor ||
-      //   user.RoleId === AclRoles.FieldAgent ||
-      //   user.RoleId === AclRoles.Vendor
-      // ) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_FORBIDDEN,
-      //     'Access Denied, Unauthorised Access'
-      //   );
-      //   return Response.send(res);
-      // }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
+        error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1003,13 +989,13 @@ class AuthController {
         }
       });
 
-      if (user && user.user.is_email_verified === false) {
-        Response.setError(
-          HttpStatusCode.STATUS_UNAUTHORIZED,
-          'Access Denied, Email Account has not been Verified.'
-        );
-        return Response.send(res);
-      }
+      // if (user && user.is_email_verified === false) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_UNAUTHORIZED,
+      //     'Access Denied, Email Account has not been Verified.'
+      //   );
+      //   return Response.send(res);
+      // }
 
       if (user && user.RoleId != AclRoles.NgoAdmin) {
         Response.setError(
@@ -1034,10 +1020,9 @@ class AuthController {
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
+      Logger.error(`Internal Server Error: ${error}`);
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
+        error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1078,9 +1063,7 @@ class AuthController {
       return Response.send(res);
     } catch (error) {
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
+        error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1125,9 +1108,7 @@ class AuthController {
       return Response.send(res);
     } catch (error) {
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
+        error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1163,7 +1144,7 @@ class AuthController {
   //     const message =
   //       error.status == 401
   //         ? error.message
-  //         : 'Login failed. Please try again later.';
+  //         : 'Internal Server Error';
   //     Response.setError(401, message);
   //     return Response.send(res);
   //   }
@@ -1231,9 +1212,7 @@ class AuthController {
       return Response.send(res);
     } catch (error) {
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.' + error;
+        error.status == 401 ? error.message : 'Internal Server Error' + error;
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1277,9 +1256,7 @@ class AuthController {
       return Response.send(res);
     } catch (error) {
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
+        error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1309,9 +1286,7 @@ class AuthController {
       return Response.send(res);
     } catch (error) {
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
+        error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
       return Response.send(res);
     }
