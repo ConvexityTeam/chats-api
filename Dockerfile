@@ -1,6 +1,4 @@
-FROM node:14
-RUN apt-get update && apt-get install -y openssh-client
-# COPY id_rsa /root/id_rsa
+FROM node:14.0.0-alpine
 WORKDIR /app
 COPY package.json ./
 RUN npm i
