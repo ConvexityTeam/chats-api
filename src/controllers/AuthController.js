@@ -743,17 +743,10 @@ class AuthController {
                           process.env.SECRET_KEY,
                           {expiresIn: '24hr'}
                         );
-<<<<<<< HEAD
-                        // const verifyLink =
-                        //   data.host_url +
-                        //   '/email-verification/?confirmationCode=' +
-                        //   token;
-=======
                         const verifyLink =
                           data.host_url +
                           '/email-verification?confirmationCode=' +
                           token;
->>>>>>> 1886d34110333b958f58eb4d3c3e6f9da486b8f4
 
                         // await MailerService.sendEmailVerification(
                         //   data.email,
