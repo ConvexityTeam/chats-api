@@ -173,7 +173,7 @@ class UsersController {
         'representative.address': 'string',
         'representative.location': 'string',
         'representative.password': 'required',
-        'representative.dob': 'required|date|before:today',
+        'representative.dob': 'required|date',
         'representative.nfc': 'string',
         'representative.campaign': 'required|numeric',
         'member.*.full_name': 'required|string',
