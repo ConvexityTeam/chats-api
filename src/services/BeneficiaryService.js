@@ -363,7 +363,8 @@ class BeneficiariesService {
           },
           attributes: [],
           require: true
-        }
+        },
+        {model: Group, as: 'members'}
       ]
     });
   }
