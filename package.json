@@ -6,9 +6,9 @@
   "scripts": {
     "test": "mocha --recursive --exit",
     "start": "npm run db:migrate && node src/index.js",
-    "start:dev": "nodemon src/index.js",
+    "start:dev": "nodemon -L src/index.js",
     "start:consumer": "node src/consumer.js",
-    "start:consumer:dev": "nodemon src/consumer.js",
+    "start:consumer:dev": "nodemon -L src/consumer.js",
     "db:create": "npx sequelize-cli db:create",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
