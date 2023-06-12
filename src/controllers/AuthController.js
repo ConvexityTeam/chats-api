@@ -743,10 +743,17 @@ class AuthController {
                           process.env.SECRET_KEY,
                           {expiresIn: '24hr'}
                         );
+<<<<<<< HEAD
                         // const verifyLink =
                         //   data.host_url +
                         //   '/email-verification/?confirmationCode=' +
                         //   token;
+=======
+                        const verifyLink =
+                          data.host_url +
+                          '/email-verification?confirmationCode=' +
+                          token;
+>>>>>>> 1886d34110333b958f58eb4d3c3e6f9da486b8f4
 
                         // await MailerService.sendEmailVerification(
                         //   data.email,
@@ -790,36 +797,44 @@ class AuthController {
   }
 
   static async confirmEmail(req, res) {
-    const confirmationCode = req.body.confirmationCode;
+    const confirmationCode = req.params.confirmationCode;
     try {
-      //verify token
+      if (!confirmationCode) {
+        //if token is missing
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Confirmation Token Missing!!!'
+        );
+      }
+      // console.log('Confirmation Code: ' + confirmationCode);
       jwt.verify(
         confirmationCode,
         process.env.SECRET_KEY,
         async (err, payload) => {
           if (err) {
             //if token was tampered with or invalid
-            console.log(err);
+            // console.log(err);
             Response.setError(
               HttpStatusCode.STATUS_BAD_REQUEST,
-              'Email verification failed Possibly the link is invalid or Expired'
+              'Email Verification Failed, Email Could not be verified!!!'
             );
             return Response.send(res);
           }
-
+          console.log(payload);
           //fetch users records from the database
           const userExist = await db.User.findOne({
             where: {email: payload.email}
           });
           if (!userExist) {
             // if users email doesnt exist then
-            console.log(err);
+            // console.log(err);
             Response.setError(
               HttpStatusCode.STATUS_BAD_REQUEST,
               'Email verification failed, Account Not Found'
             );
             return Response.send(res);
           }
+          // console.log(userExist);
           //update users status to verified
           db.User.update(
             {status: 'activated', is_email_verified: true},
@@ -827,8 +842,11 @@ class AuthController {
           )
             .then(() => {
               Response.setSuccess(
-                200,
-                'User With Email: ' + payload.email + ' Account Activated!'
+                HttpStatusCode.STATUS_OK,
+                'User With Email: ' + payload.email + ' Account Activated!',
+                {
+                  email: payload.email
+                }
               );
               return Response.send(res);
             })
@@ -912,8 +930,9 @@ class AuthController {
             )
               .then(() => {
                 Response.setSuccess(
-                  200,
-                  'A new confirmation token sent to the provided email address '
+                  HttpStatusCode.STATUS_OK,
+                  'A new confirmation token sent to the provided email address ',
+                  {email: data.email}
                 );
                 return Response.send(res);
               })
@@ -990,6 +1009,14 @@ class AuthController {
           }
         }
       });
+
+      if (user && user.user.is_email_verified === false) {
+        Response.setError(
+          HttpStatusCode.STATUS_UNAUTHORIZED,
+          'Access Denied, Email Account has not been Verified.'
+        );
+        return Response.send(res);
+      }
 
       if (user && user.RoleId != AclRoles.NgoAdmin) {
         Response.setError(
