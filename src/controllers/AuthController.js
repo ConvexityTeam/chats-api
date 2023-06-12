@@ -813,7 +813,6 @@ class AuthController {
             );
             return Response.send(res);
           }
-          console.log(payload);
           //fetch users records from the database
           const userExist = await db.User.findOne({
             where: {email: payload.email}
@@ -990,7 +989,7 @@ class AuthController {
         }
       });
 
-      if (user && user.user.is_email_verified === false) {
+      if (user && user.is_email_verified === false) {
         Response.setError(
           HttpStatusCode.STATUS_UNAUTHORIZED,
           'Access Denied, Email Account has not been Verified.'
