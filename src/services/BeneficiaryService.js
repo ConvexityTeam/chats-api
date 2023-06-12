@@ -8,6 +8,7 @@ const {
   Transaction,
   Market,
   FormAnswer,
+  Group,
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
@@ -408,10 +409,13 @@ class BeneficiariesService {
           model: User,
           as: 'User',
           attributes: userConst.publicAttr,
-          include: {
-            model: FormAnswer,
-            as: 'Answers'
-          }
+          include: [
+            {
+              model: FormAnswer,
+              as: 'Answers'
+            },
+            {model: Group, as: 'members'}
+          ]
         }
       ]
     });
