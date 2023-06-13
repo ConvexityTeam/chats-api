@@ -219,6 +219,19 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+  static async getAllNGOs(req, res) {
+    try {
+      const ngos = await OrganisationService.getAllNGOs();
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'NGOs retrieved.', ngos);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Request failed. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async getAllPublicDonorCampaigns(req, res) {
     try {
       let completed_task = 0;

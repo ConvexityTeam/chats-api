@@ -722,9 +722,6 @@ RabbitMq['default']
         );
         let lastIndex;
         const realBudget = campaign.budget;
-        const parsedAmount =
-          parseInt(campaign.budget / beneficiaries.length) *
-          beneficiaries.length;
         for (let [index, beneficiary] of beneficiaries.entries()) {
           let wallet = beneficiary.User.Wallets[0];
 

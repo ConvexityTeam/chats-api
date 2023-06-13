@@ -5,7 +5,9 @@ const {
   createHash,
   SanitizeObject,
   HttpStatusCode,
-  AclRoles
+  AclRoles,
+  generateRandom,
+  GenearteVendorId
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -18,7 +20,9 @@ const {
   UserService,
   PaystackService,
   QueueService,
-  WalletService
+  WalletService,
+  SmsService,
+  MailerService
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -28,6 +32,7 @@ const codeGenerator = require('./QrCodeController');
 const ZohoService = require('../services/ZohoService');
 const sanitizeObject = require('../utils/sanitizeObject');
 const AwsUploadService = require('../services/AwsUploadService');
+const {data} = require('../libs/Response');
 
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
   durable: true
@@ -80,6 +85,7 @@ class UsersController {
       location,
       store_name
     } = req.body;
+
     try {
       const rules = {
         first_name: 'required|alpha',
@@ -97,20 +103,47 @@ class UsersController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+      const user = await UserService.findByEmail(email);
+      if (user) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Email already taken'
+        );
+        return Response.send(res);
+      }
+      const rawPassword = generateRandom(8);
+      const password = createHash(rawPassword);
+      const vendor_id = GenearteVendorId();
       const createdVendor = await UserService.createUser({
         RoleId: AclRoles.Vendor,
         first_name,
         last_name,
         email,
-        phone
+        phone,
+        password
       });
       await QueueService.createWallet(createdVendor.id, 'user');
-      await db.Market.create({
+      const store = await db.Market.create({
         store_name,
         address,
         location,
         UserId: createdVendor.id
       });
+
+      await MailerService.verify(
+        email,
+        first_name + ' ' + last_name,
+        rawPassword,
+        vendor_id
+      );
+      await QueueService.createWallet(createdVendor.id, 'user');
+
+      await SmsService.sendOtp(
+        phone,
+        `Hi, ${first_name}  ${last_name} your CHATS account ID is: ${vendor_id} , password is: ${rawPassword}`
+      );
+      createdVendor.dataValues.password = null;
+      createdVendor.dataValues.store = store;
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Vendor Account Created.',
@@ -125,7 +158,72 @@ class UsersController {
       return Response.send(res);
     }
   }
-
+  static async groupAccount(req, res) {
+    const {group, representative, member, campaignId} = req.body;
+    try {
+      const rules = {
+        'representative.first_name': 'required|alpha',
+        'representative.last_name': 'required|alpha',
+        'representative.gender': 'required|in:male,female',
+        'representative.email': 'required|email',
+        'representative.phone': [
+          'required',
+          'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'
+        ],
+        'representative.address': 'string',
+        'representative.location': 'string',
+        'representative.password': 'required',
+        'representative.dob': 'required|date',
+        'representative.nfc': 'string',
+        'representative.campaign': 'required|numeric',
+        'member.*.full_name': 'required|string',
+        'member.*.dob': 'required|date',
+        'member.*.full_name': 'required|string',
+        'group.group_name': 'required|string',
+        'group.group_category': 'required|string'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const data = member;
+      const find = await UserService.findByEmail(representative.email);
+      if (find) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Email already taken'
+        );
+        return Response.send(res);
+      }
+      const result = await db.sequelize.transaction(async t => {
+        representative.RoleId = AclRoles.Beneficiary;
+        // representative.password = createHash()
+        const rep = await db.User.create(representative, {transaction: t});
+        group.representative_id = rep.id;
+        const grouping = await db.Group.create(group, {transaction: t});
+        for (let mem of data) {
+          mem.group_id = grouping.id;
+        }
+        const members = await db.Member.bulkCreate(data, {transaction: t});
+        rep.dataValues.group = grouping;
+        rep.dataValues.members = members;
+        return rep;
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Group Created',
+        result
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async addBankAccount(req, res) {
     try {
       const data = SanitizeObject(req.body, ['account_number', 'bank_code']);

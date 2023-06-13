@@ -7,6 +7,7 @@ const {
   ComplaintController
 } = require('../controllers');
 const CashForWorkController = require('../controllers/CashForWorkController');
+const UsersController = require('../controllers/UsersController');
 
 const {
   DonorAuth,
@@ -95,6 +96,15 @@ router.post(
   ParamValidator.CampaignIdOptional,
   CampaignController.importBeneficiary
 );
+router.post(
+  '/:organisation_id/campaign-funds-withdrawal/:campaign_id',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  ParamValidator.CampaignIdOptional,
+  CampaignController.withdrawFund
+);
+
 router.get(
   '/beneficiaries-summary/:id',
   OrganisationController.getBeneficiariesFinancials
@@ -315,7 +325,11 @@ router
     IsOrgMember,
     OrganisationController.getAllOrgCampaigns
   );
-
+router.post(
+  '/group-beneficiaries',
+  FieldAgentAuth,
+  UsersController.groupAccount
+);
 router
   .route('/donations/private_donor/campaigns/all')
   .get(DonorAuth, OrganisationController.getAllPrivateDonorCampaigns);
@@ -324,7 +338,7 @@ router.get(
   '/donations/public_donor/campaigns/all',
   OrganisationController.getAllPublicDonorCampaigns
 );
-
+router.get('/public-ngos', OrganisationController.getAllNGOs);
 router
   .route('/:organisation_id/cash4works')
   .get(
