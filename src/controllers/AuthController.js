@@ -1003,7 +1003,7 @@ class AuthController {
         }
       });
 
-      if (user && user.user.is_email_verified === false) {
+      if (user && user.is_email_verified === false) {
         Response.setError(
           HttpStatusCode.STATUS_UNAUTHORIZED,
           'Access Denied, Email Account has not been Verified.'
