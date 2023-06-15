@@ -9,7 +9,8 @@ const {
   WalletService,
   TaskService,
   BlockchainService,
-  AwsService
+  AwsService,
+  TransactionService
 } = require('../services');
 const Validator = require('validatorjs');
 const db = require('../models');
@@ -23,7 +24,8 @@ const {
   generateQrcodeURL,
   GenearteVendorId,
   GenearteSMSToken,
-  AclRoles
+  AclRoles,
+  generateTransactionRef
 } = require('../utils');
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
@@ -449,6 +451,67 @@ class CampaignController {
     }
   }
 
+  static async fundCampaignWithCrypto(req, res) {
+    const {organisation_id, campaign_id} = req.params;
+    const {amount} = req.body;
+    try {
+      const campaign = await CampaignService.getCampaignWallet(
+        campaign_id,
+        organisation_id
+      );
+      const organisation = await OrganisationService.getOrganisationWallet(
+        organisation_id
+      );
+      const campaignWallet = campaign.Wallet;
+      const OrgWallet = organisation.Wallet;
+      if (campaign.status == 'completed') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already completed'
+        );
+        return Response.send(res);
+      }
+      if (campaign.status == 'ended') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ended'
+        );
+        return Response.send(res);
+      }
+      if (campaign.status == 'ongoing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ongoing'
+        );
+        return Response.send(res);
+      }
+
+      const transaction = await TransactionService.addTransaction({
+        amount: Number(amount),
+        reference: generateTransactionRef(),
+        status: 'success',
+        transaction_origin: 'wallet',
+        transaction_type: 'transfer',
+        SenderWalletId: OrgWallet.uuid,
+        ReceiverWalletId: campaignWallet.uuid,
+        CampaignId: campaign.id,
+        OrganisationId: campaign.OrganisationId,
+        narration: 'Approve Campaign Funding'
+      });
+      await campaign.update({budget: campaign.budget + amount});
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Success donor funding to campaign`,
+        transaction
+      );
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
@@ -1033,6 +1096,7 @@ class CampaignController {
       return Response.send(res);
     }
   }
+
   static async getPrivateCampaign(req, res) {
     try {
       let assignmentTask = [];
