@@ -154,7 +154,6 @@ router
   .get(
     FieldAgentAuth,
     ParamValidator.OrganisationId,
-    IsOrgMember,
     ParamValidator.ReferenceOptional,
     WalletController.getOrgnaisationTransaction
   );
@@ -357,6 +356,13 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.getPrivateCampaign
   );
+
+router.get(
+  '/:organisation_id/public-campaigns/:campaign_id',
+  ParamValidator.OrganisationId,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignController.getCampaign
+);
 router
   .route('/:organisation_id/campaigns/:campaign_id')
   .get(
