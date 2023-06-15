@@ -465,8 +465,7 @@ class BlockchainService {
       }
     });
   }
-  static async mintToken(mintTo, amount, message) {
-    const {transactionId, transactionReference, OrganisationId} = message;
+  static async mintToken(mintTo, amount, message, type) {
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
@@ -499,7 +498,11 @@ class BlockchainService {
             address: mintTo,
             amount
           };
-          await QueueService.increaseGasForMinting(keys, message);
+          if (type === 'ngo') {
+            await QueueService.increaseGasForMinting(keys, message);
+          } else {
+            await QueueService.gasFundCampaignWithCrypto(keys, message);
+          }
         }
         return reject(error);
       }
