@@ -172,12 +172,12 @@ class UsersController {
           'required',
           'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'
         ],
-        // 'representative.address': 'string',
-        // 'representative.location': 'string',
-        // 'representative.password': 'required',
-        // 'representative.dob': 'required|date',
-        // 'representative.nfc': 'string',
-        // 'representative.campaign': 'required|numeric',
+        'representative.address': 'string',
+        'representative.location': 'string',
+        'representative.password': 'required',
+        'representative.dob': 'required|date',
+        'representative.nfc': 'string',
+        'representative.campaign': 'required|numeric',
         'member.*.full_name': 'required|string',
         'member.*.dob': 'required|date',
         'member.*.full_name': 'required|string',
@@ -224,21 +224,21 @@ class UsersController {
           {transaction: t}
         );
 
-        // await QueueService.createWallet(parent.id, 'user', campaignId);
+        await QueueService.createWallet(parent.id, 'user', campaignId);
         group.representative_id = parent.id;
         const grouping = await db.Group.create(group, {transaction: t});
-        // let extension = files.profile_pic.name.substring(
-        //   files.profile_pic.name.lastIndexOf('.') + 1
-        // );
-        // await uploadFile(
-        //   files.profile_pic,
-        //   'u-' + environ + '-' + parent.id + '-i.' + extension,
-        //   'convexity-profile-images'
-        // ).then(url => {
-        //   parent.update({
-        //     profile_pic: url
-        //   });
-        // });
+        let extension = files.profile_pic.name.substring(
+          files.profile_pic.name.lastIndexOf('.') + 1
+        );
+        await uploadFile(
+          files.profile_pic,
+          'u-' + environ + '-' + parent.id + '-i.' + extension,
+          'convexity-profile-images'
+        ).then(url => {
+          parent.update({
+            profile_pic: url
+          });
+        });
         for (let mem of data) {
           mem.group_id = grouping.id;
           // await uploadFile(
