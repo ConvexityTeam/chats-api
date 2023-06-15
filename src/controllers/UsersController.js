@@ -22,7 +22,8 @@ const {
   QueueService,
   WalletService,
   SmsService,
-  MailerService
+  MailerService,
+  CampaignService
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -160,6 +161,7 @@ class UsersController {
   }
   static async groupAccount(req, res) {
     const {group, representative, member, campaignId} = req.body;
+
     try {
       const rules = {
         'representative.first_name': 'required|alpha',
@@ -170,12 +172,12 @@ class UsersController {
           'required',
           'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'
         ],
-        'representative.address': 'string',
-        'representative.location': 'string',
-        'representative.password': 'required',
-        'representative.dob': 'required|date',
-        'representative.nfc': 'string',
-        'representative.campaign': 'required|numeric',
+        // 'representative.address': 'string',
+        // 'representative.location': 'string',
+        // 'representative.password': 'required',
+        // 'representative.dob': 'required|date',
+        // 'representative.nfc': 'string',
+        // 'representative.campaign': 'required|numeric',
         'member.*.full_name': 'required|string',
         'member.*.dob': 'required|date',
         'member.*.full_name': 'required|string',
@@ -197,18 +199,63 @@ class UsersController {
         return Response.send(res);
       }
       const result = await db.sequelize.transaction(async t => {
+        var form = new formidable.IncomingForm({
+          multiples: true
+        });
+
+        const campaignExist = await CampaignService.getCampaignById(campaignId);
+        if (!campaignExist) {
+          Response.setError(404, 'Campaign not found');
+          return Response.send(res);
+        }
+        // form.parse(req, async (err, fields, files) => {
+        //   fields['today'] = new Date(Date.now()).toDateString();
+
         representative.RoleId = AclRoles.Beneficiary;
-        // representative.password = createHash()
-        const rep = await db.User.create(representative, {transaction: t});
-        group.representative_id = rep.id;
+        representative.password = createHash('0000');
+        const parent = await db.User.create(representative, {transaction: t});
+        await db.Beneficiary.create(
+          {
+            UserId: parent.id,
+            CampaignId: campaignExist.id,
+            approved: true,
+            source: 'field app'
+          },
+          {transaction: t}
+        );
+
+        // await QueueService.createWallet(parent.id, 'user', campaignId);
+        group.representative_id = parent.id;
         const grouping = await db.Group.create(group, {transaction: t});
+        // let extension = files.profile_pic.name.substring(
+        //   files.profile_pic.name.lastIndexOf('.') + 1
+        // );
+        // await uploadFile(
+        //   files.profile_pic,
+        //   'u-' + environ + '-' + parent.id + '-i.' + extension,
+        //   'convexity-profile-images'
+        // ).then(url => {
+        //   parent.update({
+        //     profile_pic: url
+        //   });
+        // });
         for (let mem of data) {
           mem.group_id = grouping.id;
+          // await uploadFile(
+          //   files.profile_pic,
+          //   'u-' + environ + '-' + parent.id + '-i.' + extension,
+          //   'convexity-profile-images'
+          // ).then(url => {
+          //   parent.update({
+          //     profile_pic: url
+          //   });
+          // });
         }
         const members = await db.Member.bulkCreate(data, {transaction: t});
-        rep.dataValues.group = grouping;
-        rep.dataValues.members = members;
-        return rep;
+
+        parent.dataValues.group = grouping;
+        parent.dataValues.members = members;
+        return parent;
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -216,6 +263,7 @@ class UsersController {
         result
       );
       return Response.send(res);
+      // });
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,

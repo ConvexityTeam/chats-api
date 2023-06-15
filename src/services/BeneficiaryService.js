@@ -226,7 +226,9 @@ class BeneficiariesService {
         id
       },
       attributes: userConst.publicAttr,
+
       include: [
+        {model: Group, as: 'members', include: ['group_members']},
         {
           order: [['createdAt', 'ASC']],
           model: Campaign,
@@ -415,7 +417,7 @@ class BeneficiariesService {
               model: FormAnswer,
               as: 'Answers'
             },
-            {model: Group, as: 'members'}
+            {model: Group, as: 'members', include: ['group_members']}
           ]
         }
       ]

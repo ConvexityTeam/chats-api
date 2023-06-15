@@ -52,7 +52,6 @@ class NgoController {
       const {role, ...data} = SanitizeObject(req.body);
       const {user, organisation} = req;
       const newPassword = utils.generatePassword();
-
       const admin = await NgoService.createAdminAccount(
         organisation,
         data,
