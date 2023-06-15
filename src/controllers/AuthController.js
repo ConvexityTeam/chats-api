@@ -509,25 +509,9 @@ class AuthController {
           Response.setError(400, 'Profile picture required');
           return Response.send(res);
         }
-        // else if (!allowed_types.includes(files.profile_pic.type)) {
-        //   Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture");
-        //   return Response.send(res);
-        // }
         if (files.fingerprints) {
           if (files.fingerprints.length >= 6) {
             var uploadFilePromises = [];
-
-            // files.fingerprints.forEach((fingerprint) => {
-            //   const limit = 2 * 1024 * 1024
-            //   if (!allowed_types.includes(fingerprint.type)) {
-            //     Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for fingerprints");
-            //     return Response.send(res);
-            //   }
-            //    if (fingerprint.size > limit) {
-            //     Response.setError(400, "Fingerprint file must not exceed 2MB");
-            //     return Response.send(res);
-            //   }
-            // })
             let campaignExist = await db.Campaign.findOne({
               where: {
                 id: fields.campaign,
@@ -630,13 +614,7 @@ class AuthController {
                           );
                         });
                       }
-                      // const data = await encryptData(
-                      //   JSON.stringify({
-                      //     id: user.id,
-                      //     email: fields.email,
-                      //     phone: fields.phone
-                      //   })
-                      // );
+
                       Response.setSuccess(
                         201,
                         'Account Onboarded Successfully',

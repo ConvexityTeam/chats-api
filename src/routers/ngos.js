@@ -7,6 +7,7 @@ const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
+  SuperAdminAuth,
   IsOrgMember
 } = require('../middleware');
 const {
@@ -18,7 +19,7 @@ const {
 const router = require('express').Router();
 
 router.get('/', NgoController.getAllNGO);
-router.get('/:id', NgoController.getOneNGO);
+router.get('/:id', SuperAdminAuth, NgoController.getOneNGO);
 
 // auth/register
 router.post('/auth/onboard', AuthController.createNgoAccount);

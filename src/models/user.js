@@ -93,7 +93,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.BankAccount, {
         as: 'BankAccounts'
       });
-      User.hasMany(models.Group, {
+      User.hasOne(models.Group, {
         as: 'members',
         foreignKey: 'representative_id'
       });
