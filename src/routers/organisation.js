@@ -411,6 +411,15 @@ router
     CampaignController.approveAndFundCampaign
   );
 
+router
+  .route('/:organisation_id/campaigns/:campaign_id/fund-crypto-pay')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    ParamValidator.CampaignId,
+    CampaignController.fundCampaignWithCrypto
+  );
+
 router.get('/chain_currency', NgoSubAdminAuth, CampaignController.networkChain);
 router
   .route('/:organisation_id/campaigns/:campaign_id/crypto_pay')
