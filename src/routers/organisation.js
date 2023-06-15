@@ -154,7 +154,6 @@ router
   .get(
     FieldAgentAuth,
     ParamValidator.OrganisationId,
-    IsOrgMember,
     ParamValidator.ReferenceOptional,
     WalletController.getOrgnaisationTransaction
   );
