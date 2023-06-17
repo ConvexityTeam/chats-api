@@ -164,6 +164,7 @@ class UsersController {
 
     try {
       const rules = {
+        campaignId: 'required|integer',
         'representative.first_name': 'required|alpha',
         'representative.last_name': 'required|alpha',
         'representative.gender': 'required|in:male,female',
@@ -177,7 +178,6 @@ class UsersController {
         'representative.password': 'required',
         'representative.dob': 'required|date',
         'representative.nfc': 'string',
-        'representative.campaign': 'required|numeric',
         'member.*.full_name': 'required|string',
         'member.*.dob': 'required|date',
         'member.*.full_name': 'required|string',
@@ -199,18 +199,11 @@ class UsersController {
         return Response.send(res);
       }
       const result = await db.sequelize.transaction(async t => {
-        var form = new formidable.IncomingForm({
-          multiples: true
-        });
-
         const campaignExist = await CampaignService.getCampaignById(campaignId);
         if (!campaignExist) {
           Response.setError(404, 'Campaign not found');
           return Response.send(res);
         }
-        // form.parse(req, async (err, fields, files) => {
-        //   fields['today'] = new Date(Date.now()).toDateString();
-
         representative.RoleId = AclRoles.Beneficiary;
         representative.password = createHash('0000');
         const parent = await db.User.create(representative, {transaction: t});
@@ -227,29 +220,10 @@ class UsersController {
         await QueueService.createWallet(parent.id, 'user', campaignId);
         group.representative_id = parent.id;
         const grouping = await db.Group.create(group, {transaction: t});
-        let extension = files.profile_pic.name.substring(
-          files.profile_pic.name.lastIndexOf('.') + 1
-        );
-        await uploadFile(
-          files.profile_pic,
-          'u-' + environ + '-' + parent.id + '-i.' + extension,
-          'convexity-profile-images'
-        ).then(url => {
-          parent.update({
-            profile_pic: url
-          });
-        });
+
         for (let mem of data) {
           mem.group_id = grouping.id;
-          // await uploadFile(
-          //   files.profile_pic,
-          //   'u-' + environ + '-' + parent.id + '-i.' + extension,
-          //   'convexity-profile-images'
-          // ).then(url => {
-          //   parent.update({
-          //     profile_pic: url
-          //   });
-          // });
+          //await QueueService.createWallet(mem.id, 'user');
         }
         const members = await db.Member.bulkCreate(data, {transaction: t});
 

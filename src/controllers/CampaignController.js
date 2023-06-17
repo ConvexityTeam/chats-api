@@ -485,23 +485,15 @@ class CampaignController {
         );
         return Response.send(res);
       }
-
-      const transaction = await TransactionService.addTransaction({
-        amount: Number(amount),
-        reference: generateTransactionRef(),
-        status: 'success',
-        transaction_origin: 'wallet',
-        transaction_type: 'transfer',
-        SenderWalletId: OrgWallet.uuid,
-        ReceiverWalletId: campaignWallet.uuid,
-        CampaignId: campaign.id,
-        OrganisationId: campaign.OrganisationId,
-        narration: 'Approve Campaign Funding'
-      });
-      await campaign.update({budget: campaign.budget + amount});
+      await QueueService.fundCampaignWithCrypto(
+        campaign,
+        amount,
+        campaignWallet,
+        OrgWallet
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Success donor funding to campaign`,
+        `Campaign fund with ${amount} is Processing.`,
         transaction
       );
     } catch (error) {
