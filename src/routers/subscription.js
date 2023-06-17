@@ -17,12 +17,12 @@ router.post(
   SubscriptionController.createSubscriptions
 );
 router.put(
-  '/update-plan:id',
+  '/update-subscription/:id',
   SuperAdminAuth,
   SubscriptionController.updateSubscriptions
 );
 router.get(
-  '/plans',
+  '/subscriptions',
   SuperAdminAuth,
   SubscriptionController.getAllSubscriptions
 );
