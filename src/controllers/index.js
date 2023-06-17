@@ -13,6 +13,7 @@ const WebhookController = require('./WebhookController');
 const AppController = require('./AppController');
 const UtilController = require('./UtilController');
 const PlanController = require('./PlanController');
+const SubscriptionController = require('./SubscriptionController');
 
 module.exports = {
   MarketController,
@@ -29,5 +30,6 @@ module.exports = {
   WebhookController,
   AppController,
   UtilController,
-  PlanController
+  PlanController,
+  SubscriptionController
 };

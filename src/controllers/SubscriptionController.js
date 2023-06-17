@@ -1,4 +1,14 @@
-class SubscriptionsControllers {
+require('dotenv').config();
+const db = require('../models');
+const {util, Response, Logger} = require('../libs');
+const {HttpStatusCode} = require('../utils');
+const Validator = require('validatorjs');
+const {UserService, PlanService, SubscriptionService} = require('../services');
+const {SanitizeObject} = require('../utils');
+const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
+const axios = require('axios');
+
+class SubscriptionController {
   static async createSubscriptions(req, res) {
     try {
       const plan = await Subscriptions.create(req.body);
@@ -31,3 +41,4 @@ class SubscriptionsControllers {
     } catch (error) {}
   }
 }
+module.exports = SubscriptionController;

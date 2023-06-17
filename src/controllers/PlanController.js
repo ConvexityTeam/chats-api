@@ -3,20 +3,10 @@ const db = require('../models');
 const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
-const {
-  UserService,
-  OrganisationService,
-  VendorService,
-  BeneficiaryService,
-  CampaignService,
-  TransactionService,
-  BlockchainService
-} = require('../services');
+const {UserService, PlanService} = require('../services');
 const {SanitizeObject} = require('../utils');
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 const axios = require('axios');
-const {termiiConfig} = require('../config');
-const {AclRoles} = require('../utils');
 
 class PlanController {
   static async createPlan(req, res) {
@@ -50,7 +40,8 @@ class PlanController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       } else {
-        const plan = await db.Plan.create({data});
+        const plan = await PlanService.addPlan(data);
+
         if (!plan) {
           Response.setError(
             HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
@@ -75,16 +66,21 @@ class PlanController {
       return Response.send(res);
     }
   }
-
+  static async listPlans() {}
   static async getAllPlans(req, res) {
     try {
-      const plans = await db.Plan.findAll();
-      Response.setSuccess(
-        HttpStatusCode.STATUS_OK,
-        'All Plans Retrieved',
-        plans
-      );
-      return Response.send(res);
+      const plans = await PlanService.getAllPlans();
+      if (!plans) {
+        Response.setError(HttpStatusCode.STATUS_NOT_FOUND, 'No plans found');
+        return Response.send(res);
+      } else {
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'All Plans Retrieved',
+          plans
+        );
+        return Response.send(res);
+      }
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
@@ -98,18 +94,22 @@ class PlanController {
    */
   static async getAPlan(req, res) {
     const {id} = req.params;
-    if (!Number(id)) {
-      Response.setError(400, 'Please input a valid numeric value');
-      return Response.send(res);
-    }
     try {
-      const plan = await db.Plan.findOne({where: {id: id}});
+      if (!Number(id)) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Please input a valid numeric value'
+        );
+        return Response.send(res);
+      }
+      const plan = await PlanService.getAPlan(id);
       if (!plan) {
         Response.setError(HttpStatusCode.STATUS_NOT_FOUND, 'No such plan');
         return Response.send(res);
+      } else {
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Plan Retrieved', plan);
+        return Response.send(res);
       }
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Plan Retrieved', plan);
-      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
@@ -119,25 +119,28 @@ class PlanController {
     }
   }
   static async updatePlan(req, res) {
-    const updatedPlan = req.body;
+    const planData = req.body;
     const {id} = req.params;
     if (!Number(id)) {
-      Response.setError(400, 'Please input a valid numeric value');
+      Response.setError(
+        HttpStatusCode.STATUS_BAD_REQUEST,
+        'Please input a valid numeric value'
+      );
       return Response.send(res);
     }
     try {
-      const planUpdated = await db.Plan.update(updatedPlan, {
-        where: {
-          id
-        }
-      });
-      if (!planUpdated) {
-        Response.setError(404, `Plan Cannot Be Updated`);
+      const updatedPlan = PlanService.updatePlan(id, planData);
+      if (!updatedPlan) {
+        Response.setError(
+          HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
+          `Plan Cannot Be Updated`
+        );
+        return Response.send(res);
       } else {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Plan updated',
-          updateCampaign
+          updatedPlan
         );
       }
       return Response.send(res);
@@ -155,12 +158,16 @@ class PlanController {
    */
   static async deletePlan(req, res) {
     const {id} = req.params;
-    if (!Number(id)) {
-      Response.setError(400, 'Please input a valid numeric value');
-      return Response.send(res);
-    }
+
     try {
-      const plan = await db.Plan.destroy({where: {id: id}});
+      if (!Number(id)) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Please input a valid numeric value'
+        );
+        return Response.send(res);
+      }
+      const plan = await PlanService.deletePlan(id);
       if (!plan) {
         Response.setError(HttpStatusCode.STATUS_NOT_FOUND, 'Plan Not Deleted');
         return Response.send(res);
