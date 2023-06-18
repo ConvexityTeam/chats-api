@@ -486,6 +486,20 @@ class CampaignService {
     });
   }
 
+  // static async getAllCampaigns(OrganisationId) {
+  //   return Campaign.findAll({
+  //     order: [['createdAt', 'DESC']],
+  //     attributes: [
+  //       [Sequelize.fn('sum', Sequelize.col('minting_limit')), 'total_items'],
+  //       [Sequelize.fn('sum', Sequelize.col('minting_limit')), 'total_cash']
+  //     ],
+  //     where: {
+  //       is_funded: true,
+  //       OrganisationId
+  //     },
+  //     include: ['Organisation']
+  //   });
+  // }
   static async getAllCampaigns(queryClause = null) {
     return Campaign.findAll({
       order: [['createdAt', 'DESC']],
