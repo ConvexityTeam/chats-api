@@ -293,6 +293,34 @@ class MailerService {
       });
     });
   }
+  ngoApprovedMail(to, orgname) {
+    const body = `
+    <div>
+    <h2>Congratulations, ${orgname}</h2>
+    <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaign.<br/>
+If you have any questions any questions, please contact us via the contact form on your dashboard.</p>
+    <a href="${this.config.url}"> Click here</a>
+      <p>Best,\n CHATS - Convexity</p>
+    </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to: to,
+      subject: 'Congratulations Account Approved!',
+      html: body
+    };
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          console.log('NGO Verification Mail Sent');
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
 }
 
 module.exports = new MailerService();
