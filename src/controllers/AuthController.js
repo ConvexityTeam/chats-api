@@ -944,6 +944,7 @@ class AuthController {
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
+      Logger.info(`Internal Server Error: ${error}`);
       const message =
         error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
@@ -1267,9 +1268,30 @@ class AuthController {
     }
   }
 
+  static async verify2FASecret(req, res) {
+    try {
+      await AuthService.verify2faSecret(req.user);
+      Response.setSuccess(200, '2FA Data Verified', req.user);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(400, error.message);
+      return Response.send(res);
+    }
+  }
   static async setTwoFactorSecret(req, res) {
     try {
-      const data = await AuthService.add2faSecret(req.user);
+      const rules = {
+        tfa_method: 'required|in:qrCode,email,sms'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const data = await AuthService.add2faSecret(
+        req.user,
+        req.body.tfa_method
+      );
       Response.setSuccess(200, '2FA Data Generated', data);
       return Response.send(res);
     } catch (error) {
@@ -1287,9 +1309,22 @@ class AuthController {
         Response.setError(422, `OTP is required.`);
         return Response.send(res);
       }
+      const user = await db.User.findOne({
+        where: {
+          id: req.user.id
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
 
-      const user = await AuthService.enable2afCheck(req.user, token);
-      Response.setSuccess(200, 'Two factor authentication enabled.', user);
+      const data = await AuthService.enable2afCheck(user, token);
+      Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
     } catch (error) {
       Response.setError(400, error.message);

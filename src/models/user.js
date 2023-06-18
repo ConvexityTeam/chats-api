@@ -160,6 +160,7 @@ module.exports = (sequelize, DataTypes) => {
       is_public: DataTypes.BOOLEAN,
       is_tfa_enabled: DataTypes.BOOLEAN,
       tfa_secret: DataTypes.STRING,
+      tfa_method: DataTypes.ENUM('qrCode', 'email', 'sms'),
       iris: DataTypes.TEXT,
       last_login: DataTypes.DATE,
       profile_pic: DataTypes.STRING,
