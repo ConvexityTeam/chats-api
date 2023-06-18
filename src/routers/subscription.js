@@ -12,24 +12,20 @@ const {
 const {SubscriptionController} = require('../controllers');
 
 router.post(
-  '/create-plan',
-  SuperAdminAuth,
+  '/buy-plan',
+  IsOrgMember,
   SubscriptionController.createSubscriptions
 );
 router.put(
   '/update-subscription/:id',
-  SuperAdminAuth,
+  IsOrgMember,
   SubscriptionController.updateSubscriptions
 );
 router.get(
   '/subscriptions',
-  SuperAdminAuth,
+  IsOrgMember,
   SubscriptionController.getAllSubscriptions
 );
-router.delete(
-  '/:id',
-  SuperAdminAuth,
-  SubscriptionController.deleteSubscriptions
-);
+router.delete('/:id', IsOrgMember, SubscriptionController.deleteSubscriptions);
 
 module.exports = router;

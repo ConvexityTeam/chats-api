@@ -25,9 +25,7 @@ class ImpactReportController {
         campaignId: 'integer|required',
         MedialLink: 'required'
       };
-      const validation = new Validator(data, rules, {
-        url: 'Only valid url with https or http allowed'
-      });
+      const validation = new Validator(data, rules);
       if (validation.fails()) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, validation.errors);
         return Response.send(res);
