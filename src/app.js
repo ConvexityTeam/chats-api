@@ -29,6 +29,8 @@ const orderRouter = require('./routers/order');
 const appRouter = require('./routers/app');
 const productRouter = require('./routers/product');
 const planRouter = require('./routers/plan');
+const subscriptionRouter = require('./routers/subscription');
+const impactReportRouter = require('./routers/impact');
 
 const app = express();
 
@@ -62,6 +64,9 @@ app.use('/v1/utils', utilRouter);
 app.use('/v1/app', appRouter);
 app.use('/v1/products', productRouter);
 app.use('/v1/plans', planRouter);
+app.use('/v1/subscriptions', subscriptionRouter);
+app.use('/v1/impact-reports', impactReportRouter);
+
 app.get('/', (req, res) => {
   try {
     Response.setSuccess(HttpStatusCode.STATUS_OK, 'Welcome to CHATS App ');
