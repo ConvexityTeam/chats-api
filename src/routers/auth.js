@@ -6,6 +6,7 @@ const {
   IsOrgMember,
   IsRecaptchaVerified
 } = require('../middleware'); //Auhorization middleware
+const excelUploader = require('../middleware/excelUploader');
 const {AuthController, BeneficiaryController} = require('../controllers');
 const {
   AuthValidator,
@@ -42,6 +43,14 @@ router.post('/resend-email-confirmation/', AuthController.resendMail);
 router.post('/verify-email/:confirmationCode', AuthController.confirmEmail);
 
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
+//uploading beneficiaries via spreadsheet
+router.post(
+  '/register/beneficiaries-upload-spreadsheet',
+  excelUploader.single('beneficiaries_xls'),
+  AuthController.beneficiariesExcel
+);
+router.post('/register/kobo-tool-box', AuthController.beneficiariesKoboToolBox);
+
 router.post('/nin-verification', AuthController.verifyNin);
 router.post('/update-profile', Auth, AuthController.updateProfile);
 router.get('/user-detail/:id', Auth, AuthController.userDetails);
