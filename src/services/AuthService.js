@@ -100,7 +100,7 @@ class AuthService {
         .then(() => {
           if (tfa_method == 'sms') {
             SmsService.send(
-              '+2348034074748',
+              user.phone,
               `2AF Verification Code: ${qrcodeData.code}`
             );
             delete qrcodeData.qrcode_url;
@@ -109,7 +109,7 @@ class AuthService {
           }
           if (tfa_method == 'email') {
             MailerService._sendMail(
-              'jibrilmohammed39@gmail.com',
+              user.email,
               `2AF Verification Code: ${qrcodeData.code}`,
               '<h1>2AF Verification Code: ' + qrcodeData.code + '</h1>'
             );
