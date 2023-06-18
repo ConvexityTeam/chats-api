@@ -11,11 +11,12 @@ const {Message} = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const {Response, Logger} = require('../libs');
+const {Response, Logger, Axios} = require('../libs');
 const {Beneficiary, Invites} = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
+const readXlsxFile = require('read-excel-file/node');
 
 const AuthService = require('../services/AuthService');
 const amqp_1 = require('./../libs/RabbitMQ/Connection');
@@ -38,7 +39,7 @@ const ninVerificationQueue = amqp_1['default'].declareQueue(
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
-
+const __basedir = __dirname + '/..';
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
 class AuthController {
@@ -126,9 +127,10 @@ class AuthController {
   static async beneficiariesExcel(req, res) {
     try {
       if (req.file == undefined) {
-        return res.status(400).send('Please upload an excel file!');
+        Response.setError(404, 'Please upload an excel file!', err);
+        return Response.send(res);
       }
-      const campaignId = req.body.campaign;
+      const {campaignId} = req.body;
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
 
       let existingEmails = []; //existings
@@ -152,11 +154,13 @@ class AuthController {
             dob: row[7],
             RoleId: AclRoles.Beneficiary,
             pin: encryptedPin,
+            password: 'password',
             status: 'activated'
           };
           beneficiaries.push(beneficiary);
         });
-        // console.log(beneficiaries);
+        console.log(beneficiaries);
+
         //loop through all the beneficiaries list to populate them in the db
         beneficiaries.forEach(async beneficiary => {
           let campaignExist = await db.Campaign.findOne({
@@ -166,7 +170,10 @@ class AuthController {
             }
           });
           if (!campaignExist) {
-            Response.setError(400, 'Invalid Campaign ID');
+            Response.setError(
+              HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+              'Invalid Campaign ID'
+            );
             return Response.send(res);
           }
           const user_exist = await db.User.findOne({
@@ -227,13 +234,17 @@ class AuthController {
                   // return Response.send(res);
                 })
                 .catch(err => {
-                  Response.setError(500, err.message);
+                  Response.setError(
+                    HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+                    err.message
+                  );
                   // return Response.send(res);
                   createdFailed.push(beneficiary.email);
                 });
             });
           }
         });
+
         return Response.send(res);
       });
     } catch (error) {
@@ -247,6 +258,7 @@ class AuthController {
 
   static async beneficiariesKoboToolBox(req, res) {
     const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
+    const response = await Axios.get(kTBoxURL);
     //fetch from their url
     //read into json
     //match records to right data column
