@@ -8,7 +8,7 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.removeColumn('Users', 'iris');
+    // await queryInterface.removeColumn('Users', 'iris');
     await queryInterface.addColumn('Users', 'iris', {
       type: Sequelize.JSON,
       after: 'tfa_secret'
