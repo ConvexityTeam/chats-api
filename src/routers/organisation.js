@@ -154,7 +154,6 @@ router
   .get(
     FieldAgentAuth,
     ParamValidator.OrganisationId,
-    IsOrgMember,
     ParamValidator.ReferenceOptional,
     WalletController.getOrgnaisationTransaction
   );
@@ -357,6 +356,13 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.getPrivateCampaign
   );
+
+router.get(
+  '/:organisation_id/public-campaigns/:campaign_id',
+  ParamValidator.OrganisationId,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignController.getCampaign
+);
 router
   .route('/:organisation_id/campaigns/:campaign_id')
   .get(
@@ -403,6 +409,15 @@ router
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.approveAndFundCampaign
+  );
+
+router
+  .route('/:organisation_id/campaigns/:campaign_id/fund-crypto-pay')
+  .post(
+    NgoAdminAuth,
+    ParamValidator.OrganisationId,
+    ParamValidator.CampaignId,
+    CampaignController.fundCampaignWithCrypto
   );
 
 router.get('/chain_currency', NgoSubAdminAuth, CampaignController.networkChain);

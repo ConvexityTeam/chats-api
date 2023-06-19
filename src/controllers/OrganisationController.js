@@ -462,6 +462,17 @@ class OrganisationController {
     }
   }
 
+  static async totalCashItem(req, res) {
+    try {
+      const campaign = await CampaignService.getAllCampaigns();
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Request failed. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
   static async getBeneficiariesTransactions(req, res) {
     try {
       const transactions = await BeneficiaryService.findOrganisationVendorTransactions(
@@ -1597,7 +1608,7 @@ class OrganisationController {
           is_approved: true
         })
       ]);
-
+      console.log(beneficiary, 'opop');
       for (let tran of transaction) {
         if (
           tran.narration === 'Vendor Order' ||

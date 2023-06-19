@@ -16,7 +16,7 @@ const {Beneficiary, Invites} = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
-const readXlsxFile = require('read-excel-file/node');
+// const readXlsxFile = require('read-excel-file/node');
 
 const AuthService = require('../services/AuthService');
 const amqp_1 = require('./../libs/RabbitMQ/Connection');
@@ -136,117 +136,117 @@ class AuthController {
       let existingEmails = []; //existings
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
-      readXlsxFile(path).then(rows => {
-        // skip header or first row
-        rows.shift();
-        let beneficiaries = [];
-        const encryptedPin = createHash('0000');
-        //loop through the file
-        rows.forEach(row => {
-          let beneficiary = {
-            first_name: row[0],
-            last_name: row[1],
-            email: row[2],
-            phone: row[3],
-            gender: row[4],
-            address: row[5],
-            location: row[6],
-            dob: row[7],
-            RoleId: AclRoles.Beneficiary,
-            pin: encryptedPin,
-            password: 'password',
-            status: 'activated'
-          };
-          beneficiaries.push(beneficiary);
-        });
-        console.log(beneficiaries);
+      // readXlsxFile(path).then(rows => {
+      //   // skip header or first row
+      //   rows.shift();
+      //   let beneficiaries = [];
+      //   const encryptedPin = createHash('0000');
+      //   //loop through the file
+      //   rows.forEach(row => {
+      //     let beneficiary = {
+      //       first_name: row[0],
+      //       last_name: row[1],
+      //       email: row[2],
+      //       phone: row[3],
+      //       gender: row[4],
+      //       address: row[5],
+      //       location: row[6],
+      //       dob: row[7],
+      //       RoleId: AclRoles.Beneficiary,
+      //       pin: encryptedPin,
+      //       password: 'password',
+      //       status: 'activated'
+      //     };
+      //     beneficiaries.push(beneficiary);
+      //   });
+      //   console.log(beneficiaries);
 
-        //loop through all the beneficiaries list to populate them in the db
-        beneficiaries.forEach(async beneficiary => {
-          let campaignExist = await db.Campaign.findOne({
-            where: {
-              id: campaignId,
-              type: 'campaign'
-            }
-          });
-          if (!campaignExist) {
-            Response.setError(
-              HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-              'Invalid Campaign ID'
-            );
-            return Response.send(res);
-          }
-          const user_exist = await db.User.findOne({
-            where: {
-              email: beneficiary.email
-            }
-          });
-          if (user_exist) {
-            //include the email in the existing list
-            existingEmails.push(beneficiary.email);
-          } else {
-            bcrypt.genSalt(10, (err, salt) => {
-              if (err) {
-                console.log('Error Ocurred hashing');
-              }
-              const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
-              bcrypt
-                .hash(beneficiary.password, salt)
-                .then(async hash => {
-                  const encryptedPassword = hash;
-                  await db.User.create({
-                    RoleId: AclRoles.Beneficiary,
-                    first_name: beneficiary.first_name,
-                    last_name: beneficiary.last_name,
-                    phone: beneficiary.phone,
-                    email: beneficiary.email,
-                    password: encryptedPassword,
-                    gender: beneficiary.gender,
-                    status: 'activated',
-                    location: beneficiary.location,
-                    address: beneficiary.address,
-                    referal_id: beneficiary.referal_id,
-                    dob: beneficiary.dob,
-                    pin: encryptedPin
-                  }).then(async user => {
-                    await QueueService.createWallet(user.id, 'user');
-                    if (campaignExist.type === 'campaign') {
-                      await Beneficiary.create({
-                        UserId: user.id,
-                        CampaignId: campaignExist.id,
-                        approved: true,
-                        source: 'Excel File Upload'
-                      }).then(async () => {
-                        await QueueService.createWallet(
-                          user.id,
-                          'user',
-                          fields.campaign
-                        );
-                      });
-                    }
-                  });
-                  createdSuccess.push(beneficiary.email); //add to success list
-                  Response.setSuccess(
-                    200,
-                    'Beneficiaries Uploaded Successfully:',
-                    user.id
-                  );
-                  // return Response.send(res);
-                })
-                .catch(err => {
-                  Response.setError(
-                    HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-                    err.message
-                  );
-                  // return Response.send(res);
-                  createdFailed.push(beneficiary.email);
-                });
-            });
-          }
-        });
+      //   //loop through all the beneficiaries list to populate them in the db
+      //   beneficiaries.forEach(async beneficiary => {
+      //     let campaignExist = await db.Campaign.findOne({
+      //       where: {
+      //         id: campaignId,
+      //         type: 'campaign'
+      //       }
+      //     });
+      //     if (!campaignExist) {
+      //       Response.setError(
+      //         HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //         'Invalid Campaign ID'
+      //       );
+      //       return Response.send(res);
+      //     }
+      //     const user_exist = await db.User.findOne({
+      //       where: {
+      //         email: beneficiary.email
+      //       }
+      //     });
+      //     if (user_exist) {
+      //       //include the email in the existing list
+      //       existingEmails.push(beneficiary.email);
+      //     } else {
+      //       bcrypt.genSalt(10, (err, salt) => {
+      //         if (err) {
+      //           console.log('Error Ocurred hashing');
+      //         }
+      //         const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
+      //         bcrypt
+      //           .hash(beneficiary.password, salt)
+      //           .then(async hash => {
+      //             const encryptedPassword = hash;
+      //             await db.User.create({
+      //               RoleId: AclRoles.Beneficiary,
+      //               first_name: beneficiary.first_name,
+      //               last_name: beneficiary.last_name,
+      //               phone: beneficiary.phone,
+      //               email: beneficiary.email,
+      //               password: encryptedPassword,
+      //               gender: beneficiary.gender,
+      //               status: 'activated',
+      //               location: beneficiary.location,
+      //               address: beneficiary.address,
+      //               referal_id: beneficiary.referal_id,
+      //               dob: beneficiary.dob,
+      //               pin: encryptedPin
+      //             }).then(async user => {
+      //               await QueueService.createWallet(user.id, 'user');
+      //               if (campaignExist.type === 'campaign') {
+      //                 await Beneficiary.create({
+      //                   UserId: user.id,
+      //                   CampaignId: campaignExist.id,
+      //                   approved: true,
+      //                   source: 'Excel File Upload'
+      //                 }).then(async () => {
+      //                   await QueueService.createWallet(
+      //                     user.id,
+      //                     'user',
+      //                     fields.campaign
+      //                   );
+      //                 });
+      //               }
+      //             });
+      //             createdSuccess.push(beneficiary.email); //add to success list
+      //             Response.setSuccess(
+      //               200,
+      //               'Beneficiaries Uploaded Successfully:',
+      //               user.id
+      //             );
+      //             // return Response.send(res);
+      //           })
+      //           .catch(err => {
+      //             Response.setError(
+      //               HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+      //               err.message
+      //             );
+      //             // return Response.send(res);
+      //             createdFailed.push(beneficiary.email);
+      //           });
+      //       });
+      //     }
+      //   });
 
-        return Response.send(res);
-      });
+      //   return Response.send(res);
+      // });
     } catch (error) {
       console.log(error);
       res.status(500).send({
@@ -521,25 +521,9 @@ class AuthController {
           Response.setError(400, 'Profile picture required');
           return Response.send(res);
         }
-        // else if (!allowed_types.includes(files.profile_pic.type)) {
-        //   Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for Profile picture");
-        //   return Response.send(res);
-        // }
         if (files.fingerprints) {
           if (files.fingerprints.length >= 6) {
             var uploadFilePromises = [];
-
-            // files.fingerprints.forEach((fingerprint) => {
-            //   const limit = 2 * 1024 * 1024
-            //   if (!allowed_types.includes(fingerprint.type)) {
-            //     Response.setError(400, "Invalid File type. Only jpg, png and jpeg files allowed for fingerprints");
-            //     return Response.send(res);
-            //   }
-            //    if (fingerprint.size > limit) {
-            //     Response.setError(400, "Fingerprint file must not exceed 2MB");
-            //     return Response.send(res);
-            //   }
-            // })
             let campaignExist = await db.Campaign.findOne({
               where: {
                 id: fields.campaign,
@@ -642,13 +626,7 @@ class AuthController {
                           );
                         });
                       }
-                      // const data = await encryptData(
-                      //   JSON.stringify({
-                      //     id: user.id,
-                      //     email: fields.email,
-                      //     phone: fields.phone
-                      //   })
-                      // );
+
                       Response.setSuccess(
                         201,
                         'Account Onboarded Successfully',
@@ -978,6 +956,7 @@ class AuthController {
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
+      Logger.info(`Internal Server Error: ${error}`);
       const message =
         error.status == 401 ? error.message : 'Internal Server Error';
       Response.setError(401, message);
@@ -1301,9 +1280,30 @@ class AuthController {
     }
   }
 
+  static async verify2FASecret(req, res) {
+    try {
+      await AuthService.verify2faSecret(req.user);
+      Response.setSuccess(200, '2FA Data Verified', req.user);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(400, error.message);
+      return Response.send(res);
+    }
+  }
   static async setTwoFactorSecret(req, res) {
     try {
-      const data = await AuthService.add2faSecret(req.user);
+      const rules = {
+        tfa_method: 'required|in:qrCode,email,sms'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const data = await AuthService.add2faSecret(
+        req.user,
+        req.body.tfa_method
+      );
       Response.setSuccess(200, '2FA Data Generated', data);
       return Response.send(res);
     } catch (error) {
@@ -1321,9 +1321,34 @@ class AuthController {
         Response.setError(422, `OTP is required.`);
         return Response.send(res);
       }
+      const rules = {
+        tfa_method: 'required|in:qrCode,email,sms'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const user = await db.User.findOne({
+        where: {
+          id: req.user.id
+        },
+        include: {
+          model: db.OrganisationMembers,
+          as: 'AssociatedOrganisations',
+          include: {
+            model: db.Organisation,
+            as: 'Organisation'
+          }
+        }
+      });
 
-      const user = await AuthService.enable2afCheck(req.user, token);
-      Response.setSuccess(200, 'Two factor authentication enabled.', user);
+      const data = await AuthService.enable2afCheck(
+        user,
+        token,
+        req.body.tfa_method
+      );
+      Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
     } catch (error) {
       Response.setError(400, error.message);

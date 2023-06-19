@@ -13,7 +13,7 @@ services:
         - /etc/localtime:/etc/localtime:ro
       environment:
         - POSTGRES_HOST=localhost
-        - POSTGRES_DB=chats_dev
+        - POSTGRES_DB=dev_chats
         - POSTGRES_USER=postgres
         - POSTGRES_PASSWORD=postgres
       restart: unless-stopped

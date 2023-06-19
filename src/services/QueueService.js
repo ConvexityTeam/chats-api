@@ -3,6 +3,7 @@ const {Transaction} = require('../models');
 const {RabbitMq, Logger} = require('../libs');
 const {generateTransactionRef, AclRoles} = require('../utils');
 const {
+  FUND_CAMPAIGN_WITH_CRYPTO,
   CREATE_WALLET,
   NFT_MINTING_LIMIT,
   VERIFY_FIAT_DEPOSIT,
@@ -59,7 +60,9 @@ const {
   INCREASE_GAS_APPROVE_SPENDING,
   CONFIRM_WITHHOLDING_FUND,
   WITHHOLD_FUND_GAS_ERROR,
-  WITHHELD_FUND
+  WITHHELD_FUND,
+  CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO,
+  INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 
@@ -418,7 +421,36 @@ const increaseGasWithHoldFunds = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+
+const fundCampaignWithCrypto = RabbitMq['default'].declareQueue(
+  FUND_CAMPAIGN_WITH_CRYPTO,
+  {
+    durable: true
+  }
+);
+
+const confirmFundCampaignWithCrypto = RabbitMq['default'].declareQueue(
+  CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO,
+  {
+    durable: true
+  }
+);
+
+const gasFundCampaignWithCrypto = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO,
+  {
+    durable: true
+  }
+);
+
 class QueueService {
+  static async gasFundCampaignWithCrypto(data) {
+    gasFundCampaignWithCrypto.send(
+      new Message(data, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async increaseGasApproveSpending(
     campaignPrivateKey,
     campaignAddress,
@@ -1226,6 +1258,54 @@ class QueueService {
         contentType: 'application/json'
       })
     );
+  }
+
+  static async confirmFundCampaignWithCrypto(
+    hash,
+    transactionId,
+    uuid,
+    amount,
+    campaign
+  ) {
+    const payload = {hash, transactionId, uuid, amount, campaign};
+    confirmFundCampaignWithCrypto.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async fundCampaignWithCrypto(
+    campaign,
+    amount,
+    campaignWallet,
+    OrgWallet
+  ) {
+    const transaction = await TransactionService.addTransaction({
+      amount: Number(amount),
+      reference: generateTransactionRef(),
+      status: 'processing',
+      transaction_origin: 'wallet',
+      transaction_type: 'transfer',
+      SenderWalletId: OrgWallet.uuid,
+      ReceiverWalletId: campaignWallet.uuid,
+      CampaignId: campaign.id,
+      OrganisationId: OrgWallet.OrganisationId,
+      narration: 'Approve Campaign Funding With Crypto'
+    });
+
+    const payload = {
+      OrgWallet,
+      campaignWallet,
+      campaign,
+      transactionId: transaction.uuid,
+      amount
+    };
+    fundCampaignWithCrypto.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+    return transaction;
   }
   static async CampaignApproveAndFund(campaign, campaignWallet, OrgWallet) {
     const realBudget = campaign.budget;

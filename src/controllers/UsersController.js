@@ -22,7 +22,8 @@ const {
   QueueService,
   WalletService,
   SmsService,
-  MailerService
+  MailerService,
+  CampaignService
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -160,8 +161,10 @@ class UsersController {
   }
   static async groupAccount(req, res) {
     const {group, representative, member, campaignId} = req.body;
+
     try {
       const rules = {
+        campaignId: 'required|integer',
         'representative.first_name': 'required|alpha',
         'representative.last_name': 'required|alpha',
         'representative.gender': 'required|in:male,female',
@@ -175,7 +178,6 @@ class UsersController {
         'representative.password': 'required',
         'representative.dob': 'required|date',
         'representative.nfc': 'string',
-        'representative.campaign': 'required|numeric',
         'member.*.full_name': 'required|string',
         'member.*.dob': 'required|date',
         'member.*.full_name': 'required|string',
@@ -197,18 +199,37 @@ class UsersController {
         return Response.send(res);
       }
       const result = await db.sequelize.transaction(async t => {
+        const campaignExist = await CampaignService.getCampaignById(campaignId);
+        if (!campaignExist) {
+          Response.setError(404, 'Campaign not found');
+          return Response.send(res);
+        }
         representative.RoleId = AclRoles.Beneficiary;
-        // representative.password = createHash()
-        const rep = await db.User.create(representative, {transaction: t});
-        group.representative_id = rep.id;
+        representative.password = createHash('0000');
+        const parent = await db.User.create(representative, {transaction: t});
+        await db.Beneficiary.create(
+          {
+            UserId: parent.id,
+            CampaignId: campaignExist.id,
+            approved: true,
+            source: 'field app'
+          },
+          {transaction: t}
+        );
+
+        await QueueService.createWallet(parent.id, 'user', campaignId);
+        group.representative_id = parent.id;
         const grouping = await db.Group.create(group, {transaction: t});
+
         for (let mem of data) {
           mem.group_id = grouping.id;
+          //await QueueService.createWallet(mem.id, 'user');
         }
         const members = await db.Member.bulkCreate(data, {transaction: t});
-        rep.dataValues.group = grouping;
-        rep.dataValues.members = members;
-        return rep;
+
+        parent.dataValues.group = grouping;
+        parent.dataValues.members = members;
+        return parent;
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -216,6 +237,7 @@ class UsersController {
         result
       );
       return Response.send(res);
+      // });
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
