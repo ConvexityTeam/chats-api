@@ -18,20 +18,22 @@ const {AclRoles} = require('../utils');
 class ImpactReportController {
   static async createReport(req, res) {
     const data = req.body;
+
     try {
       const rules = {
         title: 'string',
         AgentId: 'integer|required',
-        campaignId: 'integer|required',
+        CampaignId: 'integer|required',
         MedialLink: 'required'
       };
       const validation = new Validator(data, rules);
+
       if (validation.fails()) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, validation.errors);
         return Response.send(res);
       }
-      const report = await ImpactReportService.create(req.body);
-
+      const report = await db.ImpactReports.create({data}); //await ImpactReportService.create(req.body);
+      console.log(report);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Report Generated successfully',
@@ -39,6 +41,7 @@ class ImpactReportController {
       );
       return Response.send(res);
     } catch (error) {
+      console.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error, Contact Support'
