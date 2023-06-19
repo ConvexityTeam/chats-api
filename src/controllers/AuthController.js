@@ -562,7 +562,6 @@ class AuthController {
                     email: fields.email,
                     password: encryptedPassword,
                     gender: fields.gender,
-                    status: 'activated',
                     location: fields.location,
                     address: fields.address,
                     referal_id: fields.referal_id,
@@ -1713,7 +1712,6 @@ class AuthController {
       const user = await UserService.addUser({
         RoleId: AclRoles.Donor,
         email: data.email,
-        status: 'activated',
         password
       });
 

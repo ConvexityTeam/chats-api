@@ -2491,6 +2491,10 @@ class OrganisationController {
     }
   }
 
+  static async cash_item() {
+    try {
+    } catch (error) {}
+  }
   static async record(req, res) {
     try {
       const isOrgMember = await OrganisationService.isMemberUser(req.user.id);
@@ -2519,13 +2523,13 @@ class OrganisationController {
       const balance = getDifference()
         .map(val => val.balance)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
-      const item_distributed = getDifference()
+      const total_items_distributed = isOrganisationCamp
         .map(val => val.minting_limit)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
       Response.setSuccess(200, 'transaction', {
         campaign_budget,
         amount_disbursed,
-        item_distributed,
+        total_items_distributed,
         balance
       });
       return Response.send(res);
