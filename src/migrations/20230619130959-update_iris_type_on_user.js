@@ -14,7 +14,7 @@ module.exports = {
       after: 'tfa_secret'
     });
     await queryInterface.addColumn('Users', 'tfa_binded_date', {
-      type: Sequelize.JSON,
+      type: Sequelize.Date,
       after: 'tfa_secret'
     });
   },
