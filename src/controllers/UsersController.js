@@ -77,15 +77,8 @@ class UsersController {
   }
 
   static async createVendor(req, res) {
-    const {
-      first_name,
-      last_name,
-      email,
-      phone,
-      address,
-      location,
-      store_name
-    } = req.body;
+    const {first_name, last_name, email, phone, address, location, store_name} =
+      req.body;
 
     try {
       const rules = {
@@ -381,6 +374,7 @@ class UsersController {
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(`Server Error. Please retry: ${JSON.stringify(error)}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server Error. Please retry.' + error
