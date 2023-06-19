@@ -62,7 +62,7 @@ router.post('/field-login', AuthController.signInField);
 router.post('/beneficiary-login', AuthController.signInBeneficiary);
 router.post('/ngo-login', AuthController.signInNGO);
 router.post('/2fa/verify', Auth, AuthController.verify2FASecret);
-router.get('/2fa/init', Auth, AuthController.setTwoFactorSecret);
+router.post('/2fa/init', Auth, AuthController.setTwoFactorSecret);
 router.post('/2fa/enable', Auth, AuthController.enableTwoFactorAuth);
 router.post('/2fa/disable', Auth, AuthController.disableTwoFactorAuth);
 router.post('/2fa/toggle', Auth, AuthController.toggleTwoFactorAuth);
