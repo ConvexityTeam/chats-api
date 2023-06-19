@@ -42,11 +42,11 @@ class WalletController {
         return Response.send(res);
       }
 
-      const transaction = await TransactionService.findTransaction({
+      const transactions = await TransactionService.findTransaction({
         OrganisationId,
         reference
       });
-      if (!transaction) {
+      if (!transactions) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Transaction not found.'
@@ -55,7 +55,6 @@ class WalletController {
       }
 
       for (let transaction of transactions) {
-        console.log(transaction.CampaignId, 'transaction.CampaignId');
         if (typeof transaction.CampaignId === 'number') {
           const campaign = await CampaignService.getACampaign(
             transaction.CampaignId,
@@ -68,7 +67,7 @@ class WalletController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Transaction Details',
-        transaction
+        transactions
       );
       return Response.send(res);
     } catch (error) {
