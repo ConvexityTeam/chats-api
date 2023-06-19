@@ -1,7 +1,8 @@
 const {Response} = require('../libs');
 const {UtilService, PaystackService} = require('../services');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
-const {default: axios} = require('axios');
+const {CurrencyServices} = require('../services');
+
 class UtilController {
   static async getCountries(req, res) {
     try {
@@ -61,16 +62,28 @@ class UtilController {
     }
   }
   static async getexchangeRates(req, res) {
-    const exchange = await axios.get(
-      'https://openexchangerates.org/api/latest.json?app_id=da41a176c0874c4498594d728d2aa4ca'
-    );
-    console.log(exchange.data.rates);
+    const exchangeRate = await CurrencyServices.getExchangeRate();
+    // const newAmount = await CurrencyServices.convertCurrency(
+    //   'USD',
+    //   'NGN',
+    //   1000.0
+    // );
+    // const finData = {newAmount: newAmount, exchangeRate: exchangeRate};
+    // console.log(newAmount);
+    // console.log(exchangeRate);
     Response.setSuccess(
       HttpStatusCode.STATUS_OK,
       'Exchange Rate',
-      exchange.data.rates
+      exchangeRate
     );
     return Response.send(res);
+  }
+  static async convertCurrency(req, res) {
+    const {amount, from, to} = req.body;
+    const newAmount = await CurrencyServices.convertCurrency(amount, from, to);
+
+    console.log(newAmount);
+    Response.setSuccess(HttpStatusCode.STATUS_OK, 'Exchange Rate', newAmount);
   }
 }
 
