@@ -1,10 +1,10 @@
 const {Sequelize, Op} = require('sequelize');
-const {User, ImpactReports, Campaign} = require('../models');
+const {User, CampaignImpactReport, Campaign} = require('../models');
 
 class ImpactReportService {
   static async create(reports) {
     try {
-      return await ImpactReports.create(reports);
+      return await CampaignImpactReport.create(reports);
     } catch (error) {
       console.log(error);
       throw error;
@@ -14,14 +14,14 @@ class ImpactReportService {
     return await ImpactReports.findByPk(id);
   }
   static async getReportByCampaignId(campaignId) {
-    return ImpactReports.findAll({
+    return CampaignImpactReport.findAll({
       where: {
-        campaign_id: campaignId
+        CampaignId: campaignId
       }
     });
   }
   static async getAll() {
-    return await ImpactReports.findAll();
+    return await CampaignImpactReport.findAll();
   }
   static async delete(id) {}
   static async update(report) {}
