@@ -161,7 +161,7 @@ module.exports = (sequelize, DataTypes) => {
       is_tfa_enabled: DataTypes.BOOLEAN,
       tfa_secret: DataTypes.STRING,
       tfa_method: DataTypes.ENUM('qrCode', 'email', 'sms'),
-      iris: DataTypes.TEXT,
+      iris: DataTypes.JSON,
       last_login: DataTypes.DATE,
       profile_pic: DataTypes.STRING,
       nfc: DataTypes.STRING,
