@@ -31,7 +31,7 @@ class ImpactReportController {
       const payload = {
         title: data.title,
         AgentId: data.AgentId,
-        CampaignId: data.CampaignId,
+        campaignId: data.CampaignId,
         MediaLink: data.MedialLink
       };
       const report = await db.ImpactReports.create(payload); //await ImpactReportService.create(payload);
