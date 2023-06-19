@@ -18,9 +18,22 @@ class WalletController {
       const OrganisationId = req.organisation.id;
       const reference = req.params.reference;
       if (!reference) {
-        const transactions = await TransactionService.findOrgnaisationTransactions(
-          OrganisationId
-        );
+        const transactions =
+          await TransactionService.findOrgnaisationTransactions(OrganisationId);
+        for (let tran of transactions) {
+          if (tran.CampaignId) {
+            const hash = await BlockchainService.getTransactionDetails(
+              tran.transaction_hash
+            );
+            const campaign = await CampaignService.getCampaignById(
+              tran.CampaignId
+            );
+            tran.dataValues.transaction_hash = hash;
+            tran.dataValues.campaign_name = campaign.title;
+            tran.dataValues.funded_with = null;
+          }
+        }
+        
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Organisation Transactions',
@@ -39,6 +52,17 @@ class WalletController {
           'Transaction not found.'
         );
         return Response.send(res);
+      }
+
+      for (let transaction of transactions) {
+        console.log(transaction.CampaignId, 'transaction.CampaignId');
+        if (typeof transaction.CampaignId === 'number') {
+          const campaign = await CampaignService.getACampaign(
+            transaction.CampaignId,
+            req.organisation.id
+          );
+          transaction.dataValues.campaign_name = campaign.title;
+        }
       }
 
       Response.setSuccess(
@@ -72,33 +96,28 @@ class WalletController {
         });
       }
 
-      let [
-        {total: total_deposit}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        status: 'success',
-        is_approved: true,
-        transaction_type: 'deposit'
-      });
+      let [{total: total_deposit}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          status: 'success',
+          is_approved: true,
+          transaction_type: 'deposit'
+        });
 
-      let [
-        {total: spend_for_campaign}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        is_approved: true,
-        status: 'success',
-        transaction_type: 'transfer',
-        CampaignId: {
-          [Op.not]: null
-        }
-      });
+      let [{total: spend_for_campaign}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          is_approved: true,
+          status: 'success',
+          transaction_type: 'transfer',
+          CampaignId: {
+            [Op.not]: null
+          }
+        });
 
       const wallet = await WalletService.findMainOrganisationWallet(
         OrganisationId
       );
-      if (!wallet) {
-        await QueueService.createWallet(OrganisationId, 'organisation');
-      }
 
       const MainWallet = wallet.toObject();
       total_deposit = total_deposit || 0;

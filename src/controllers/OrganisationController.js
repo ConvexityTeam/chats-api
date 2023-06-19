@@ -124,7 +124,8 @@ class OrganisationController {
         'state',
         'address',
         'year_of_inception',
-        'website_url'
+        'website_url',
+        'about'
       ]);
       data.profile_completed = true;
 
@@ -214,6 +215,19 @@ class OrganisationController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Request failed. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async getAllNGOs(req, res) {
+    try {
+      const ngos = await OrganisationService.getAllNGOs();
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'NGOs retrieved.', ngos);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Request failed. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -448,6 +462,17 @@ class OrganisationController {
     }
   }
 
+  static async totalCashItem(req, res) {
+    try {
+      const campaign = await CampaignService.getAllCampaigns();
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Request failed. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
   static async getBeneficiariesTransactions(req, res) {
     try {
       const transactions = await BeneficiaryService.findOrganisationVendorTransactions(
@@ -684,6 +709,30 @@ class OrganisationController {
       const OrgWallet = await OrganisationService.getOrganisationWallet(
         OrganisationId
       );
+
+      if (data.formId) {
+        const form = await CampaignService.findCampaignFormById(data.formId);
+
+        let total = 0;
+        form.questions.map(val => {
+          const reward = val.question.options.reduce(
+            (accumulator, currentValue) => {
+              if (isNaN(accumulator + currentValue.reward)) {
+                return 0;
+              } else return accumulator + currentValue.reward;
+            },
+            0
+          );
+          total += reward;
+        });
+        if (total > data.budget) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Beneficiary reward greater than budget'
+          );
+          return Response.send(res);
+        }
+      }
 
       if (data.budget > OrgWallet.balance || OrgWallet.balance == 0) {
         Response.setError(
@@ -1032,6 +1081,8 @@ class OrganisationController {
       req.campaign.budget = additional_budget
         ? Number(additional_budget) + req.campaign.budget
         : req.campaign.budget;
+      req.body.status =
+        req.campaign.type === 'cash-for-work' ? 'active' : 'ongoing';
       const newCampaign = await req.campaign.update(req.body);
       const history = await db.CampaignHistory.create({
         extension_period,
@@ -1557,7 +1608,7 @@ class OrganisationController {
           is_approved: true
         })
       ]);
-
+      console.log(beneficiary, 'opop');
       for (let tran of transaction) {
         if (
           tran.narration === 'Vendor Order' ||

@@ -3,7 +3,7 @@ const util = require('../libs/Utils');
 const {HttpStatusCode} = require('../utils');
 const {Response} = require('../libs');
 const BeneficiariesService = require('../services/BeneficiaryService');
-const {UserService} = require('../services');
+const {UserService, BlockchainService} = require('../services');
 
 class TransactionsController {
   static async vendorTransaction(req, res) {
@@ -198,6 +198,25 @@ class TransactionsController {
       return util.send(res);
     } catch (error) {
       util.setError(404, error);
+      return util.send(res);
+    }
+  }
+  static async getBlockChainTransactionDetails(req, res) {
+    const trans_hash = req.params.transaction_hash;
+    try {
+      // console.log(`Transaction Hash: ${trans_hash}`);
+      let blockChains = await BlockchainService.getTransactionDetails(
+        trans_hash
+      );
+      if (!blockChains) {
+        util.setSuccess(200, 'Transaction yet to be Mined ', blockChains);
+        return util.send(res);
+      }
+
+      util.setSuccess(200, 'Transaction Details Retrieved', blockChains);
+      return util.send(res);
+    } catch (error) {
+      util.setError(400, error);
       return util.send(res);
     }
   }

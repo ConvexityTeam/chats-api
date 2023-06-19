@@ -722,27 +722,25 @@ RabbitMq['default']
         );
         let lastIndex;
         const realBudget = campaign.budget;
-        const parsedAmount =
-          parseInt(campaign.budget / beneficiaries.length) *
-          beneficiaries.length;
         for (let [index, beneficiary] of beneficiaries.entries()) {
           let wallet = beneficiary.User.Wallets[0];
 
           const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
             `user_${wallet.UserId}campaign_${campaign.id}`
           );
-          const share = parseInt(campaign.budget / beneficiaries.length);
-
-          // const transaction = await create_transaction(
-          //   beneficiaries.length > 0 ? parsedAmount : realBudget,
-          //   OrgWallet.uuid,
-          //   wallet.uuid,
-          //   {
-          //     BeneficiaryId: wallet.UserId,
-          //     OrganisationId: campaign.OrganisationId,
-          //     CampaignId: campaign.id
-          //   }
-          // );
+          let share = parseInt(campaign.budget / beneficiaries.length);
+          if (beneficiary.formAnswer) {
+            const sum = beneficiary.formAnswer.questions.map(val => {
+              const total = val.reward.reduce((accumulator, currentValue) => {
+                return accumulator + currentValue;
+              }, 0);
+              return total;
+            });
+            const formShare = sum.reduce((accumulator, currentValue) => {
+              return accumulator + currentValue;
+            }, 0);
+            share = formShare;
+          }
           if (beneficiaries.length - 1 == index) {
             lastIndex = index;
           }

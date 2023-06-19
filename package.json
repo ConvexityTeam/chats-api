@@ -6,9 +6,9 @@
   "scripts": {
     "test": "mocha --recursive --exit",
     "start": "npm run db:migrate && node src/index.js",
-    "start:dev": "nodemon src/index.js",
+    "start:dev": "nodemon -L src/index.js",
     "start:consumer": "node src/consumer.js",
-    "start:consumer:dev": "nodemon src/consumer.js",
+    "start:consumer:dev": "nodemon -L src/consumer.js",
     "db:create": "npx sequelize-cli db:create",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
@@ -25,6 +25,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.7.0",
     "@droidsolutions-oss/amqp-ts": "^2.6.3",
+    "@types/xlsx": "^0.0.36",
     "@zohocrm/nodejs-sdk-2.0": "^5.0.0",
     "amqplib": "^0.7.1",
     "aws-sdk": "^2.856.0",
@@ -43,7 +44,6 @@
     "faker": "^5.4.0",
     "formidable": "^1.2.2",
     "g": "^2.0.1",
-    "geoip-country": "^4.1.25",
     "hashi-vault-js": "^0.4.13",
     "helmet": "^4.1.1",
     "js-sha512": "^0.8.0",
@@ -64,6 +64,7 @@
     "qrcode": "^1.5.0",
     "randomstring": "^1.2.1",
     "rascal": "^13.0.0",
+    "read-excel-file": "^5.6.1",
     "redis": "^4.3.1",
     "regenerator-runtime": "^0.13.7",
     "request": "^2.88.2",
@@ -77,7 +78,8 @@
     "uuid": "^9.0.0",
     "validator": "^13.7.0",
     "validatorjs": "^3.22.1",
-    "winston": "^3.7.2"
+    "winston": "^3.7.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "eslint-config-prettier": "^6.11.0",

@@ -64,5 +64,12 @@ module.exports = {
   INCREASE_GAS_MINT_NFT: 'increaseGasMintNFT',
   ESCROW_HASH: 'escrowHash',
   APPROVE_NFT_SPENDING: 'approveNFTSpending',
-  INCREASE_GAS_APPROVE_SPENDING: 'increaseGasApproveSpending'
+  INCREASE_GAS_APPROVE_SPENDING: 'increaseGasApproveSpending',
+  WITHHELD_FUND: 'withHeldFund',
+  CONFIRM_WITHHOLDING_FUND: 'confirmWithHoldingFunds',
+  WITHHOLD_FUND_GAS_ERROR: 'withholdFundGasError',
+  FUND_CAMPAIGN_WITH_CRYPTO: 'fundCampaignWithCrypto',
+  CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO: 'confirmFundCampaignWithCrypto',
+  INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO:
+    'increaseGasForConfirmFundCampaignWithCrypto'
 };

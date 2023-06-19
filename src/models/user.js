@@ -93,6 +93,10 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.BankAccount, {
         as: 'BankAccounts'
       });
+      User.hasOne(models.Group, {
+        as: 'members',
+        foreignKey: 'representative_id'
+      });
       User.hasMany(models.VerificationToken, {
         as: 'VerificationTokens'
       });
@@ -156,6 +160,7 @@ module.exports = (sequelize, DataTypes) => {
       is_public: DataTypes.BOOLEAN,
       is_tfa_enabled: DataTypes.BOOLEAN,
       tfa_secret: DataTypes.STRING,
+      tfa_method: DataTypes.ENUM('qrCode', 'email', 'sms'),
       iris: DataTypes.TEXT,
       last_login: DataTypes.DATE,
       profile_pic: DataTypes.STRING,

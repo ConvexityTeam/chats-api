@@ -8,6 +8,7 @@ const {
   Transaction,
   Market,
   FormAnswer,
+  Group,
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
@@ -225,7 +226,9 @@ class BeneficiariesService {
         id
       },
       attributes: userConst.publicAttr,
+
       include: [
+        {model: Group, as: 'members', include: ['group_members']},
         {
           order: [['createdAt', 'ASC']],
           model: Campaign,
@@ -362,28 +365,18 @@ class BeneficiariesService {
           },
           attributes: [],
           require: true
-        }
+        },
+        {model: Group, as: 'members'}
       ]
     });
   }
 
-  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
-    return Beneficiary.findAll({
+  static async fetchCampaignBeneficiary(CampaignId, UserId) {
+    return Beneficiary.findOne({
       where: {
-        ...extraClause,
+        UserId,
         CampaignId
-      },
-      include: [
-        {
-          model: User,
-          as: 'User',
-          attributes: userConst.publicAttr,
-          include: {
-            model: FormAnswer,
-            as: 'Answers'
-          }
-        }
-      ]
+      }
     });
   }
 
@@ -408,7 +401,28 @@ class BeneficiariesService {
       ]
     });
   }
-
+  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
+    return Beneficiary.findAll({
+      where: {
+        ...extraClause,
+        CampaignId
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConst.publicAttr,
+          include: [
+            {
+              model: FormAnswer,
+              as: 'Answers'
+            },
+            {model: Group, as: 'members', include: ['group_members']}
+          ]
+        }
+      ]
+    });
+  }
   static async getBeneficiariesAdmin() {
     return User.findAll({
       where: {
