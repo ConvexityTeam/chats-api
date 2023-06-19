@@ -86,14 +86,11 @@ class AuthService {
     return new Promise(async (resolve, reject) => {
       let qrcodeData;
 
-      if (user.tfa_method === 'qrCode') {
-        return reject(new Error(`2AF is already enabled.`));
-      }
       generate2faSecret()
         .then(_data => {
           qrcodeData = _data;
           return User.update(
-            {tfa_secret: _data.secret, tfa_method},
+            {tfa_secret: _data.secret},
             {where: {id: user.id}}
           );
         })
@@ -157,12 +154,15 @@ class AuthService {
             return;
           }
 
-          if (!verify2faToken(_user.tfa_secret, token)) {
+          if (!verify2faToken(_user.tfa_secret, token, tfa_method)) {
             reject(new Error('Invalid or wrong token.'));
             return;
           }
 
-          User.update({is_tfa_enabled: true}, {where: {id: user.id}})
+          User.update(
+            {is_tfa_enabled: true, tfa_method},
+            {where: {id: user.id}}
+          )
             .then(() => {
               user.is_tfa_enabled = true;
               const uid = user.id;

@@ -1174,17 +1174,14 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [
-            campaign_token,
-            beneficiary_token,
-            campaignBeneficiary
-          ] = await Promise.all([
-            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-            BlockchainService.setUserKeypair(
-              `user_${user.id}campaign_${wallet.CampaignId}`
-            ),
-            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-          ]);
+          const [campaign_token, beneficiary_token, campaignBeneficiary] =
+            await Promise.all([
+              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+              BlockchainService.setUserKeypair(
+                `user_${user.id}campaign_${wallet.CampaignId}`
+              ),
+              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+            ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
@@ -1295,18 +1292,7 @@ class AuthController {
   }
   static async setTwoFactorSecret(req, res) {
     try {
-      const rules = {
-        tfa_method: 'required|in:qrCode,email,sms'
-      };
-      const validation = new Validator(req.body, rules);
-      if (validation.fails()) {
-        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
-        return Response.send(res);
-      }
-      const data = await AuthService.add2faSecret(
-        req.user,
-        req.body.tfa_method
-      );
+      const data = await AuthService.add2faSecret(req.user);
       Response.setSuccess(200, '2FA Data Generated', data);
       return Response.send(res);
     } catch (error) {
@@ -1318,12 +1304,22 @@ class AuthController {
   static async enableTwoFactorAuth(req, res) {
     // TODO: Validate token
     try {
+      const rules = {
+        tfa_method: 'required|in:qrCode,email,sms'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
       const token = req.body.otp || req.query.otp;
 
       if (!token) {
         Response.setError(422, `OTP is required.`);
         return Response.send(res);
       }
+
       const user = await db.User.findOne({
         where: {
           id: req.user.id
@@ -1338,7 +1334,11 @@ class AuthController {
         }
       });
 
-      const data = await AuthService.enable2afCheck(user, token);
+      const data = await AuthService.enable2afCheck(
+        user,
+        token,
+        req.body.tfa_method
+      );
       Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
     } catch (error) {
