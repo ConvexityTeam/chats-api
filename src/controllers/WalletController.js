@@ -15,7 +15,7 @@ const {logger} = require('../libs/Logger');
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
-      const OrganisationId = req.organisation.id;
+      const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
         const transactions =
