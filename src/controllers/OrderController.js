@@ -277,22 +277,23 @@ class OrderController {
         );
         return Response.send(res);
       }
-      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
-        data.order.CampaignId
-      );
+      const approvedBeneficiaries =
+        await BeneficiariesService.getApprovedBeneficiaries(
+          data.order.CampaignId
+        );
 
-      const [
-        campaignWallet,
-        vendorWallet,
-        beneficiaryWallet
-      ] = await Promise.all([
-        WalletService.findSingleWallet({
-          CampaignId: data.order.CampaignId,
-          UserId: null
-        }),
-        WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
-        WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
-      ]);
+      const [campaignWallet, vendorWallet, beneficiaryWallet] =
+        await Promise.all([
+          WalletService.findSingleWallet({
+            CampaignId: data.order.CampaignId,
+            UserId: null
+          }),
+          WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
+          WalletService.findUserCampaignWallet(
+            req.user.id,
+            data.order.CampaignId
+          )
+        ]);
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
@@ -660,7 +661,7 @@ class OrderController {
       });
       const products = await OrderService.productPurchasedBy(organisation_id);
 
-      if (products.length <= 0) {
+      if (products && products.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
@@ -668,14 +669,16 @@ class OrderController {
         );
         return Response.send(res);
       }
-      campaigns.forEach(campaign => {
-        //CampaignId
-        products.forEach(product => {
-          if (campaign.id === product.CampaignId) {
-            data.push(product);
-          }
+      campaigns &&
+        campaigns?.forEach(campaign => {
+          //CampaignId
+          products &&
+            products?.forEach(product => {
+              if (campaign.id === product.CampaignId) {
+                data.push(product);
+              }
+            });
         });
-      });
 
       let total_product_value = 0;
       data.forEach(product => {

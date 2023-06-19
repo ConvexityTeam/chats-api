@@ -76,7 +76,7 @@ class ZohoService {
       return data;
     } catch (error) {
       Logger.error(
-        `Error Creating Zoho Ticket: ${JSON.stringify(error.response.data)}`
+        `Error Creating Zoho Ticket: ${JSON.stringify(error?.response?.data)}`
       );
       throw new Error('Error Creating Zoho Ticket');
     }
