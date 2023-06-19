@@ -12,7 +12,7 @@ module.exports = {
       title: {
         type: Sequelize.STRING
       },
-      campaignId: {
+      CampaignId: {
         allowNull: false,
         type: Sequelize.INTEGER,
         references: {

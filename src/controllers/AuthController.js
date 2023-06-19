@@ -258,7 +258,7 @@ class AuthController {
 
   static async beneficiariesKoboToolBox(req, res) {
     const kTBoxURL = 'https://[kpi]/api/v2/assets/{asset_uid}.json';
-    const response = await Axios.get(kTBoxURL);
+    const response = await axios.get(kTBoxURL);
     //fetch from their url
     //read into json
     //match records to right data column

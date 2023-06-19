@@ -7,7 +7,8 @@ router.get('/countries', UtilController.getCountries);
 router.get(
   '/resolve_account',
   UtilValidator.resolveAccountValidator,
-  UtilController.resolveAccountNumber,
+  UtilController.resolveAccountNumber
 );
+router.get('/exchange-rate', UtilController.getexchangeRates);
 
 module.exports = router;
