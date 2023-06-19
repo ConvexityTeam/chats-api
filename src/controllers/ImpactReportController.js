@@ -34,6 +34,7 @@ class ImpactReportController {
         CampaignId: data.CampaignId,
         MediaLink: data.MediaLink
       };
+      console.log(payload);
       const report = await db.ImpactReports.create(payload); //await ImpactReportService.create(payload);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
