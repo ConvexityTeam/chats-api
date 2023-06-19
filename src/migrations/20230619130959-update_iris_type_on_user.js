@@ -31,7 +31,7 @@ module.exports = {
     });
     await queryInterface.addColumn('Users', 'registration_type', {
       type: Sequelize.ENUM('individual', 'organisation'),
-      allowNull: false
+      allowNull: true
     });
   },
 
@@ -44,5 +44,8 @@ module.exports = {
      */
     await queryInterface.removeColumn('Users', 'iris');
     await queryInterface.removeColumn('Users', 'tfa_binded_date');
+    await queryInterface.removeColumn('Users', 'is_verified');
+    await queryInterface.removeColumn('Users', 'is_verified_all');
+    await queryInterface.removeColumn('Users', 'registration_type');
   }
 };
