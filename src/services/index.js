@@ -24,7 +24,7 @@ const TransactionService = require('./TransactionService');
 const AwsService = require('./AwsUploadService');
 const ZohoService = require('./ZohoService');
 const RedisService = require('./RedisService');
-const ImpactReportService = require('./impactReportService');
+const ImpactReportService = require('./ImpactReportService');
 const CurrencyServices = require('./CurrencyServices');
 module.exports = {
   RedisService,
