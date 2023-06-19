@@ -11,9 +11,10 @@ module.exports = {
     await queryInterface.removeColumn('Users', 'iris');
     await queryInterface.addColumn('Users', 'iris', {
       type: Sequelize.JSON,
-      after: 'tfa_secret'
+      allowNull: true
     });
     await queryInterface.addColumn('Users', 'tfa_binded_date', {
+      allowNull: true,
       type: Sequelize.Date,
       after: 'tfa_secret'
     });
