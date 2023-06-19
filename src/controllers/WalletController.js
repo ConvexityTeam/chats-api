@@ -33,7 +33,7 @@ class WalletController {
             tran.dataValues.funded_with = null;
           }
         }
-        
+
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Organisation Transactions',
@@ -101,7 +101,16 @@ class WalletController {
           OrganisationId,
           status: 'success',
           is_approved: true,
-          transaction_type: 'deposit'
+          transaction_type: 'deposit',
+          BeneficiaryId: {
+            [Op.eq]: null
+          },
+          VendorId: {
+            [Op.eq]: null
+          },
+          CampaignId: {
+            [Op.eq]: null
+          }
         });
 
       let [{total: spend_for_campaign}] =
@@ -110,6 +119,12 @@ class WalletController {
           is_approved: true,
           status: 'success',
           transaction_type: 'transfer',
+          BeneficiaryId: {
+            [Op.eq]: null
+          },
+          VendorId: {
+            [Op.eq]: null
+          },
           CampaignId: {
             [Op.not]: null
           }

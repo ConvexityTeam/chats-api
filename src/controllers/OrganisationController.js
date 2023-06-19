@@ -475,9 +475,10 @@ class OrganisationController {
   }
   static async getBeneficiariesTransactions(req, res) {
     try {
-      const transactions = await BeneficiaryService.findOrganisationVendorTransactions(
-        req.organisation.id
-      );
+      const transactions =
+        await BeneficiaryService.findOrganisationVendorTransactions(
+          req.organisation.id
+        );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiaries transactions.',
@@ -1023,13 +1024,8 @@ class OrganisationController {
   }
 
   static async extendCampaign(req, res) {
-    const {
-      end_date,
-      description,
-      location,
-      campaign_id,
-      additional_budget
-    } = req.body;
+    const {end_date, description, location, campaign_id, additional_budget} =
+      req.body;
     const today = moment();
     const endDate = moment(end_date);
     try {
@@ -1350,9 +1346,8 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       //const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
-      const transactions = await BeneficiaryService.findVendorTransactionsPerBene(
-        CampaignId
-      );
+      const transactions =
+        await BeneficiaryService.findVendorTransactionsPerBene(CampaignId);
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1573,9 +1568,8 @@ class OrganisationController {
   static async getOrganisationBeneficiaries(req, res) {
     try {
       const organisation = req.organisation;
-      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
-        organisation.id
-      );
+      const beneficiaries =
+        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation beneficiaries',
@@ -1670,12 +1664,11 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      const [
-        approvals
-      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(
-        campaign.id,
-        ids
-      );
+      const [approvals] =
+        await BeneficiaryService.approveAllCampaignBeneficiaries(
+          campaign.id,
+          ids
+        );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
         approvals
       });
@@ -1700,12 +1693,11 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      const [
-        approvals
-      ] = await BeneficiaryService.rejectAllCampaignBeneficiaries(
-        campaign.id,
-        ids
-      );
+      const [approvals] =
+        await BeneficiaryService.rejectAllCampaignBeneficiaries(
+          campaign.id,
+          ids
+        );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries rejected!', {
         approvals
       });
@@ -2477,9 +2469,10 @@ class OrganisationController {
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true
       });
-      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId
-      );
+      const isOrganisationCampWallet =
+        await WalletService.findOrganisationCampaignWallets(
+          isOrgMember.OrganisationId
+        );
       isOrganisationCamp.forEach(matric => {
         disbursedDates.push(matric.updatedAt);
       });
@@ -2505,9 +2498,10 @@ class OrganisationController {
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true
       });
-      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId
-      );
+      const isOrganisationCampWallet =
+        await WalletService.findOrganisationCampaignWallets(
+          isOrgMember.OrganisationId
+        );
       function getDifference() {
         return isOrganisationCampWallet.filter(wallet => {
           return isOrganisationCamp.some(campaign => {
@@ -2525,9 +2519,13 @@ class OrganisationController {
       const balance = getDifference()
         .map(val => val.balance)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
+      const item_distributed = getDifference()
+        .map(val => val.minting_limit)
+        .reduce((accumulator, curValue) => accumulator + curValue, 0);
       Response.setSuccess(200, 'transaction', {
         campaign_budget,
         amount_disbursed,
+        item_distributed,
         balance
       });
       return Response.send(res);
@@ -2571,6 +2569,7 @@ class OrganisationController {
         'contact.firstName': 'string',
         'contact.lastName': 'string'
       };
+      console.log(data, 'data');
 
       const validation = new Validator(data, rules);
       if (validation.fails()) {
