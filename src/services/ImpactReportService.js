@@ -2,16 +2,16 @@ const {Sequelize, Op} = require('sequelize');
 const {User, ImpactReports, Campaign} = require('../models');
 
 class ImpactReportService {
-  static create(reports) {
+  static async create(reports) {
     try {
-      return ImpactReports.create(reports);
+      return await ImpactReports.create(reports);
     } catch (error) {
       console.log(error);
       throw error;
     }
   }
   static async get(id) {
-    return ImpactReports.findByPk(id);
+    return await ImpactReports.findByPk(id);
   }
   static async getReportByCampaignId(campaignId) {
     return ImpactReports.findAll({
@@ -21,7 +21,7 @@ class ImpactReportService {
     });
   }
   static async getAll() {
-    return ImpactReports.findAll();
+    return await ImpactReports.findAll();
   }
   static async delete(id) {}
   static async update(report) {}

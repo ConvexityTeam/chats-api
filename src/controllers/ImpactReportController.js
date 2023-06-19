@@ -4,11 +4,7 @@ const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
-const {
-  UserService,
-  ImpactReportService,
-  MailerService
-} = require('../services');
+const {ImpactReportService} = require('../services/ImpactReportService');
 const {SanitizeObject} = require('../utils');
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 const {termiiConfig} = require('../config');
@@ -32,8 +28,13 @@ class ImpactReportController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, validation.errors);
         return Response.send(res);
       }
-      const report = await db.ImpactReports.create({data}); //await ImpactReportService.create(req.body);
-      console.log(report);
+      const payload = {
+        title: data.title,
+        AgentId: data.AgentId,
+        CampaignId: data.CampaignId,
+        MediaLink: data.MedialLink
+      };
+      const report = await db.ImpactReports.create(payload); //await ImpactReportService.create(payload);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Report Generated successfully',
@@ -41,7 +42,6 @@ class ImpactReportController {
       );
       return Response.send(res);
     } catch (error) {
-      console.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error, Contact Support'
@@ -51,7 +51,7 @@ class ImpactReportController {
   }
   static async getAllReport(req, res) {
     try {
-      const reports = await ImpactReportService.getAll();
+      const reports = await db.ImpactReports.findAll(); //ImpactReportService.getAll();
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Reports fetched successfully',
@@ -76,7 +76,11 @@ class ImpactReportController {
         );
         return Response.send(res);
       }
-      const report = await ImpactReportService.getById(campaignId);
+      const report = await db.ImpactReports.findAll({
+        where: {
+          CampaignId: campaignId
+        }
+      }); //ImpactReportService.getById(campaignId);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Report fetched successfully',
