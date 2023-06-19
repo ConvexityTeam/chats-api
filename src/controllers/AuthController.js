@@ -1292,7 +1292,18 @@ class AuthController {
   }
   static async setTwoFactorSecret(req, res) {
     try {
-      const data = await AuthService.add2faSecret(req.user);
+      const rules = {
+        tfa_method: 'required|in:qrCode,email,sms'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const data = await AuthService.add2faSecret(
+        req.user,
+        req.body.tfa_method
+      );
       Response.setSuccess(200, '2FA Data Generated', data);
       return Response.send(res);
     } catch (error) {
@@ -1304,6 +1315,12 @@ class AuthController {
   static async enableTwoFactorAuth(req, res) {
     // TODO: Validate token
     try {
+      const token = req.body.otp || req.query.otp;
+
+      if (!token) {
+        Response.setError(422, `OTP is required.`);
+        return Response.send(res);
+      }
       const rules = {
         tfa_method: 'required|in:qrCode,email,sms'
       };
@@ -1312,14 +1329,6 @@ class AuthController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-
-      const token = req.body.otp || req.query.otp;
-
-      if (!token) {
-        Response.setError(422, `OTP is required.`);
-        return Response.send(res);
-      }
-
       const user = await db.User.findOne({
         where: {
           id: req.user.id
