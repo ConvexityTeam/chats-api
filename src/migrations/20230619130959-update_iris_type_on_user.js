@@ -18,6 +18,21 @@ module.exports = {
       type: Sequelize.DATE,
       after: 'tfa_secret'
     });
+    await queryInterface.addColumn('Users', 'is_verified', {
+      allowNull: true,
+      type: Sequelize.BOOLEAN,
+      defaultValue: false
+    });
+
+    await queryInterface.addColumn('Users', 'is_verified_all', {
+      allowNull: true,
+      type: Sequelize.BOOLEAN,
+      defaultValue: false
+    });
+    await queryInterface.addColumn('Users', 'registration_type', {
+      type: Sequelize.ENUM('individual', 'organisation'),
+      allowNull: false
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
