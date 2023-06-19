@@ -4,7 +4,7 @@ const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
-const {ImpactReportService} = require('../services/ImpactReportService');
+const {ImpactReportService} = require('../services');
 const {SanitizeObject} = require('../utils');
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 const {termiiConfig} = require('../config');
@@ -35,7 +35,7 @@ class ImpactReportController {
         MediaLink: data.MediaLink
       };
       console.log(payload);
-      const report = await db.ImpactReports.create(payload); //await ImpactReportService.create(payload);
+      const report = await ImpactReportService.create(payload);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Report Generated successfully',
@@ -53,7 +53,7 @@ class ImpactReportController {
   }
   static async getAllReport(req, res) {
     try {
-      const reports = await db.ImpactReports.findAll(); //ImpactReportService.getAll();
+      const reports = await ImpactReportService.getAll();
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Reports fetched successfully',
@@ -78,11 +78,13 @@ class ImpactReportController {
         );
         return Response.send(res);
       }
-      const report = await db.ImpactReports.findAll({
-        where: {
-          CampaignId: campaignId
-        }
-      }); //ImpactReportService.getById(campaignId);
+      const report = await ImpactReportService.getById(campaignId);
+      //   await db.ImpactReports.findAll({
+      //   where: {
+      //     CampaignId: campaignId
+      //   }
+      // });
+      //
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Report fetched successfully',
