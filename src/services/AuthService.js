@@ -145,7 +145,7 @@ class AuthService {
       });
     });
   }
-  static async enable2afCheck(user, token) {
+  static async enable2afCheck(user, token, tfa_method) {
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
         .then(_user => {
