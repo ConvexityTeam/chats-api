@@ -20,7 +20,7 @@ class ImpactReportController {
         title: 'string',
         AgentId: 'integer|required',
         CampaignId: 'integer|required',
-        MedialLink: 'required'
+        MediaLink: 'required'
       };
       const validation = new Validator(data, rules);
 
@@ -31,9 +31,10 @@ class ImpactReportController {
       const payload = {
         title: data.title,
         AgentId: data.AgentId,
-        campaignId: data.CampaignId,
-        MediaLink: data.MedialLink
+        CampaignId: data.CampaignId,
+        MediaLink: data.MediaLink
       };
+      console.log(payload);
       const report = await db.ImpactReports.create(payload); //await ImpactReportService.create(payload);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -42,6 +43,7 @@ class ImpactReportController {
       );
       return Response.send(res);
     } catch (error) {
+      console.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error, Contact Support'
