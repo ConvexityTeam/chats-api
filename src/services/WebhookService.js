@@ -11,7 +11,6 @@ class WebhookService {
           transactionReference
         }
       });
-
       if (record) {
         await record.update({
           approved: true

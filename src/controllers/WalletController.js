@@ -212,6 +212,7 @@ class WalletController {
       const data = SanitizeObject(req.body, ['amount', 'currency']);
       const {organisation_id} = req.params;
       if (!data.currency) data.currency = 'NGN';
+      const CampaignId = req.body.CampaignId ? req.body.CampaignId : null;
       const organisation = req.organisation;
       organisation.dataValues.email = req.user.email;
       const wallet = await WalletService.findMainOrganisationWallet(
@@ -227,10 +228,10 @@ class WalletController {
       const response = await PaystackService.buildDepositData(
         organisation,
         data.amount,
+        CampaignId,
         data.currency
       );
       logger.info(`Initiated PayStack Transaction`);
-      //QueueService.createPayStack(wallet.address, data.amount)
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Deposit data generated.',
