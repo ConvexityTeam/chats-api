@@ -62,19 +62,11 @@ class UtilController {
     }
   }
   static async getexchangeRates(req, res) {
-    const exchangeRate = await CurrencyServices.getExchangeRate();
-    // const newAmount = await CurrencyServices.convertCurrency(
-    //   'USD',
-    //   'NGN',
-    //   1000.0
-    // );
-    // const finData = {newAmount: newAmount, exchangeRate: exchangeRate};
-    // console.log(newAmount);
-    // console.log(exchangeRate);
+    const currenciesObj = CurrencyServices;
     Response.setSuccess(
       HttpStatusCode.STATUS_OK,
       'Exchange Rate',
-      exchangeRate
+      currenciesObj.exchangeData
     );
     return Response.send(res);
   }

@@ -34,7 +34,17 @@ class ImpactReportController {
         CampaignId: data.CampaignId,
         MediaLink: data.MediaLink
       };
-      console.log(payload);
+      // valiate Campaign
+      // const campaignExist = await db.Campaigns.findOne({
+      //   where: {id: data.CampaignId}
+      // });
+      // if (!campaignExist) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //     'Campaign not found, provide a valild campaign'
+      //   );
+      //   return Response.send(res);
+      // }
       const report = await ImpactReportService.create(payload);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,

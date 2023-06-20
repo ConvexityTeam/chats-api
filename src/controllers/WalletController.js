@@ -6,20 +6,23 @@ const {
   TransactionService,
   OrderService,
   BlockchainService,
-  CampaignService
+  CampaignService,
+  CurrencyServices
 } = require('../services');
 const {Logger, Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const {Op} = require('sequelize');
 const {logger} = require('../libs/Logger');
+
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
       const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
-        const transactions =
-          await TransactionService.findOrgnaisationTransactions(OrganisationId);
+        const transactions = await TransactionService.findOrgnaisationTransactions(
+          OrganisationId
+        );
         for (let tran of transactions) {
           if (tran.CampaignId) {
             const hash = await BlockchainService.getTransactionDetails(
@@ -87,6 +90,9 @@ class WalletController {
       const token = await BlockchainService.balance(user.address);
       const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
+      const usersCurrency = req.user.currency;
+      const exchangeRate = null;
+      const currencyData = null;
       const uuid = req.params.wallet_id;
       if (uuid) {
         return WalletController._handleSingleWallet(res, {
@@ -95,45 +101,43 @@ class WalletController {
         });
       }
 
-      let [{total: total_deposit}] =
-        await TransactionService.getTotalTransactionAmount({
-          OrganisationId,
-          status: 'success',
-          is_approved: true,
-          transaction_type: 'deposit',
-          BeneficiaryId: {
-            [Op.eq]: null
-          },
-          VendorId: {
-            [Op.eq]: null
-          },
-          CampaignId: {
-            [Op.eq]: null
-          }
-        });
+      let [
+        {total: total_deposit}
+      ] = await TransactionService.getTotalTransactionAmount({
+        OrganisationId,
+        status: 'success',
+        is_approved: true,
+        transaction_type: 'deposit'
+      });
 
-      let [{total: spend_for_campaign}] =
-        await TransactionService.getTotalTransactionAmount({
-          OrganisationId,
-          is_approved: true,
-          status: 'success',
-          transaction_type: 'transfer',
-          BeneficiaryId: {
-            [Op.eq]: null
-          },
-          VendorId: {
-            [Op.eq]: null
-          },
-          CampaignId: {
-            [Op.not]: null
-          }
-        });
+      let [
+        {total: spend_for_campaign}
+      ] = await TransactionService.getTotalTransactionAmount({
+        OrganisationId,
+        is_approved: true,
+        status: 'success',
+        transaction_type: 'transfer',
+        CampaignId: {
+          [Op.not]: null
+        }
+      });
 
       const wallet = await WalletService.findMainOrganisationWallet(
         OrganisationId
       );
 
+      const currencyObj = CurrencyServices;
+      //convert currency to set currency if not in USD
+      //get users set ccurrency
+
       const MainWallet = wallet.toObject();
+      if (usersCurrency !== '' || usersCurrency !== null) {
+      }
+      //set the users currency
+      currencyData = {
+        users_currency: 'USD',
+        currency_symbol: '$'
+      };
       total_deposit = total_deposit || 0;
       spend_for_campaign = spend_for_campaign || 0;
       MainWallet.balance = balance;
@@ -142,7 +146,8 @@ class WalletController {
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
         MainWallet,
         total_deposit,
-        spend_for_campaign
+        spend_for_campaign,
+        currencies
       });
       return Response.send(res);
     } catch (error) {
