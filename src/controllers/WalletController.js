@@ -132,16 +132,18 @@ class WalletController {
 
       const MainWallet = wallet.toObject();
       if (usersCurrency !== '' || usersCurrency !== null) {
+        usersCurrency = 'USD';
+        exchangeRate = currencyObj.convertCurrency(usersCurrency, 'USD', 1);
       }
       //set the users currency
       currencyData = {
         users_currency: 'USD',
         currency_symbol: '$'
       };
-      total_deposit = total_deposit || 0;
-      spend_for_campaign = spend_for_campaign || 0;
-      MainWallet.balance = balance;
-      MainWallet.fiat_balance = balance;
+      total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
+      spend_for_campaign = (spend_for_campaign * exchangeRate).toFixed(2) || 0;
+      MainWallet.balance = (balance * exchangeRate).toFixed(2);
+      MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
       MainWallet.address = user.address;
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
         MainWallet,
