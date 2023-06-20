@@ -819,6 +819,7 @@ RabbitMq['default']
           QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
           istoken = true;
         } else if (token_type === 'smstoken') {
+          istoken = true;
           Logger.info('Sending SMS Token');
           await SmsService.sendOtp(
             beneficiary.User.phone,
@@ -828,10 +829,9 @@ RabbitMq['default']
                 : ''
             } your convexity token is ${smsToken}, you are approved to spend ${share}.`
           );
-          istoken = true;
         }
         if (istoken) {
-          await VoucherToken.create({
+          const voucher = await VoucherToken.create({
             organisationId: campaign.OrganisationId,
             beneficiaryId: beneficiary.User.id,
             campaignId: campaign.id,
@@ -839,6 +839,7 @@ RabbitMq['default']
             token: token_type === 'papertoken' ? QrCode : smsToken,
             amount
           });
+          Logger.info(`Sending SMS Token Success: ${voucher}`);
           istoken = false;
           Logger.info('Sending SMS Token Success');
         }
