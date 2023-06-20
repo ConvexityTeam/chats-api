@@ -145,7 +145,7 @@ class AuthService {
       });
     });
   }
-  static async enable2afCheck(user, token) {
+  static async enable2afCheck(user, token, tfa_method) {
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
         .then(_user => {
@@ -154,13 +154,13 @@ class AuthService {
             return;
           }
 
-          if (!verify2faToken(_user.tfa_secret, token, tfa_method)) {
+          if (!verify2faToken(_user.tfa_secret, token)) {
             reject(new Error('Invalid or wrong token.'));
             return;
           }
 
           User.update(
-            {is_tfa_enabled: true, tfa_method},
+            {is_tfa_enabled: true, tfa_method, tfa_binded_date: new Date()},
             {where: {id: user.id}}
           )
             .then(() => {

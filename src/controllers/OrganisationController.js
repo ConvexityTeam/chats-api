@@ -475,9 +475,10 @@ class OrganisationController {
   }
   static async getBeneficiariesTransactions(req, res) {
     try {
-      const transactions = await BeneficiaryService.findOrganisationVendorTransactions(
-        req.organisation.id
-      );
+      const transactions =
+        await BeneficiaryService.findOrganisationVendorTransactions(
+          req.organisation.id
+        );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiaries transactions.',
@@ -1023,13 +1024,8 @@ class OrganisationController {
   }
 
   static async extendCampaign(req, res) {
-    const {
-      end_date,
-      description,
-      location,
-      campaign_id,
-      additional_budget
-    } = req.body;
+    const {end_date, description, location, campaign_id, additional_budget} =
+      req.body;
     const today = moment();
     const endDate = moment(end_date);
     try {
@@ -1350,9 +1346,8 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       //const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
-      const transactions = await BeneficiaryService.findVendorTransactionsPerBene(
-        CampaignId
-      );
+      const transactions =
+        await BeneficiaryService.findVendorTransactionsPerBene(CampaignId);
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1573,9 +1568,8 @@ class OrganisationController {
   static async getOrganisationBeneficiaries(req, res) {
     try {
       const organisation = req.organisation;
-      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
-        organisation.id
-      );
+      const beneficiaries =
+        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation beneficiaries',
@@ -1670,12 +1664,11 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      const [
-        approvals
-      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(
-        campaign.id,
-        ids
-      );
+      const [approvals] =
+        await BeneficiaryService.approveAllCampaignBeneficiaries(
+          campaign.id,
+          ids
+        );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
         approvals
       });
@@ -1700,12 +1693,11 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      const [
-        approvals
-      ] = await BeneficiaryService.rejectAllCampaignBeneficiaries(
-        campaign.id,
-        ids
-      );
+      const [approvals] =
+        await BeneficiaryService.rejectAllCampaignBeneficiaries(
+          campaign.id,
+          ids
+        );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries rejected!', {
         approvals
       });
@@ -2477,9 +2469,10 @@ class OrganisationController {
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true
       });
-      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId
-      );
+      const isOrganisationCampWallet =
+        await WalletService.findOrganisationCampaignWallets(
+          isOrgMember.OrganisationId
+        );
       isOrganisationCamp.forEach(matric => {
         disbursedDates.push(matric.updatedAt);
       });
@@ -2498,6 +2491,10 @@ class OrganisationController {
     }
   }
 
+  static async cash_item() {
+    try {
+    } catch (error) {}
+  }
   static async record(req, res) {
     try {
       const isOrgMember = await OrganisationService.isMemberUser(req.user.id);
@@ -2505,9 +2502,10 @@ class OrganisationController {
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true
       });
-      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId
-      );
+      const isOrganisationCampWallet =
+        await WalletService.findOrganisationCampaignWallets(
+          isOrgMember.OrganisationId
+        );
       function getDifference() {
         return isOrganisationCampWallet.filter(wallet => {
           return isOrganisationCamp.some(campaign => {
@@ -2525,9 +2523,13 @@ class OrganisationController {
       const balance = getDifference()
         .map(val => val.balance)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
+      const total_items_distributed = isOrganisationCamp
+        .map(val => val.minting_limit)
+        .reduce((accumulator, curValue) => accumulator + curValue, 0);
       Response.setSuccess(200, 'transaction', {
         campaign_budget,
         amount_disbursed,
+        total_items_distributed,
         balance
       });
       return Response.send(res);
@@ -2560,6 +2562,23 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+
+  static async fundWithProvidus(req, res) {
+    const {organisation_id} = req.params;
+    try {
+      const fundWithProvidus = await ProvidusService.fundWithProvidus(
+        organisation_id
+      );
+      Response.setSuccess(200, 'fund with providus', fundWithProvidus);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`
+      );
+      return Response.send(res);
+    }
+  }
   static async createTicket(req, res) {
     const data = req.body;
     try {
@@ -2571,6 +2590,7 @@ class OrganisationController {
         'contact.firstName': 'string',
         'contact.lastName': 'string'
       };
+      console.log(data, 'data');
 
       const validation = new Validator(data, rules);
       if (validation.fails()) {
@@ -2578,9 +2598,9 @@ class OrganisationController {
         return Response.send(res);
       }
       data.departmentId = '661286000000006907';
-      const createdTicket = await ZohoService.createTicket(data);
-      //const generate = await ZohoService.generatingToken()
-      Response.setSuccess(201, 'Ticket Created Successfully', createdTicket);
+      // const createdTicket = await ZohoService.createTicket(data);
+      const generate = await ZohoService.generatingToken();
+      Response.setSuccess(201, 'Ticket Created Successfully', generate);
       return Response.send(res);
     } catch (error) {
       Response.setError(

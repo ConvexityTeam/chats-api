@@ -446,12 +446,8 @@ RabbitMq['default']
     increaseGasForMinting
       .activateConsumer(async msg => {
         const {keys, message} = msg.getContent();
-        const {
-          OrganisationId,
-          transactionId,
-          transactionReference,
-          amount
-        } = message;
+        const {OrganisationId, transactionId, transactionReference, amount} =
+          message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'mint',
@@ -527,13 +523,8 @@ RabbitMq['default']
       });
     processCampaignFund
       .activateConsumer(async msg => {
-        const {
-          OrgWallet,
-          campaignWallet,
-          campaign,
-          transactionId,
-          realBudget
-        } = msg.getContent();
+        const {OrgWallet, campaignWallet, campaign, transactionId, realBudget} =
+          msg.getContent();
         const campaignAddress = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -622,13 +613,8 @@ RabbitMq['default']
       });
     confirmCampaignFunding
       .activateConsumer(async msg => {
-        const {
-          hash,
-          transactionId,
-          campaign,
-          OrgWallet,
-          amount
-        } = msg.getContent();
+        const {hash, transactionId, campaign, OrgWallet, amount} =
+          msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
 
@@ -710,13 +696,8 @@ RabbitMq['default']
       });
     processFundBeneficiaries
       .activateConsumer(async msg => {
-        const {
-          OrgWallet,
-          campaignWallet,
-          beneficiaries,
-          campaign,
-          token_type
-        } = msg.getContent();
+        const {OrgWallet, campaignWallet, beneficiaries, campaign, token_type} =
+          msg.getContent();
         const campaignKeyPair = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -729,6 +710,7 @@ RabbitMq['default']
             `user_${wallet.UserId}campaign_${campaign.id}`
           );
           let share = parseInt(campaign.budget / beneficiaries.length);
+          Logger.info(`Campaign Form: ${beneficiary.formAnswer}`);
           if (beneficiary.formAnswer) {
             const sum = beneficiary.formAnswer.questions.map(val => {
               const total = val.reward.reduce((accumulator, currentValue) => {
@@ -837,15 +819,15 @@ RabbitMq['default']
           QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
           istoken = true;
         } else if (token_type === 'smstoken') {
-          SmsService.sendOtp(
+          istoken = true;
+          await SmsService.sendOtp(
             beneficiary.User.phone,
             `Hello ${
               beneficiary.User.first_name || beneficiary.User.last_name
                 ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
                 : ''
-            } your convexity token is ${smsToken}, you are approved to spend ${share}.`
+            } your convexity token is ${smsToken}, you are approved to spend ${amount}.`
           );
-          istoken = true;
         }
         if (istoken) {
           await VoucherToken.create({
@@ -875,13 +857,8 @@ RabbitMq['default']
       });
     processBeneficiaryPaystackWithdrawal
       .activateConsumer(async msg => {
-        const {
-          bankAccount,
-          campaignWallet,
-          userWallet,
-          amount,
-          transaction
-        } = msg.getContent();
+        const {bankAccount, campaignWallet, userWallet, amount, transaction} =
+          msg.getContent();
         const campaignAddress = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -1202,13 +1179,8 @@ RabbitMq['default']
       });
     confirmVRedeem
       .activateConsumer(async msg => {
-        const {
-          hash,
-          amount,
-          recipient_code,
-          transactionId,
-          uuid
-        } = msg.getContent();
+        const {hash, amount, recipient_code, transactionId, uuid} =
+          msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
 

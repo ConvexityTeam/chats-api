@@ -16,7 +16,7 @@ class ZohoService {
     try {
       Logger.info('Generating Zoho Access Token');
       const {data} = await Axios.post(
-        `https://accounts.zoho.com/oauth/v2/token?client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&code=${zohoCrmConfig.code}`
+        `https://accounts.zoho.com/oauth/v2/token?client_id=${zohoCrmConfig.clientID}&client_secret=${zohoCrmConfig.clientSecret}&grant_type=authorization_code&code=1000.6cb681baab4d95180f4d25eab60465fb.9aa081ae146190fcb733190edc8218b2`
       );
       await this.saveToken({
         access_token: data.access_token,
@@ -76,7 +76,7 @@ class ZohoService {
       return data;
     } catch (error) {
       Logger.error(
-        `Error Creating Zoho Ticket: ${JSON.stringify(error.response.data)}`
+        `Error Creating Zoho Ticket: ${JSON.stringify(error?.response?.data)}`
       );
       throw new Error('Error Creating Zoho Ticket');
     }

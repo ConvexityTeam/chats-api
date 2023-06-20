@@ -15,7 +15,7 @@ const {logger} = require('../libs/Logger');
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
-      const OrganisationId = req.organisation.id;
+      const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
         const transactions =
@@ -33,7 +33,7 @@ class WalletController {
             tran.dataValues.funded_with = null;
           }
         }
-        
+
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Organisation Transactions',
@@ -42,11 +42,11 @@ class WalletController {
         return Response.send(res);
       }
 
-      const transaction = await TransactionService.findTransaction({
+      const transactions = await TransactionService.findTransaction({
         OrganisationId,
         reference
       });
-      if (!transaction) {
+      if (!transactions) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Transaction not found.'
@@ -55,7 +55,6 @@ class WalletController {
       }
 
       for (let transaction of transactions) {
-        console.log(transaction.CampaignId, 'transaction.CampaignId');
         if (typeof transaction.CampaignId === 'number') {
           const campaign = await CampaignService.getACampaign(
             transaction.CampaignId,
@@ -68,7 +67,7 @@ class WalletController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Transaction Details',
-        transaction
+        transactions
       );
       return Response.send(res);
     } catch (error) {
@@ -101,7 +100,16 @@ class WalletController {
           OrganisationId,
           status: 'success',
           is_approved: true,
-          transaction_type: 'deposit'
+          transaction_type: 'deposit',
+          BeneficiaryId: {
+            [Op.eq]: null
+          },
+          VendorId: {
+            [Op.eq]: null
+          },
+          CampaignId: {
+            [Op.eq]: null
+          }
         });
 
       let [{total: spend_for_campaign}] =
@@ -110,6 +118,12 @@ class WalletController {
           is_approved: true,
           status: 'success',
           transaction_type: 'transfer',
+          BeneficiaryId: {
+            [Op.eq]: null
+          },
+          VendorId: {
+            [Op.eq]: null
+          },
           CampaignId: {
             [Op.not]: null
           }

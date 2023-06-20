@@ -77,15 +77,8 @@ class UsersController {
   }
 
   static async createVendor(req, res) {
-    const {
-      first_name,
-      last_name,
-      email,
-      phone,
-      address,
-      location,
-      store_name
-    } = req.body;
+    const {first_name, last_name, email, phone, address, location, store_name} =
+      req.body;
 
     try {
       const rules = {
@@ -361,6 +354,7 @@ class UsersController {
           );
           return Response.send(res);
         }
+        data.is_verified = true;
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
@@ -372,7 +366,7 @@ class UsersController {
         return Response.send(res);
       }
       data.is_nin_verified = true;
-
+      data.is_verified = true;
       await req.user.update(data);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -381,6 +375,7 @@ class UsersController {
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(`Server Error. Please retry: ${JSON.stringify(error)}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server Error. Please retry.' + error
