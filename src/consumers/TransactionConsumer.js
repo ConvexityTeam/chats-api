@@ -819,7 +819,8 @@ RabbitMq['default']
           QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
           istoken = true;
         } else if (token_type === 'smstoken') {
-          SmsService.sendOtp(
+          Logger.info('Sending SMS Token');
+          await SmsService.sendOtp(
             beneficiary.User.phone,
             `Hello ${
               beneficiary.User.first_name || beneficiary.User.last_name

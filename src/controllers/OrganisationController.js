@@ -2562,6 +2562,23 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+
+  static async fundWithProvidus(req, res) {
+    const {organisation_id} = req.params;
+    try {
+      const fundWithProvidus = await ProvidusService.fundWithProvidus(
+        organisation_id
+      );
+      Response.setSuccess(200, 'fund with providus', fundWithProvidus);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`
+      );
+      return Response.send(res);
+    }
+  }
   static async createTicket(req, res) {
     const data = req.body;
     try {
@@ -2581,9 +2598,9 @@ class OrganisationController {
         return Response.send(res);
       }
       data.departmentId = '661286000000006907';
-      const createdTicket = await ZohoService.createTicket(data);
-      //const generate = await ZohoService.generatingToken()
-      Response.setSuccess(201, 'Ticket Created Successfully', createdTicket);
+      // const createdTicket = await ZohoService.createTicket(data);
+      const generate = await ZohoService.generatingToken();
+      Response.setSuccess(201, 'Ticket Created Successfully', generate);
       return Response.send(res);
     } catch (error) {
       Response.setError(
