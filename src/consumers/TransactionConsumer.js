@@ -831,6 +831,8 @@ RabbitMq['default']
           );
         }
         if (istoken) {
+          Logger.info(`Sending SMS Token Success:SMS ${smsToken}`);
+
           const voucher = await VoucherToken.create({
             organisationId: campaign.OrganisationId,
             beneficiaryId: beneficiary.User.id,
