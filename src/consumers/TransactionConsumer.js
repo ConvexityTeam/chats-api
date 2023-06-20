@@ -815,10 +815,14 @@ RabbitMq['default']
           },
           amount
         };
+
         if (token_type === 'papertoken') {
           QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
+          Logger.info('Generating QrCode');
+
           istoken = true;
         } else if (token_type === 'smstoken') {
+          Logger.info('Generating SmsToken');
           istoken = true;
           await SmsService.sendOtp(
             beneficiary.User.phone,
