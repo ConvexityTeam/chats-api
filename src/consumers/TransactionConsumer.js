@@ -820,20 +820,17 @@ RabbitMq['default']
           istoken = true;
         } else if (token_type === 'smstoken') {
           istoken = true;
-          Logger.info('Sending SMS Token');
           await SmsService.sendOtp(
             beneficiary.User.phone,
             `Hello ${
               beneficiary.User.first_name || beneficiary.User.last_name
                 ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
                 : ''
-            } your convexity token is ${smsToken}, you are approved to spend ${share}.`
+            } your convexity token is ${smsToken}, you are approved to spend ${amount}.`
           );
         }
         if (istoken) {
-          Logger.info(`Sending SMS Token Success:SMS ${smsToken}`);
-
-          const voucher = await VoucherToken.create({
+          await VoucherToken.create({
             organisationId: campaign.OrganisationId,
             beneficiaryId: beneficiary.User.id,
             campaignId: campaign.id,
@@ -841,9 +838,7 @@ RabbitMq['default']
             token: token_type === 'papertoken' ? QrCode : smsToken,
             amount
           });
-          Logger.info(`Sending SMS Token Success: ${voucher}`);
           istoken = false;
-          Logger.info('Sending SMS Token Success');
         }
 
         lastIndex &&
