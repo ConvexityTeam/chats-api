@@ -18,6 +18,7 @@ const {userConst, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
+const Pagination = require('../utils/pagination');
 
 class CampaignService {
   static campaignHistory(id) {
@@ -435,26 +436,26 @@ class CampaignService {
     });
   }
   static getCampaigns(queryClause = {}) {
+    const page = queryClause.page;
+    const size = queryClause.size;
+    const {limit, offset} = Pagination.getPagination(page, size);
+    delete queryClause.page;
+    delete queryClause.size;
     const where = queryClause;
-    return Campaign.findAll({
+    const campaign = Campaign.findAll({
       order: [['createdAt', 'DESC']],
       where: {
         ...where
       },
-      // attributes: {
-      //   include: [
-      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-      //   ]
-      // },
+      limit,
+      offset,
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
       ]
-      // includeIgnoreAttributes: false,
-      // group: [
-      //   "Campaign.id"
-      // ],
     });
+    const response = Pagination.getPagingData(campaign, page, limit);
+    return response;
   }
   static getCash4W(OrganisationId) {
     return Campaign.findAll({
@@ -462,19 +463,11 @@ class CampaignService {
         type: 'cash-for-work',
         OrganisationId
       },
-      // attributes: {
-      //   include: [
-      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-      //   ]
-      // },
+
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries'}
       ]
-      // includeIgnoreAttributes: false,
-      // group: [
-      //   "Campaign.id"
-      // ],
     });
   }
 

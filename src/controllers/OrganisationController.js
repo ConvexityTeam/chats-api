@@ -379,36 +379,36 @@ class OrganisationController {
         OrganisationId
       });
 
-      for (let data of campaigns) {
-        if (new Date(data.end_date) < new Date())
-          data.update({status: 'ended'});
-        for (let task of data.Jobs) {
-          const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'}
-          });
-          assignmentTask.push(assignment);
-        }
-        //(await AwsService.getMnemonic(data.id)) || null;
-        data.dataValues.ck8 = GenerateSecrete();
+      // for (let data of campaigns) {
+      //   if (new Date(data.end_date) < new Date())
+      //     data.update({status: 'ended'});
+      //   for (let task of data.Jobs) {
+      //     const assignment = await db.TaskAssignment.findOne({
+      //       where: {TaskId: task.id, status: 'completed'}
+      //     });
+      //     assignmentTask.push(assignment);
+      //   }
+      //   //(await AwsService.getMnemonic(data.id)) || null;
+      //   data.dataValues.ck8 = GenerateSecrete();
 
-        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
-        data.dataValues.task_count = data.Jobs.length;
-        data.dataValues.completed_task = completed_task;
-      }
-      function isExist(id) {
-        let find = assignmentTask.find(a => a && a.TaskId === id);
-        if (find) {
-          return true;
-        }
-        return false;
-      }
-      campaigns.forEach(data => {
-        data.Jobs.forEach(task => {
-          if (isExist(task.id)) {
-            data.dataValues.completed_task++;
-          }
-        });
-      });
+      //   data.dataValues.beneficiaries_count = data.Beneficiaries.length;
+      //   data.dataValues.task_count = data.Jobs.length;
+      //   data.dataValues.completed_task = completed_task;
+      // }
+      // function isExist(id) {
+      //   let find = assignmentTask.find(a => a && a.TaskId === id);
+      //   if (find) {
+      //     return true;
+      //   }
+      //   return false;
+      // }
+      // campaigns.forEach(data => {
+      //   data.Jobs.forEach(task => {
+      //     if (isExist(task.id)) {
+      //       data.dataValues.completed_task++;
+      //     }
+      //   });
+      // });
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
