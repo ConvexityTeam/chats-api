@@ -840,6 +840,7 @@ RabbitMq['default']
             amount
           });
           istoken = false;
+          Logger.info('Sending SMS Token Success');
         }
 
         lastIndex &&
