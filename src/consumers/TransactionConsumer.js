@@ -404,21 +404,33 @@ RabbitMq['default']
           transactionId,
           transactionReference,
           OrganisationId,
+          CampaignId,
           approved,
           status,
           amount
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
-          const organisation = await BlockchainService.setUserKeypair(
-            `organisation_${OrganisationId}`
-          );
           const message = msg.getContent();
-          const mint = await BlockchainService.mintToken(
-            organisation.address,
-            amount,
-            message
-          );
-
+          let mint;
+          if (CampaignId) {
+            const campaignAddress = await BlockchainService.setUserKeypair(
+              `campaign_${OrganisationId}`
+            );
+            mint = await BlockchainService.mintToken(
+              campaignAddress.address,
+              amount,
+              message
+            );
+          } else {
+            const organisation = await BlockchainService.setUserKeypair(
+              `organisation_${OrganisationId}`
+            );
+            mint = await BlockchainService.mintToken(
+              organisation.address,
+              amount,
+              message
+            );
+          }
           if (!mint) {
             msg.nack();
             return;
@@ -430,6 +442,7 @@ RabbitMq['default']
           await QueueService.confirmNGO_FUNDING(
             mint.Minted,
             OrganisationId,
+            CampaignId,
             transactionId,
             transactionReference,
             amount
@@ -446,8 +459,13 @@ RabbitMq['default']
     increaseGasForMinting
       .activateConsumer(async msg => {
         const {keys, message} = msg.getContent();
-        const {OrganisationId, transactionId, transactionReference, amount} =
-          message;
+        const {
+          OrganisationId,
+          transactionId,
+          CampaignId,
+          transactionReference,
+          amount
+        } = message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'mint',
@@ -467,6 +485,7 @@ RabbitMq['default']
         await QueueService.confirmNGO_FUNDING(
           gasFee.retried,
           OrganisationId,
+          CampaignId,
           transactionId,
           transactionReference,
           amount
@@ -486,13 +505,11 @@ RabbitMq['default']
         const {
           hash,
           OrganisationId,
+          CampaignId,
           transactionId,
           transactionReference,
           amount
         } = msg.getContent();
-        const wallet = await WalletService.findMainOrganisationWallet(
-          OrganisationId
-        );
 
         const confirm = await BlockchainService.confirmTransaction(hash);
 
@@ -504,14 +521,29 @@ RabbitMq['default']
           {status: 'success', is_approved: true},
           transactionId
         );
-        await wallet.update({
-          balance: Sequelize.literal(`balance + ${amount}`),
-          fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-        });
+        if (CampaignId) {
+          const campaignWallet = await WalletService.findSingleWallet({
+            CampaignId,
+            OrganisationId
+          });
+          await campaignWallet.update({
+            balance: Sequelize.literal(`balance + ${amount}`),
+            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+          });
+        } else {
+          const wallet = await WalletService.findMainOrganisationWallet(
+            OrganisationId
+          );
+          await wallet.update({
+            balance: Sequelize.literal(`balance + ${amount}`),
+            fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+          });
+        }
+
         await DepositService.updateFiatDeposit(transactionReference, {
           status: 'successful'
         });
-        Logger.info('NGO funded');
+        Logger.info('NGO funded / Campaign funded');
         msg.ack();
       })
       .catch(error => {

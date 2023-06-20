@@ -879,6 +879,7 @@ class QueueService {
   static async confirmNGO_FUNDING(
     hash,
     OrganisationId,
+    CampaignId,
     transactionId,
     transactionReference,
     amount
@@ -886,6 +887,7 @@ class QueueService {
     const payload = {
       hash,
       OrganisationId,
+      CampaignId,
       transactionId,
       transactionReference,
       amount
@@ -1110,7 +1112,8 @@ class QueueService {
     OrganisationId,
     approved,
     status,
-    amount
+    amount,
+    CampaignId
   }) {
     const wallet = await WalletService.findMainOrganisationWallet(
       OrganisationId
@@ -1128,6 +1131,7 @@ class QueueService {
       status: 'processing',
       is_approved: false,
       OrganisationId,
+      CampaignId,
       reference: generateTransactionRef(),
       amount
     });
@@ -1135,6 +1139,7 @@ class QueueService {
       transactionId: transaction.uuid,
       transactionReference,
       OrganisationId,
+      CampaignId,
       approved,
       status,
       amount,
