@@ -435,7 +435,7 @@ class CampaignService {
       // ],
     });
   }
-  static async getCampaigns(extraClause = {}) {
+  static async getCampaigns(OrganisationId, extraClause = {}) {
     const {page, size} = extraClause;
     const {limit, offset} = await Pagination.getPagination(page, size);
     const where = extraClause;
@@ -450,7 +450,11 @@ class CampaignService {
 
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      ...queryOptions,
+      where:{
+        OrganisationId,
+        ...queryOptions
+      },
+      
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
