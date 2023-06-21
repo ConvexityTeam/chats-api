@@ -435,7 +435,7 @@ class CampaignService {
       // ],
     });
   }
-  static async getCampaigns(queryClause = {}) {
+  static async getCampaigns(extraClause = {}) {
     const {page, size} = extraClause;
     const {limit, offset} = await Pagination.getPagination(page, size);
     const where = extraClause;
