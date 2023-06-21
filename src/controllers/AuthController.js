@@ -144,9 +144,7 @@ class AuthController {
         );
         return Response.send(res);
       }
-
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
-
       let existingEmails = []; //existings
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
