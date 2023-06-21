@@ -151,7 +151,7 @@ class WalletController {
         MainWallet.balance = (balance * exchangeRate).toFixed(2);
         MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
         MainWallet.address = user.address;
-*/
+        */
         total_deposit = total_deposit || 0;
         spend_for_campaign = spend_for_campaign || 0;
         MainWallet.balance = balance;
@@ -162,7 +162,7 @@ class WalletController {
           MainWallet,
           total_deposit,
           spend_for_campaign,
-          currencies
+          currencyData
         });
         return Response.send(res);
       } else {
