@@ -38,10 +38,15 @@ class CurrencyServices {
     // console.log(toRate);
     // console.log('toRate: ', fromRate);
     // console.log(fromRate);
-    return this.convertRate(fromRate[1], toRate[1], amount);
+    return await this.convertRate(fromRate[1], toRate[1], amount);
   }
   async convertRate(fromRate, toRate, amount) {
-    return ((toRate / fromRate) * amount).toFixed(2);
+    // console.log('fromRate: ', fromRate);
+    // console.log('toRate: ', toRate);
+    // console.log('amount: ', amount);
+    const result = (toRate / fromRate) * amount;
+    // console.log('result: ', result.toFixed(2));
+    return result;
   }
 }
 
