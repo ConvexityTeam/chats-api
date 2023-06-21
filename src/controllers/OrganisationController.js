@@ -500,6 +500,7 @@ class OrganisationController {
       const transactions = await VendorService.organisationVendorsTransactions(
         req.organisation.id
       );
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Vendors transactions.',
