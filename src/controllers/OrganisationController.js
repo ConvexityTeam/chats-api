@@ -2363,7 +2363,7 @@ class OrganisationController {
     try {
       const {organisation} = req;
       const vendors = (
-        await VendorService.organisationVendors(organisation, req.query)
+        await VendorService.organisationVendors(organisation)
       ).map(res => {
         const toObject = res.toObject();
         toObject.data.Wallet.map(wallet => {
@@ -2376,7 +2376,7 @@ class OrganisationController {
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, `Internal server error. Contact support.` + error);
       return Response.send(res);
     }
   }
