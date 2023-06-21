@@ -6,12 +6,14 @@ const {
   TransactionService,
   OrderService,
   BlockchainService,
-  CampaignService
+  CampaignService,
+  CurrencyServices
 } = require('../services');
 const {Logger, Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const {Op} = require('sequelize');
 const {logger} = require('../libs/Logger');
+
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
@@ -90,6 +92,9 @@ class WalletController {
       const token = await BlockchainService.balance(user.address);
       const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
+      const usersCurrency = req.user.currency;
+      const exchangeRate = null;
+      const currencyData = null;
       const uuid = req.params.wallet_id;
       if (uuid) {
         return WalletController._handleSingleWallet(res, {
@@ -103,16 +108,7 @@ class WalletController {
           OrganisationId,
           status: 'success',
           is_approved: true,
-          transaction_type: 'deposit',
-          BeneficiaryId: {
-            [Op.eq]: null
-          },
-          VendorId: {
-            [Op.eq]: null
-          },
-          CampaignId: {
-            [Op.eq]: null
-          }
+          transaction_type: 'deposit'
         });
 
       let [{total: spend_for_campaign}] =
@@ -121,12 +117,6 @@ class WalletController {
           is_approved: true,
           status: 'success',
           transaction_type: 'transfer',
-          BeneficiaryId: {
-            [Op.eq]: null
-          },
-          VendorId: {
-            [Op.eq]: null
-          },
           CampaignId: {
             [Op.not]: null
           }
@@ -136,16 +126,30 @@ class WalletController {
         OrganisationId
       );
 
+      const currencyObj = CurrencyServices;
+      //convert currency to set currency if not in USD
+      //get users set ccurrency
+
       const MainWallet = wallet.toObject();
-      total_deposit = total_deposit || 0;
-      spend_for_campaign = spend_for_campaign || 0;
-      MainWallet.balance = balance;
-      MainWallet.fiat_balance = balance;
+      if (usersCurrency !== '' || usersCurrency !== null) {
+        usersCurrency = 'USD';
+        exchangeRate = currencyObj.convertCurrency(usersCurrency, 'USD', 1);
+      }
+      //set the users currency
+      currencyData = {
+        users_currency: 'USD',
+        currency_symbol: '$'
+      };
+      total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
+      spend_for_campaign = (spend_for_campaign * exchangeRate).toFixed(2) || 0;
+      MainWallet.balance = (balance * exchangeRate).toFixed(2);
+      MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
       MainWallet.address = user.address;
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
         MainWallet,
         total_deposit,
-        spend_for_campaign
+        spend_for_campaign,
+        currencies
       });
       return Response.send(res);
     } catch (error) {

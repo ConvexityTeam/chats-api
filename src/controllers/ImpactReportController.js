@@ -4,11 +4,7 @@ const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
-const {
-  UserService,
-  ImpactReportService,
-  MailerService
-} = require('../services');
+const {ImpactReportService} = require('../services');
 const {SanitizeObject} = require('../utils');
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 const {termiiConfig} = require('../config');
@@ -18,20 +14,38 @@ const {AclRoles} = require('../utils');
 class ImpactReportController {
   static async createReport(req, res) {
     const data = req.body;
+
     try {
       const rules = {
         title: 'string',
         AgentId: 'integer|required',
-        campaignId: 'integer|required',
-        MedialLink: 'required'
+        CampaignId: 'integer|required',
+        MediaLink: 'required'
       };
       const validation = new Validator(data, rules);
+
       if (validation.fails()) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, validation.errors);
         return Response.send(res);
       }
-      const report = await ImpactReportService.create(req.body);
-
+      const payload = {
+        title: data.title,
+        AgentId: data.AgentId,
+        CampaignId: data.CampaignId,
+        MediaLink: data.MediaLink
+      };
+      // valiate Campaign
+      // const campaignExist = await db.Campaigns.findOne({
+      //   where: {id: data.CampaignId}
+      // });
+      // if (!campaignExist) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //     'Campaign not found, provide a valild campaign'
+      //   );
+      //   return Response.send(res);
+      // }
+      const report = await ImpactReportService.create(payload);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Report Generated successfully',
@@ -39,6 +53,7 @@ class ImpactReportController {
       );
       return Response.send(res);
     } catch (error) {
+      console.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error, Contact Support'
@@ -74,6 +89,12 @@ class ImpactReportController {
         return Response.send(res);
       }
       const report = await ImpactReportService.getById(campaignId);
+      //   await db.ImpactReports.findAll({
+      //   where: {
+      //     CampaignId: campaignId
+      //   }
+      // });
+      //
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Report fetched successfully',
