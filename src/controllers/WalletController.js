@@ -20,10 +20,12 @@ class WalletController {
       const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
-        const transactions = await TransactionService.findOrgnaisationTransactions(
-          OrganisationId
-        );
-        for (let tran of transactions) {
+        const transactions =
+          await TransactionService.findOrgnaisationTransactions(
+            OrganisationId,
+            req.query
+          );
+        for (let tran of transactions.data) {
           if (tran.CampaignId) {
             const hash = await BlockchainService.getTransactionDetails(
               tran.transaction_hash
@@ -101,26 +103,24 @@ class WalletController {
         });
       }
 
-      let [
-        {total: total_deposit}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        status: 'success',
-        is_approved: true,
-        transaction_type: 'deposit'
-      });
+      let [{total: total_deposit}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          status: 'success',
+          is_approved: true,
+          transaction_type: 'deposit'
+        });
 
-      let [
-        {total: spend_for_campaign}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        is_approved: true,
-        status: 'success',
-        transaction_type: 'transfer',
-        CampaignId: {
-          [Op.not]: null
-        }
-      });
+      let [{total: spend_for_campaign}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          is_approved: true,
+          status: 'success',
+          transaction_type: 'transfer',
+          CampaignId: {
+            [Op.not]: null
+          }
+        });
 
       const wallet = await WalletService.findMainOrganisationWallet(
         OrganisationId

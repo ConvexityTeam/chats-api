@@ -435,17 +435,17 @@ class CampaignService {
       // ],
     });
   }
-  static getCampaigns(queryClause = {}) {
-    const page = queryClause.page;
-    const size = queryClause.size;
-    const {limit, offset} = Pagination.getPagination(page, size);
-    delete queryClause.page;
-    delete queryClause.size;
-    const where = queryClause;
-    const campaign = Campaign.findAll({
+  static async getCampaigns(queryClause = {}) {
+    const newQueryClause = queryClause || {};
+    const page = newQueryClause.page;
+    const size = newQueryClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete newQueryClause.page;
+    delete newQueryClause.size;
+    const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       where: {
-        ...where
+        ...newQueryClause
       },
       limit,
       offset,
@@ -454,7 +454,7 @@ class CampaignService {
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
       ]
     });
-    const response = Pagination.getPagingData(campaign, page, limit);
+    const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
   }
   static getCash4W(OrganisationId) {
@@ -494,13 +494,22 @@ class CampaignService {
   //   });
   // }
   static async getAllCampaigns(queryClause = null) {
-    return Campaign.findAll({
+    const {page, size} = queryClause;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    const where = queryClause;
+    delete where.page;
+    delete where.size;
+
+    const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      limit,
+      offset,
       where: {
-        ...queryClause
+        ...where
       },
       include: ['Organisation']
     });
+    return await Pagination.getPagingData(campaign, page, limit);
   }
   static async getOurCampaigns(
     userId,
@@ -721,12 +730,21 @@ class CampaignService {
   static async campaignForm(data) {
     return await CampaignForm.create(data);
   }
-  static async getCampaignForm(organisationId) {
-    return await CampaignForm.findAll({
+  static async getCampaignForm(organisationId, queryClause = {}) {
+    const page = Number(queryClause.page);
+    const size = Number(queryClause.size);
+    const where = queryClause;
+    delete where.page;
+    delete where.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      where: {organisationId},
+      where: {organisationId, ...where},
+      limit,
+      offset,
       include: ['campaigns']
     });
+    return await Pagination.getPagingData(form, page, limit);
   }
 
   // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {

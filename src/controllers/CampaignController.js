@@ -30,6 +30,7 @@ const {
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
 const {async} = require('regenerator-runtime');
+const Pagination = require('../utils/pagination');
 const approveToSpendQueue = amqp_1['default'].declareQueue('approveToSpend', {
   durable: true
 });
@@ -728,29 +729,29 @@ class CampaignController {
   }
 
   static async campaignTokens(req, res) {
-    const {campaign_id, page, organisation_id, token_type} = req.params;
+    const {campaign_id, organisation_id, token_type} = req.params;
     const OrganisationId = organisation_id;
-
-    let limit = 10;
-    let offset = 0;
 
     let where = {
       tokenType: token_type,
       organisationId: OrganisationId,
       campaignId: campaign_id
     };
+    const {limit, offset} = await Pagination.getPagination(
+      req.query.page,
+      req.query.size
+    );
     try {
-      const tokencount = await db.VoucherToken.findAndCountAll({where});
+      const tokencount = await db.VoucherToken.findAndCountAll({
+        where,
+        limit,
+        offset
+      });
       const user = await UserService.getAllUsers();
       const campaign = await CampaignService.getAllCampaigns({OrganisationId});
       const singleCampaign = await CampaignService.getCampaignById(campaign_id);
-      let pages = Math.ceil(tokencount.count / limit);
-      offset = limit * (page - 1);
-      const tokens = await db.VoucherToken.findAll({
-        where,
-        order: [['updatedAt', 'ASC']]
-      });
-      for (let data of tokens) {
+
+      for (let data of tokencount.data) {
         if (singleCampaign.type !== 'item') {
           const campaignAddress = await BlockchainService.setUserKeypair(
             `campaign_${campaign_id}`
@@ -1650,7 +1651,7 @@ class CampaignController {
   static async getCampaignForm(req, res) {
     const id = req.params.organisation_id;
     try {
-      const form = await CampaignService.getCampaignForm(id);
+      const form = await CampaignService.getCampaignForm(id, req.query);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign form received',

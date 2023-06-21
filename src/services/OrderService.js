@@ -14,6 +14,7 @@ const Op = Sequelize.Op;
 
 const QueueService = require('./QueueService');
 const {ProductService} = require('.');
+const Pagination = require('../utils/pagination');
 
 class OrderService {
   static async processOrder(
@@ -65,9 +66,16 @@ class OrderService {
     return transaction;
   }
 
-  static async productPurchased(OrganisationId) {
-    const gender = await Order.findAll({
+  static async productPurchased(OrganisationId, extraClasue = {}) {
+    const {page, size} = extraClasue;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    const where = extraClasue;
+    delete where.page;
+    delete where.size;
+    const gender = await Order.findAndCountAll({
       where: {status: 'confirmed'},
+      limit,
+      offset,
       include: [
         {
           model: User,
@@ -96,7 +104,7 @@ class OrderService {
       ]
     });
 
-    return gender;
+    return await Pagination.getPagingData(gender, page, size);
   }
 
   static async productPurchasedBy(id) {

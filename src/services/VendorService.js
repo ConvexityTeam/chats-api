@@ -25,6 +25,7 @@ const {
   generateQrcodeURL,
   GenearteVendorId
 } = require('../utils');
+const Pagination = require('../utils/pagination');
 
 class VendorService {
   static searchVendorStore(store_name, extraClause = null) {
@@ -383,7 +384,12 @@ class VendorService {
     });
   }
 
-  static async organisationVendors({id: OrganisationId}) {
+  static async organisationVendors({id: OrganisationId}, queryClause = {}) {
+    const {page, size} = queryClause;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    const where = queryClause;
+    delete where.page;
+    delete where.size;
     const vendorIds = (
       await OrganisationMembers.findAll({
         where: {
@@ -392,14 +398,18 @@ class VendorService {
         }
       })
     ).map(m => m.UserId);
-    return User.findAll({
+    const users = await User.findAndCountAll({
+      limit,
+      offset,
       where: {
+        ...where,
         id: {
           [Op.in]: [...vendorIds]
         }
       },
       include: ['Wallet', 'Store']
     });
+    return await Pagination.getPagingData(users, page, limit);
   }
 
   static async organisationVendorsAdmin(OrganisationId) {

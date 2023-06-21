@@ -568,11 +568,15 @@ class OrderController {
       let data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation_id,
+        ...req.query
       });
-      const products = await OrderService.productPurchased(organisation_id);
+      const products = await OrderService.productPurchased(
+        organisation_id,
+        req.query
+      );
 
-      if (products.length <= 0) {
+      if (products.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
@@ -580,9 +584,9 @@ class OrderController {
         );
         return Response.send(res);
       }
-      campaigns.forEach(campaign => {
+      campaigns.data.forEach(campaign => {
         //CampaignId
-        products.forEach(product => {
+        products.data.forEach(product => {
           if (campaign.id === product.CampaignId) {
             filtered_data.push(product);
           }
