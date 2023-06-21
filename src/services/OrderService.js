@@ -73,10 +73,16 @@ class OrderService {
     const where = extraClasue;
     delete where.page;
     delete where.size;
+    const queryOptions = {
+      where
+    };
+    if (limit && offset) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
     const gender = await Order.findAndCountAll({
       where: {status: 'confirmed'},
-      limit,
-      offset,
+      ...queryOptions,
       include: [
         {
           model: User,
