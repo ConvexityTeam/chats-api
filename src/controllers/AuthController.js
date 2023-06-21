@@ -663,7 +663,7 @@ class AuthController {
     const rules = {
       first_name: 'alpha',
       last_name: 'alpha',
-      organisation_name: 'required|string',
+      organisation_name: 'string',
       registration_id: 'string',
       email: 'required|email',
       password: 'required',
@@ -677,10 +677,7 @@ class AuthController {
       Response.setError(400, validation.errors);
       return Response.send(res);
     } else {
-      const url_string = data.website_url;
-      const domain = extractDomain(url_string);
       const email = data.email;
-      const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       // if (email.match(new RegExp(re))) {
       const userExist = await db.User.findOne({
         where: {
@@ -714,6 +711,10 @@ class AuthController {
                       organisation.id,
                       'organisation'
                     );
+                    await organisation.createMember({
+                      UserId: user.id,
+                      role: OrgRoles.Admin
+                    });
                   })
                   .catch(err => {
                     Response.setError(500, err);
@@ -722,7 +723,11 @@ class AuthController {
               });
             }
 
-            if (registration_type === 'organisation') {
+            if (data.registration_type === 'organisation') {
+              const url_string = data.website_url;
+              const domain = extractDomain(url_string);
+              const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+
               const organisationExist = await db.Organisation.findOne({
                 where: {
                   [Op.or]: [
@@ -782,7 +787,7 @@ class AuthController {
 
             await MailerService.sendEmailVerification(
               data.email,
-              data.organisation_name,
+              data.organisation_name || data.first_name + ' ' + data.last_name,
               verifyLink
             );
             Response.setSuccess(201, 'NGO and User registered successfully', {

@@ -19,8 +19,11 @@ class WalletController {
       const reference = req.params.reference;
       if (!reference) {
         const transactions =
-          await TransactionService.findOrgnaisationTransactions(OrganisationId);
-        for (let tran of transactions) {
+          await TransactionService.findOrgnaisationTransactions(
+            OrganisationId,
+            req.query
+          );
+        for (let tran of transactions.data) {
           if (tran.CampaignId) {
             const hash = await BlockchainService.getTransactionDetails(
               tran.transaction_hash

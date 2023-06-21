@@ -14,6 +14,7 @@ const {
 const {Op, Sequelize} = require('sequelize');
 const {userConst, walletConst} = require('../constants');
 const moment = require('moment');
+const Pagination = require('../utils/pagination');
 
 class BeneficiariesService {
   static capitalizeFirstLetter(str) {
@@ -345,9 +346,17 @@ class BeneficiariesService {
     });
   }
 
-  static async findOrgnaisationBeneficiaries(OrganisationId) {
-    return User.findAll({
+  static async findOrgnaisationBeneficiaries(OrganisationId, queryClause = {}) {
+    const {page, size} = queryClause;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    const where = queryClause;
+    delete where.page;
+    delete where.size;
+    const users = await User.findAndCountAll({
+      limit,
+      offset,
       where: {
+        ...where,
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
           OrganisationId
@@ -369,6 +378,7 @@ class BeneficiariesService {
         {model: Group, as: 'members'}
       ]
     });
+    return await Pagination.getPagingData(users, page, limit);
   }
 
   static async fetchCampaignBeneficiary(CampaignId, UserId) {

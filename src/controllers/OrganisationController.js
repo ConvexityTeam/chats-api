@@ -379,36 +379,37 @@ class OrganisationController {
         OrganisationId
       });
 
-      // for (let data of campaigns) {
-      //   if (new Date(data.end_date) < new Date())
-      //     data.update({status: 'ended'});
-      //   for (let task of data.Jobs) {
-      //     const assignment = await db.TaskAssignment.findOne({
-      //       where: {TaskId: task.id, status: 'completed'}
-      //     });
-      //     assignmentTask.push(assignment);
-      //   }
-      //   //(await AwsService.getMnemonic(data.id)) || null;
-      //   data.dataValues.ck8 = GenerateSecrete();
+      for (let data of campaigns?.data) {
+        if (new Date(data.end_date) < new Date())
+          data.update({status: 'ended'});
+        for (let task of data.Jobs) {
+          const assignment = await db.TaskAssignment.findOne({
+            where: {TaskId: task.id, status: 'completed'}
+          });
+          assignmentTask.push(assignment);
+        }
+        //(await AwsService.getMnemonic(data.id)) || null;
+        data.dataValues.ck8 = GenerateSecrete();
 
-      //   data.dataValues.beneficiaries_count = data.Beneficiaries.length;
-      //   data.dataValues.task_count = data.Jobs.length;
-      //   data.dataValues.completed_task = completed_task;
-      // }
-      // function isExist(id) {
-      //   let find = assignmentTask.find(a => a && a.TaskId === id);
-      //   if (find) {
-      //     return true;
-      //   }
-      //   return false;
-      // }
-      // campaigns.forEach(data => {
-      //   data.Jobs.forEach(task => {
-      //     if (isExist(task.id)) {
-      //       data.dataValues.completed_task++;
-      //     }
-      //   });
-      // });
+        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
+        data.dataValues.task_count = data.Jobs.length;
+        data.dataValues.completed_task = completed_task;
+      }
+      function isExist(id) {
+        let find = assignmentTask.find(a => a && a.TaskId === id);
+        if (find) {
+          return true;
+        }
+        return false;
+      }
+      campaigns &&
+        campaigns?.data.forEach(data => {
+          data.Jobs.forEach(task => {
+            if (isExist(task.id)) {
+              data.dataValues.completed_task++;
+            }
+          });
+        });
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1569,7 +1570,10 @@ class OrganisationController {
     try {
       const organisation = req.organisation;
       const beneficiaries =
-        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
+        await BeneficiaryService.findOrgnaisationBeneficiaries(
+          organisation.id,
+          req.query
+        );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation beneficiaries',
@@ -2359,10 +2363,10 @@ class OrganisationController {
     try {
       const {organisation} = req;
       const vendors = (
-        await VendorService.organisationVendors(organisation)
+        await VendorService.organisationVendors(organisation, req.query)
       ).map(res => {
         const toObject = res.toObject();
-        toObject.Wallet.map(wallet => {
+        toObject.data.Wallet.map(wallet => {
           delete wallet.privateKey;
           delete wallet.bantuPrivateKey;
           return wallet;
@@ -2381,7 +2385,7 @@ class OrganisationController {
     try {
       const {organisation} = req;
       const vendors = (
-        await VendorService.organisationVendors(organisation)
+        await VendorService.organisationVendors(organisation, req.query)
       ).map(res => {
         const toObject = res.toObject();
         toObject.Wallet.map(wallet => {
@@ -2431,7 +2435,7 @@ class OrganisationController {
     try {
       const organisation = req.organisation;
       const vendors_count = (
-        await VendorService.organisationVendors(organisation)
+        await VendorService.organisationVendors(organisation, req.query)
       ).length;
       const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
       const previous_stat = await VendorService.organisationDailyVendorStat(
