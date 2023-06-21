@@ -91,7 +91,7 @@ class WalletController {
       const token = await BlockchainService.balance(user.address);
       const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
-      let usersCurrency = 'NGN'; //req.user.currency;
+      let usersCurrency = req.user.currency;
       let exchangeRate = 0.0;
       let currencyData = {};
       const uuid = req.params.wallet_id;
