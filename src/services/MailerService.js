@@ -299,7 +299,7 @@ class MailerService {
     <h2>Congratulations, ${orgname}</h2>
     <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaigns.<br/>
 If you have any questions, please contact us via the contact form on your dashboard.</p>
-    <a href="${this.config.url}"> Click here</a>
+    <a href="https://chats.cash/"> Click here To Get Started</a>
       <p>Regards,\n CHATS - Convexity</p>
     </div>
     `;
