@@ -297,10 +297,10 @@ class MailerService {
     const body = `
     <div>
     <h2>Congratulations, ${orgname}</h2>
-    <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaign.<br/>
-If you have any questions any questions, please contact us via the contact form on your dashboard.</p>
+    <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaigns.<br/>
+If you have any questions, please contact us via the contact form on your dashboard.</p>
     <a href="${this.config.url}"> Click here</a>
-      <p>Best,\n CHATS - Convexity</p>
+      <p>Regards,\n CHATS - Convexity</p>
     </div>
     `;
     const options = {
