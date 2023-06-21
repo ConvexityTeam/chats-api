@@ -179,10 +179,11 @@ class OrganisationController {
         ..._query,
         status: 'active'
       };
-      const campaigns = await CampaignService.getCampaigns({
+      const campaigns = await CampaignService.getCampaigns(
+        OrganisationId,
         ...query,
-        OrganisationId
-      });
+
+      );
       let campaignsArray = [];
       for (let campaign of campaigns) {
         let beneficiaries_count = await campaign.countBeneficiaries();
@@ -374,10 +375,10 @@ class OrganisationController {
       const assignmentTask = [];
       const OrganisationId = req.params.organisation_id;
       const query = SanitizeObject(req.query);
-      const campaigns = await CampaignService.getCampaigns({
-        ...query,
-        OrganisationId
-      });
+      const campaigns = await CampaignService.getCampaigns(
+        OrganisationId,
+        ...query
+      );
 
       for (let data of campaigns?.data) {
         if (new Date(data.end_date) < new Date())
