@@ -1152,7 +1152,9 @@ class AuthController {
       if (!wallet) {
         await QueueService.createWallet(user.id, 'user');
       }
-      await AuthService.add2faSecret(user, user.tfa_method);
+      if (user.is_tfa_enabled && user.tfa_method !== 'qrCode') {
+        await AuthService.add2faSecret(user, user.tfa_method);
+      }
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
