@@ -841,19 +841,29 @@ class AuthController {
 
             if (data.registration_type === 'organisation') {
               const url_string = data.website_url;
-              const domain = extractDomain(url_string);
-              const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+              // const domain = url_string ? extractDomain(url_string) : '';
+              // const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
 
               const organisationExist = await db.Organisation.findOne({
                 where: {
-                  [Op.or]: [
-                    {
-                      name: data.organisation_name
+                  [Op.and]: {
+                    [Op.or]: {
+                      name: {
+                        [Op.ne]: null
+                      },
+                      website_url: {
+                        [Op.ne]: null
+                      }
                     },
-                    {
-                      website_url: data.website_url
-                    }
-                  ]
+                    [Op.or]: [
+                      {
+                        name: data.organisation_name || null
+                      },
+                      {
+                        website_url: data.website_url || null
+                      }
+                    ]
+                  }
                 }
               });
               if (organisationExist) {
@@ -875,7 +885,7 @@ class AuthController {
                   await db.Organisation.create({
                     name: data.organisation_name,
                     email: data.email,
-                    website_url: data.website_url,
+                    website_url: data.website_url || null,
                     registration_id: data.registration_id
                   }).then(async organisation => {
                     await QueueService.createWallet(
@@ -901,16 +911,18 @@ class AuthController {
             const verifyLink =
               data.host_url + '/email-verification?confirmationCode=' + token;
 
-            await MailerService.sendEmailVerification(
+            const sent = await MailerService.sendEmailVerification(
               data.email,
               data.organisation_name || data.first_name + ' ' + data.last_name,
               verifyLink
             );
-            Response.setSuccess(201, 'NGO and User registered successfully', {
-              user: user.toObject(),
-              organisation
-            });
-            return Response.send(res);
+            if (sent) {
+              Response.setSuccess(201, 'NGO and User registered successfully', {
+                user: user.toObject(),
+                organisation
+              });
+              return Response.send(res);
+            }
           });
         });
       } else {
