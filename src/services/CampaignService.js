@@ -436,19 +436,18 @@ class CampaignService {
     });
   }
   static async getCampaigns(queryClause = {}) {
-    const newQueryClause = queryClause || {};
-    const page = newQueryClause.page;
-    const size = newQueryClause.size;
+    const {page, size} = extraClause;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    delete newQueryClause.page;
-    delete newQueryClause.size;
+    delete queryClause.page;
+    delete queryClause.size;
+    const queryOptions = {};
+    if (limit && offset) {
+      queryOptions.offset = offset;
+      queryOptions.limit = limit;
+    }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      where: {
-        ...newQueryClause
-      },
-      limit,
-      offset,
+      ...queryOptions,
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
