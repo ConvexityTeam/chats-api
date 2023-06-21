@@ -2384,13 +2384,17 @@ class OrganisationController {
   static async getDonorVendors(req, res) {
     try {
       const {organisation} = req;
-      const vendors = await VendorService.organisationVendors(
-        organisation,
-        req.query
-      );
-      // )
-      // urn toObject;
-      // });
+      const vendors = (
+        await VendorService.organisationVendors(organisation, req.query)
+      ).map(res => {
+        const toObject = res.toObject();
+        toObject.Wallet.map(wallet => {
+          delete wallet.privateKey;
+          delete wallet.bantuPrivateKey;
+          return wallet;
+        });
+        return toObject;
+      });
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
@@ -2508,22 +2512,22 @@ class OrganisationController {
         );
       function getDifference() {
         return isOrganisationCampWallet.filter(wallet => {
-          return isOrganisationCamp.some(campaign => {
+          return isOrganisationCamp.data.some(campaign => {
             return wallet.CampaignId === campaign.id;
           });
         });
       }
 
-      const campaign_budget = isOrganisationCamp
+      const campaign_budget = isOrganisationCamp.data
         .map(val => val.budget)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
-      const amount_disbursed = isOrganisationCamp
+      const amount_disbursed = isOrganisationCamp.data
         .map(val => val.amount_disbursed)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
       const balance = getDifference()
         .map(val => val.balance)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
-      const total_items_distributed = isOrganisationCamp
+      const total_items_distributed = isOrganisationCamp.data
         .map(val => val.minting_limit)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
       Response.setSuccess(200, 'transaction', {
