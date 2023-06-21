@@ -1,6 +1,6 @@
 class Pagination {
   static async getPagination(page, size) {
-    const limit = size ? +size : 1;
+    const limit = size;
     const offset = (page - 1) * size;
 
     return {limit, offset};

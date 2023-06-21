@@ -713,14 +713,14 @@ class OrganisationController {
       const OrgWallet = await OrganisationService.getOrganisationWallet(
         OrganisationId
       );
-      const is_verified_all = req.user.is_verified_all;
-      if (!is_verified_all) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Update your profile first'
-        );
-        return Response.send(res);
-      }
+      // const is_verified_all = req.user.is_verified_all;
+      // if (!is_verified_all) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Update your profile first'
+      //   );
+      //   return Response.send(res);
+      // }
       if (data.formId) {
         const form = await CampaignService.findCampaignFormById(data.formId);
 
