@@ -438,13 +438,16 @@ class CampaignService {
   static async getCampaigns(queryClause = {}) {
     const {page, size} = extraClause;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    delete queryClause.page;
-    delete queryClause.size;
-    const queryOptions = {};
+    const where = extraClause;
+
+    delete where.page;
+    delete where.size;
+    const queryOptions = {where, OrganisationId};
     if (limit && offset) {
       queryOptions.offset = offset;
       queryOptions.limit = limit;
     }
+
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       ...queryOptions,
