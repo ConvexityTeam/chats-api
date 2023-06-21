@@ -1319,17 +1319,14 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [
-            campaign_token,
-            beneficiary_token,
-            campaignBeneficiary
-          ] = await Promise.all([
-            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-            BlockchainService.setUserKeypair(
-              `user_${user.id}campaign_${wallet.CampaignId}`
-            ),
-            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-          ]);
+          const [campaign_token, beneficiary_token, campaignBeneficiary] =
+            await Promise.all([
+              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+              BlockchainService.setUserKeypair(
+                `user_${user.id}campaign_${wallet.CampaignId}`
+              ),
+              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+            ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
@@ -1448,6 +1445,15 @@ class AuthController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+
+      const is_verified = req.user.is_verified;
+      if (!is_verified) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Update your profile first'
+        );
+        return Response.send(res);
+      }
       const data = await AuthService.add2faSecret(
         req.user,
         req.body.tfa_method
@@ -1459,7 +1465,7 @@ class AuthController {
       return Response.send(res);
     }
   }
-
+  // Enable 2FA
   static async enableTwoFactorAuth(req, res) {
     // TODO: Validate token
     try {

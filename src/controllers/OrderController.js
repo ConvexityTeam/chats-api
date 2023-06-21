@@ -355,7 +355,7 @@ class OrderController {
         data.order,
         data.order.Vendor,
         data.total_cost,
-        campaign.type
+        campaign
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
