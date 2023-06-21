@@ -5,6 +5,6 @@ const multer = require('multer');
 module.exports = multer({
   dest: 'temp/',
   limits: {
-    fieldSize: maxFileUploadSize,
-  },
+    fieldSize: maxFileUploadSize
+  }
 });

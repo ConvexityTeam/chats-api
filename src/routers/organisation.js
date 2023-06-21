@@ -474,7 +474,7 @@ router
     CampaignController.fundApprovedBeneficiary
   );
 router
-  .route('/:organisation_id/:campaign_id/:token_type/tokens/:page')
+  .route('/:organisation_id/:campaign_id/:token_type/tokens')
   .get(
     NgoAdminAuth,
     ParamValidator.OrganisationId,

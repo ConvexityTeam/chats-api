@@ -678,7 +678,6 @@ class AuthController {
                     email: fields.email,
                     password: encryptedPassword,
                     gender: fields.gender,
-                    status: 'activated',
                     location: fields.location,
                     address: fields.address,
                     referal_id: fields.referal_id,
@@ -778,10 +777,14 @@ class AuthController {
     let user = null;
     const data = req.body;
     const rules = {
-      organisation_name: 'required|string',
+      first_name: 'alpha',
+      last_name: 'alpha',
+      organisation_name: 'string',
+      registration_id: 'string',
       email: 'required|email',
       password: 'required',
-      website_url: 'url'
+      website_url: 'url',
+      registration_type: 'required|in:individual,organisation'
     };
     const validation = new Validator(data, rules, {
       url: 'Only valid url with https or http allowed'
@@ -790,10 +793,7 @@ class AuthController {
       Response.setError(400, validation.errors);
       return Response.send(res);
     } else {
-      const url_string = data.website_url;
-      const domain = extractDomain(url_string);
       const email = data.email;
-      const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
       // if (email.match(new RegExp(re))) {
       const userExist = await db.User.findOne({
         where: {
@@ -801,29 +801,73 @@ class AuthController {
         }
       });
       if (!userExist) {
-        const organisationExist = await db.Organisation.findOne({
-          where: {
-            [Op.or]: [
-              {
-                name: data.organisation_name
-              },
-              {
-                website_url: data.website_url
-              }
-            ]
+        bcrypt.genSalt(10, (err, salt) => {
+          if (err) {
+            console.log('Error Ocurred hashing');
           }
-        });
-        if (!organisationExist) {
-          bcrypt.genSalt(10, (err, salt) => {
-            if (err) {
-              console.log('Error Ocurred hashing');
+          bcrypt.hash(data.password, salt).then(async hash => {
+            const encryptedPassword = hash;
+
+            if (data.registration_type === 'individual') {
+              await db.User.create({
+                RoleId: AclRoles.NgoAdmin,
+                first_name: data.first_name,
+                last_name: data.last_name,
+                phone: data.phone,
+                email: data.email,
+                registration_type: 'individual',
+                password: encryptedPassword
+              }).then(async _user => {
+                user = _user;
+                await db.Organisation.create({
+                  email: data.email
+                })
+                  .then(async organisation => {
+                    await QueueService.createWallet(
+                      organisation.id,
+                      'organisation'
+                    );
+                    await organisation.createMember({
+                      UserId: user.id,
+                      role: OrgRoles.Admin
+                    });
+                  })
+                  .catch(err => {
+                    Response.setError(500, err);
+                    return Response.send(res);
+                  });
+              });
             }
-            bcrypt.hash(data.password, salt).then(async hash => {
-              const encryptedPassword = hash;
+
+            if (data.registration_type === 'organisation') {
+              const url_string = data.website_url;
+              const domain = extractDomain(url_string);
+              const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+
+              const organisationExist = await db.Organisation.findOne({
+                where: {
+                  [Op.or]: [
+                    {
+                      name: data.organisation_name
+                    },
+                    {
+                      website_url: data.website_url
+                    }
+                  ]
+                }
+              });
+              if (organisationExist) {
+                Response.setError(
+                  400,
+                  'An Organisation with such name or website url already exist'
+                );
+                return Response.send(res);
+              }
               await db.User.create({
                 RoleId: AclRoles.NgoAdmin,
                 email: data.email,
-                password: encryptedPassword
+                password: encryptedPassword,
+                registration_type: 'organisation'
               })
                 .then(async _user => {
                   user = _user;
@@ -832,58 +876,43 @@ class AuthController {
                     name: data.organisation_name,
                     email: data.email,
                     website_url: data.website_url,
-                    registration_id: generateOrganisationId()
+                    registration_id: data.registration_id
                   }).then(async organisation => {
                     await QueueService.createWallet(
                       organisation.id,
                       'organisation'
                     );
-                    await organisation
-                      .createMember({
-                        UserId: user.id,
-                        role: OrgRoles.Admin
-                      })
-                      .then(async () => {
-                        const token = jwt.sign(
-                          {email: data.email},
-                          process.env.SECRET_KEY,
-                          {expiresIn: '24hr'}
-                        );
-                        const verifyLink =
-                          data.host_url +
-                          '/email-verification?confirmationCode=' +
-                          token;
-
-                        await MailerService.sendEmailVerification(
-                          data.email,
-                          data.organisation_name,
-                          verifyLink
-                        );
-                        Response.setSuccess(
-                          201,
-                          'NGO and User registered successfully',
-                          {
-                            user: user.toObject(),
-                            organisation
-                          }
-                        );
-                        return Response.send(res);
-                      });
+                    await organisation.createMember({
+                      UserId: user.id,
+                      role: OrgRoles.Admin
+                    });
                   });
                 })
                 .catch(err => {
                   Response.setError(500, err);
                   return Response.send(res);
                 });
+            }
+            const token = jwt.sign(
+              {email: data.email},
+              process.env.SECRET_KEY,
+              {expiresIn: '24hr'}
+            );
+            const verifyLink =
+              data.host_url + '/email-verification?confirmationCode=' + token;
+
+            await MailerService.sendEmailVerification(
+              data.email,
+              data.organisation_name || data.first_name + ' ' + data.last_name,
+              verifyLink
+            );
+            Response.setSuccess(201, 'NGO and User registered successfully', {
+              user: user.toObject(),
+              organisation
             });
+            return Response.send(res);
           });
-        } else {
-          Response.setError(
-            400,
-            'An Organisation with such name or website url already exist'
-          );
-          return Response.send(res);
-        }
+        });
       } else {
         Response.setError(400, 'Email Already Exists, Recover Your Account');
         return Response.send(res);
@@ -1290,17 +1319,14 @@ class AuthController {
           campaign.type === 'campaign' &&
           !wallet.was_funded
         ) {
-          const [
-            campaign_token,
-            beneficiary_token,
-            campaignBeneficiary
-          ] = await Promise.all([
-            BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-            BlockchainService.setUserKeypair(
-              `user_${user.id}campaign_${wallet.CampaignId}`
-            ),
-            BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-          ]);
+          const [campaign_token, beneficiary_token, campaignBeneficiary] =
+            await Promise.all([
+              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+              BlockchainService.setUserKeypair(
+                `user_${user.id}campaign_${wallet.CampaignId}`
+              ),
+              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+            ]);
 
           let amount = campaign.budget / campaignBeneficiary.length;
           await QueueService.approveOneBeneficiary(
@@ -1419,6 +1445,15 @@ class AuthController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+
+      const is_verified = req.user.is_verified;
+      if (!is_verified) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Update your profile first'
+        );
+        return Response.send(res);
+      }
       const data = await AuthService.add2faSecret(
         req.user,
         req.body.tfa_method
@@ -1430,7 +1465,7 @@ class AuthController {
       return Response.send(res);
     }
   }
-
+  // Enable 2FA
   static async enableTwoFactorAuth(req, res) {
     // TODO: Validate token
     try {
@@ -1832,7 +1867,6 @@ class AuthController {
       const user = await UserService.addUser({
         RoleId: AclRoles.Donor,
         email: data.email,
-        status: 'activated',
         password
       });
 

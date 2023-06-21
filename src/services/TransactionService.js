@@ -1,15 +1,23 @@
 const {userConst} = require('../constants');
 const {Transaction, Sequelize, Campaign, Wallet, User} = require('../models');
 const {Op} = require('sequelize');
+const Pagination = require('../utils/pagination');
 
 class TransactionService {
   static async findOrgnaisationTransactions(
     OrganisationId,
     extraClause = null
   ) {
-    return Transaction.findAll({
+    const {page, size} = extraClause;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    const where = extraClause;
+    delete where.page;
+    delete where.size;
+    const transaction = await Transaction.findAndCountAll({
+      limit,
+      offset,
       where: {
-        ...extraClause,
+        ...where,
         OrganisationId
       },
       attributes: [
@@ -52,6 +60,7 @@ class TransactionService {
       ],
       order: [['createdAt', 'DESC']]
     });
+    return await Pagination.getPagingData(transaction, page, limit);
   }
 
   static async findTransactions(where) {

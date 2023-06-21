@@ -17,13 +17,15 @@ const {logger} = require('../libs/Logger');
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
-      const OrganisationId = req.organisation.id;
+      const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
-        const transactions = await TransactionService.findOrgnaisationTransactions(
-          OrganisationId
-        );
-        for (let tran of transactions) {
+        const transactions =
+          await TransactionService.findOrgnaisationTransactions(
+            OrganisationId,
+            req.query
+          );
+        for (let tran of transactions.data) {
           if (tran.CampaignId) {
             const hash = await BlockchainService.getTransactionDetails(
               tran.transaction_hash
@@ -45,11 +47,11 @@ class WalletController {
         return Response.send(res);
       }
 
-      const transaction = await TransactionService.findTransaction({
+      const transactions = await TransactionService.findTransaction({
         OrganisationId,
         reference
       });
-      if (!transaction) {
+      if (!transactions) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Transaction not found.'
@@ -58,7 +60,6 @@ class WalletController {
       }
 
       for (let transaction of transactions) {
-        console.log(transaction.CampaignId, 'transaction.CampaignId');
         if (typeof transaction.CampaignId === 'number') {
           const campaign = await CampaignService.getACampaign(
             transaction.CampaignId,
@@ -71,7 +72,7 @@ class WalletController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Transaction Details',
-        transaction
+        transactions
       );
       return Response.send(res);
     } catch (error) {
@@ -102,26 +103,24 @@ class WalletController {
         });
       }
 
-      let [
-        {total: total_deposit}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        status: 'success',
-        is_approved: true,
-        transaction_type: 'deposit'
-      });
+      let [{total: total_deposit}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          status: 'success',
+          is_approved: true,
+          transaction_type: 'deposit'
+        });
 
-      let [
-        {total: spend_for_campaign}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        is_approved: true,
-        status: 'success',
-        transaction_type: 'transfer',
-        CampaignId: {
-          [Op.not]: null
-        }
-      });
+      let [{total: spend_for_campaign}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          is_approved: true,
+          status: 'success',
+          transaction_type: 'transfer',
+          CampaignId: {
+            [Op.not]: null
+          }
+        });
 
       const currencyObj = CurrencyServices;
       //convert currency to set currency if not in USD
@@ -250,6 +249,7 @@ class WalletController {
       const data = SanitizeObject(req.body, ['amount', 'currency']);
       const {organisation_id} = req.params;
       if (!data.currency) data.currency = 'NGN';
+      const CampaignId = req.body.CampaignId ? req.body.CampaignId : null;
       const organisation = req.organisation;
       organisation.dataValues.email = req.user.email;
       const wallet = await WalletService.findMainOrganisationWallet(
@@ -265,10 +265,10 @@ class WalletController {
       const response = await PaystackService.buildDepositData(
         organisation,
         data.amount,
+        CampaignId,
         data.currency
       );
       logger.info(`Initiated PayStack Transaction`);
-      //QueueService.createPayStack(wallet.address, data.amount)
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Deposit data generated.',
