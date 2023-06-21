@@ -128,9 +128,14 @@ class WalletController {
       //get users set currency
       if (usersCurrency !== '' || usersCurrency !== null) {
         usersCurrency = 'USD';
-        exchangeRate = currencyObj.convertCurrency(usersCurrency, 'USD', 1);
+        exchangeRate = await currencyObj.convertCurrency(
+          usersCurrency,
+          'USD',
+          1
+        );
+        // console.log(exchangeRate);
       }
-
+      console.log('ExchangeRate: ' + exchangeRate);
       //set the users currency
       currencyData = {
         users_currency: 'USD',
