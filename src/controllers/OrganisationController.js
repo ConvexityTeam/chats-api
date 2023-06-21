@@ -2481,7 +2481,7 @@ class OrganisationController {
       isOrganisationCamp.data.forEach(matric => {
         disbursedDates.push(matric.updatedAt);
       });
-      isOrganisationCampWallet.data.forEach(spend => {
+      isOrganisationCampWallet.forEach(spend => {
         spendDate.push(spend.updatedAt);
       });
       matrics.maxDisbursedDate = new Date(Math.max(...disbursedDates));
