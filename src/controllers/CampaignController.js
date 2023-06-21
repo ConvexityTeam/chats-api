@@ -31,6 +31,7 @@ const {
 const amqp_1 = require('../libs/RabbitMQ/Connection');
 const {async} = require('regenerator-runtime');
 const Pagination = require('../utils/pagination');
+const {generateOTP} = require('../libs/Utils');
 const approveToSpendQueue = amqp_1['default'].declareQueue('approveToSpend', {
   durable: true
 });
@@ -1073,10 +1074,11 @@ class CampaignController {
           0
         )
       ).toFixed(2);
-      campaign.dataValues.Complaints =
-        await CampaignService.getCampaignComplaint(campaignId);
-      campaign.dataValues.ck8 =
-        (await AwsService.getMnemonic(campaign.id)) || null;
+      campaign.dataValues.Complaints = '';
+      await CampaignService.getCampaignComplaint(campaignId);
+      // (await AwsService.getMnemonic(campaign.id)) || null;
+      campaign.dataValues.ck8 = '';
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Details',
