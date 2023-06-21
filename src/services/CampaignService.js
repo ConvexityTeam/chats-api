@@ -435,16 +435,19 @@ class CampaignService {
       // ],
     });
   }
-  static async getCampaigns(queryClause = {}) {
+  static async getCampaigns(extraClause = {}) {
     const {page, size} = extraClause;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    delete queryClause.page;
-    delete queryClause.size;
+    const where = extraClause;
+
+    delete where.page;
+    delete where.size;
     const queryOptions = {};
     if (limit && offset) {
       queryOptions.offset = offset;
       queryOptions.limit = limit;
     }
+
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       ...queryOptions,
