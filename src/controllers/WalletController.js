@@ -93,8 +93,8 @@ class WalletController {
       const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
       let usersCurrency = req.user.currency;
-      let exchangeRate = null;
-      let currencyData = null;
+      let exchangeRate = 0.0;
+      let currencyData = {};
       const uuid = req.params.wallet_id;
       if (uuid) {
         return WalletController._handleSingleWallet(res, {
@@ -125,19 +125,31 @@ class WalletController {
       const currencyObj = CurrencyServices;
       //convert currency to set currency if not in USD
       //get users set currency
-      if (usersCurrency !== '' || usersCurrency !== null) {
+      if (
+        usersCurrency === '' ||
+        usersCurrency == null ||
+        usersCurrency === 'USD'
+      ) {
         usersCurrency = 'USD';
+        //  console.log(usersCurrency);
         exchangeRate = await currencyObj.convertCurrency(
           usersCurrency,
           'USD',
           1
         );
-        // console.log(exchangeRate);
+      } else if (usersCurrency !== 'USD') {
+        //  console.log(usersCurrency);
+        exchangeRate = await currencyObj.convertCurrency(
+          'USD',
+          usersCurrency,
+          1
+        );
       }
+
       console.log('ExchangeRate: ' + exchangeRate);
       //set the users currency
       currencyData = {
-        users_currency: 'USD',
+        users_currency: usersCurrency,
         currency_symbol: '$'
       };
 
@@ -149,7 +161,6 @@ class WalletController {
       }
       if (wallet) {
         const MainWallet = wallet.toObject();
-
         total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
         spend_for_campaign =
           (spend_for_campaign * exchangeRate).toFixed(2) || 0;
