@@ -384,12 +384,7 @@ class VendorService {
     });
   }
 
-  static async organisationVendors({id: OrganisationId}, queryClause = {}) {
-    const {page, size} = queryClause;
-    const {limit, offset} = await Pagination.getPagination(page, size);
-    const where = queryClause;
-    delete where.page;
-    delete where.size;
+  static async organisationVendors({id: OrganisationId}) {
     const vendorIds = (
       await OrganisationMembers.findAll({
         where: {
@@ -398,7 +393,7 @@ class VendorService {
         }
       })
     ).map(m => m.UserId);
-    const users = await User.findAll({
+    return User.findAll({
       where: {
         id: {
           [Op.in]: [...vendorIds]
@@ -406,8 +401,6 @@ class VendorService {
       },
       include: ['Wallet', 'Store']
     });
-    //await Pagination.getPagingData(users, page, limit);
-    return users;
   }
 
   static async organisationVendorsAdmin(OrganisationId) {
