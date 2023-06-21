@@ -11,7 +11,8 @@ const {
   BeneficiaryService,
   CampaignService,
   TransactionService,
-  BlockchainService
+  BlockchainService,
+  MailerServices
 } = require('../services');
 const {SanitizeObject} = require('../utils');
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
@@ -49,6 +50,7 @@ class AdminController {
       }
 
       const userExist = await db.User.findOne({where: {id: data.userId}});
+
       if (!userExist) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -57,6 +59,14 @@ class AdminController {
         return Response.send(res);
       }
       const updatesUser = await userExist.update({status: data.status});
+
+      const to = userExist.email;
+      // const OrgName = userExist.;
+      const OrgName = '';
+      if (updatesUser && data.status === 'activated') {
+        //send email notification to user
+        await MailerService.ngoApprovedMail(to, OrgName);
+      }
       updatesUser.dataValues.password = null;
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, `User status updated`);
       return Response.send(res);
@@ -173,8 +183,9 @@ class AdminController {
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
-          let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
+          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+            campaign.id
+          );
           count = count + beneficiaries.length;
         }
         ngo.dataValues.beneficiary_count = count;
@@ -212,8 +223,9 @@ class AdminController {
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
-          let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
+          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+            campaign.id
+          );
           count = count + beneficiaries.length;
         }
         ngo.dataValues.beneficiary_count = count;
@@ -246,8 +258,9 @@ class AdminController {
       let total = await TransactionService.getTotalTransactionAmountAdmin(
         organisation_id
       );
-      const beneficiaries =
-        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
+        organisation_id
+      );
       const beneficiariesCount = Object.keys(beneficiaries).length;
 
       let spend_for_campaign = total.map(a => a.dataValues.amount);
@@ -359,10 +372,9 @@ class AdminController {
     const {beneficiary_id} = req.params;
 
     try {
-      let total =
-        await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
-          beneficiary_id
-        );
+      let total = await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
+        beneficiary_id
+      );
       const campaigns = await CampaignService.beneficiaryCampaingsAdmin(
         beneficiary_id
       );
