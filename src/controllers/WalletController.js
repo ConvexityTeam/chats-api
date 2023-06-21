@@ -91,9 +91,9 @@ class WalletController {
       const token = await BlockchainService.balance(user.address);
       const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
-      const usersCurrency = req.user.currency;
-      const exchangeRate = null;
-      const currencyData = null;
+      let usersCurrency = req.user.currency;
+      let exchangeRate = null;
+      let currencyData = null;
       const uuid = req.params.wallet_id;
       if (uuid) {
         return WalletController._handleSingleWallet(res, {
@@ -123,42 +123,56 @@ class WalletController {
         }
       });
 
-      const wallet = await WalletService.findMainOrganisationWallet(
-        OrganisationId
-      );
-
       const currencyObj = CurrencyServices;
       //convert currency to set currency if not in USD
-      //get users set ccurrency
-
-      const MainWallet = wallet.toObject();
+      //get users set currency
       if (usersCurrency !== '' || usersCurrency !== null) {
         usersCurrency = 'USD';
         exchangeRate = currencyObj.convertCurrency(usersCurrency, 'USD', 1);
       }
+
       //set the users currency
       currencyData = {
         users_currency: 'USD',
         currency_symbol: '$'
       };
-      // total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
-      // spend_for_campaign = (spend_for_campaign * exchangeRate).toFixed(2) || 0;
-      // MainWallet.balance = (balance * exchangeRate).toFixed(2);
-      // MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
-      // MainWallet.address = user.address;
 
-      total_deposit = total_deposit || 0;
-      spend_for_campaign = spend_for_campaign || 0;
-      MainWallet.balance = balance;
-      MainWallet.fiat_balance = balance;
-      MainWallet.address = user.address;
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
-        MainWallet,
-        total_deposit,
-        spend_for_campaign,
-        currencies
-      });
-      return Response.send(res);
+      const wallet = await WalletService.findMainOrganisationWallet(
+        OrganisationId
+      );
+      if (!wallet) {
+        await QueueService.createWallet(OrganisationId, 'organisation');
+      }
+      if (wallet) {
+        const MainWallet = wallet.toObject();
+        /*
+        total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
+        spend_for_campaign = (spend_for_campaign * exchangeRate).toFixed(2) || 0;
+        MainWallet.balance = (balance * exchangeRate).toFixed(2);
+        MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
+        MainWallet.address = user.address;
+*/
+        total_deposit = total_deposit || 0;
+        spend_for_campaign = spend_for_campaign || 0;
+        MainWallet.balance = balance;
+        MainWallet.fiat_balance = balance;
+        MainWallet.address = user.address;
+
+        Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
+          MainWallet,
+          total_deposit,
+          spend_for_campaign,
+          currencies
+        });
+        return Response.send(res);
+      } else {
+        console.error('wallet not found');
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Wallet Not Found'
+        );
+        return Response.send(res);
+      }
     } catch (error) {
       console.error(error);
       Response.setError(
