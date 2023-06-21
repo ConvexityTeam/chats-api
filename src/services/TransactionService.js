@@ -11,15 +11,16 @@ class TransactionService {
     const {page, size} = extraClause;
     const {limit, offset} = await Pagination.getPagination(page, size);
     const where = extraClause;
+
     delete where.page;
     delete where.size;
+    const queryOptions = {where, OrganisationId};
+    if (limit && offset) {
+      queryOptions.offset = offset;
+      queryOptions.limit = limit;
+    }
     const transaction = await Transaction.findAndCountAll({
-      limit,
-      offset,
-      where: {
-        ...where,
-        OrganisationId
-      },
+      ...queryOptions,
       attributes: [
         'reference',
         'amount',

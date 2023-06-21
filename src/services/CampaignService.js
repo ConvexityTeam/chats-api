@@ -508,7 +508,7 @@ class CampaignService {
     }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      queryOptions,
+      ...queryOptions,
       include: ['Organisation']
     });
     return await Pagination.getPagingData(campaign, page, limit);
