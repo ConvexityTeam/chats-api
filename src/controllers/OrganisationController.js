@@ -498,7 +498,8 @@ class OrganisationController {
   static async vendorsTransactions(req, res) {
     try {
       const transactions = await VendorService.organisationVendorsTransactions(
-        req.organisation.id
+        req.organisation.id,
+        req.query
       );
 
       Response.setSuccess(
