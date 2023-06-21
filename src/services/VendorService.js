@@ -398,18 +398,16 @@ class VendorService {
         }
       })
     ).map(m => m.UserId);
-    const users = await User.findAndCountAll({
-      limit,
-      offset,
+    const users = await User.findAll({
       where: {
-        ...where,
         id: {
           [Op.in]: [...vendorIds]
         }
       },
       include: ['Wallet', 'Store']
     });
-    return await Pagination.getPagingData(users, page, limit);
+    //await Pagination.getPagingData(users, page, limit);
+    return users;
   }
 
   static async organisationVendorsAdmin(OrganisationId) {
