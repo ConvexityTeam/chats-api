@@ -382,7 +382,7 @@ class OrderController {
       });
       const products = await OrderService.productPurchased(organisation_id);
 
-      if (products.length <= 0) {
+      if (products.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased By Gender Recieved',
@@ -394,7 +394,7 @@ class OrderController {
       campaigns.data &&
         campaigns?.data?.forEach(campaign => {
           //CampaignId
-          products.forEach(product => {
+          products.data.forEach(product => {
             if (campaign.id === product.CampaignId) {
               filtered_data.push(product);
             }
