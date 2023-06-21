@@ -841,35 +841,29 @@ class AuthController {
               // const domain = url_string ? extractDomain(url_string) : '';
               // const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
 
-              const organisationExist = await db.Organisation.findOne({
-                where: {
-                  [Op.and]: {
-                    [Op.or]: {
-                      name: {
-                        [Op.ne]: null
-                      },
-                      website_url: {
-                        [Op.ne]: null
-                      }
-                    },
-                    [Op.or]: [
-                      {
-                        name: data.organisation_name || null
-                      },
-                      {
-                        website_url: data.website_url || null
-                      }
-                    ]
-                  }
-                }
-              });
-              if (organisationExist) {
-                Response.setError(
-                  400,
-                  'An Organisation with such name or website url already exist'
-                );
-                return Response.send(res);
-              }
+              // const orgName = await db.Organisation.findOne({
+              //   where: {
+              //     name: data.organisation_name
+              //   }
+              // });
+              // const orgWebsiteUrl = await db.Organisation.findOne({
+              //   where: {
+              //     website_url: data.website_url
+              //   }
+              // });
+
+              // if (orgWebsiteUrl) {
+              //   Response.setError(400, 'website url already exist');
+              //   return Response.send(res);
+              // }
+              // if (orgName) {
+              //   Response.setError(
+              //     400,
+              //     'An Organisation with such name already exist'
+              //   );
+              //   return Response.send(res);
+              // }
+
               await db.User.create({
                 RoleId: AclRoles.NgoAdmin,
                 email: data.email,
