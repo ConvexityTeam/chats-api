@@ -713,7 +713,14 @@ class OrganisationController {
       const OrgWallet = await OrganisationService.getOrganisationWallet(
         OrganisationId
       );
-
+      const is_verified = req.user.is_verified;
+      if (!is_verified) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Update your profile first'
+        );
+        return Response.send(res);
+      }
       if (data.formId) {
         const form = await CampaignService.findCampaignFormById(data.formId);
 
