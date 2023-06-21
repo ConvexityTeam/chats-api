@@ -499,11 +499,12 @@ class CampaignService {
     const where = queryClause;
     delete where.page;
     delete where.size;
-    const queryOptions = {};
+    const queryOptions = {
+      where
+    };
     if (limit && offset) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
-      queryOptions.where = where;
     }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
