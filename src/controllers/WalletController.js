@@ -145,19 +145,20 @@ class WalletController {
       }
       if (wallet) {
         const MainWallet = wallet.toObject();
-        /*
+
         total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
-        spend_for_campaign = (spend_for_campaign * exchangeRate).toFixed(2) || 0;
+        spend_for_campaign =
+          (spend_for_campaign * exchangeRate).toFixed(2) || 0;
         MainWallet.balance = (balance * exchangeRate).toFixed(2);
         MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
         MainWallet.address = user.address;
-        */
+        /*  
         total_deposit = total_deposit || 0;
         spend_for_campaign = spend_for_campaign || 0;
         MainWallet.balance = balance;
         MainWallet.fiat_balance = balance;
         MainWallet.address = user.address;
-
+  */
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
           MainWallet,
           total_deposit,
