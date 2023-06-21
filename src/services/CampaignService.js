@@ -442,7 +442,7 @@ class CampaignService {
 
     delete where.page;
     delete where.size;
-    const queryOptions = {where, OrganisationId};
+    const queryOptions = {};
     if (limit && offset) {
       queryOptions.offset = offset;
       queryOptions.limit = limit;
