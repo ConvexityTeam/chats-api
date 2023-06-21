@@ -2376,7 +2376,7 @@ class OrganisationController {
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.` + error);
+      Response.setError(500, `Internal server error. Contact support.`);
       return Response.send(res);
     }
   }
@@ -2477,10 +2477,10 @@ class OrganisationController {
         await WalletService.findOrganisationCampaignWallets(
           isOrgMember.OrganisationId
         );
-      isOrganisationCamp.forEach(matric => {
+      isOrganisationCamp.data.forEach(matric => {
         disbursedDates.push(matric.updatedAt);
       });
-      isOrganisationCampWallet.forEach(spend => {
+      isOrganisationCampWallet.data.forEach(spend => {
         spendDate.push(spend.updatedAt);
       });
       matrics.maxDisbursedDate = new Date(Math.max(...disbursedDates));
