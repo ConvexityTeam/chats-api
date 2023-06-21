@@ -377,7 +377,8 @@ class OrderController {
       const filtered_data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation_id,
+        ...req.query
       });
       const products = await OrderService.productPurchased(organisation_id);
 
@@ -390,14 +391,15 @@ class OrderController {
         return Response.send(res);
       }
 
-      campaigns?.data?.forEach(campaign => {
-        //CampaignId
-        products.forEach(product => {
-          if (campaign.id === product.CampaignId) {
-            filtered_data.push(product);
-          }
+      campaigns.data &&
+        campaigns?.data?.forEach(campaign => {
+          //CampaignId
+          products.forEach(product => {
+            if (campaign.id === product.CampaignId) {
+              filtered_data.push(product);
+            }
+          });
         });
-      });
       filtered_data.forEach(product => {
         product.Cart.forEach(cart => {
           cart.Product.ProductBeneficiaries.forEach(beneficiary => {
@@ -437,7 +439,7 @@ class OrderController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry.' + error
       );
       return Response.send(res);
     }
