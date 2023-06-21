@@ -2514,7 +2514,8 @@ class OrganisationController {
       const isOrgMember = await OrganisationService.isMemberUser(req.user.id);
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
-        is_funded: true
+        is_funded: true,
+        ...req.query
       });
       const isOrganisationCampWallet =
         await WalletService.findOrganisationCampaignWallets(

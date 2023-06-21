@@ -499,14 +499,15 @@ class CampaignService {
     const where = queryClause;
     delete where.page;
     delete where.size;
-
+    const queryOptions = {};
+    if (limit && offset) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+      queryOptions.where = where;
+    }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      limit,
-      offset,
-      where: {
-        ...where
-      },
+      queryOptions,
       include: ['Organisation']
     });
     return await Pagination.getPagingData(campaign, page, limit);
