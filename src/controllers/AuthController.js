@@ -910,13 +910,10 @@ class AuthController {
               data.organisation_name || data.first_name + ' ' + data.last_name,
               verifyLink
             );
-            if (sent) {
-              Response.setSuccess(201, 'NGO and User registered successfully', {
-                user: user.toObject(),
-                organisation
-              });
-              return Response.send(res);
-            }
+            Response.setSuccess(201, 'NGO and User registered successfully', {
+              user: user.toObject()
+            });
+            return Response.send(res);
           });
         });
       } else {
