@@ -1442,6 +1442,7 @@ class AuthController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+
       const is_verified = req.user.is_verified;
       if (!is_verified) {
         Response.setError(
@@ -1461,7 +1462,7 @@ class AuthController {
       return Response.send(res);
     }
   }
-
+  // Enable 2FA
   static async enableTwoFactorAuth(req, res) {
     // TODO: Validate token
     try {
