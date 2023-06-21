@@ -46,6 +46,7 @@ router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
 //uploading beneficiaries via spreadsheet
 router.post(
   '/register/beneficiaries-upload-spreadsheet',
+  Auth,
   excelUploader.single('beneficiaries_xls'),
   AuthController.beneficiariesExcel
 );

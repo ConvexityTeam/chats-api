@@ -131,6 +131,20 @@ class AuthController {
         return Response.send(res);
       }
       const {campaignId} = req.body;
+
+      const campaignExist = await db.Campaign.findOne({
+        where: {id: campaignId}
+      });
+
+      if (!campaignExist) {
+        console.log('Campaign not found');
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Invalid Campaign ID'
+        );
+        return Response.send(res);
+      }
+
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
 
       let existingEmails = []; //existings
@@ -159,32 +173,14 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
-        console.log(beneficiaries);
 
         //loop through all the beneficiaries list to populate them in the db
         beneficiaries.forEach(async beneficiary => {
-          let campaignExist = await db.Campaign.findOne({
-            where: {
-              id: campaignId,
-              type: 'campaign'
-            }
-          });
-          if (!campaignExist) {
-            Response.setError(
-              HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-              'Invalid Campaign ID'
-            );
-            return Response.send(res);
-          }
           const user_exist = await db.User.findOne({
-            where: {
-              email: beneficiary.email
-            }
+            where: {email: beneficiary.email}
           });
-          if (user_exist) {
-            //include the email in the existing list
-            existingEmails.push(beneficiary.email);
-          } else {
+
+          if (!user_exist) {
             bcrypt.genSalt(10, (err, salt) => {
               if (err) {
                 console.log('Error Ocurred hashing');
@@ -194,7 +190,7 @@ class AuthController {
                 .hash(beneficiary.password, salt)
                 .then(async hash => {
                   const encryptedPassword = hash;
-                  await db.User.create({
+                  const user = await db.User.create({
                     RoleId: AclRoles.Beneficiary,
                     first_name: beneficiary.first_name,
                     last_name: beneficiary.last_name,
@@ -208,23 +204,25 @@ class AuthController {
                     referal_id: beneficiary.referal_id,
                     dob: beneficiary.dob,
                     pin: encryptedPin
-                  }).then(async user => {
+                  });
+                  if (user) {
                     await QueueService.createWallet(user.id, 'user');
                     if (campaignExist.type === 'campaign') {
-                      await Beneficiary.create({
+                      const benef = await Beneficiary.create({
                         UserId: user.id,
                         CampaignId: campaignExist.id,
                         approved: true,
                         source: 'Excel File Upload'
-                      }).then(async () => {
+                      });
+                      if (benef) {
                         await QueueService.createWallet(
                           user.id,
                           'user',
                           fields.campaign
                         );
-                      });
+                      }
                     }
-                  });
+                  }
                   createdSuccess.push(beneficiary.email); //add to success list
                   Response.setSuccess(
                     200,
@@ -236,15 +234,22 @@ class AuthController {
                 .catch(err => {
                   Response.setError(
                     HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-                    err.message
+                    err
                   );
-                  return Response.send(res);
+                  // return Response.send(res);
                   createdFailed.push(beneficiary.email);
                 });
             });
+          } else {
+            //include the email in the existing list
+            existingEmails.push(beneficiary.email);
           }
         });
-
+        Response.setSuccess(
+          200,
+          'Beneficiaries Uploaded Successfully:',
+          createdSuccess
+        );
         return Response.send(res);
       });
     } catch (error) {

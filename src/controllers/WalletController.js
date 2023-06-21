@@ -153,7 +153,7 @@ class WalletController {
       });
       return Response.send(res);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server Error: Unexpected error occured.'
