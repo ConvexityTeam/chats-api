@@ -34,6 +34,10 @@ class CurrencyServices {
     const toRate = currencies.find(row => {
       return row[0] == toCurrency;
     });
+    // console.log('fromRate: ', toRate);
+    // console.log(toRate);
+    // console.log('toRate: ', fromRate);
+    // console.log(fromRate);
     return this.convertRate(fromRate[1], toRate[1], amount);
   }
   async convertRate(fromRate, toRate, amount) {
