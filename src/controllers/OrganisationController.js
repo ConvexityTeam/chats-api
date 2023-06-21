@@ -2366,7 +2366,7 @@ class OrganisationController {
         await VendorService.organisationVendors(organisation)
       ).map(res => {
         const toObject = res.toObject();
-        toObject.data.Wallet.map(wallet => {
+        toObject.Wallet.map(wallet => {
           delete wallet.privateKey;
           delete wallet.bantuPrivateKey;
           return wallet;
