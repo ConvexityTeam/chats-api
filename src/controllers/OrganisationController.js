@@ -2471,7 +2471,8 @@ class OrganisationController {
 
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
-        is_funded: true
+        is_funded: true,
+        ...req.query
       });
       const isOrganisationCampWallet =
         await WalletService.findOrganisationCampaignWallets(
@@ -2490,7 +2491,7 @@ class OrganisationController {
       Response.setSuccess(200, `matrics received`, matrics);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, `Internal server error. Contact support.` + error);
       return Response.send(res);
     }
   }
