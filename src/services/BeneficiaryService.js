@@ -352,11 +352,10 @@ class BeneficiariesService {
     const where = queryClause;
     delete where.page;
     delete where.size;
-    const users = await User.findAndCountAll({
-      limit,
-      offset,
+    const users = await User.findAll({
+      // limit,
+      // offset,
       where: {
-        ...where,
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
           OrganisationId
@@ -378,7 +377,8 @@ class BeneficiariesService {
         {model: Group, as: 'members'}
       ]
     });
-    return await Pagination.getPagingData(users, page, limit);
+    //await Pagination.getPagingData(users, page, limit);
+    return users;
   }
 
   static async fetchCampaignBeneficiary(CampaignId, UserId) {
