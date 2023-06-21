@@ -390,7 +390,7 @@ class OrderController {
         return Response.send(res);
       }
 
-      campaigns.forEach(campaign => {
+      campaigns?.data?.forEach(campaign => {
         //CampaignId
         products.forEach(product => {
           if (campaign.id === product.CampaignId) {
