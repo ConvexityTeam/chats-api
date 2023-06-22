@@ -450,11 +450,11 @@ class CampaignService {
 
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      where:{
-        OrganisationId,
-        ...queryOptions
+      ...queryOptions,
+      where: {
+        OrganisationId
       },
-      
+
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}

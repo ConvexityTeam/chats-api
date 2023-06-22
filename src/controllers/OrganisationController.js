@@ -181,8 +181,7 @@ class OrganisationController {
       };
       const campaigns = await CampaignService.getCampaigns(
         OrganisationId,
-        ...query,
-
+        ...query
       );
       let campaignsArray = [];
       for (let campaign of campaigns) {
@@ -377,7 +376,7 @@ class OrganisationController {
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getCampaigns(
         OrganisationId,
-        ...query
+        query
       );
 
       for (let data of campaigns?.data) {
