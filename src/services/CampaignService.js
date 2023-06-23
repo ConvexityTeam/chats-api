@@ -436,22 +436,22 @@ class CampaignService {
     });
   }
   static async getCampaigns(OrganisationId, extraClause = {}) {
-    const {page, size} = extraClause;
+    const page = extraClause.page;
+    const size = extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    const where = extraClause;
-
-    delete where.page;
-    delete where.size;
-    const queryOptions = {};
+    delete extraClause.page;
+    delete extraClause.size;
+    const pageOptions = {};
     if (limit && offset) {
-      queryOptions.offset = offset;
-      queryOptions.limit = limit;
+      pageOptions.offset = offset;
+      pageOptions.limit = limit;
     }
 
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      ...queryOptions,
+      ...pageOptions,
       where: {
+        ...extraClause,
         OrganisationId
       },
 
@@ -499,22 +499,23 @@ class CampaignService {
   //     include: ['Organisation']
   //   });
   // }
-  static async getAllCampaigns(queryClause = null) {
-    const {page, size} = queryClause;
+  static async getAllCampaigns(extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    const where = queryClause;
-    delete where.page;
-    delete where.size;
-    const queryOptions = {
-      where
-    };
+    delete extraClause.page;
+    delete extraClause.size;
+    const pageOptions = {};
     if (limit && offset) {
-      queryOptions.limit = limit;
-      queryOptions.offset = offset;
+      pageOptions.offset = offset;
+      pageOptions.limit = limit;
     }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      ...queryOptions,
+      ...pageOptions,
+      where: {
+        ...queryClause
+      },
       include: ['Organisation']
     });
     return await Pagination.getPagingData(campaign, page, limit);
@@ -738,18 +739,22 @@ class CampaignService {
   static async campaignForm(data) {
     return await CampaignForm.create(data);
   }
-  static async getCampaignForm(organisationId, queryClause = {}) {
-    const page = Number(queryClause.page);
-    const size = Number(queryClause.size);
-    const where = queryClause;
-    delete where.page;
-    delete where.size;
+  static async getCampaignForm(organisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    const pageOptions = {};
+    if (limit && offset) {
+      pageOptions.offset = offset;
+      pageOptions.limit = limit;
+    }
+
     const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      where: {organisationId, ...where},
-      limit,
-      offset,
+      where: {organisationId, ...extraClause},
+      ...pageOptions,
       include: ['campaigns']
     });
     return await Pagination.getPagingData(form, page, limit);
