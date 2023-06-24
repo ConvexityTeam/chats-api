@@ -675,8 +675,8 @@ class OrderController {
         );
         return Response.send(res);
       }
-      campaigns &&
-        campaigns?.forEach(campaign => {
+      campaigns.data &&
+        campaigns.data?.forEach(campaign => {
           //CampaignId
           products &&
             products?.forEach(product => {
