@@ -760,15 +760,15 @@ class OrganisationController {
         status: 'pending'
       })
         .then(async campaign => {
-          await QueueService.createWallet(
-            OrganisationId,
-            'organisation',
-            campaign.id
-          );
-          campaign.type === 'item'
-            ? await QueueService.createCollection(campaign)
-            : await QueueService.createEscrow(campaign);
-          AwsUploadService.createSecret(campaign.id);
+          // await QueueService.createWallet(
+          //   OrganisationId,
+          //   'organisation',
+          //   campaign.id
+          // );
+          // campaign.type === 'item'
+          //   ? await QueueService.createCollection(campaign)
+          //   : await QueueService.createEscrow(campaign);
+          // AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',

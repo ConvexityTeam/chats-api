@@ -441,15 +441,11 @@ class CampaignService {
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
-    const pageOptions = {};
-    if (limit && offset) {
-      pageOptions.offset = offset;
-      pageOptions.limit = limit;
-    }
 
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      ...pageOptions,
+      limit,
+      offset,
       where: {
         ...extraClause,
         OrganisationId
@@ -510,6 +506,7 @@ class CampaignService {
       pageOptions.offset = offset;
       pageOptions.limit = limit;
     }
+    console.log(queryClause, 'queryClause');
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       ...pageOptions,
