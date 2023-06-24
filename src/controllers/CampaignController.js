@@ -738,21 +738,27 @@ class CampaignController {
       organisationId: OrganisationId,
       campaignId: campaign_id
     };
-    const {limit, offset} = await Pagination.getPagination(
-      req.query.page,
-      req.query.size
-    );
+
+    const {page, size} = req.query;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
     try {
       const tokencount = await db.VoucherToken.findAndCountAll({
         where,
-        limit,
-        offset
+        ...options
       });
+      const response = await Pagination.getPagingData(tokencount, page, limit);
       const user = await UserService.getAllUsers();
       const campaign = await CampaignService.getAllCampaigns({OrganisationId});
       const singleCampaign = await CampaignService.getCampaignById(campaign_id);
 
-      for (let data of tokencount.data) {
+      for (let data of response.data) {
         if (singleCampaign.type !== 'item') {
           const campaignAddress = await BlockchainService.setUserKeypair(
             `campaign_${campaign_id}`
