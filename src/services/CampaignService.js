@@ -438,14 +438,19 @@ class CampaignService {
   static async getCampaigns(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
+
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
 
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      limit,
-      offset,
+      ...queryOptions,
       where: {
         ...extraClause,
         OrganisationId
@@ -500,26 +505,22 @@ class CampaignService {
     const size = extraClause.size;
     delete extraClause.page;
     delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
 
     let options = {};
     if (page && size) {
-      const {limit, offset} = await Pagination.getPagination(page, size);
       options.limit = limit;
       options.offset = offset;
     }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      options,
+      ...options,
       where: {
         ...extraClause
       },
       include: ['Organisation']
     });
-    const response = await Pagination.getPagingData(
-      campaign,
-      page,
-      options.limit
-    );
+    const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
   }
   static async getOurCampaigns(
