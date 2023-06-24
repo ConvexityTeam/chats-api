@@ -10,16 +10,15 @@ class TransactionService {
   ) {
     const {page, size} = extraClause;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    const where = extraClause;
-
-    delete where.page;
-    delete where.size;
-    const queryOptions = {where, OrganisationId};
-    if (limit && offset) {
+    delete extraClause.page;
+    delete extraClause.size;
+    const queryOptions = {};
+    if (page && size) {
       queryOptions.offset = offset;
       queryOptions.limit = limit;
     }
     const transaction = await Transaction.findAndCountAll({
+      where: {OrganisationId},
       ...queryOptions,
       attributes: [
         'reference',
@@ -61,7 +60,8 @@ class TransactionService {
       ],
       order: [['createdAt', 'DESC']]
     });
-    return await Pagination.getPagingData(transaction, page, limit);
+    const response = await Pagination.getPagingData(transaction, page, limit);
+    return response;
   }
 
   static async findTransactions(where) {
