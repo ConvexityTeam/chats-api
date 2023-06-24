@@ -498,24 +498,29 @@ class CampaignService {
   static async getAllCampaigns(extraClause = null) {
     const page = extraClause.page;
     const size = extraClause.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
-    const pageOptions = {};
-    if (limit && offset) {
-      pageOptions.offset = offset;
-      pageOptions.limit = limit;
+
+    let options = {};
+    if (page && size) {
+      const {limit, offset} = await Pagination.getPagination(page, size);
+      options.limit = limit;
+      options.offset = offset;
     }
-    console.log(queryClause, 'queryClause');
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      ...pageOptions,
+      options,
       where: {
-        ...queryClause
+        ...extraClause
       },
       include: ['Organisation']
     });
-    return await Pagination.getPagingData(campaign, page, limit);
+    const response = await Pagination.getPagingData(
+      campaign,
+      page,
+      options.limit
+    );
+    return response;
   }
   static async getOurCampaigns(
     userId,
@@ -742,19 +747,16 @@ class CampaignService {
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
-    const pageOptions = {};
-    if (limit && offset) {
-      pageOptions.offset = offset;
-      pageOptions.limit = limit;
-    }
 
     const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
       where: {organisationId, ...extraClause},
-      ...pageOptions,
+      limit,
+      offset,
       include: ['campaigns']
     });
-    return await Pagination.getPagingData(form, page, limit);
+    const response = await Pagination.getPagingData(form, page, limit);
+    return response;
   }
 
   // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
