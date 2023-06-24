@@ -704,7 +704,7 @@ class OrderController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry. me' + error
       );
       return Response.send(res);
     }
