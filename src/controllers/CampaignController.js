@@ -779,14 +779,14 @@ class CampaignController {
         data.dataValues.Beneficiary = filteredKeywords[0];
       }
 
-      tokens.forEach(data => {
+      response.data.forEach(data => {
         var filteredKeywords = user.filter(
           user => user.id === data.beneficiaryId
         );
         data.dataValues.Beneficiary = filteredKeywords[0];
       });
 
-      tokens.forEach(data => {
+      response.data.forEach(data => {
         var filteredKeywords = campaign.filter(
           camp => camp.id === data.campaignId
         );
@@ -796,8 +796,8 @@ class CampaignController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Found ${tokens.length} ${token_type}.`,
-        {tokens, page_count: pages}
+        `Found ${response.data.length} ${token_type}.`,
+        response
       );
       return Response.send(res);
     } catch (error) {
