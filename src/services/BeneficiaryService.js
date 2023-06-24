@@ -346,15 +346,20 @@ class BeneficiariesService {
     });
   }
 
-  static async findOrgnaisationBeneficiaries(OrganisationId, queryClause = {}) {
-    const {page, size} = queryClause;
+  static async findOrgnaisationBeneficiaries(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    const where = queryClause;
-    delete where.page;
-    delete where.size;
-    const users = await User.findAll({
-      // limit,
-      // offset,
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const users = await User.findAndCountAll({
+      ...options,
       where: {
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
@@ -377,8 +382,8 @@ class BeneficiariesService {
         {model: Group, as: 'members'}
       ]
     });
-    //await Pagination.getPagingData(users, page, limit);
-    return users;
+    const response = await Pagination.getPagingData(users, page, limit);
+    return response;
   }
 
   static async fetchCampaignBeneficiary(CampaignId, UserId) {
