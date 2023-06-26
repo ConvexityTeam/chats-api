@@ -121,7 +121,7 @@ class CampaignController {
       });
 
       await Promise.all(
-        allCampaign.data.map(async campaign => {
+        allCampaign?.data.map(async campaign => {
           //(await AwsService.getMnemonic(campaign.id)) || null;
           campaign.dataValues.ck8 = generateSecrete();
         })
@@ -136,7 +136,7 @@ class CampaignController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.'
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }
