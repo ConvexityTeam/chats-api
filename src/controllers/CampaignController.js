@@ -24,6 +24,7 @@ const {
   generateQrcodeURL,
   GenearteVendorId,
   GenearteSMSToken,
+  GenerateSecrete,
   AclRoles,
   generateTransactionRef
 } = require('../utils');
@@ -123,7 +124,7 @@ class CampaignController {
       await Promise.all(
         allCampaign?.data.map(async campaign => {
           //(await AwsService.getMnemonic(campaign.id)) || null;
-          campaign.dataValues.ck8 = generateSecrete();
+          campaign.dataValues.ck8 = GenerateSecrete();
         })
       );
 
