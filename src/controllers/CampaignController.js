@@ -121,9 +121,9 @@ class CampaignController {
       });
 
       await Promise.all(
-        allCampaign.map(async campaign => {
-          campaign.dataValues.ck8 =
-            (await AwsService.getMnemonic(campaign.id)) || null;
+        allCampaign.data.map(async campaign => {
+          //(await AwsService.getMnemonic(campaign.id)) || null;
+          campaign.dataValues.ck8 = generateSecrete();
         })
       );
 
