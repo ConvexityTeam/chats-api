@@ -404,7 +404,11 @@ class CampaignService {
       ]
     });
 
-    return await Pagination.getPagingData(campaigns, page, limit);
+    return await Pagination.getPagingData(
+      campaigns.associatedCampaigns,
+      page,
+      limit
+    );
   }
 
   static getPrivateCampaignsAdmin(id) {
