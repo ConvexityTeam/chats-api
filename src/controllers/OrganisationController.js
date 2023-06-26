@@ -330,7 +330,7 @@ class OrganisationController {
             organisationW !== null &&
             organisationW.Wallet
           ) {
-            for (let tran of transaction) {
+            for (let tran of transaction.data) {
               if (
                 tran.ReceiverWalletId === campaignW.Wallet.uuid &&
                 tran.SenderWalletId === organisationW.Wallet.uuid
