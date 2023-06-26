@@ -4,11 +4,9 @@ const {Op} = require('sequelize');
 const Pagination = require('../utils/pagination');
 
 class TransactionService {
-  static async findOrgnaisationTransactions(
-    OrganisationId,
-    extraClause = null
-  ) {
-    const {page, size} = extraClause;
+  static async findOrgnaisationTransactions(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;

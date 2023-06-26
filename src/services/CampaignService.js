@@ -369,18 +369,29 @@ class CampaignService {
       ]
     });
   }
-  static getPrivateCampaigns(queryClause = {}, id) {
-    let where = queryClause;
-    return Organisation.findOne({
+  static async getPrivateCampaigns(extraClause = {}, id) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const campaigns = await Organisation.findOne({
       where: {
         id
       },
       order: [['createdAt', 'DESC']],
       include: [
         {
+          ...queryOptions,
           model: Campaign,
           where: {
-            ...where,
+            ...extraClause,
             is_public: false
           },
           as: 'associatedCampaigns',
@@ -392,6 +403,8 @@ class CampaignService {
         }
       ]
     });
+
+    return await Pagination.getPagingData(campaigns, page, limit);
   }
 
   static getPrivateCampaignsAdmin(id) {
