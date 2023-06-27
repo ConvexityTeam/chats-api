@@ -302,8 +302,8 @@ class OrganisationController {
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
 
-      if (campaigns.data?.associatedCampaigns) {
-        for (let campaign of campaigns.data.associatedCampaigns) {
+      if (campaigns.associatedCampaigns) {
+        for (let campaign of campaigns.associatedCampaigns) {
           if (new Date(campaign.end_date) < new Date())
             campaign.update({status: 'completed'});
           for (let task of campaign.Jobs) {
@@ -350,7 +350,7 @@ class OrganisationController {
         }
         return false;
       }
-      campaigns.data?.associatedCampaigns.forEach(data => {
+      campaigns?.associatedCampaigns.forEach(data => {
         data.Jobs.forEach(task => {
           if (isExist(task.id)) {
             data.dataValues.completed_task++;

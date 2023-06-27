@@ -370,17 +370,17 @@ class CampaignService {
     });
   }
   static async getPrivateCampaigns(extraClause = {}, id) {
-    const page = extraClause.page;
-    const size = extraClause.size;
+    // const page = extraClause.page;
+    // const size = extraClause.size;
 
-    const {limit, offset} = await Pagination.getPagination(page, size);
-    delete extraClause.page;
-    delete extraClause.size;
-    let queryOptions = {};
-    if (page && size) {
-      queryOptions.limit = limit;
-      queryOptions.offset = offset;
-    }
+    // const {limit, offset} = await Pagination.getPagination(page, size);
+    // delete extraClause.page;
+    // delete extraClause.size;
+    // let queryOptions = {};
+    // if (page && size) {
+    //   queryOptions.limit = limit;
+    //   queryOptions.offset = offset;
+    // }
     const campaigns = await Organisation.findOne({
       where: {
         id
@@ -388,7 +388,7 @@ class CampaignService {
       order: [['createdAt', 'DESC']],
       include: [
         {
-          ...queryOptions,
+          // ...queryOptions,
           model: Campaign,
           where: {
             ...extraClause,
@@ -404,11 +404,12 @@ class CampaignService {
       ]
     });
 
-    return await Pagination.getPagingData(
-      campaigns.associatedCampaigns,
-      page,
-      limit
-    );
+    return campaigns;
+    // return await Pagination.getPagingData(
+    //   campaigns.associatedCampaigns,
+    //   page,
+    //   limit
+    // );
   }
 
   static getPrivateCampaignsAdmin(id) {
