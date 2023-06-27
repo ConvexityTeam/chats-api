@@ -788,7 +788,7 @@ class CampaignController {
       });
 
       response.data.forEach(data => {
-        var filteredKeywords = campaign.filter(
+        var filteredKeywords = campaign.data.filter(
           camp => camp.id === data.campaignId
         );
 
