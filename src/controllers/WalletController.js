@@ -1,3 +1,4 @@
+const getSymbolFromCurrency = require('currency-symbol-map');
 const {
   PaystackService,
   DepositService,
@@ -20,11 +21,10 @@ class WalletController {
       const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
-        const transactions =
-          await TransactionService.findOrgnaisationTransactions(
-            OrganisationId,
-            req.query
-          );
+        const transactions = await TransactionService.findOrgnaisationTransactions(
+          OrganisationId,
+          req.query
+        );
         for (let tran of transactions.data) {
           if (tran.CampaignId) {
             const hash = await BlockchainService.getTransactionDetails(
@@ -103,24 +103,26 @@ class WalletController {
         });
       }
 
-      let [{total: total_deposit}] =
-        await TransactionService.getTotalTransactionAmount({
-          OrganisationId,
-          status: 'success',
-          is_approved: true,
-          transaction_type: 'deposit'
-        });
+      let [
+        {total: total_deposit}
+      ] = await TransactionService.getTotalTransactionAmount({
+        OrganisationId,
+        status: 'success',
+        is_approved: true,
+        transaction_type: 'deposit'
+      });
 
-      let [{total: spend_for_campaign}] =
-        await TransactionService.getTotalTransactionAmount({
-          OrganisationId,
-          is_approved: true,
-          status: 'success',
-          transaction_type: 'transfer',
-          CampaignId: {
-            [Op.not]: null
-          }
-        });
+      let [
+        {total: spend_for_campaign}
+      ] = await TransactionService.getTotalTransactionAmount({
+        OrganisationId,
+        is_approved: true,
+        status: 'success',
+        transaction_type: 'transfer',
+        CampaignId: {
+          [Op.not]: null
+        }
+      });
 
       const currencyObj = CurrencyServices;
       //convert currency to set currency if not in USD
