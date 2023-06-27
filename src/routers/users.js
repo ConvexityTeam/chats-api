@@ -23,6 +23,7 @@ router.post(
   UsersController.vendorWithdrawFromBankAccount
 );
 
+router.post('/liveness', UsersController.liveness);
 router.post('/support', UsersController.createTicket);
 
 router
