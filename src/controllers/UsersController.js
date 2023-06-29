@@ -342,7 +342,7 @@ class UsersController {
         const [nin_photo_url, liveness_capture] = await Promise.all([
           uploadFile(
             fileContent,
-            'u-' + environ + '-' + req.user.id + '-' + '-i.' + new Date.now(),
+            'u-' + environ + '-' + req.user.id + '-' + '-i.' + new Date(),
             'convexity-profile-images'
           ),
           uploadFile(
@@ -354,7 +354,7 @@ class UsersController {
               '-i.' +
               extension +
               '-' +
-              new Date.now(),
+              new Date(),
             'convexity-profile-images'
           )
         ]);
