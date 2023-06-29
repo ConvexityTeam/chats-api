@@ -665,9 +665,9 @@ class OrderController {
         type: 'campaign',
         OrganisationId: organisation_id
       });
-      const products = await OrderService.productPurchasedBy(organisation_id);
+      const products = await OrderService.productPurchased(organisation_id);
 
-      if (products && products.length <= 0) {
+      if (products && products?.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
@@ -679,7 +679,7 @@ class OrderController {
         campaigns.data?.forEach(campaign => {
           //CampaignId
           products &&
-            products?.forEach(product => {
+            products.data?.forEach(product => {
               if (campaign.id === product.CampaignId) {
                 data.push(product);
               }
