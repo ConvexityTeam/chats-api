@@ -763,15 +763,20 @@ class CampaignService {
   static async getCampaignForm(organisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
 
     const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
       where: {organisationId, ...extraClause},
-      limit,
-      offset,
+      ...options,
       include: ['campaigns']
     });
     const response = await Pagination.getPagingData(form, page, limit);
