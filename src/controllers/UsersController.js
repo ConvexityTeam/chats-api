@@ -327,7 +327,7 @@ class UsersController {
           return Response.send(res);
         }
         const outputFilePath = 'image.png';
-        const base64Image = files.liveness_capture.replace(
+        const base64Image = fields.nin_photo_url.replace(
           /^data:image\/\w+;base64,/,
           ''
         );
