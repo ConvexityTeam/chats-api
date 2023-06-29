@@ -776,8 +776,8 @@ class CampaignService {
     const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
       where: {organisationId, ...extraClause},
-      ...options,
-      include: ['campaigns']
+      ...options
+      // include: ['campaigns']
     });
     const response = await Pagination.getPagingData(form, page, limit);
     return response;

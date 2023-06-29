@@ -179,13 +179,15 @@ class AdminController {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
+
         const user = await UserService.findUser(ngo.Members[0].UserId);
+        ngo.dataValues.name =
+          ngo.name || user.first_name + ' ' + user.last_name;
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
-          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-            campaign.id
-          );
+          let beneficiaries =
+            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
           count = count + beneficiaries.length;
         }
         ngo.dataValues.beneficiary_count = count;
@@ -223,9 +225,8 @@ class AdminController {
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
-          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-            campaign.id
-          );
+          let beneficiaries =
+            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
           count = count + beneficiaries.length;
         }
         ngo.dataValues.beneficiary_count = count;
@@ -258,9 +259,8 @@ class AdminController {
       let total = await TransactionService.getTotalTransactionAmountAdmin(
         organisation_id
       );
-      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
-        organisation_id
-      );
+      const beneficiaries =
+        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
       const beneficiariesCount = Object.keys(beneficiaries).length;
 
       let spend_for_campaign = total.map(a => a.dataValues.amount);
@@ -372,9 +372,10 @@ class AdminController {
     const {beneficiary_id} = req.params;
 
     try {
-      let total = await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
-        beneficiary_id
-      );
+      let total =
+        await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
+          beneficiary_id
+        );
       const campaigns = await CampaignService.beneficiaryCampaingsAdmin(
         beneficiary_id
       );
