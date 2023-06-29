@@ -333,7 +333,6 @@ class UsersController {
         );
         const imageBuffer = Buffer.from(base64Image, 'base64');
 
-        // 14625019521;
         fs.writeFileSync(outputFilePath, imageBuffer);
         const fileContent = fs.readFileSync(outputFilePath);
         const extension = files.liveness_capture.name.substring(

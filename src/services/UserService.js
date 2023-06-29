@@ -100,6 +100,7 @@ class UserService {
         id,
         ...extraClause
       },
+      include: ['liveness'],
       include: [
         'Store',
         {
