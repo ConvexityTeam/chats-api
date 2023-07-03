@@ -19,6 +19,7 @@ const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
 const Pagination = require('../utils/pagination');
+const {Logger} = require('../libs');
 
 class CampaignService {
   static campaignHistory(id) {
@@ -767,6 +768,7 @@ class CampaignService {
     delete extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
     const totalCount = await CampaignForm.count();
+    Logger.info(totalCount, 'CampaignForm');
     let options = {};
     if (page && size) {
       if (size > totalCount) {
