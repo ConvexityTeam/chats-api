@@ -767,13 +767,8 @@ class CampaignService {
     delete extraClause.page;
     delete extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    const totalCount = await CampaignForm.count();
-    Logger.info(totalCount, 'CampaignForm');
     let options = {};
-    if (page && size) {
-      if (size > totalCount) {
-        options = {};
-      } else {
+    if (page && size) { 
         options.limit = limit;
         options.offset = offset;
       }
