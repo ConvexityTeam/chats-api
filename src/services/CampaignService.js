@@ -19,6 +19,7 @@ const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
 const Pagination = require('../utils/pagination');
+const {Logger} = require('../libs');
 
 class CampaignService {
   static campaignHistory(id) {
@@ -461,7 +462,6 @@ class CampaignService {
     delete extraClause.page;
     delete extraClause.size;
     let queryOptions = {};
-
     if (page && size) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
@@ -772,7 +772,7 @@ class CampaignService {
     let options = {};
     if (page && size) {
       if (size > totalCount) {
-        options.limit = totalCount;
+        options = {};
       } else {
         options.limit = limit;
         options.offset = offset;
@@ -788,6 +788,41 @@ class CampaignService {
     const response = await Pagination.getPagingData(form, page, limit);
     return response;
   }
+
+  // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
+  //   const payload = {
+  //     CampaignId: campaign.id,
+  //     NgoWalletAddress: OrgWallet.address,
+  //     CampaignWalletAddress: campaignWallet.address,
+  //     amount: campaign.budget,
+  //     beneficiaries
+  //   };
+
+  //   // : beneficiaries.map(beneficiary => {
+  //   //   const bWalletId = beneficiary.User.Wallets.length ? beneficiary.User.Wallets[0].uuid : null;
+  //   //   return [
+  //   //     beneficiary.UserId,
+  //   //     bWalletId
+  //   //   ]
+  //   // })
+
+  //   // Queue fuding disbursing
+  //   const org = await Wallet.findOne({where: {uuid: OrgWallet.uuid}})
+
+  //   if
+  //   await Wallet.update({
+  //     balance: Sequelize.literal(`balance - ${campaign.budget}`)
+  //   }, {
+  //     where: {
+  //       uuid: OrgWallet.uuid
+  //     }
+  //   });
+
+  //   return {
+  //     campaign,
+  //     transaction
+  //   }
+  // }
 }
 
 module.exports = CampaignService;
