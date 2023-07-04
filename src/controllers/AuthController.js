@@ -1904,7 +1904,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support'
+        'Internal Server Error, Contact Support' + error
       );
       return Response.send(res);
     }
