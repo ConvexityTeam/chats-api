@@ -1795,14 +1795,14 @@ class AuthController {
 
       const url_string = data.website_url;
       const email = data.email;
-      if (url_string) {
-        const domain = extractDomain(url_string);
-        const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-        if (!email.match(new RegExp(re))) {
-          Response.setError(400, 'Email must end in @' + domain);
-          return Response.send(res);
-        }
-      }
+      // if (url_string) {
+      //   const domain = extractDomain(url_string);
+      //   const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+      //   if (!email.match(new RegExp(re))) {
+      //     Response.setError(400, 'Email must end in @' + domain);
+      //     return Response.send(res);
+      //   }
+      // }
 
       const userExist = await UserService.findSingleUser({
         email: email
