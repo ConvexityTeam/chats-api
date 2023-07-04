@@ -1836,33 +1836,38 @@ class AuthController {
         return Response.send(res);
       }
 
-      const organisationExist = await db.Organisation.findOne({
-        where: {
-          [Op.or]: [
-            {
-              name: data.organisation_name
-            },
-            {
-              website_url: data.website_url
-            }
-          ]
-        }
+      // const organisationExist = await db.Organisation.findOne({
+      //   where: {
+      //     [Op.or]: [
+      //       {
+      //         name: data.organisation_name
+      //       },
+      //       {
+      //         website_url: data.website_url
+      //       }
+      //     ]
+      //   }
+      // });
+      const createdOrganisation = await db.Organisation.create({
+        name: data.organisation_name || null,
+        email: data.email,
+        website_url: data.website_url || 'null',
+        registration_id: generateOrganisationId()
       });
+      // const ass = await db.AssociatedCampaign.findOne({
+      //   where: {
+      //     DonorId: createdOrganisation.id,
+      //     CampaignId: data.campaignId
+      //   }
+      // });
 
-      const ass = await db.AssociatedCampaign.findOne({
-        where: {
-          DonorId: organisationExist.id,
-          CampaignId: data.campaignId
-        }
-      });
-
-      if (ass) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Already on campaign'
-        );
-        return Response.send(res);
-      }
+      // if (ass) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Already on campaign'
+      //   );
+      //   return Response.send(res);
+      // }
 
       // if (organisationExist) {
       //   Response.setError(
@@ -1877,13 +1882,6 @@ class AuthController {
         RoleId: AclRoles.Donor,
         email: data.email,
         password
-      });
-
-      const createdOrganisation = await db.Organisation.create({
-        name: data.organisation_name || null,
-        email: data.email,
-        website_url: data.website_url || 'null',
-        registration_id: generateOrganisationId()
       });
 
       await db.OrganisationMembers.create({
