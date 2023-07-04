@@ -1835,9 +1835,23 @@ class AuthController {
         );
         return Response.send(res);
       }
+
+      const organisationExist = await db.Organisation.findOne({
+        where: {
+          [Op.or]: [
+            {
+              name: data.organisation_name
+            },
+            {
+              website_url: data.website_url
+            }
+          ]
+        }
+      });
+
       const ass = await db.AssociatedCampaign.findOne({
         where: {
-          DonorId: createdOrganisation.id,
+          DonorId: organisationExist.id,
           CampaignId: data.campaignId
         }
       });
@@ -1849,18 +1863,7 @@ class AuthController {
         );
         return Response.send(res);
       }
-      // const organisationExist = await db.Organisation.findOne({
-      //   where: {
-      //     [Op.or]: [
-      //       {
-      //         name: data.organisation_name
-      //       },
-      //       {
-      //         website_url: data.website_url
-      //       }
-      //     ]
-      //   }
-      // });
+
       // if (organisationExist) {
       //   Response.setError(
       //     400,
@@ -1877,7 +1880,7 @@ class AuthController {
       });
 
       const createdOrganisation = await db.Organisation.create({
-        name: data.organisation_name || 'no org',
+        name: data.organisation_name || null,
         email: data.email,
         website_url: data.website_url || 'null',
         registration_id: generateOrganisationId()
