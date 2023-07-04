@@ -179,10 +179,10 @@ class OrganisationController {
         ..._query,
         status: 'active'
       };
-      const campaigns = await CampaignService.getCampaigns({
-        ...query,
-        OrganisationId
-      });
+      const campaigns = await CampaignService.getCampaigns(
+        OrganisationId,
+        ...query
+      );
       let campaignsArray = [];
       for (let campaign of campaigns) {
         let beneficiaries_count = await campaign.countBeneficiaries();
@@ -302,7 +302,7 @@ class OrganisationController {
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
 
-      if (campaigns?.associatedCampaigns) {
+      if (campaigns.associatedCampaigns) {
         for (let campaign of campaigns.associatedCampaigns) {
           if (new Date(campaign.end_date) < new Date())
             campaign.update({status: 'completed'});
@@ -330,7 +330,7 @@ class OrganisationController {
             organisationW !== null &&
             organisationW.Wallet
           ) {
-            for (let tran of transaction) {
+            for (let tran of transaction.data) {
               if (
                 tran.ReceiverWalletId === campaignW.Wallet.uuid &&
                 tran.SenderWalletId === organisationW.Wallet.uuid
@@ -374,12 +374,12 @@ class OrganisationController {
       const assignmentTask = [];
       const OrganisationId = req.params.organisation_id;
       const query = SanitizeObject(req.query);
-      const campaigns = await CampaignService.getCampaigns({
-        ...query,
-        OrganisationId
-      });
+      const campaigns = await CampaignService.getCampaigns(
+        OrganisationId,
+        query
+      );
 
-      for (let data of campaigns) {
+      for (let data of campaigns?.data) {
         if (new Date(data.end_date) < new Date())
           data.update({status: 'ended'});
         for (let task of data.Jobs) {
@@ -402,13 +402,14 @@ class OrganisationController {
         }
         return false;
       }
-      campaigns.forEach(data => {
-        data.Jobs.forEach(task => {
-          if (isExist(task.id)) {
-            data.dataValues.completed_task++;
-          }
+      campaigns &&
+        campaigns?.data.forEach(data => {
+          data.Jobs.forEach(task => {
+            if (isExist(task.id)) {
+              data.dataValues.completed_task++;
+            }
+          });
         });
-      });
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -497,8 +498,10 @@ class OrganisationController {
   static async vendorsTransactions(req, res) {
     try {
       const transactions = await VendorService.organisationVendorsTransactions(
-        req.organisation.id
+        req.organisation.id,
+        req.query
       );
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Vendors transactions.',
@@ -710,7 +713,14 @@ class OrganisationController {
       const OrgWallet = await OrganisationService.getOrganisationWallet(
         OrganisationId
       );
-
+      // const is_verified_all = req.user.is_verified_all;
+      // if (!is_verified_all) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Update your profile first'
+      //   );
+      //   return Response.send(res);
+      // }
       if (data.formId) {
         const form = await CampaignService.findCampaignFormById(data.formId);
 
@@ -750,15 +760,15 @@ class OrganisationController {
         status: 'pending'
       })
         .then(async campaign => {
-          await QueueService.createWallet(
-            OrganisationId,
-            'organisation',
-            campaign.id
-          );
-          campaign.type === 'item'
-            ? await QueueService.createCollection(campaign)
-            : await QueueService.createEscrow(campaign);
-          AwsUploadService.createSecret(campaign.id);
+          // await QueueService.createWallet(
+          //   OrganisationId,
+          //   'organisation',
+          //   campaign.id
+          // );
+          // campaign.type === 'item'
+          //   ? await QueueService.createCollection(campaign)
+          //   : await QueueService.createEscrow(campaign);
+          // AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',
@@ -1569,7 +1579,10 @@ class OrganisationController {
     try {
       const organisation = req.organisation;
       const beneficiaries =
-        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
+        await BeneficiaryService.findOrgnaisationBeneficiaries(
+          organisation.id,
+          req.query
+        );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation beneficiaries',
@@ -2381,7 +2394,7 @@ class OrganisationController {
     try {
       const {organisation} = req;
       const vendors = (
-        await VendorService.organisationVendors(organisation)
+        await VendorService.organisationVendors(organisation, req.query)
       ).map(res => {
         const toObject = res.toObject();
         toObject.Wallet.map(wallet => {
@@ -2431,7 +2444,7 @@ class OrganisationController {
     try {
       const organisation = req.organisation;
       const vendors_count = (
-        await VendorService.organisationVendors(organisation)
+        await VendorService.organisationVendors(organisation, req.query)
       ).length;
       const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
       const previous_stat = await VendorService.organisationDailyVendorStat(
@@ -2467,13 +2480,14 @@ class OrganisationController {
 
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
-        is_funded: true
+        is_funded: true,
+        ...req.query
       });
       const isOrganisationCampWallet =
         await WalletService.findOrganisationCampaignWallets(
           isOrgMember.OrganisationId
         );
-      isOrganisationCamp.forEach(matric => {
+      isOrganisationCamp.data.forEach(matric => {
         disbursedDates.push(matric.updatedAt);
       });
       isOrganisationCampWallet.forEach(spend => {
@@ -2486,7 +2500,7 @@ class OrganisationController {
       Response.setSuccess(200, `matrics received`, matrics);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, `Internal server error. Contact support.` + error);
       return Response.send(res);
     }
   }
@@ -2500,7 +2514,8 @@ class OrganisationController {
       const isOrgMember = await OrganisationService.isMemberUser(req.user.id);
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
-        is_funded: true
+        is_funded: true,
+        ...req.query
       });
       const isOrganisationCampWallet =
         await WalletService.findOrganisationCampaignWallets(
@@ -2508,22 +2523,22 @@ class OrganisationController {
         );
       function getDifference() {
         return isOrganisationCampWallet.filter(wallet => {
-          return isOrganisationCamp.some(campaign => {
+          return isOrganisationCamp.data.some(campaign => {
             return wallet.CampaignId === campaign.id;
           });
         });
       }
 
-      const campaign_budget = isOrganisationCamp
+      const campaign_budget = isOrganisationCamp.data
         .map(val => val.budget)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
-      const amount_disbursed = isOrganisationCamp
+      const amount_disbursed = isOrganisationCamp.data
         .map(val => val.amount_disbursed)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
       const balance = getDifference()
         .map(val => val.balance)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
-      const total_items_distributed = isOrganisationCamp
+      const total_items_distributed = isOrganisationCamp.data
         .map(val => val.minting_limit)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
       Response.setSuccess(200, 'transaction', {

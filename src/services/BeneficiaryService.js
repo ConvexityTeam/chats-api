@@ -14,6 +14,7 @@ const {
 const {Op, Sequelize} = require('sequelize');
 const {userConst, walletConst} = require('../constants');
 const moment = require('moment');
+const Pagination = require('../utils/pagination');
 
 class BeneficiariesService {
   static capitalizeFirstLetter(str) {
@@ -345,8 +346,20 @@ class BeneficiariesService {
     });
   }
 
-  static async findOrgnaisationBeneficiaries(OrganisationId) {
-    return User.findAll({
+  static async findOrgnaisationBeneficiaries(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const users = await User.findAndCountAll({
+      ...options,
       where: {
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
@@ -369,6 +382,8 @@ class BeneficiariesService {
         {model: Group, as: 'members'}
       ]
     });
+    const response = await Pagination.getPagingData(users, page, limit);
+    return response;
   }
 
   static async fetchCampaignBeneficiary(CampaignId, UserId) {
@@ -542,8 +557,23 @@ class BeneficiariesService {
 
   //get all beneficiaries by marital status
 
-  static async findOrganisationVendorTransactions(OrganisationId) {
-    return Transaction.findAll({
+  static async findOrganisationVendorTransactions(
+    OrganisationId,
+    extraClause = {}
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const transactions = await Transaction.findAndCountAll({
+      ...options,
       include: [
         {
           model: Wallet,
@@ -570,6 +600,8 @@ class BeneficiariesService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(transactions, page, limit);
+    return response;
   }
 
   static async findVendorTransactionsPerBene(CampaignId) {

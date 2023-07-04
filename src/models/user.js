@@ -97,6 +97,10 @@ module.exports = (sequelize, DataTypes) => {
         as: 'members',
         foreignKey: 'representative_id'
       });
+      User.hasOne(models.Liveness, {
+        as: 'liveness',
+        foreignKey: 'authorized_by'
+      });
       User.hasMany(models.VerificationToken, {
         as: 'VerificationTokens'
       });

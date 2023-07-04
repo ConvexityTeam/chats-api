@@ -46,10 +46,15 @@ router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
 //uploading beneficiaries via spreadsheet
 router.post(
   '/register/beneficiaries-upload-spreadsheet',
+  Auth,
   excelUploader.single('beneficiaries_xls'),
   AuthController.beneficiariesExcel
 );
-router.post('/register/kobo-tool-box', AuthController.beneficiariesKoboToolBox);
+router.post(
+  '/register/kobo-tool-box',
+  Auth,
+  AuthController.beneficiariesKoboToolBox
+);
 
 router.post('/nin-verification', AuthController.verifyNin);
 router.post('/update-profile', Auth, AuthController.updateProfile);

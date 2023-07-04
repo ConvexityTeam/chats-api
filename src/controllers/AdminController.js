@@ -11,7 +11,8 @@ const {
   BeneficiaryService,
   CampaignService,
   TransactionService,
-  BlockchainService
+  BlockchainService,
+  MailerServices
 } = require('../services');
 const {SanitizeObject} = require('../utils');
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
@@ -49,6 +50,7 @@ class AdminController {
       }
 
       const userExist = await db.User.findOne({where: {id: data.userId}});
+
       if (!userExist) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -57,6 +59,14 @@ class AdminController {
         return Response.send(res);
       }
       const updatesUser = await userExist.update({status: data.status});
+
+      const to = userExist.email;
+      // const OrgName = userExist.;
+      const OrgName = '';
+      if (updatesUser && data.status === 'activated') {
+        //send email notification to user
+        await MailerService.ngoApprovedMail(to, OrgName);
+      }
       updatesUser.dataValues.password = null;
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, `User status updated`);
       return Response.send(res);
@@ -169,7 +179,10 @@ class AdminController {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
+
         const user = await UserService.findUser(ngo.Members[0].UserId);
+        ngo.dataValues.name =
+          ngo.name || user.first_name + ' ' + user.last_name;
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {

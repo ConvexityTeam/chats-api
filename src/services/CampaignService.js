@@ -18,6 +18,8 @@ const {userConst, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef} = require('../utils');
+const Pagination = require('../utils/pagination');
+const {Logger} = require('../libs');
 
 class CampaignService {
   static campaignHistory(id) {
@@ -368,18 +370,29 @@ class CampaignService {
       ]
     });
   }
-  static getPrivateCampaigns(queryClause = {}, id) {
-    let where = queryClause;
-    return Organisation.findOne({
+  static async getPrivateCampaigns(extraClause = {}, id) {
+    // const page = extraClause.page;
+    // const size = extraClause.size;
+
+    // const {limit, offset} = await Pagination.getPagination(page, size);
+    // delete extraClause.page;
+    // delete extraClause.size;
+    // let queryOptions = {};
+    // if (page && size) {
+    //   queryOptions.limit = limit;
+    //   queryOptions.offset = offset;
+    // }
+    const campaigns = await Organisation.findOne({
       where: {
         id
       },
       order: [['createdAt', 'DESC']],
       include: [
         {
+          // ...queryOptions,
           model: Campaign,
           where: {
-            ...where,
+            ...extraClause,
             is_public: false
           },
           as: 'associatedCampaigns',
@@ -391,6 +404,13 @@ class CampaignService {
         }
       ]
     });
+
+    return campaigns;
+    // return await Pagination.getPagingData(
+    //   campaigns.associatedCampaigns,
+    //   page,
+    //   limit
+    // );
   }
 
   static getPrivateCampaignsAdmin(id) {
@@ -434,27 +454,34 @@ class CampaignService {
       // ],
     });
   }
-  static getCampaigns(queryClause = {}) {
-    const where = queryClause;
-    return Campaign.findAll({
+  static async getCampaigns(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      ...queryOptions,
       where: {
-        ...where
+        ...extraClause,
+        OrganisationId
       },
-      // attributes: {
-      //   include: [
-      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-      //   ]
-      // },
+
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
       ]
-      // includeIgnoreAttributes: false,
-      // group: [
-      //   "Campaign.id"
-      // ],
     });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
   }
   static getCash4W(OrganisationId) {
     return Campaign.findAll({
@@ -462,19 +489,11 @@ class CampaignService {
         type: 'cash-for-work',
         OrganisationId
       },
-      // attributes: {
-      //   include: [
-      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-      //   ]
-      // },
+
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries'}
       ]
-      // includeIgnoreAttributes: false,
-      // group: [
-      //   "Campaign.id"
-      // ],
     });
   }
 
@@ -500,14 +519,28 @@ class CampaignService {
   //     include: ['Organisation']
   //   });
   // }
-  static async getAllCampaigns(queryClause = null) {
-    return Campaign.findAll({
+  static async getAllCampaigns(extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      ...options,
       where: {
-        ...queryClause
+        ...extraClause
       },
       include: ['Organisation']
     });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
   }
   static async getOurCampaigns(
     userId,
@@ -728,12 +761,26 @@ class CampaignService {
   static async campaignForm(data) {
     return await CampaignForm.create(data);
   }
-  static async getCampaignForm(organisationId) {
-    return await CampaignForm.findAll({
+  static async getCampaignForm(organisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      where: {organisationId},
-      include: ['campaigns']
+      where: {organisationId, ...extraClause},
+      ...options
+      // include: ['campaigns']
     });
+    const response = await Pagination.getPagingData(form, page, limit);
+    return response;
   }
 
   // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {

@@ -14,6 +14,7 @@ const Op = Sequelize.Op;
 
 const QueueService = require('./QueueService');
 const {ProductService} = require('.');
+const Pagination = require('../utils/pagination');
 
 class OrderService {
   static async processOrder(
@@ -23,7 +24,7 @@ class OrderService {
     order,
     vendor,
     amount,
-    type
+    campaign
   ) {
     order.update({status: 'processing'});
     const transaction = await Transaction.create({
@@ -35,11 +36,12 @@ class OrderService {
       SenderWalletId: campaignWallet.uuid,
       ReceiverWallet: vendorWallet.uuid,
       OrderId: order.id,
+      CampaignId: campaign.id,
       VendorId: vendor.id,
       BeneficiaryId: beneficiaryWallet.UserId,
       narration: 'Vendor Order'
     });
-    if (type === 'item') {
+    if (campaign.type === 'item') {
       QueueService.processNFTOrder(
         beneficiaryWallet,
         vendorWallet,
@@ -65,9 +67,22 @@ class OrderService {
     return transaction;
   }
 
-  static async productPurchased(OrganisationId) {
-    const gender = await Order.findAll({
+  static async productPurchased(OrganisationId, extraClasue = {}) {
+    const {page, size} = extraClasue;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    const where = extraClasue;
+    delete where.page;
+    delete where.size;
+    const queryOptions = {
+      where
+    };
+    if (limit && offset) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const gender = await Order.findAndCountAll({
       where: {status: 'confirmed'},
+      ...queryOptions,
       include: [
         {
           model: User,
@@ -96,7 +111,7 @@ class OrderService {
       ]
     });
 
-    return gender;
+    return await Pagination.getPagingData(gender, page, size);
   }
 
   static async productPurchasedBy(id) {

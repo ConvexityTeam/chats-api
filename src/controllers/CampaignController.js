@@ -24,12 +24,15 @@ const {
   generateQrcodeURL,
   GenearteVendorId,
   GenearteSMSToken,
+  GenerateSecrete,
   AclRoles,
   generateTransactionRef
 } = require('../utils');
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
 const {async} = require('regenerator-runtime');
+const Pagination = require('../utils/pagination');
+const {generateOTP} = require('../libs/Utils');
 const approveToSpendQueue = amqp_1['default'].declareQueue('approveToSpend', {
   durable: true
 });
@@ -119,9 +122,9 @@ class CampaignController {
       });
 
       await Promise.all(
-        allCampaign.map(async campaign => {
-          campaign.dataValues.ck8 =
-            (await AwsService.getMnemonic(campaign.id)) || null;
+        allCampaign?.data.map(async campaign => {
+          //(await AwsService.getMnemonic(campaign.id)) || null;
+          campaign.dataValues.ck8 = GenerateSecrete();
         })
       );
 
@@ -134,7 +137,7 @@ class CampaignController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.'
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -728,29 +731,35 @@ class CampaignController {
   }
 
   static async campaignTokens(req, res) {
-    const {campaign_id, page, organisation_id, token_type} = req.params;
+    const {campaign_id, organisation_id, token_type} = req.params;
     const OrganisationId = organisation_id;
-
-    let limit = 10;
-    let offset = 0;
 
     let where = {
       tokenType: token_type,
       organisationId: OrganisationId,
       campaignId: campaign_id
     };
+
+    const {page, size} = req.query;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
     try {
-      const tokencount = await db.VoucherToken.findAndCountAll({where});
+      const tokencount = await db.VoucherToken.findAndCountAll({
+        where,
+        ...options
+      });
+      const response = await Pagination.getPagingData(tokencount, page, limit);
       const user = await UserService.getAllUsers();
       const campaign = await CampaignService.getAllCampaigns({OrganisationId});
       const singleCampaign = await CampaignService.getCampaignById(campaign_id);
-      let pages = Math.ceil(tokencount.count / limit);
-      offset = limit * (page - 1);
-      const tokens = await db.VoucherToken.findAll({
-        where,
-        order: [['updatedAt', 'ASC']]
-      });
-      for (let data of tokens) {
+
+      for (let data of response.data) {
         if (singleCampaign.type !== 'item') {
           const campaignAddress = await BlockchainService.setUserKeypair(
             `campaign_${campaign_id}`
@@ -771,15 +780,15 @@ class CampaignController {
         data.dataValues.Beneficiary = filteredKeywords[0];
       }
 
-      tokens.forEach(data => {
+      response.data.forEach(data => {
         var filteredKeywords = user.filter(
           user => user.id === data.beneficiaryId
         );
         data.dataValues.Beneficiary = filteredKeywords[0];
       });
 
-      tokens.forEach(data => {
-        var filteredKeywords = campaign.filter(
+      response.data.forEach(data => {
+        var filteredKeywords = campaign.data.filter(
           camp => camp.id === data.campaignId
         );
 
@@ -788,8 +797,8 @@ class CampaignController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Found ${tokens.length} ${token_type}.`,
-        {tokens, page_count: pages}
+        `Found ${response.data.length} ${token_type}.`,
+        response
       );
       return Response.send(res);
     } catch (error) {
@@ -1072,10 +1081,11 @@ class CampaignController {
           0
         )
       ).toFixed(2);
-      campaign.dataValues.Complaints =
-        await CampaignService.getCampaignComplaint(campaignId);
-      campaign.dataValues.ck8 =
-        (await AwsService.getMnemonic(campaign.id)) || null;
+      campaign.dataValues.Complaints = '';
+      await CampaignService.getCampaignComplaint(campaignId);
+      // (await AwsService.getMnemonic(campaign.id)) || null;
+      campaign.dataValues.ck8 = '';
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Details',
@@ -1650,7 +1660,7 @@ class CampaignController {
   static async getCampaignForm(req, res) {
     const id = req.params.organisation_id;
     try {
-      const form = await CampaignService.getCampaignForm(id);
+      const form = await CampaignService.getCampaignForm(id, req.query);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign form received',

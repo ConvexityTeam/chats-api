@@ -25,6 +25,7 @@ const {
   generateQrcodeURL,
   GenearteVendorId
 } = require('../utils');
+const Pagination = require('../utils/pagination');
 
 class VendorService {
   static searchVendorStore(store_name, extraClause = null) {
