@@ -66,3 +66,21 @@ Go to the original repository and locate the "Merge Requests" section.
 Click on "New merge request" to create a new merge request from your branch to the original repository's main branch.
 Provide a descriptive title and detailed description of your changes in the merge request.
 
+
+# Convexity Humanitarian Aid Transfer Solution (CHATS) Starting Guide
+
+    CHATS API
+    Copyright (C) 2023  Convexity CVA Inc.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
