@@ -238,7 +238,8 @@ class OrderController {
         campaignWallet,
         data.order,
         data.order.Vendor,
-        data.total_cost
+        data.total_cost,
+        campaign
       );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
