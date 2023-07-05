@@ -903,7 +903,7 @@ class AuthController {
               {expiresIn: '24hr'}
             );
             const verifyLink =
-              data.host_url + '/email-verification?confirmationCode=' + token;
+              data.host_url + '/email-verification/?confirmationCode=' + token;
 
             const sent = await MailerService.sendEmailVerification(
               data.email,
