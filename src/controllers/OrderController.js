@@ -121,8 +121,7 @@ class OrderController {
       Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
       const data = await VendorService.getOrder({reference});
       const user = await UserService.findSingleUser({id});
-      console.log(`VendorId: ${data.order.Vendor.id}`);
-      console.log(`CampaignId: ${data.order.CampaignId}`);
+
       if (!user) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -233,14 +232,14 @@ class OrderController {
         Logger.error('Insufficient wallet balance.');
         return Response.send(res);
       }
-      // await OrderService.processOrder(
-      //   beneficiaryWallet,
-      //   vendorWallet,
-      //   campaignWallet,
-      //   data.order,
-      //   data.order.Vendor,
-      //   data.total_cost
-      // );
+      await OrderService.processOrder(
+        beneficiaryWallet,
+        vendorWallet,
+        campaignWallet,
+        data.order,
+        data.order.Vendor,
+        data.total_cost
+      );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
