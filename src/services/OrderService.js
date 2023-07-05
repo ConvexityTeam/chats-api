@@ -28,6 +28,7 @@ class OrderService {
     campaign
   ) {
     order.update({status: 'processing'});
+    console.log('Order ID is ', order.id);
 
     const transaction = await Transaction.create({
       amount,

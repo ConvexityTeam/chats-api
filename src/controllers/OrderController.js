@@ -121,7 +121,6 @@ class OrderController {
       Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
       const data = await VendorService.getOrder({reference});
       const user = await UserService.findSingleUser({id});
-      console.log('Order ID is ', data.order.id);
       if (!user) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
