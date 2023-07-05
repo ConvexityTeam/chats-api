@@ -28,7 +28,8 @@ class OrderService {
     campaign
   ) {
     order.update({status: 'processing'});
-    console.log('Order ID is ', order.id);
+    console.log('campaignId ', campaign.id);
+    console.log('vendor id ', vendor.id);
 
     const transaction = await Transaction.create({
       amount,
@@ -44,6 +45,8 @@ class OrderService {
       BeneficiaryId: beneficiaryWallet.UserId,
       narration: 'Vendor Order'
     });
+    console.log('transaction ', transaction);
+
     if (campaign.type === 'item') {
       QueueService.processNFTOrder(
         beneficiaryWallet,
