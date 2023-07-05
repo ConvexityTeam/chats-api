@@ -233,14 +233,14 @@ class OrderController {
         Logger.error('Insufficient wallet balance.');
         return Response.send(res);
       }
-      await OrderService.processOrder(
-        beneficiaryWallet,
-        vendorWallet,
-        campaignWallet,
-        data.order,
-        data.order.Vendor,
-        data.total_cost
-      );
+      // await OrderService.processOrder(
+      //   beneficiaryWallet,
+      //   vendorWallet,
+      //   campaignWallet,
+      //   data.order,
+      //   data.order.Vendor,
+      //   data.total_cost
+      // );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
