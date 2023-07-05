@@ -27,10 +27,9 @@ class OrderService {
     amount,
     campaign
   ) {
-    order.update({status: 'processing'});
     console.log('campaignId ', campaign.id);
     console.log('vendor id ', vendor.id);
-
+    order.update({status: 'processing'});
     const transaction = await Transaction.create({
       amount,
       reference: generateTransactionRef(),
