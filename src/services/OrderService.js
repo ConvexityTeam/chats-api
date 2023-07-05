@@ -37,7 +37,7 @@ class OrderService {
       SenderWalletId: campaignWallet.uuid,
       ReceiverWallet: vendorWallet.uuid,
       OrderId: order.id,
-      CampaignId: campaign.id || null,
+      CampaignId: campaign.id,
       VendorId: vendor.id,
       BeneficiaryId: beneficiaryWallet.UserId,
       narration: 'Vendor Order'
