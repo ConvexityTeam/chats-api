@@ -28,7 +28,7 @@ class OrderService {
     campaign
   ) {
     order.update({status: 'processing'});
-    Logger.info(`Order: ${order}`);
+
     const transaction = await Transaction.create({
       amount,
       reference: generateTransactionRef(),
