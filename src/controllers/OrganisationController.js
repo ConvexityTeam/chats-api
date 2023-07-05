@@ -713,14 +713,22 @@ class OrganisationController {
       const OrgWallet = await OrganisationService.getOrganisationWallet(
         OrganisationId
       );
-      // const is_verified_all = req.user.is_verified_all;
-      // if (!is_verified_all) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Update your profile first'
-      //   );
-      //   return Response.send(res);
-      // }
+      const is_verified_all = req.user.is_verified_all;
+      const is_verified = req.user.is_verified;
+      if (!is_verified_all) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Your account has not been activated yet'
+        );
+        return Response.send(res);
+      }
+      if (!is_verified) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Your profile is not verified yet, please update your profile'
+        );
+        return Response.send(res);
+      }
       if (data.formId) {
         const form = await CampaignService.findCampaignFormById(data.formId);
 
