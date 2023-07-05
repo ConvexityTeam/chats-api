@@ -1742,6 +1742,11 @@ class AuthController {
             );
             return Response.send(res);
           }
+          await db.OrganisationMembers.create({
+            UserId: userExist.id,
+            role: 'donor',
+            OrganisationId: donor.id
+          });
           await db.AssociatedCampaign.create({
             DonorId: donor.id,
             CampaignId: campaignId
