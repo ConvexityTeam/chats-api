@@ -21,6 +21,31 @@ class WalletController {
     try {
       const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
+      let usersCurrency = req.user.currency;
+      let exchangeRate = 0.0;
+      let currencyData = {};
+      //convert currency to set currency if not in USD
+      //get users set currency
+      if (
+        usersCurrency === '' ||
+        usersCurrency == null ||
+        usersCurrency === 'USD'
+      ) {
+        usersCurrency = 'USD';
+        //  console.log(usersCurrency);
+        exchangeRate = await currencyObj.convertCurrency(
+          usersCurrency,
+          'USD',
+          1
+        );
+      } else if (usersCurrency !== 'USD') {
+        //  console.log(usersCurrency);
+        exchangeRate = await currencyObj.convertCurrency(
+          'USD',
+          usersCurrency,
+          1
+        );
+      }
       if (!reference) {
         const transactions =
           await TransactionService.findOrgnaisationTransactions(
@@ -35,6 +60,9 @@ class WalletController {
             const campaign = await CampaignService.getCampaignById(
               tran.CampaignId
             );
+            campaign.budget = (campaign.budget * exchangeRate).toFixed(2);
+            tran.amount = (tran.amount * exchangeRate).toFixed(2);
+
             tran.dataValues.transaction_hash = hash;
             tran.dataValues.campaign_name = campaign.title;
             tran.dataValues.funded_with = null;
