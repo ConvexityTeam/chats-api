@@ -62,11 +62,12 @@ class UtilController {
     }
   }
   static async getexchangeRates(req, res) {
-    const currenciesObj = CurrencyServices;
+    const currenciesObj = await CurrencyServices.getExchangeRate();
+    console.log(CurrencyServices.exchangeData);
     Response.setSuccess(
       HttpStatusCode.STATUS_OK,
       'Exchange Rate',
-      currenciesObj.exchangeData
+      currenciesObj
     );
     return Response.send(res);
   }
