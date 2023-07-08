@@ -857,7 +857,7 @@ RabbitMq['default']
           Logger.info('Generating SmsToken');
           istoken = true;
           await SmsService.sendOtp(
-            beneficiary.User.phone,
+            '+'+beneficiary.User.phone,
             `Hello ${
               beneficiary.User.first_name || beneficiary.User.last_name
                 ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
