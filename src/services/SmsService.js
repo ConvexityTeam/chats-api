@@ -18,29 +18,17 @@ class SmsService {
   async sendOtp(recipients, message) {
     const _recipients = Array.isArray(recipients) ? recipients : [recipients];
     const to = this._prunRecipients(_recipients);
-    return this.sendOTP(to, message);
+    return this.send(to, message);
   }
 
   async send(to, sms, channel = 'dnd') {
+    console.log('number', to);
+
     const data = this._loadData({to, sms, channel});
     return new Promise(async (resolve, reject) => {
       try {
         const response = await this.httpService.post('/sms/send', data);
         console.log('sms sent');
-        resolve(response.data);
-      } catch (error) {
-        console.log('sms error' + error);
-        reject(error);
-      }
-    });
-  }
-
-  async sendOTP(to, sms, channel = 'dnd') {
-    const data = this._loadData({to, sms, channel});
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await this.httpService.post('/sms/otp/send', data);
-        console.log('sms otp sent');
         resolve(response.data);
       } catch (error) {
         console.log('sms error' + error);
