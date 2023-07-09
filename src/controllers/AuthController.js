@@ -1456,7 +1456,7 @@ class AuthController {
       if (!is_verified_all) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Update your profile first'
+          'Update your profile to set 2-FA'
         );
         return Response.send(res);
       }
