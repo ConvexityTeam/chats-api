@@ -1080,13 +1080,13 @@ class OrganisationController {
           return Response.send(res);
         }
       }
-      if (req.campaign.is_funded) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign Already Funded`
-        );
-        return Response.send(res);
-      }
+      // if (req.campaign.is_funded) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Campaign Already Funded`
+      //   );
+      //   return Response.send(res);
+      // }
       const dateB = moment(req.campaign.updatedAt);
       const dateC = moment(end_date);
 
