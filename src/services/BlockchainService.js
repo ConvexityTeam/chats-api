@@ -634,7 +634,7 @@ class BlockchainService {
           const keys = {
             password: senderPass,
             receiverAdd,
-            amount
+            amount: amount.toString()
           };
           if (type === 'fundCampaign') {
             await QueueService.increaseTransferCampaignGas(keys, message);
