@@ -1092,6 +1092,17 @@ class OrganisationController {
 
       const extension_period = dateC.diff(dateB, 'days');
 
+      const campaign = await CampaignService.getCampaignWallet(
+        campaign_id,
+        req.organisationId
+      );
+      const campaignWallet = campaign.Wallet;
+      const organisation = await OrganisationService.getOrganisationWallet(
+        req.organisationId
+      );
+
+      const OrgWallet = organisation.Wallet;
+
       req.campaign.budget = additional_budget
         ? Number(additional_budget) + req.campaign.budget
         : req.campaign.budget;
@@ -1105,6 +1116,12 @@ class OrganisationController {
         campaign_id
       });
       newCampaign.dataValues.history = history;
+      await QueueService.CampaignExtensionFund(
+        campaign,
+        campaignWallet,
+        OrgWallet,
+        Number(additional_budget)
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'campaign extended',
