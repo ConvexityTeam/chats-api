@@ -669,9 +669,9 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.info(
-          `Error transferring funds from:  ${
-            error.response ? JSON.stringify(error.response.data) : error
-          } `
+          `Error transferring funds from:  ${JSON.stringify(
+            error.response.data
+          )}`
         );
 
         if (
