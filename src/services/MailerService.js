@@ -38,7 +38,7 @@ class MailerService {
       });
     });
   }
-  verify(to, name, password, vendor_id) {
+  async verify(to, name, password, vendor_id) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
         if (!err) {
@@ -157,8 +157,8 @@ class MailerService {
       } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
       <p>${
         exist
-          ? `If you want to login to confirm access, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
-          : `If you want to create an account, please click on the following link: ${link}?token=${token}&campaign_id=${campaign.id}`
+          ? `If you want to login to confirm access, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
+          : `If you want to create an account, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
       }</p>
       <p>${message}</p>
       <p>Enjoy!</p>
@@ -266,7 +266,6 @@ class MailerService {
     });
   }
   sendEmailVerification(to, orgName, url) {
-    
     const body = `
     <div>
     <h2>Hello, ${orgName}</h2>
@@ -278,11 +277,39 @@ class MailerService {
     `;
     const options = {
       from: this.config.from,
-      to:to,
+      to: to,
       subject: 'Please confirm your account',
       html: body
     };
-  
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          console.log('NGO Verification Mail Sent');
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+  ngoApprovedMail(to, orgname) {
+    const body = `
+    <div>
+    <h2>Congratulations, ${orgname}</h2>
+    <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaigns.<br/>
+If you have any questions, please contact us via the contact form on your dashboard.</p>
+    <a href="https://chats.cash/"> Click here To Get Started</a>
+      <p>Regards,\n CHATS - Convexity</p>
+    </div>
+    `;
+    const options = {
+      from: this.config.from,
+      to: to,
+      subject: 'Congratulations Account Approved!',
+      html: body
+    };
+
     return new Promise((resolve, reject) => {
       this.transporter.sendMail(options, (err, data) => {
         if (!err) {

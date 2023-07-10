@@ -10,29 +10,28 @@ const AclRoles = {
   Guest: 9
 };
 
-
 const OrgRoles = {
   Admin: 'admin',
   SubAdmin: 'subadmin',
   FieldAgent: 'fieldagent',
   Vendor: 'vendor',
   Member: 'member'
-}
+};
 
 const OrgAdminRolesToAcl = {
   admin: AclRoles.NgoAdmin,
   subadmin: AclRoles.NgoSubAdmin,
-  fieldagent: AclRoles.FieldAgent,
-}
+  fieldagent: AclRoles.FieldAgent
+};
 
 const BeneficiarySource = {
   beneficiary: 'beneficiary app',
   agent: 'field app'
-}
+};
 
 module.exports = {
   AclRoles,
   OrgRoles,
   OrgAdminRolesToAcl,
   BeneficiarySource
-}
+};

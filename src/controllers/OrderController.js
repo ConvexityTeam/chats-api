@@ -238,16 +238,17 @@ class OrderController {
         campaignWallet,
         data.order,
         data.order.Vendor,
-        data.total_cost
+        data.total_cost,
+        campaign
       );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
     } catch (error) {
-      Logger.error(error);
+      Logger.error(`Order Error: ${error}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.',
+        'Internal server error. Please try again later.' + error,
         error
       );
       return Response.send(res);
@@ -277,22 +278,23 @@ class OrderController {
         );
         return Response.send(res);
       }
-      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
-        data.order.CampaignId
-      );
+      const approvedBeneficiaries =
+        await BeneficiariesService.getApprovedBeneficiaries(
+          data.order.CampaignId
+        );
 
-      const [
-        campaignWallet,
-        vendorWallet,
-        beneficiaryWallet
-      ] = await Promise.all([
-        WalletService.findSingleWallet({
-          CampaignId: data.order.CampaignId,
-          UserId: null
-        }),
-        WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
-        WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
-      ]);
+      const [campaignWallet, vendorWallet, beneficiaryWallet] =
+        await Promise.all([
+          WalletService.findSingleWallet({
+            CampaignId: data.order.CampaignId,
+            UserId: null
+          }),
+          WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
+          WalletService.findUserCampaignWallet(
+            req.user.id,
+            data.order.CampaignId
+          )
+        ]);
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
@@ -354,7 +356,7 @@ class OrderController {
         data.order,
         data.order.Vendor,
         data.total_cost,
-        campaign.type
+        campaign
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
@@ -376,11 +378,12 @@ class OrderController {
       const filtered_data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation_id,
+        ...req.query
       });
       const products = await OrderService.productPurchased(organisation_id);
 
-      if (products.length <= 0) {
+      if (products.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased By Gender Recieved',
@@ -389,14 +392,15 @@ class OrderController {
         return Response.send(res);
       }
 
-      campaigns.forEach(campaign => {
-        //CampaignId
-        products.forEach(product => {
-          if (campaign.id === product.CampaignId) {
-            filtered_data.push(product);
-          }
+      campaigns.data &&
+        campaigns?.data?.forEach(campaign => {
+          //CampaignId
+          products.data.forEach(product => {
+            if (campaign.id === product.CampaignId) {
+              filtered_data.push(product);
+            }
+          });
         });
-      });
       filtered_data.forEach(product => {
         product.Cart.forEach(cart => {
           cart.Product.ProductBeneficiaries.forEach(beneficiary => {
@@ -436,7 +440,7 @@ class OrderController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry.' + error
       );
       return Response.send(res);
     }
@@ -567,11 +571,15 @@ class OrderController {
       let data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation_id,
+        ...req.query
       });
-      const products = await OrderService.productPurchased(organisation_id);
+      const products = await OrderService.productPurchased(
+        organisation_id,
+        req.query
+      );
 
-      if (products.length <= 0) {
+      if (products.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
@@ -579,9 +587,9 @@ class OrderController {
         );
         return Response.send(res);
       }
-      campaigns.forEach(campaign => {
+      campaigns.data.forEach(campaign => {
         //CampaignId
-        products.forEach(product => {
+        products.data.forEach(product => {
           if (campaign.id === product.CampaignId) {
             filtered_data.push(product);
           }
@@ -658,9 +666,9 @@ class OrderController {
         type: 'campaign',
         OrganisationId: organisation_id
       });
-      const products = await OrderService.productPurchasedBy(organisation_id);
+      const products = await OrderService.productPurchased(organisation_id);
 
-      if (products.length <= 0) {
+      if (products && products?.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
@@ -668,14 +676,16 @@ class OrderController {
         );
         return Response.send(res);
       }
-      campaigns.forEach(campaign => {
-        //CampaignId
-        products.forEach(product => {
-          if (campaign.id === product.CampaignId) {
-            data.push(product);
-          }
+      campaigns.data &&
+        campaigns.data?.forEach(campaign => {
+          //CampaignId
+          products &&
+            products.data?.forEach(product => {
+              if (campaign.id === product.CampaignId) {
+                data.push(product);
+              }
+            });
         });
-      });
 
       let total_product_value = 0;
       data.forEach(product => {
@@ -695,7 +705,7 @@ class OrderController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry. me' + error
       );
       return Response.send(res);
     }
