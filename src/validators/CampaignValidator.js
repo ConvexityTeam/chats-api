@@ -233,6 +233,7 @@ class CampaignValidator extends BaseValidator {
         return Response.send(res);
       }
       req.campaign = campaign;
+      req.organisationId =  organisationId;
       next();
     } catch (error) {
       Response.setError(

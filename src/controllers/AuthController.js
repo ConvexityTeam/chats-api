@@ -903,7 +903,7 @@ class AuthController {
               {expiresIn: '24hr'}
             );
             const verifyLink =
-              data.host_url + '/email-verification?confirmationCode=' + token;
+              data.host_url + '/email-verification/?confirmationCode=' + token;
 
             const sent = await MailerService.sendEmailVerification(
               data.email,
@@ -1128,13 +1128,13 @@ class AuthController {
         }
       });
 
-      // if (user && user.is_email_verified === false) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_UNAUTHORIZED,
-      //     'Access Denied, Email Account has not been Verified.'
-      //   );
-      //   return Response.send(res);
-      // }
+      if (user && user.is_email_verified === false) {
+        Response.setError(
+          HttpStatusCode.STATUS_UNAUTHORIZED,
+          'Access Denied, Email Account has not been Verified.'
+        );
+        return Response.send(res);
+      }
 
       if (user && user.RoleId != AclRoles.NgoAdmin) {
         Response.setError(
@@ -1456,7 +1456,7 @@ class AuthController {
       if (!is_verified_all) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Update your profile first'
+          'Update your profile to set 2-FA'
         );
         return Response.send(res);
       }
@@ -1742,6 +1742,7 @@ class AuthController {
             );
             return Response.send(res);
           }
+
           await db.AssociatedCampaign.create({
             DonorId: donor.id,
             CampaignId: campaignId
@@ -1795,14 +1796,14 @@ class AuthController {
 
       const url_string = data.website_url;
       const email = data.email;
-      if (url_string) {
-        const domain = extractDomain(url_string);
-        const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-        if (!email.match(new RegExp(re))) {
-          Response.setError(400, 'Email must end in @' + domain);
-          return Response.send(res);
-        }
-      }
+      // if (url_string) {
+      //   const domain = extractDomain(url_string);
+      //   const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
+      //   if (!email.match(new RegExp(re))) {
+      //     Response.setError(400, 'Email must end in @' + domain);
+      //     return Response.send(res);
+      //   }
+      // }
 
       const userExist = await UserService.findSingleUser({
         email: email
@@ -1835,20 +1836,7 @@ class AuthController {
         );
         return Response.send(res);
       }
-      const ass = await db.AssociatedCampaign.findOne({
-        where: {
-          DonorId: createdOrganisation.id,
-          CampaignId: data.campaignId
-        }
-      });
 
-      if (ass) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Already on campaign'
-        );
-        return Response.send(res);
-      }
       // const organisationExist = await db.Organisation.findOne({
       //   where: {
       //     [Op.or]: [
@@ -1861,6 +1849,27 @@ class AuthController {
       //     ]
       //   }
       // });
+      const createdOrganisation = await db.Organisation.create({
+        name: data.organisation_name || null,
+        email: data.email,
+        website_url: data.website_url || 'null',
+        registration_id: generateOrganisationId()
+      });
+      // const ass = await db.AssociatedCampaign.findOne({
+      //   where: {
+      //     DonorId: createdOrganisation.id,
+      //     CampaignId: data.campaignId
+      //   }
+      // });
+
+      // if (ass) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Already on campaign'
+      //   );
+      //   return Response.send(res);
+      // }
+
       // if (organisationExist) {
       //   Response.setError(
       //     400,
@@ -1874,13 +1883,6 @@ class AuthController {
         RoleId: AclRoles.Donor,
         email: data.email,
         password
-      });
-
-      const createdOrganisation = await db.Organisation.create({
-        name: data.organisation_name || 'no org',
-        email: data.email,
-        website_url: data.website_url || 'null',
-        registration_id: generateOrganisationId()
       });
 
       await db.OrganisationMembers.create({
@@ -1904,7 +1906,7 @@ class AuthController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support'
+        'Internal Server Error, Contact Support' + error
       );
       return Response.send(res);
     }

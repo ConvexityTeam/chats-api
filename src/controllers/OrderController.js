@@ -238,16 +238,17 @@ class OrderController {
         campaignWallet,
         data.order,
         data.order.Vendor,
-        data.total_cost
+        data.total_cost,
+        campaign
       );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
     } catch (error) {
-      Logger.error(error);
+      Logger.error(`Order Error: ${error}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.',
+        'Internal server error. Please try again later.' + error,
         error
       );
       return Response.send(res);

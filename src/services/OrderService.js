@@ -15,6 +15,7 @@ const Op = Sequelize.Op;
 const QueueService = require('./QueueService');
 const {ProductService} = require('.');
 const Pagination = require('../utils/pagination');
+const {Logger} = require('../libs');
 
 class OrderService {
   static async processOrder(

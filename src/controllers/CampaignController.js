@@ -544,13 +544,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (campaign.status == 'ongoing') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already ongoing'
-        );
-        return Response.send(res);
-      }
+      // if (campaign.status == 'ongoing') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign already ongoing'
+      //   );
+      //   return Response.send(res);
+      // }
 
       if (
         (campaign.type !== 'item' && campaign.budget > balance) ||

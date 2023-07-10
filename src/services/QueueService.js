@@ -1340,6 +1340,36 @@ class QueueService {
     );
     return transaction;
   }
+
+  static async CampaignExtensionFund(campaign, campaignWallet, OrgWallet, additional_budget) {
+    const realBudget = additional_budget;
+    const transaction = await Transaction.create({
+      amount: realBudget,
+      reference: generateTransactionRef(),
+      status: 'processing',
+      transaction_origin: 'wallet',
+      transaction_type: 'transfer',
+      SenderWalletId: OrgWallet.uuid,
+      ReceiverWalletId: campaignWallet.uuid,
+      CampaignId: campaign.id,
+      OrganisationId: campaign.OrganisationId,
+      narration: 'Approve Campaign Funding'
+    });
+    const payload = {
+      OrgWallet,
+      campaignWallet,
+      campaign,
+      transactionId: transaction.uuid,
+      realBudget
+    };
+    approveCampaignAndFund.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+    return transaction;
+  }
+
   static async fundNFTCampaign(campaign, campaignWallet, OrgWallet) {
     const transaction = await Transaction.create({
       amount: campaign.minting_limit,

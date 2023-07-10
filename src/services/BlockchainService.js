@@ -634,7 +634,7 @@ class BlockchainService {
           const keys = {
             password: senderPass,
             receiverAdd,
-            amount
+            amount: amount.toString()
           };
           if (type === 'fundCampaign') {
             await QueueService.increaseTransferCampaignGas(keys, message);
@@ -669,9 +669,9 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.info(
-          `Error transferring funds from:  ${
-            error.response ? JSON.stringify(error.response.data) : error
-          } `
+          `Error transferring funds from:  ${JSON.stringify(
+            error.response.data
+          )}`
         );
 
         if (

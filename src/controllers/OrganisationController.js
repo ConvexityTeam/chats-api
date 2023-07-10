@@ -713,14 +713,22 @@ class OrganisationController {
       const OrgWallet = await OrganisationService.getOrganisationWallet(
         OrganisationId
       );
-      // const is_verified_all = req.user.is_verified_all;
-      // if (!is_verified_all) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Update your profile first'
-      //   );
-      //   return Response.send(res);
-      // }
+      const is_verified_all = req.user.is_verified_all;
+      const is_verified = req.user.is_verified;
+      if (!is_verified_all) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Your account has not been activated yet'
+        );
+        return Response.send(res);
+      }
+      if (!is_verified) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Your profile is not verified yet, please update your profile'
+        );
+        return Response.send(res);
+      }
       if (data.formId) {
         const form = await CampaignService.findCampaignFormById(data.formId);
 
@@ -1072,17 +1080,28 @@ class OrganisationController {
           return Response.send(res);
         }
       }
-      if (req.campaign.is_funded) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign Already Funded`
-        );
-        return Response.send(res);
-      }
+      // if (req.campaign.is_funded) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Campaign Already Funded`
+      //   );
+      //   return Response.send(res);
+      // }
       const dateB = moment(req.campaign.updatedAt);
       const dateC = moment(end_date);
 
       const extension_period = dateC.diff(dateB, 'days');
+
+      const campaign = await CampaignService.getCampaignWallet(
+        campaign_id,
+        req.organisationId
+      );
+      const campaignWallet = campaign.Wallet;
+      const organisation = await OrganisationService.getOrganisationWallet(
+        req.organisationId
+      );
+
+      const OrgWallet = organisation.Wallet;
 
       req.campaign.budget = additional_budget
         ? Number(additional_budget) + req.campaign.budget
@@ -1097,6 +1116,12 @@ class OrganisationController {
         campaign_id
       });
       newCampaign.dataValues.history = history;
+      await QueueService.CampaignExtensionFund(
+        campaign,
+        campaignWallet,
+        OrgWallet,
+        Number(additional_budget)
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'campaign extended',
