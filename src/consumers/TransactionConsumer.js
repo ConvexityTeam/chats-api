@@ -331,25 +331,25 @@ const update_transaction = async (args, uuid) => {
   await transaction.update(args);
   return transaction;
 };
-const deductWalletAmount = async (amount, uuid) => {
+const deductWalletAmount = async (balance, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
-    balance: Sequelize.literal(`balance - ${amount}`),
-    fiat_balance: Sequelize.literal(`fiat_balance - ${amount}`)
+    balance,
+    fiat_balance: balance
   });
-  Logger.info(`Wallet amount deducted with ${amount}`);
+  Logger.info(`Current wallet balance is: ${balance}`);
   return wallet;
 };
 
-const addWalletAmount = async (amount, uuid) => {
+const addWalletAmount = async (balance, uuid) => {
   const wallet = await Wallet.findOne({where: {uuid}});
   if (!wallet) return null;
   await wallet.update({
-    balance: Sequelize.literal(`balance + ${amount}`),
-    fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+    balance,
+    fiat_balance: balance
   });
-  Logger.info(`Wallet amount added with ${amount}`);
+  Logger.info(`Current wallet balance is: ${balance}`);
   return wallet;
 };
 
@@ -675,9 +675,14 @@ RabbitMq['default']
           },
           transactionId
         );
+        const orgToken = await BlockchainService.balance(OrgWallet.address);
+        const orgBalance = Number(orgToken.Balance.split(',').join(''));
 
-        await deductWalletAmount(amount, OrgWallet.uuid);
-        await addWalletAmount(amount, campaign.Wallet.uuid);
+        const campaignToken = await BlockchainService.balance(campaign.Wallet.address);
+        const campaignBalance = Number(campaignToken.Balance.split(',').join(''));
+
+        await deductWalletAmount(orgBalance, OrgWallet.uuid);
+        await addWalletAmount(campaignBalance, campaign.Wallet.uuid);
         Logger.info('CAMPAIGN FUNDED');
         msg.ack();
       })
@@ -1120,8 +1125,16 @@ RabbitMq['default']
           recipient_code,
           'spending'
         );
-        await deductWalletAmount(amount, campaignWallet.uuid);
-        await deductWalletAmount(amount, userWallet.uuid);
+
+        const campaignToken = await BlockchainService.balance(campaignWallet.address);
+        const campaignBalance = Number(campaignToken.Balance.split(',').join(''));
+        const userToken = await BlockchainService.allowance(
+          campaignWallet.address,
+          userWallet.address
+        );
+        const userBalance = Number(userToken.Allowed.split(',').join(''));
+        await deductWalletAmount(campaignBalance, campaignWallet.uuid);
+        await deductWalletAmount(userBalance, userWallet.uuid);
         await update_transaction(
           {status: 'success', is_approved: true},
           transactionId
@@ -1358,8 +1371,17 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await addWalletAmount(amount, beneficiaryWallet.uuid);
-        await deductWalletAmount(amount, campaignWallet.uuid);
+        const beneficaryToken = await BlockchainService.allowance(
+          campaignWallet.address,
+          beneficiaryWallet.address
+        );
+        const beneficiaryBalance = Number(beneficaryToken.Allowed.split(',').join(''));
+        
+        const campaignToken = await BlockchainService.balance(campaignWallet.address);
+        const campaignBalance = Number(campaignToken.Balance.split(',').join(''));
+        
+        await addWalletAmount(beneficiaryBalance, beneficiaryWallet.uuid);
+        await deductWalletAmount(campaignBalance, campaignWallet.uuid);
         await update_transaction(
           {status: 'success', is_approved: true},
           transactionId
@@ -1504,9 +1526,19 @@ RabbitMq['default']
           msg.nack();
           return;
         }
+
+        const beneficaryToken = await BlockchainService.allowance(
+          campaignWallet.address,
+          beneficiaryWallet.address
+        );
+        const beneficiaryBalance = Number(beneficaryToken.Allowed.split(',').join(''));
+        
+        const campaignToken = await BlockchainService.balance(campaignWallet.address);
+        const campaignBalance = Number(campaignToken.Balance.split(',').join(''));
+
         await update_order(order.reference, {status: 'confirmed'});
-        await deductWalletAmount(amount, beneficiaryWallet.uuid);
-        await deductWalletAmount(amount, campaignWallet.uuid);
+        await deductWalletAmount(beneficiaryBalance, beneficiaryWallet.uuid);
+        await deductWalletAmount(campaignBalance, campaignWallet.uuid);
         const token = await BlockchainService.balance(vendorWallet.address);
         const balance = Number(token.Balance.split(',').join(''));
         // await addWalletAmount(amount, vendorWallet.uuid);
@@ -1688,10 +1720,22 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await deductWalletAmount(amount, senderWallet.uuid);
-        await addWalletAmount(amount, receiverWallet.uuid);
+
+        const senderToken = await BlockchainService.allowance(
+          campaignWallet.address,
+          senderWallet.address
+        );
+        const senderBalance = Number(senderToken.Allowed.split(',').join(''));
+        
+        const receiverToken = await BlockchainService.balance(receiverWallet.address);
+        const receiverBalance = Number(receiverToken.Balance.split(',').join(''));
+
+        const campaignToken = await BlockchainService.balance(campaignWallet.address);
+        const campaignBalance = Number(campaignToken.Balance.split(',').join(''));
+        await deductWalletAmount(senderBalance, senderWallet.uuid);
+        await addWalletAmount(receiverBalance, receiverWallet.uuid);
         campaignWallet &&
-          (await deductWalletAmount(amount, campaignWallet.uuid));
+          (await deductWalletAmount(campaignBalance, campaignWallet.uuid));
         await update_transaction(
           {
             status: 'success',
