@@ -937,6 +937,17 @@ RabbitMq['default']
           userWallet,
           campaignWallet
         );
+
+        const campaignToken = await BlockchainService.balance(campaignWallet.address);
+        const campaignBalance = Number(campaignToken.Balance.split(',').join(''));
+        const beneficiaryToken = await BlockchainService.allowance(
+          campaignWallet.address,
+          beneficiary.address
+        );
+        const beneficiaryBalance = Number(beneficiaryToken.Allowed.split(',').join(''));
+        await deductWalletAmount(campaignBalance, campaignWallet.uuid);
+        await deductWalletAmount(beneficiaryBalance, userWallet.uuid);
+        
         msg.ack();
       })
       .catch(error => {
