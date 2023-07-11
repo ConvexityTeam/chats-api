@@ -521,6 +521,7 @@ RabbitMq['default']
           {status: 'success', is_approved: true},
           transactionId
         );
+        Logger.info(`CampaignId: ${CampaignId}`);
         if (CampaignId) {
           const campaignWallet = await WalletService.findSingleWallet({
             CampaignId,
