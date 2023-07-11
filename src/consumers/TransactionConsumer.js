@@ -546,7 +546,6 @@ RabbitMq['default']
             // fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
           });
         }
-
         await DepositService.updateFiatDeposit(transactionReference, {
           status: 'successful'
         });
