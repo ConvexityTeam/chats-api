@@ -320,20 +320,18 @@ class OrganisationController {
 
           campaign.dataValues.iDonate = false;
           campaign.dataValues.amount_donated = 0;
-          const campaignW = await CampaignService.getCampaignWallet(
-            campaign.id,
-            organisation.id
-          );
-          if (campaignW !== null && campaignW.Wallet) {
-            for (let tran of transaction.data) {
-              if (
-                tran.OrganisationId === organisation.id &&
-                tran.CampaignId === campaign.id
-              ) {
-                campaign.dataValues.iDonate = true;
-                campaign.dataValues.amount_donated = tran.amount;
-                campaign.dataValues.donation_date = tran.createdAt;
-              }
+
+          for (let tran of transaction.data) {
+            Logger.info(`Campaign id...: ${campaign.id}`);
+            if (
+              tran.OrganisationId &&
+              tran.OrganisationId === organisation.id &&
+              tran.CampaignId &&
+              tran.CampaignId === campaign.id
+            ) {
+              campaign.dataValues.iDonate = true;
+              campaign.dataValues.amount_donated = tran.amount;
+              campaign.dataValues.donation_date = tran.createdAt;
             }
           }
         }
