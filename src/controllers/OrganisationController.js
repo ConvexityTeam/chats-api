@@ -324,14 +324,12 @@ class OrganisationController {
             campaign.id,
             organisation.id
           );
-          if (
-            campaignW !== null &&
-            campaignW.Wallet &&
-            organisationW !== null &&
-            organisationW.Wallet
-          ) {
+          if (campaignW !== null && campaignW.Wallet) {
             for (let tran of transaction.data) {
-              if (tran.ReceiverWalletId === campaignW.Wallet.uuid) {
+              if (
+                tran.OrganisationId === organisation.id &&
+                tran.CampaignId === campaign.id
+              ) {
                 campaign.dataValues.iDonate = true;
                 campaign.dataValues.amount_donated = tran.amount;
                 campaign.dataValues.donation_date = tran.createdAt;
