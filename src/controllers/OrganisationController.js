@@ -295,13 +295,14 @@ class OrganisationController {
       const organisation = await OrganisationService.checkExistEmail(
         req.user.email
       );
+      Logger.info(`Organisation...: ${JSON.stringify(organisation)}`);
       const query = SanitizeObject(req.query);
       const [campaigns, organisationW, transaction] = await Promise.all([
         CampaignService.getPrivateCampaigns(query, organisation.id),
         OrganisationService.getOrganisationWallet(organisation.id),
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
-
+      Logger.info(`Transaction...: ${JSON.stringify(transaction)}`);
       if (campaigns.associatedCampaigns) {
         for (let campaign of campaigns.associatedCampaigns) {
           if (new Date(campaign.end_date) < new Date())
