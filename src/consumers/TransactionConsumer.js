@@ -530,6 +530,11 @@ RabbitMq['default']
             balance: Sequelize.literal(`balance + ${amount}`)
             // fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
           });
+          await update_campaign(CampaignId, {
+            is_funded: true,
+            is_processing: false,
+            amount_disbursed: Sequelize.literal(`balance + ${amount}`)
+          });
           Logger.info('campaign wallet updated');
         } else {
           const wallet = await WalletService.findMainOrganisationWallet(
