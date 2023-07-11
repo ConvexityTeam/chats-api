@@ -1679,7 +1679,7 @@ RabbitMq['default']
         } = message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
-          'transfer',
+          'transferFrom',
           keys
         );
         if (!gasFee) {
