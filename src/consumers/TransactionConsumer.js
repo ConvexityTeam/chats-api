@@ -534,7 +534,7 @@ RabbitMq['default']
           await update_campaign(CampaignId, {
             is_funded: true,
             is_processing: false,
-            amount_disbursed: Sequelize.literal(`balance + ${amount}`)
+            amount_disbursed: Sequelize.literal(`amount_disbursed + ${amount}`)
           });
           Logger.info('campaign wallet updated');
         } else {
