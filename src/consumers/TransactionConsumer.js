@@ -538,7 +538,6 @@ RabbitMq['default']
           {status: 'success', is_approved: true},
           transactionId
         );
-        Logger.info(`CampaignId: ${CampaignId}`);
         if (CampaignId) {
           const campaignWallet = await WalletService.findSingleWallet({
             CampaignId,
@@ -1706,7 +1705,7 @@ RabbitMq['default']
             amount,
             senderWallet,
             receiverWallet,
-            transactionId,
+            transactionId
           );
         }
         Logger.info(
@@ -1765,15 +1764,10 @@ RabbitMq['default']
         );
       });
 
-      increaseTransferPersonalBeneficiaryGas
+    increaseTransferPersonalBeneficiaryGas
       .activateConsumer(async msg => {
         const {keys, message} = msg.getContent();
-        const {
-          amount,
-          senderWallet,
-          receiverWallet,
-          transactionId,
-        } = message;
+        const {amount, senderWallet, receiverWallet, transactionId} = message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'transfer',
@@ -1794,7 +1788,7 @@ RabbitMq['default']
           amount,
           senderWallet,
           receiverWallet,
-          transactionId,
+          transactionId
         );
       })
       .catch(error => {
@@ -1870,15 +1864,10 @@ RabbitMq['default']
           `Running Process For Confirming Beneficiary to Beneficiary Transfer`
         );
       });
-      confirmPBFundingBeneficiary
+    confirmPBFundingBeneficiary
       .activateConsumer(async msg => {
-        const {
-          hash,
-          amount,
-          senderWallet,
-          receiverWallet,
-          transactionId,
-        } = msg.getContent();
+        const {hash, amount, senderWallet, receiverWallet, transactionId} =
+          msg.getContent();
         const confirm = await BlockchainService.confirmTransaction(
           hash,
           CONFIRM_PERSONAL_BENEFICIARY_FUNDING_BENEFICIARY,
@@ -1888,10 +1877,16 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        const senderToken = await BlockchainService.balance(senderWallet.address);
+        const senderToken = await BlockchainService.balance(
+          senderWallet.address
+        );
         const senderBalance = Number(senderToken.Balance.split(',').join(''));
-        const receiverToken = await BlockchainService.balance(receiverWallet.address);
-        const receiverBalance = Number(receiverToken.Balance.split(',').join(''));
+        const receiverToken = await BlockchainService.balance(
+          receiverWallet.address
+        );
+        const receiverBalance = Number(
+          receiverToken.Balance.split(',').join('')
+        );
         await deductWalletAmount(senderBalance, senderWallet.uuid);
         await addWalletAmount(receiverBalance, receiverWallet.uuid);
         await update_transaction(

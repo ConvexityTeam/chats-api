@@ -1,9 +1,7 @@
 const {BlockchainService, WalletService, QueueService} = require('../services');
 const {RabbitMq, Logger} = require('../libs');
-const {
-  CREATE_WALLET,
-  CONFIRM_AND_CREATE_WALLET
-} = require('../constants').queuesConst;
+const {CREATE_WALLET, CONFIRM_AND_CREATE_WALLET} =
+  require('../constants').queuesConst;
 
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
   durable: true,
@@ -46,7 +44,7 @@ RabbitMq['default']
         }
 
         await QueueService.confirmAndCreateWallet(content, token);
-        Logger.info('Address Sent for confirmation');
+        // Logger.info('Address Sent for confirmation');
         msg.ack();
       })
       .catch(error => {
