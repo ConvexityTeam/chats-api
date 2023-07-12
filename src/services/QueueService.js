@@ -1118,10 +1118,11 @@ class QueueService {
     Logger.info(`CampaignId from QueService: ${CampaignId}`);
     let wallet = null;
     if (CampaignId) {
-      wallet = await WalletService.findSingleWallet({
+      const campaign = await CampaignService.getCampaignWallet(
         CampaignId,
         OrganisationId
-      });
+      );
+      wallet = campaign.Wallet;
       Logger.info(`Campaign wallet from QueService: ${JSON.stringify(wallet)}`);
     } else {
       wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
