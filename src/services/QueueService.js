@@ -65,6 +65,7 @@ const {
   INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
+const CampaignService = require('./CampaignService');
 
 const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
   durable: true
