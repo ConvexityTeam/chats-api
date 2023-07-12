@@ -51,12 +51,8 @@ const increaseGasFundWithCrypto = RabbitMq['default'].declareQueue(
 RabbitMq['default'].completeConfiguration().then(() => {
   fundWithCrypto
     .activateConsumer(async msg => {
-      const {
-        campaignWallet,
-        campaign,
-        amount,
-        transactionId
-      } = msg.getContent();
+      const {campaignWallet, campaign, amount, transactionId} =
+        msg.getContent();
       const campaignAddress = await BlockchainService.setUserKeypair(
         `campaign_${campaign.id}`
       );
@@ -104,6 +100,8 @@ RabbitMq['default'].completeConfiguration().then(() => {
         return;
       }
       await consumerFunctions.update_campaign(campaign.id, {
+        is_funded: true,
+        is_processing: false,
         amount_disbursed: campaign.amount_disbursed + amount
       });
       await consumerFunctions.update_transaction(

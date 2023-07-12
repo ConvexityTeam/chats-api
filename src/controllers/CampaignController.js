@@ -469,8 +469,11 @@ class CampaignController {
       const organisation = await OrganisationService.getOrganisationWallet(
         organisation_id
       );
+
       const campaignWallet = campaign.Wallet;
+      Logger.info(`Campaign Wallet: ${JSON.stringify(campaignWallet)}`);
       const OrgWallet = organisation.Wallet;
+      Logger.info(`Organisation Wallet: ${JSON.stringify(OrgWallet)}`);
       if (campaign.status == 'completed') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -485,13 +488,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (campaign.status == 'ongoing') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already ongoing'
-        );
-        return Response.send(res);
-      }
+      // if (campaign.status == 'ongoing') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign already ongoing'
+      //   );
+      //   return Response.send(res);
+      // }
       await QueueService.fundCampaignWithCrypto(
         campaign,
         amount,
