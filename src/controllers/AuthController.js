@@ -1128,13 +1128,13 @@ class AuthController {
         }
       });
 
-      // if (user && user.is_email_verified === false) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_UNAUTHORIZED,
-      //     'Access Denied, Email Account has not been Verified.'
-      //   );
-      //   return Response.send(res);
-      // }
+      if (user && user.is_email_verified === false) {
+        Response.setError(
+          HttpStatusCode.STATUS_UNAUTHORIZED,
+          'Access Denied, Email Account has not been Verified.'
+        );
+        return Response.send(res);
+      }
 
       if (user && user.RoleId != AclRoles.NgoAdmin) {
         Response.setError(
