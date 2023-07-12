@@ -1307,7 +1307,8 @@ class QueueService {
     campaignWallet,
     OrgWallet
   ) {
-    const transaction = await TransactionService.addTransaction({
+    Logger.info(`Amount from crypto: ${amount}`);
+    const transaction = await Transaction.create({
       amount: Number(amount),
       reference: generateTransactionRef(),
       status: 'processing',
