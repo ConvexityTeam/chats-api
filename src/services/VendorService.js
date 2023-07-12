@@ -519,6 +519,7 @@ class VendorService {
     return Transaction.findAll({
       where: {
         ...filter,
+        OrganisationId,
         transaction_origin: 'store'
       },
       attributes: ['reference', 'amount', 'createdAt', 'updatedAt'],
@@ -533,9 +534,6 @@ class VendorService {
               model: Organisation,
               as: 'Organisations',
               attributes: [],
-              where: {
-                id: OrganisationId
-              },
               through: {
                 attributes: []
               }

@@ -1116,7 +1116,6 @@ class QueueService {
     amount,
     CampaignId
   }) {
-    Logger.info(`OrganisationId from QueService: ${OrganisationId}`);
     let wallet = null;
     if (CampaignId) {
       wallet = await WalletService.findOrganisationCampaignWallet(
@@ -1133,7 +1132,6 @@ class QueueService {
         Logger.info(`Created wallet from QueService`);
         return;
       }
-      Logger.info(`Campaign wallet from QueService: ${JSON.stringify(wallet)}`);
     } else {
       wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
       if (!wallet) {
@@ -1144,7 +1142,6 @@ class QueueService {
         Logger.info(`Created wallet from QueService`);
         return;
       }
-      Logger.info(`Main wallet from QueService: ${JSON.stringify(wallet)}`);
     }
 
     const transaction = await Transaction.create({
