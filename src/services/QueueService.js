@@ -660,7 +660,7 @@ class QueueService {
         contentType: 'application/json'
       })
     );
-  }
+  } 
 
   static async increaseAllowance(keys, message) {
     const payload = {keys, message};
