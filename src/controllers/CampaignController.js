@@ -496,7 +496,7 @@ class CampaignController {
       //   );
       //   return Response.send(res);
       // }
-      await QueueService.fundCampaignWithCrypto(
+      const transaction = await QueueService.fundCampaignWithCrypto(
         campaign,
         amount,
         campaignWallet,
