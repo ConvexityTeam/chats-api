@@ -80,7 +80,7 @@ class WalletController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.'
+        'Server Error: Unexpected error occured.' + error
       );
       return Response.send(res);
     }
