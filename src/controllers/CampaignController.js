@@ -470,6 +470,7 @@ class CampaignController {
         organisation_id
       );
 
+      Logger.info(`Campaign: ${JSON.stringify(campaign)}`);
       const campaignWallet = campaign.Wallet;
       Logger.info(`Campaign Wallet: ${JSON.stringify(campaignWallet)}`);
       const OrgWallet = organisation.Wallet;
