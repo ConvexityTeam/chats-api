@@ -1136,6 +1136,14 @@ class QueueService {
       Logger.info(`Campaign wallet from QueService: ${JSON.stringify(wallet)}`);
     } else {
       wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
+      if (!wallet) {
+        wallet = await QueueService.createWallet(
+          OrganisationId,
+          'organisation'
+        );
+        Logger.info(`Created wallet from QueService`);
+        return;
+      }
       Logger.info(`Main wallet from QueService: ${JSON.stringify(wallet)}`);
     }
 
