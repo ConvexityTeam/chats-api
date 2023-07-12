@@ -28,9 +28,13 @@ class WalletController {
           );
         for (let tran of transactions.data) {
           if (tran.CampaignId) {
-            const hash = await BlockchainService.getTransactionDetails(
-              tran.transaction_hash
-            );
+            let hash = null;
+            if (tran.transaction_hash) {
+              hash = await BlockchainService.getTransactionDetails(
+                tran.transaction_hash
+              );
+            }
+
             const campaign = await CampaignService.getCampaignById(
               tran.CampaignId
             );
