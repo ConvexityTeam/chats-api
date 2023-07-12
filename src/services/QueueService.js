@@ -34,6 +34,7 @@ const {
   CONFIRM_NGO_FUNDING,
   CONFIRM_CAMPAIGN_FUNDING,
   CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
+  CONFIRM_PERSONAL_BENEFICIARY_FUNDING_BENEFICIARY,
   CONFIRM_FUND_SINGLE_BENEFICIARY,
   CONFIRM_VENDOR_REDEEM,
   CONFIRM_VENDOR_ORDER_QUEUE,
@@ -45,6 +46,7 @@ const {
   INCREASE_ALLOWANCE_GAS,
   INCREASE_TRANSFER_CAMPAIGN_GAS,
   INCREASE_TRANSFER_BENEFICIARY_GAS,
+  INCREASE_TRANSFER_PERSONAL_BENEFICIARY_GAS,
   INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL,
   INCREASE_GAS_FOR_VENDOR_WITHDRAWAL,
   INCREASE_REDEEM_GAS_BREDEEM,
@@ -232,7 +234,7 @@ const confirmCampaignFunding = RabbitMq['default'].declareQueue(
   {
     durable: true
   }
-);
+); 
 
 const confirmBFundingBeneficiary = RabbitMq['default'].declareQueue(
   CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
@@ -241,6 +243,12 @@ const confirmBFundingBeneficiary = RabbitMq['default'].declareQueue(
   }
 );
 
+const confirmPersonalBFundingBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_PERSONAL_BENEFICIARY_FUNDING_BENEFICIARY,
+  {
+    durable: true
+  }
+);
 const confirmOrderQueue = RabbitMq['default'].declareQueue(
   CONFIRM_VENDOR_ORDER_QUEUE,
   {
@@ -324,6 +332,12 @@ const increaseTransferBeneficiaryGas = RabbitMq['default'].declareQueue(
   }
 );
 
+const increaseTransferPersonalBeneficiaryGas = RabbitMq['default'].declareQueue(
+  INCREASE_TRANSFER_PERSONAL_BENEFICIARY_GAS,
+  {
+    durable: true
+  }
+);
 const increaseGasForBWithdrawal = RabbitMq['default'].declareQueue(
   INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL,
   {
@@ -630,7 +644,7 @@ class QueueService {
         contentType: 'application/json'
       })
     );
-  }
+  } 
   static async increaseTransferBeneficiaryGas(keys, message) {
     const payload = {keys, message};
     increaseTransferBeneficiaryGas.send(
@@ -639,6 +653,15 @@ class QueueService {
       })
     );
   }
+  static async increaseTransferPersonalBeneficiaryGas(keys, message) {
+    const payload = {keys, message};
+    increaseTransferPersonalBeneficiaryGas.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  } 
+
   static async increaseAllowance(keys, message) {
     const payload = {keys, message};
     increaseAllowance.send(
@@ -851,6 +874,26 @@ class QueueService {
       campaignWallet
     };
     confirmBFundingBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+  static async confirmPBFundingB(
+    hash,
+    amount,
+    senderWallet,
+    receiverWallet,
+    transactionId,
+  ) {
+    const payload = {
+      hash,
+      amount,
+      senderWallet,
+      receiverWallet,
+      transactionId,
+    };
+    confirmPersonalBFundingBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'
       })

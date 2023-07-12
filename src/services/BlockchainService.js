@@ -639,8 +639,8 @@ class BlockchainService {
           if (type === 'fundCampaign') {
             await QueueService.increaseTransferCampaignGas(keys, message);
           }
-          if (type === 'BFundB') {
-            await QueueService.increaseTransferBeneficiaryGas(keys, message);
+          if (type === 'PBFundB') {
+            await QueueService.increaseTransferPersonalBeneficiaryGas(keys, message);
           }
           if (type === 'withHoldFunds') {
             await QueueService.increaseGasWithHoldFunds(keys, message);

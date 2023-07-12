@@ -12,6 +12,7 @@ const {
   CONFIRM_NGO_FUNDING,
   CONFIRM_CAMPAIGN_FUNDING,
   CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY,
+  CONFIRM_PERSONAL_BENEFICIARY_FUNDING_BENEFICIARY,
   CONFIRM_VENDOR_ORDER_QUEUE,
   CONFIRM_FUND_SINGLE_BENEFICIARY,
   CONFIRM_BENEFICIARY_REDEEM,
@@ -23,6 +24,7 @@ const {
   INCREASE_ALLOWANCE_GAS,
   INCREASE_TRANSFER_CAMPAIGN_GAS,
   INCREASE_TRANSFER_BENEFICIARY_GAS,
+  INCREASE_TRANSFER_PERSONAL_BENEFICIARY_GAS,
   INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL,
   INCREASE_GAS_FOR_VENDOR_WITHDRAWAL,
   INCREASE_REDEEM_GAS_BREDEEM,
@@ -160,6 +162,14 @@ const confirmBFundingBeneficiary = RabbitMq['default'].declareQueue(
   }
 );
 
+const confirmPBFundingBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_PERSONAL_BENEFICIARY_FUNDING_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
 const confirmOrderQueue = RabbitMq['default'].declareQueue(
   CONFIRM_VENDOR_ORDER_QUEUE,
   {
@@ -244,6 +254,13 @@ const increaseTransferBeneficiaryGas = RabbitMq['default'].declareQueue(
   }
 );
 
+const increaseTransferPersonalBeneficiaryGas = RabbitMq['default'].declareQueue(
+  INCREASE_TRANSFER_PERSONAL_BENEFICIARY_GAS,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
 const increaseGasForBWithdrawal = RabbitMq['default'].declareQueue(
   INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL,
   {
@@ -1653,8 +1670,15 @@ RabbitMq['default']
             return;
           }
           hash = transferFrom.TransferedFrom;
+          await QueueService.confirmBFundingB(
+            hash,
+            amount,
+            senderWallet,
+            receiverWallet,
+            transactionId,
+            campaignWallet
+          );
         }
-
         if (!campaignWallet) {
           const beneficiary = await BlockchainService.setUserKeypair(
             `user_${senderWallet.UserId}`
@@ -1670,23 +1694,21 @@ RabbitMq['default']
               transactionId,
               campaignWallet
             },
-            'BFundB'
+            'PBFundB'
           );
           if (!transferTo) {
             msg.nack();
             return;
           }
           hash = transferTo.Transfered;
+          await QueueService.confirmPBFundingB(
+            hash,
+            amount,
+            senderWallet,
+            receiverWallet,
+            transactionId,
+          );
         }
-        await QueueService.confirmBFundingB(
-          hash,
-          amount,
-          senderWallet,
-          receiverWallet,
-          transactionId,
-          campaignWallet
-        );
-
         Logger.info(
           'BENEFICIARY TO BENEFICIARY TRANSFER SENT FOR CONFIRMATION'
         );
@@ -1731,6 +1753,48 @@ RabbitMq['default']
           receiverWallet,
           transactionId,
           campaignWallet
+        );
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
+
+      .then(_ => {
+        Logger.info(
+          `Running Process For Increasing Gas for Beneficiary to Beneficiary Transfer`
+        );
+      });
+
+      increaseTransferPersonalBeneficiaryGas
+      .activateConsumer(async msg => {
+        const {keys, message} = msg.getContent();
+        const {
+          amount,
+          senderWallet,
+          receiverWallet,
+          transactionId,
+        } = message;
+        const gasFee = await BlockchainService.reRunContract(
+          'token',
+          'transfer',
+          keys
+        );
+        if (!gasFee) {
+          msg.nack();
+          return;
+        }
+        await update_transaction(
+          {
+            transaction_hash: gasFee.retried
+          },
+          transactionId
+        );
+        await QueueService.confirmPBFundingB(
+          gasFee.retried,
+          amount,
+          senderWallet,
+          receiverWallet,
+          transactionId,
         );
       })
       .catch(error => {
@@ -1806,7 +1870,49 @@ RabbitMq['default']
           `Running Process For Confirming Beneficiary to Beneficiary Transfer`
         );
       });
+      confirmPBFundingBeneficiary
+      .activateConsumer(async msg => {
+        const {
+          hash,
+          amount,
+          senderWallet,
+          receiverWallet,
+          transactionId,
+        } = msg.getContent();
+        const confirm = await BlockchainService.confirmTransaction(
+          hash,
+          CONFIRM_PERSONAL_BENEFICIARY_FUNDING_BENEFICIARY,
+          msg.getContent()
+        );
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        const senderToken = await BlockchainService.balance(senderWallet.address);
+        const senderBalance = Number(senderToken.Balance.split(',').join(''));
+        const receiverToken = await BlockchainService.balance(receiverWallet.address);
+        const receiverBalance = Number(receiverToken.Balance.split(',').join(''));
+        await deductWalletAmount(senderBalance, senderWallet.uuid);
+        await addWalletAmount(receiverBalance, receiverWallet.uuid);
+        await update_transaction(
+          {
+            status: 'success',
+            is_approved: true,
+            transaction_hash: hash
+          },
+          transactionId
+        );
+        Logger.info('BENEFICIARY TRANSFER TO BENEFICIARY SUCCESS');
+      })
+      .catch(error => {
+        Logger.error(`RabbitMq Error: ${error}`);
+      })
 
+      .then(_ => {
+        Logger.info(
+          `Running Process For Confirming Beneficiary to Beneficiary Transfer`
+        );
+      });
     approveOneBeneficiary
       .activateConsumer(async msg => {
         const {
