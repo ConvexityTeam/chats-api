@@ -1320,7 +1320,7 @@ class QueueService {
       OrganisationId: OrgWallet.OrganisationId,
       narration: 'Approve Campaign Funding With Crypto'
     });
-
+    Logger.info(`transaction: ${JSON.stringify(transaction)}`);
     const payload = {
       OrgWallet,
       campaignWallet,
