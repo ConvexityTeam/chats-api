@@ -1117,18 +1117,27 @@ class QueueService {
     CampaignId
   }) {
     Logger.info(`OrganisationId from QueService: ${OrganisationId}`);
+    let wallet = null;
+    if (CampaignId) {
+      wallet = await WalletService.findOrganisationCampaignWallet(
+        OrganisationId,
+        CampaignId
+      );
 
-    // if (CampaignId) {
-    const wallet = await WalletService.findOrganisationCampaignWallet(
-      OrganisationId,
-      CampaignId
-    );
-    Logger.info(`Campaign wallet from QueService: ${JSON.stringify(wallet)}`);
-    ///}
-    //  else {
-    //   wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
-    //   Logger.info(`Main wallet from QueService: ${JSON.stringify(wallet)}`);
-    // }
+      if (!wallet) {
+        wallet = await QueueService.createWallet(
+          OrganisationId,
+          'organisation',
+          CampaignId
+        );
+        Logger.info(`Created wallet from QueService`);
+        return;
+      }
+      Logger.info(`Campaign wallet from QueService: ${JSON.stringify(wallet)}`);
+    } else {
+      wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
+      Logger.info(`Main wallet from QueService: ${JSON.stringify(wallet)}`);
+    }
 
     const transaction = await Transaction.create({
       log: transactionReference,
