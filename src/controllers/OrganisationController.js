@@ -295,13 +295,14 @@ class OrganisationController {
       const organisation = await OrganisationService.checkExistEmail(
         req.user.email
       );
+      Logger.info(`Organisation...: ${JSON.stringify(organisation)}`);
       const query = SanitizeObject(req.query);
       const [campaigns, organisationW, transaction] = await Promise.all([
         CampaignService.getPrivateCampaigns(query, organisation.id),
         OrganisationService.getOrganisationWallet(organisation.id),
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
-
+      Logger.info(`Transaction...: ${JSON.stringify(transaction)}`);
       if (campaigns.associatedCampaigns) {
         for (let campaign of campaigns.associatedCampaigns) {
           if (new Date(campaign.end_date) < new Date())
@@ -320,25 +321,18 @@ class OrganisationController {
 
           campaign.dataValues.iDonate = false;
           campaign.dataValues.amount_donated = 0;
-          const campaignW = await CampaignService.getCampaignWallet(
-            campaign.id,
-            organisation.id
-          );
-          if (
-            campaignW !== null &&
-            campaignW.Wallet &&
-            organisationW !== null &&
-            organisationW.Wallet
-          ) {
-            for (let tran of transaction.data) {
-              if (
-                tran.ReceiverWalletId === campaignW.Wallet.uuid &&
-                tran.SenderWalletId === organisationW.Wallet.uuid
-              ) {
-                campaign.dataValues.iDonate = true;
-                campaign.dataValues.amount_donated = tran.amount;
-                campaign.dataValues.donation_date = tran.createdAt;
-              }
+
+          for (let tran of transaction.data) {
+            Logger.info(`Campaign id...: ${campaign.id}`);
+            if (
+              tran.OrganisationId &&
+              tran.OrganisationId === organisation.id &&
+              tran.CampaignId &&
+              tran.CampaignId === campaign.id
+            ) {
+              campaign.dataValues.iDonate = true;
+              campaign.dataValues.amount_donated = tran.amount;
+              campaign.dataValues.donation_date = tran.createdAt;
             }
           }
         }

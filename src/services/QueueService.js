@@ -1158,13 +1158,22 @@ class QueueService {
     amount,
     CampaignId
   }) {
-    const wallet = await WalletService.findMainOrganisationWallet(
-      OrganisationId
-    );
-    if (!wallet) {
-      await QueueService.createWallet(OrganisationId, 'organisation');
-      return;
+    Logger.info(`CampaignId from QueService: ${CampaignId}`);
+    let wallet = null;
+    if (CampaignId) {
+      wallet = await WalletService.findSingleWallet({
+        CampaignId,
+        OrganisationId
+      });
+      Logger.info(`Campaign wallet from QueService: ${JSON.stringify(wallet)}`);
+    } else {
+      wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
+      // if (!wallet) {
+      //   await QueueService.createWallet(OrganisationId, 'organisation');
+      //   return;
+      // }
     }
+
     const transaction = await Transaction.create({
       log: transactionReference,
       narration: 'Fiat Deposit Transaction',
@@ -1384,7 +1393,12 @@ class QueueService {
     return transaction;
   }
 
-  static async CampaignExtensionFund(campaign, campaignWallet, OrgWallet, additional_budget) {
+  static async CampaignExtensionFund(
+    campaign,
+    campaignWallet,
+    OrgWallet,
+    additional_budget
+  ) {
     const realBudget = additional_budget;
     const transaction = await Transaction.create({
       amount: realBudget,

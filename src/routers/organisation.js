@@ -168,16 +168,14 @@ router
     WalletController.getOrganisationCampaignWallet
   );
 
-router
-  .route('/:organisation_id/wallets/paystack-deposit')
-  .post(
-    NgoSubAdminAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
-    WalletValidator.fiatDepositRules(),
-    WalletValidator.validate,
-    WalletController.paystackDeposit
-  );
+router.route('/:organisation_id/wallets/paystack-deposit').post(
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  // IsOrgMember,
+  WalletValidator.fiatDepositRules(),
+  WalletValidator.validate,
+  WalletController.paystackDeposit
+);
 router
   .route('/:organisation_id/wallets/:wallet_id?')
   .get(

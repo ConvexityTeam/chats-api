@@ -1704,6 +1704,7 @@ class AuthController {
           return Response.send(res);
         }
         const ngo = await OrganisationService.checkExist(token_exist.inviterId);
+
         const donor = await OrganisationService.checkExistEmail(
           token_exist.email
         );
@@ -1748,7 +1749,19 @@ class AuthController {
             CampaignId: campaignId
           });
         }
-
+        const isMember = await db.OrganisationMembers.findOne({
+          where: {
+            UserId: userExist.id,
+            OrganisationId: isAdded.inviterId
+          }
+        });
+        if (!isMember) {
+          await db.OrganisationMembers.create({
+            UserId: userExist.id,
+            role: 'donor',
+            OrganisationId: isAdded.inviterId
+          });
+        }
         await isAdded.update({isAdded: true});
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
