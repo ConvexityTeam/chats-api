@@ -112,12 +112,18 @@ class UserService {
     });
   }
 
+  static findLivenessByUserId(authorized_by) {
+    return Liveness.findOne({
+      where: {authorized_by}
+    });
+  }
   static findByEmail(email, extraClause = null) {
     return User.findOne({
       where: {
         email,
         ...extraClause
-      }
+      },
+      include: ['liveness']
     });
   }
   static findByUsername(username, extraClause = null) {
