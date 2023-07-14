@@ -185,6 +185,7 @@ class AdminController {
           ngo.name || user.first_name + ' ' + user.last_name;
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
+        ngo.dataValues.liveness = user.liveness;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries =
             await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
@@ -205,6 +206,21 @@ class AdminController {
       return Response.send(res);
     } catch (error) {
       console.log(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async findLiveness(req, res) {
+    try {
+      const liveness = await UserService.findLivenessByUserId(
+        req.params.user_id
+      );
+      Response.setSuccess(200, 'Liveness retrieved', liveness);
+      return Response.send(res);
+    } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error.'
@@ -453,21 +469,6 @@ class AdminController {
         delete donor.dataValues.associatedCampaigns;
       }
 
-      // for (let users of allDonors) {
-      //   for (let organisation of users.Organisations) {
-      //     const campaign = await OrganisationService.getAssociatedCampaigns(
-      //       organisation.id
-      //     );
-      //     const sum = organisation.Transactions.reduce(
-      //       (accumulator, object) => {
-      //         return accumulator + object.amount;
-      //       },
-      //       0
-      //     );
-      //     organisation.dataValues.AssociatedCampaign = campaign;
-      //     organisation.dataValues.total_donation = sum;
-      //   }
-      // }
       if (allDonors.length > 0) {
         Response.setSuccess(200, 'Donors retrieved', allDonors);
       } else {

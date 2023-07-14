@@ -56,6 +56,11 @@ router.post(
   OrganisationController.approveOrReject
 );
 
+router.get(
+  '/ngos/liveness/:user_id',
+  SuperAdminAuth,
+  AdminController.findLiveness
+);
 router.post('/auth/login', AuthController.signInAdmin);
 router.get('/ngos', SuperAdminAuth, AdminController.getAllNGO);
 // router.get('/ngo/:organisation_id', SuperAdminAuth, AdminController.getAnNGO);
