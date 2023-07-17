@@ -592,6 +592,17 @@ class VendorController {
         );
         return Response.send(res);
       }
+      const campaignAddress = await BlockchainService.setUserKeypair(
+        `campaign_${isVerify.campaignId}`
+      );
+      const beneficiaryAddress = await BlockchainService.setUserKeypair(
+        `user_${isVerify.beneficiaryId}campaign_${isVerify.campaignId}`
+      );
+      const tokenBalance = await BlockchainService.allowance(
+        campaignAddress.address,
+        beneficiaryAddress.address
+      );
+      const balance = Number(tokenBalance.Allowed.split(',').join(''));
       const campaign = await CampaignService.getCampaignById(
         isVerify.campaignId
       );
@@ -614,7 +625,7 @@ class VendorController {
       );
       smsToken.CampaignId = campaign.id;
       smsToken.Campaign_title = campaign.title;
-      smsToken.Approve_to_spend = isVerify.amount;
+      smsToken.Approve_to_spend = balance;
       smsToken.Beneficiary = beneficiary;
 
       Response.setSuccess(
