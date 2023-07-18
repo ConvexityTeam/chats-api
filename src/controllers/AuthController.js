@@ -127,7 +127,7 @@ class AuthController {
   static async beneficiariesExcel(req, res) {
     try {
       if (req.file == undefined) {
-        Response.setError(404, 'Please upload an excel file!', err);
+        Response.setError(404, 'Please upload an excel file!');
         return Response.send(res);
       }
       const {campaignId} = req.body;
