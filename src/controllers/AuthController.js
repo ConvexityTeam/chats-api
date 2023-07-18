@@ -216,7 +216,8 @@ class AuthController {
                         await QueueService.createWallet(
                           user.id,
                           'user',
-                          fields.campaign
+                          // fields.campaign
+                          campaignId
                         );
                       }
                     }
