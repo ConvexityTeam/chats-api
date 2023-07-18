@@ -576,15 +576,16 @@ RabbitMq['default']
               await BeneficiariesService.fetchCampaignBeneficiaries(CampaignId);
             const share = amount / beneficiaries.length;
             await Promise.all(
-              setTimeout(() => {
-                beneficiaries.forEach(async (beneficiary, index) => {
+              beneficiaries.forEach(async (beneficiary, index) => {
+                setTimeout(async () => {
                   await QueueService.reFundBeneficiaries(
                     campaign,
                     beneficiary.UserId,
                     share
                   );
-                });
-              }, index * 5000)
+                  Logger.info(`refunding beneficiary: ${beneficiary.UserId}`);
+                }, index * 5000);
+              })
             );
           } else {
             await campaignWallet.update({
@@ -676,6 +677,7 @@ RabbitMq['default']
           },
           transactionId
         );
+        Logger.info(`Refund beneficiary confirmed`);
       })
       .then(_ => {
         Logger.info(`Running Process For Confirming Refund Beneficiary.`);
