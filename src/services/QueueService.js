@@ -62,7 +62,9 @@ const {
   WITHHOLD_FUND_GAS_ERROR,
   WITHHELD_FUND,
   CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO,
-  INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO
+  INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO,
+  RE_FUN_BENEFICIARIES,
+  CONFIRM_RE_FUND_BENEFICIARIES
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 const CampaignService = require('./CampaignService');
@@ -83,6 +85,12 @@ const confirmDisburseItem = RabbitMq['default'].declareQueue(
 const fundBeneficiary = RabbitMq['default'].declareQueue(FUND_BENEFICIARY, {
   durable: true
 });
+const reFundBeneficiaries = RabbitMq['default'].declareQueue(
+  RE_FUN_BENEFICIARIES,
+  {
+    durable: true
+  }
+);
 const createWalletQueue = RabbitMq['default'].declareQueue(CREATE_WALLET, {
   durable: true
 });
@@ -303,6 +311,19 @@ const confirmWithHoldFundsQueue = RabbitMq['default'].declareQueue(
 const withHoldFundsQueue = RabbitMq['default'].declareQueue(WITHHELD_FUND, {
   durable: true
 });
+const increaseGasForRefund = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_RE_FUND_BENEFICIARIES,
+  {
+    durable: true
+  }
+);
+
+const confirmRefundBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_RE_FUND_BENEFICIARIES,
+  {
+    durable: true
+  }
+);
 
 const increaseAllowance = RabbitMq['default'].declareQueue(
   INCREASE_ALLOWANCE_GAS,
@@ -640,6 +661,25 @@ class QueueService {
       })
     );
   }
+
+  static async increaseGasForRefund(keys, message) {
+    const payload = {keys, message};
+    increaseGasForRefund.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async confirmRefundBeneficiary(hash, transactionId) {
+    const payload = {hash, transactionId};
+    confirmRefundBeneficiary.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
   static async increaseAllowance(keys, message) {
     const payload = {keys, message};
     increaseAllowance.send(
@@ -1456,6 +1496,31 @@ class QueueService {
     return transaction;
   }
 
+  static async reFundBeneficiaries(campaign, BeneficiaryId, amount) {
+    const transaction = await Transaction.create({
+      reference: generateTransactionRef(),
+      BeneficiaryId,
+      CampaignId: campaign.id,
+      amount,
+      status: 'processing',
+      is_approved: false,
+      OrganisationId: campaign.OrganisationId,
+      transaction_type: 'spent',
+      narration: 'Approve beneficiary spending',
+      transaction_origin: 'wallet'
+    });
+    const payload = {
+      campaign,
+      BeneficiaryId,
+      amount,
+      transactionId: transaction.uuid
+    };
+    reFundBeneficiaries.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
   static async FundBeneficiary(
     beneficiaryWallet,
     campaignWallet,
