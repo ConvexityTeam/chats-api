@@ -18,7 +18,7 @@ var storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, __basedir + '/beneficiaries/upload/');
   },
-  filename: (req, file, cb) => {
+  filename: (req, file, cb) => { 
     // console.log(file.originalname);
     cb(null, `${Date.now()}-chats-beneficiaries-${file.originalname}`);
   }
