@@ -33,7 +33,9 @@ const {
   INCREASE_GAS_SINGLE_BENEFICIARY,
   APPROVE_TO_SPEND_ONE_BENEFICIARY,
   CONFIRM_ONE_BENEFICIARY,
-  ESCROW_HASH
+  ESCROW_HASH,
+  RE_FUN_BENEFICIARIES,
+  CONFIRM_RE_FUND_BENEFICIARIES
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -62,6 +64,7 @@ const {
   AclRoles
 } = require('../utils');
 const {RERUN_QUEUE_AFTER} = require('../constants/rerun.queue');
+const BeneficiariesService = require('../services/BeneficiaryService');
 
 const verifyFiatDepsoitQueue = RabbitMq['default'].declareQueue(
   VERIFY_FIAT_DEPOSIT,
@@ -301,8 +304,23 @@ const increaseGasVTransferFrom = RabbitMq['default'].declareQueue(
   }
 );
 
+const reFundBeneficiaries = RabbitMq['default'].declareQueue(
+  RE_FUN_BENEFICIARIES,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
 const increaseGasForSB = RabbitMq['default'].declareQueue(
   INCREASE_GAS_SINGLE_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+const increaseGasForRefund = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_FOR_RE_FUND_BENEFICIARIES,
   {
     prefetch: 1,
     durable: true
@@ -318,6 +336,14 @@ const confirmOneBeneficiary = RabbitMq['default'].declareQueue(
 );
 const approveOneBeneficiary = RabbitMq['default'].declareQueue(
   APPROVE_TO_SPEND_ONE_BENEFICIARY,
+  {
+    prefetch: 1,
+    durable: true
+  }
+);
+
+const confirmRefundBeneficiary = RabbitMq['default'].declareQueue(
+  CONFIRM_RE_FUND_BENEFICIARIES,
   {
     prefetch: 1,
     durable: true
@@ -543,15 +569,37 @@ RabbitMq['default']
             CampaignId,
             OrganisationId
           });
-          await campaignWallet.update({
-            balance: Sequelize.literal(`balance + ${amount}`)
-            // fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-          });
-          await update_campaign(CampaignId, {
-            is_funded: true,
-            is_processing: false,
-            amount_disbursed: Sequelize.literal(`amount_disbursed + ${amount}`)
-          });
+
+          const campaign = await Campaign.findOne({where: {id: CampaignId}});
+          if (campaign.status === 'ongoing') {
+            const beneficiaries =
+              await BeneficiariesService.fetchCampaignBeneficiaries(CampaignId);
+            const share = amount / beneficiaries.length;
+            await Promise.all(
+              beneficiaries.forEach(async (beneficiary, index) => {
+                setTimeout(async () => {
+                  await QueueService.reFundBeneficiaries(
+                    campaign,
+                    beneficiary.UserId,
+                    share
+                  );
+                  Logger.info(`refunding beneficiary: ${beneficiary.UserId}`);
+                }, index * 5000);
+              })
+            );
+          } else {
+            await campaignWallet.update({
+              balance: Sequelize.literal(`balance + ${amount}`)
+              //fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+            });
+            await update_campaign(CampaignId, {
+              is_funded: true,
+              is_processing: false,
+              amount_disbursed: Sequelize.literal(
+                `amount_disbursed + ${amount}`
+              )
+            });
+          }
           Logger.info('campaign wallet updated');
         } else {
           const wallet = await WalletService.findMainOrganisationWallet(
@@ -575,6 +623,91 @@ RabbitMq['default']
       .then(_ => {
         Logger.info(`Running Process For Confirming NGO funding.`);
       });
+    reFundBeneficiaries
+      .activateConsumer(async msg => {
+        const {campaign, BeneficiaryId, amount, transactionId} =
+          msg.getContent();
+        const campaignKeyPair = await BlockchainService.setUserKeypair(
+          `campaign_${campaign.id}`
+        );
+        const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
+          `user_${BeneficiaryId}campaign_${campaign.id}`
+        );
+
+        const {Approved} = await BlockchainService.approveToSpend(
+          campaignKeyPair.privateKey,
+          beneficiaryKeyPair.address,
+          amount,
+          {
+            transactionId,
+            campaign,
+            beneficiaryId: BeneficiaryId,
+            amount
+          },
+          'refund_beneficiary'
+        );
+        if (!approve_to_spend) {
+          msg.nack();
+          return;
+        }
+        await QueueService.confirmRefundBeneficiary(Approved, transactionId);
+        Logger.info('Refund Beneficiary Sent For Confirmation');
+      })
+      .then(_ => {
+        Logger.info(`Running Process For Refund Beneficiary.`);
+      })
+      .catch(error => {
+        Logger.error(
+          `Error Running Process For Refund Beneficiary: ${error.message}`
+        );
+      });
+    confirmRefundBeneficiary
+      .activateConsumer(async msg => {
+        const {hash, transactionId} = msg.getContent();
+        const confirm = await BlockchainService.confirmTransaction(hash);
+        if (!confirm) {
+          msg.nack();
+          return;
+        }
+        await update_transaction(
+          {
+            transaction_hash: hash,
+            status: 'success',
+            is_approved: true
+          },
+          transactionId
+        );
+        Logger.info(`Refund beneficiary confirmed`);
+      })
+      .then(_ => {
+        Logger.info(`Running Process For Confirming Refund Beneficiary.`);
+      })
+      .catch(error => {
+        Logger.error(
+          `Error Running Process For Confirming Refund Beneficiary: ${error.message}`
+        );
+      });
+    increaseGasForRefund.activateConsumer(async msg => {
+      const {keys, message} = msg.getContent();
+      const {transactionId} = message;
+      const gasFee = await BlockchainService.reRunContract(
+        'token',
+        'increaseAllowance',
+        {
+          password: keys.ownerPassword,
+          spenderPswd: keys.spenderAdd,
+          amount: keys.amount.toString()
+        }
+      );
+      if (!gasFee) {
+        msg.nack();
+        return;
+      }
+      await QueueService.confirmRefundBeneficiary(
+        gasFee.retried,
+        transactionId
+      );
+    });
     processCampaignFund
       .activateConsumer(async msg => {
         const {OrgWallet, campaignWallet, campaign, transactionId, realBudget} =

@@ -587,6 +587,9 @@ class BlockchainService {
           if (type === 'multiple') {
             await QueueService.increaseAllowance(keys, message);
           }
+          if (type === 'refund_beneficiary') {
+            await QueueService.increaseGasForRefund(keys, message);
+          }
         }
 
         reject(error);
@@ -640,7 +643,10 @@ class BlockchainService {
             await QueueService.increaseTransferCampaignGas(keys, message);
           }
           if (type === 'PBFundB') {
-            await QueueService.increaseTransferPersonalBeneficiaryGas(keys, message);
+            await QueueService.increaseTransferPersonalBeneficiaryGas(
+              keys,
+              message
+            );
           }
           if (type === 'withHoldFunds') {
             await QueueService.increaseGasWithHoldFunds(keys, message);
