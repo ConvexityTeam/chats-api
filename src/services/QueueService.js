@@ -677,7 +677,7 @@ class QueueService {
       })
     );
   }
-  //Increase gas for refund
+  //Increase gas for refund beneficiary
   static async increaseGasForRefund(keys, message) {
     const payload = {keys, message};
     increaseGasForRefund.send(
