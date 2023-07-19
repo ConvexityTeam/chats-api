@@ -1,5 +1,6 @@
 require('dotenv').config();
 const {default: axios} = require('axios');
+const {exchangeRate} = require('../config');
 
 class CurrencyServices {
   httpService;
@@ -15,12 +16,16 @@ class CurrencyServices {
     return await this.getExchangeRate();
   }
   async getExchangeRate() {
-    // const appId = process.env.OPEN_EXCHANGE_APP;
-    // console.log(appId);
-    const url = `https://openexchangerates.org/api/latest.json?app_id=da41a176c0874c4498594d728d2aa4ca`;
-    const exchange = await axios.get(url);
-    this.exchangeData = exchange.data.rates;
-    return this.exchangeData;
+    return new Promise(async (resolve, reject) => {
+      try {
+        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}`;
+        const exchange = await axios.get(url);
+        this.exchangeData = exchange.data.rates;
+        resolve(this.exchangeData);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   async convertCurrency(fromCurrency, toCurrency, amount) {
