@@ -177,7 +177,6 @@ class AuthController {
 
 
         //loop through all the beneficiaries list to populate them in the db
-        await Promise.all(
         beneficiaries.forEach(async beneficiary => {
           console.log("beneficiary", beneficiary)
           const user_exist = await db.User.findOne({
@@ -194,7 +193,7 @@ class AuthController {
                 .hash(beneficiary.password, salt)
                 .then(async hash => {
                   const encryptedPassword = hash;
-                  const user = await db.User.create({
+                   await db.User.create({
                     RoleId: AclRoles.Beneficiary,
                     first_name: beneficiary.first_name,
                     last_name: beneficiary.last_name,
@@ -208,8 +207,8 @@ class AuthController {
                     referal_id: beneficiary.referal_id,
                     dob: beneficiary.dob,
                     pin: encryptedPin
-                  });
-
+                  })
+                  .then(async user => {
                     await QueueService.createWallet(user.id, 'user');
                     if (campaignExist.type === 'campaign') {
                       const benef = await Beneficiary.create({
@@ -229,12 +228,6 @@ class AuthController {
                     }
                   
                   createdSuccess.push(beneficiary.email); //add to success list
-                  Response.setSuccess(
-                    200,
-                    'Beneficiaries Uploaded Successfully:',
-                    user.id
-                  );
-                  return Response.send(res);
                 })
                 .catch(err => {
                   Response.setError(
@@ -244,13 +237,13 @@ class AuthController {
                   // return Response.send(res);
                   createdFailed.push(beneficiary.email);
                 });
+              })
             });
           } else {
             //include the email in the existing list
             existingEmails.push(beneficiary.email);
           }
         })
-      );
         Response.setSuccess(
           200,
           'Beneficiaries Uploaded Successfully:',
