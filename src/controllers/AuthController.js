@@ -153,11 +153,15 @@ class AuthController {
       readXlsxFile(path).then(rows => {
         // skip header or first row
         rows.shift();
-        console.log("rows", rows)
         let beneficiaries = [];
         const encryptedPin = createHash('0000');
         //loop through the file
         rows.forEach(row => {
+          console.log("row1", row[0])
+          console.log("row2", row[1])
+          console.log("row3", row[2])
+          console.log("row4", row[3])
+
           let beneficiary = {
             first_name: row[0],
             last_name: row[1],
