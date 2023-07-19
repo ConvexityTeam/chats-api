@@ -175,6 +175,7 @@ class AuthController {
           beneficiaries.push(beneficiary);
         });
         //loop through all the beneficiaries list to populate them in the db
+        await Promise.all(
         beneficiaries.forEach(async (beneficiary, index) => {
           setTimeout(async () => {
           console.log("beneficiary", beneficiary)
@@ -245,6 +246,7 @@ class AuthController {
         }, index * 10000);
 
         })
+      )
         Response.setSuccess(
           200,
           'Beneficiaries Uploaded Successfully:',
