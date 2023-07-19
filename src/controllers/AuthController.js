@@ -150,7 +150,7 @@ class AuthController {
       let existingEmails = []; //existings
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
-      readXlsxFile(path).then(rows => {
+      readXlsxFile(path).then(async rows => {
         // skip header or first row
         rows.shift();
         let beneficiaries = [];
@@ -177,6 +177,7 @@ class AuthController {
 
 
         //loop through all the beneficiaries list to populate them in the db
+        await Promise.all(
         beneficiaries.forEach(async beneficiary => {
           console.log("beneficiary", beneficiary)
           const user_exist = await db.User.findOne({
@@ -208,9 +209,7 @@ class AuthController {
                     dob: beneficiary.dob,
                     pin: encryptedPin
                   });
-                  console.log("user", user)
 
-                  if (user) {
                     await QueueService.createWallet(user.id, 'user');
                     if (campaignExist.type === 'campaign') {
                       const benef = await Beneficiary.create({
@@ -228,7 +227,7 @@ class AuthController {
                         );
                       }
                     }
-                  }
+                  
                   createdSuccess.push(beneficiary.email); //add to success list
                   Response.setSuccess(
                     200,
@@ -250,7 +249,8 @@ class AuthController {
             //include the email in the existing list
             existingEmails.push(beneficiary.email);
           }
-        });
+        })
+      );
         Response.setSuccess(
           200,
           'Beneficiaries Uploaded Successfully:',
