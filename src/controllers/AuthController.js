@@ -157,11 +157,6 @@ class AuthController {
         const encryptedPin = createHash('0000');
         //loop through the file
         rows.forEach(row => {
-          console.log("row1", row[0])
-          console.log("row2", row[1])
-          console.log("row3", row[2])
-          console.log("row4", row[3])
-
           let beneficiary = {
             first_name: row[0],
             last_name: row[1],
@@ -178,6 +173,8 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
+        console.log("beneficiaries", beneficiaries)
+
 
         //loop through all the beneficiaries list to populate them in the db
         beneficiaries.forEach(async beneficiary => {
