@@ -178,6 +178,7 @@ class AuthController {
 
         //loop through all the beneficiaries list to populate them in the db
         beneficiaries.forEach(async beneficiary => {
+          console.log("beneficiary", beneficiary)
           const user_exist = await db.User.findOne({
             where: {email: beneficiary.email}
           });
@@ -207,6 +208,8 @@ class AuthController {
                     dob: beneficiary.dob,
                     pin: encryptedPin
                   });
+                  console.log("user", user)
+
                   if (user) {
                     await QueueService.createWallet(user.id, 'user');
                     if (campaignExist.type === 'campaign') {
