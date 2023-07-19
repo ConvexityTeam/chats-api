@@ -31,6 +31,7 @@ const {
   BlockchainService
 } = require('../services');
 const BeneficiariesService = require('../services/BeneficiaryService');
+const { async } = require('regenerator-runtime');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
   {
@@ -211,20 +212,20 @@ class AuthController {
                   .then(async user => {
                     await QueueService.createWallet(user.id, 'user');
                     if (campaignExist.type === 'campaign') {
-                      const benef = await Beneficiary.create({
+                      await Beneficiary.create({
                         UserId: user.id,
                         CampaignId: campaignExist.id,
                         approved: true,
                         source: 'Excel File Upload'
-                      });
-                      if (benef) {
+                      })
+                      .then(async () => {
                         await QueueService.createWallet(
                           user.id,
                           'user',
                           // fields.campaign
                           campaignId
                         );
-                      }
+                      })
                     }
                   
                   createdSuccess.push(beneficiary.email); //add to success list
