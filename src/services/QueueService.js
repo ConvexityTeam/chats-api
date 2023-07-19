@@ -66,7 +66,8 @@ const {
   CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO,
   INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO,
   RE_FUN_BENEFICIARIES,
-  CONFIRM_RE_FUND_BENEFICIARIES
+  CONFIRM_RE_FUND_BENEFICIARIES,
+  INCREASE_GAS_FOR_RE_FUND_BENEFICIARIES
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 const CampaignService = require('./CampaignService');
