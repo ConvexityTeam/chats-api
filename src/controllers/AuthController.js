@@ -174,11 +174,9 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
-        console.log("beneficiaries", beneficiaries)
-
-
         //loop through all the beneficiaries list to populate them in the db
-        beneficiaries.forEach(async beneficiary => {
+        beneficiaries.forEach(async (beneficiary, index) => {
+          setTimeout(async () => {
           console.log("beneficiary", beneficiary)
           const user_exist = await db.User.findOne({
             where: {email: beneficiary.email}
@@ -244,6 +242,8 @@ class AuthController {
             //include the email in the existing list
             existingEmails.push(beneficiary.email);
           }
+        }, index * 10000);
+
         })
         Response.setSuccess(
           200,
