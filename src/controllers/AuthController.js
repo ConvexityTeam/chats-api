@@ -127,7 +127,6 @@ class AuthController {
       });
   }
   static async beneficiariesExcel(req, res) {
-    console.log("directory in controller", __basedir);
     try {
       if (req.file == undefined) {
         Response.setError(404, 'Please upload an excel file!');
@@ -148,11 +147,11 @@ class AuthController {
         return Response.send(res);
       }
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
-      console.log("path in controller", path);
       let existingEmails = []; //existings
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
       readXlsxFile(path).then(rows => {
+        console.log("rows", rows)
         // skip header or first row
         rows.shift();
         let beneficiaries = [];

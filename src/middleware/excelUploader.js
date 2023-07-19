@@ -17,15 +17,12 @@ const excelFilter = (req, file, cb) => {
   }
 };
 
-console.log("directory in middleware", __basedir);
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("path in middleware", __basedir + '/beneficiaries/upload/');
     cb(null, __basedir + '/beneficiaries/upload/');
   },
   filename: (req, file, cb) => { 
-    console.log(file.originalname);
     cb(null, `${Date.now()}-chats-beneficiaries-${file.originalname}`);
   }
 });
