@@ -1,3 +1,4 @@
+const path = require('path');
 const {Op} = require('sequelize');
 const {
   AclRoles,
@@ -39,8 +40,7 @@ const ninVerificationQueue = amqp_1['default'].declareQueue(
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
-const __basedir = __dirname + '/..';
-console.log("directory in controller", __basedir);
+const __basedir = path.join(__dirname, '..')
 
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
@@ -127,6 +127,7 @@ class AuthController {
       });
   }
   static async beneficiariesExcel(req, res) {
+    console.log("directory in controller", __basedir);
     try {
       if (req.file == undefined) {
         Response.setError(404, 'Please upload an excel file!');
