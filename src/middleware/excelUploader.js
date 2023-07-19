@@ -1,6 +1,8 @@
 const multer = require('multer');
 const __basedir = __dirname + '/..';
 
+console.log("directory in middleware", __basedir);
+
 const excelFilter = (req, file, cb) => {
   if (
     file.mimetype.includes('excel') ||
@@ -16,6 +18,7 @@ const excelFilter = (req, file, cb) => {
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log("path in middleware", __basedir + '/beneficiaries/upload/');
     cb(null, __basedir + '/beneficiaries/upload/');
   },
   filename: (req, file, cb) => { 

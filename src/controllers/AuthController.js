@@ -40,6 +40,8 @@ const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
 const __basedir = __dirname + '/..';
+console.log("directory in controller", __basedir);
+
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
 class AuthController {
@@ -145,7 +147,7 @@ class AuthController {
         return Response.send(res);
       }
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
-      console.log("path", path);
+      console.log("path in controller", path);
       let existingEmails = []; //existings
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
