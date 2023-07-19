@@ -26,6 +26,7 @@ class TransactionService {
         'status',
         'transaction_hash',
         'transaction_type',
+        'narration',
         'createdAt',
         'updatedAt'
       ],

@@ -1406,7 +1406,7 @@ class QueueService {
       ReceiverWalletId: campaignWallet.uuid,
       CampaignId: campaign.id,
       OrganisationId: OrgWallet.OrganisationId,
-      narration: 'Approve Campaign Funding With Crypto'
+      narration: 'crypto funding'
     });
     Logger.info(`transaction: ${JSON.stringify(transaction)}`);
     const payload = {

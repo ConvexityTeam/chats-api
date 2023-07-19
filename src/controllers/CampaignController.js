@@ -10,7 +10,8 @@ const {
   TaskService,
   BlockchainService,
   AwsService,
-  TransactionService
+  TransactionService,
+  CurrencyServices
 } = require('../services');
 const Validator = require('validatorjs');
 const db = require('../models');
@@ -496,9 +497,11 @@ class CampaignController {
       //   );
       //   return Response.send(res);
       // }
+      const rate = await CurrencyServices.convertCurrency('USD', 'NGN', amount);
+
       const transaction = await QueueService.fundCampaignWithCrypto(
         campaign,
-        amount,
+        rate,
         campaignWallet,
         OrgWallet
       );
