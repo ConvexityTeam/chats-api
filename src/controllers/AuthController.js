@@ -151,9 +151,9 @@ class AuthController {
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
       readXlsxFile(path).then(rows => {
-        console.log("rows", rows)
         // skip header or first row
         rows.shift();
+        console.log("rows", rows)
         let beneficiaries = [];
         const encryptedPin = createHash('0000');
         //loop through the file
