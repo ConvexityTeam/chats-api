@@ -179,7 +179,6 @@ class AuthController {
         // await Promise.all(
         beneficiaries.forEach(async (beneficiary, index) => {
           setTimeout(async () => {
-            console.log("beneficiary", beneficiary)
             const user_exist = await db.User.findOne({
               where: { email: beneficiary.email }
             });
@@ -212,7 +211,6 @@ class AuthController {
                     })
                       // .then(async user => {
                         await QueueService.createWallet(user.id, 'user');
-                        console.log("campaign", campaignExist)
                         if (campaignExist.type === 'campaign') {
                           const res = await CampaignService.addBeneficiary(
                             campaignExist.id,
