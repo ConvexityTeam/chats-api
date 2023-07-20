@@ -217,7 +217,7 @@ class AuthController {
                           const res = await CampaignService.addBeneficiary(
                             campaignExist.id,
                             user.id,
-                            'Excel File Upload'
+                            'web app'
                           );
                         }
 
