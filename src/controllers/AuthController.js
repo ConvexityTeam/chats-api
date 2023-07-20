@@ -214,20 +214,11 @@ class AuthController {
                         await QueueService.createWallet(user.id, 'user');
                         console.log("campaign", campaignExist)
                         if (campaignExist.type === 'campaign') {
-                          await Beneficiary.create({
-                            UserId: user.id,
-                            CampaignId: campaignExist.id,
-                            approved: true,
-                            source: 'Excel File Upload'
-                          })
-                            // .then(async () => {
-                              await QueueService.createWallet(
-                                user.id,
-                                'user',
-                                // fields.campaign
-                                CampaignId
-                              );
-                            // })
+                          const res = await CampaignService.addBeneficiary(
+                            campaignExist.id,
+                            user.id,
+                            'Excel File Upload'
+                          );
                         }
 
                         createdSuccess.push(beneficiary.email); //add to success list
