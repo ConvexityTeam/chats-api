@@ -209,6 +209,7 @@ class AuthController {
                       dob: beneficiary.dob,
                       pin: encryptedPin
                     })
+                    console.log("user", user);
                       // .then(async user => {
                         await QueueService.createWallet(user.id, 'user');
                         if (campaignExist.type === 'campaign') {
