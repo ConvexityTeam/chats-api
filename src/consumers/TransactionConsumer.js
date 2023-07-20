@@ -35,7 +35,8 @@ const {
   CONFIRM_ONE_BENEFICIARY,
   ESCROW_HASH,
   RE_FUN_BENEFICIARIES,
-  CONFIRM_RE_FUND_BENEFICIARIES
+  CONFIRM_RE_FUND_BENEFICIARIES,
+  INCREASE_GAS_FOR_RE_FUND_BENEFICIARIES
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
