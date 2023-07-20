@@ -134,9 +134,10 @@ class AuthController {
         return Response.send(res);
       }
       const { campaignId } = req.body;
+      const CampaignId = Number(campaignId)
 
       const campaignExist = await db.Campaign.findOne({
-        where: { id: campaignId }
+        where: { id: CampaignId }
       });
 
       if (!campaignExist) {
@@ -224,7 +225,7 @@ class AuthController {
                                 user.id,
                                 'user',
                                 // fields.campaign
-                                campaignId
+                                CampaignId
                               );
                             // })
                         }
