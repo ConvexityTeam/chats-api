@@ -175,7 +175,7 @@ class AuthController {
           beneficiaries.push(beneficiary);
         });
         //loop through all the beneficiaries list to populate them in the db
-        await Promise.all(
+        // await Promise.all(
         beneficiaries.forEach(async (beneficiary, index) => {
           setTimeout(async () => {
           console.log("beneficiary", beneficiary)
@@ -193,11 +193,12 @@ class AuthController {
                 .hash(beneficiary.password, salt)
                 .then(async hash => {
                   const encryptedPassword = hash;
+                  const phoneInString = beneficiary.phone.toString();
                    await db.User.create({
                     RoleId: AclRoles.Beneficiary,
                     first_name: beneficiary.first_name,
                     last_name: beneficiary.last_name,
-                    phone: beneficiary.phone,
+                    phone: phoneInString,
                     email: beneficiary.email,
                     password: encryptedPassword,
                     gender: beneficiary.gender,
@@ -246,7 +247,7 @@ class AuthController {
         }, index * 10000);
 
         })
-      )
+      // )
         Response.setSuccess(
           200,
           'Beneficiaries Uploaded Successfully:',
