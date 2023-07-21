@@ -213,6 +213,20 @@ class AdminController {
       return Response.send(res);
     }
   }
+
+  static async fetchLiveness(req, res) {
+    try {
+      const liveness = await UserService.fetchLiveness();
+      Response.setSuccess(200, 'Liveness retrieved', liveness);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.'
+      );
+      return Response.send(res);
+    }
+  }
   static async findLiveness(req, res) {
     try {
       const liveness = await UserService.findLivenessByUserId(
