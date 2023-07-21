@@ -617,8 +617,8 @@ class CampaignController {
         product_name: 'required|string',
         product_type: 'required|in:product,service',
         description: 'required|string',
-        'location.country': 'required|string',
-        'location.state': 'required|string',
+        country: 'required|string',
+        state: 'required|string',
         price: 'required|numeric',
         start_date: 'required|date',
         end_date: 'required|date'
@@ -637,6 +637,7 @@ class CampaignController {
         );
         return Response.send(res);
       }
+      data.location = {country: data.country, state: data.state};
       data.organisation_id = organisation_id;
       data.campaign_id = campaign_id;
       const request = await CampaignService.proposalRequest(data);
