@@ -1395,13 +1395,12 @@ class QueueService {
     campaignWallet,
     OrgWallet
   ) {
-    Logger.info(`Amount from crypto: ${amount}`);
     const transaction = await Transaction.create({
       amount: Number(amount),
       reference: generateTransactionRef(),
       status: 'processing',
       transaction_origin: 'wallet',
-      transaction_type: 'transfer',
+      transaction_type: 'deposit',
       SenderWalletId: OrgWallet.uuid,
       ReceiverWalletId: campaignWallet.uuid,
       CampaignId: campaign.id,
