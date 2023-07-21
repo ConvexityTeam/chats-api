@@ -112,6 +112,9 @@ class UserService {
     });
   }
 
+  static async fetchLiveness() {
+    return await Liveness.findAll();
+  }
   static findLivenessByUserId(authorized_by) {
     return Liveness.findOne({
       where: {authorized_by}
