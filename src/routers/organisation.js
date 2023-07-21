@@ -62,6 +62,16 @@ router.get(
   ParamValidator.CampaignIdOptional,
   CampaignController.campaignsWithOnboardedBeneficiary
 );
+
+router
+  .route('/organisation_id/proposal-requests/campaign_id')
+  .post(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.proposalRequest
+  );
 router.post(
   '/extend-campaign/:organisation_id',
   NgoSubAdminAuth,

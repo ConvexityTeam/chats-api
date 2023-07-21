@@ -6,7 +6,7 @@ const {
   Complaint,
   Beneficiary,
   VoucherToken,
-  Transaction,
+  ProposalRequest,
   FormAnswer,
   AssociatedCampaign,
   CampaignForm,
@@ -22,6 +22,9 @@ const Pagination = require('../utils/pagination');
 const {Logger} = require('../libs');
 
 class CampaignService {
+  static async proposalRequest(data) {
+    return await ProposalRequest.create(data);
+  }
   static campaignHistory(id) {
     return Campaign.findByPk(id, {
       include: ['history']

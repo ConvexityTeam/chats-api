@@ -609,6 +609,51 @@ class CampaignController {
     }
   }
 
+  static async proposalRequest(req, res) {
+    const data = req.body;
+    const {organisation_id, campaign_id} = req.params;
+    try {
+      const rules = {
+        product_name: 'required|string',
+        product_type: 'required|in:product,service',
+        description: 'required|string',
+        'location.country': 'required|string',
+        'location.state': 'required|string',
+        price: 'required|numeric',
+        start_date: 'required|date',
+        end_date: 'required|date'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      if (!(data.start_date >= Date.now())) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Proposal date must start after today'
+        );
+        return Response.send(res);
+      }
+      data.organisation_id = organisation_id;
+      data.campaign_id = campaign_id;
+      const request = await CampaignService.proposalRequest(data);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposal Request Sent Successfully',
+        request
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
   static async rejectSubmission(req, res) {
     const {taskAssignmentId} = req.params;
     try {
