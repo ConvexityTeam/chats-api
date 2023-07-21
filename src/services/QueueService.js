@@ -1402,12 +1402,12 @@ class QueueService {
       transaction_origin: 'wallet',
       transaction_type: 'deposit',
       SenderWalletId: OrgWallet.uuid,
+      is_approved: false,
       ReceiverWalletId: campaignWallet.uuid,
       CampaignId: campaign.id,
       OrganisationId: OrgWallet.OrganisationId,
       narration: 'crypto funding'
     });
-    Logger.info(`transaction: ${JSON.stringify(transaction)}`);
     const payload = {
       OrgWallet,
       campaignWallet,
