@@ -510,6 +510,7 @@ class CampaignController {
         `Campaign fund with ${amount} is Processing.`,
         transaction
       );
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
