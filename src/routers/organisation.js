@@ -64,7 +64,7 @@ router.get(
 );
 
 router
-  .route('/organisation_id/proposal-requests/campaign_id')
+  .route('/:organisation_id/proposal-requests/:campaign_id')
   .post(
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
