@@ -18,9 +18,13 @@ module.exports = {
         allowNull: false,
         defaultValue: 'product'
       },
-      category_type: {
+      category_id: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        references: {
+          model: 'ProductCategories',
+          key: 'id'
+        }
       },
       description: {
         type: Sequelize.TEXT
