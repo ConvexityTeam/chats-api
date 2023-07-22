@@ -3,7 +3,6 @@ const {default: axios} = require('axios');
 const {exchangeRate} = require('../config');
 const currencySymbolMap = require('currency-symbol-map');
 
-
 class CurrencyServices {
   httpService;
   appId;
@@ -38,12 +37,11 @@ class CurrencyServices {
   async getSpecificCurrencyExchangeRate(currencyCode) {
     return new Promise(async (resolve, reject) => {
       try {
-        const baseCurrency = "USD";
-        const url = 
-        `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
+        const baseCurrency = 'USD';
+        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
         const exchangeRateData = await axios.get(url);
         const rateData = exchangeRateData.data.rates;
-        const currencySymbol =  await this.getCurrencySymbol(currencyCode);
+        const currencySymbol = await this.getCurrencySymbol(currencyCode);
         resolve({
           currencyCode,
           currencySymbol,
