@@ -34,7 +34,6 @@ const amqp_1 = require('../libs/RabbitMQ/Connection');
 const {async} = require('regenerator-runtime');
 const Pagination = require('../utils/pagination');
 const {generateOTP} = require('../libs/Utils');
-const {parse} = require('date-fns');
 const approveToSpendQueue = amqp_1['default'].declareQueue('approveToSpend', {
   durable: true
 });
