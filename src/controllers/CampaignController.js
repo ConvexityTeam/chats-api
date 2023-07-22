@@ -637,7 +637,7 @@ class CampaignController {
       const rules = {
         product_name: 'required|string',
         tag: 'required|in:product,service',
-        category_type: 'required|string',
+        category_id: 'required|numeric',
         price: 'required|numeric',
         quantity: 'required|numeric',
         description: 'required|string',
