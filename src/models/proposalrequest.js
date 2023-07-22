@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       product_name: DataTypes.STRING,
       tag: DataTypes.ENUM('product', 'service'),
-      category_type: DataTypes.STRING,
+      category_id: DataTypes.INTEGER,
       quantity: DataTypes.INTEGER,
       description: DataTypes.TEXT,
       location: DataTypes.JSON,
