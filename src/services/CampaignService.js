@@ -476,7 +476,12 @@ class CampaignService {
       ...queryOptions,
       where: {
         ...extraClause,
-        OrganisationId
+        OrganisationId,
+        campaign_id: Sequelize.where(
+          Sequelize.col('proposal_requests.campaign_id'),
+          Op.ne,
+          null
+        )
       },
       attributes: {
         include: [
@@ -487,7 +492,7 @@ class CampaignService {
         ]
       },
       include: [{model: ProposalRequest, as: 'proposal_requests'}],
-      group: ['proposal_requests.id']
+      group: ['Campaign.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
