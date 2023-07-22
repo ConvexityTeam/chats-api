@@ -484,7 +484,8 @@ class CampaignService {
               'request_count'
             ]
           ]
-        }
+        },
+        group: ['proposal_requests.id']
       },
 
       include: [{model: ProposalRequest, as: 'proposal_requests'}]
