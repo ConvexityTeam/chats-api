@@ -20,7 +20,7 @@ class CurrencyServices {
   }
 
   async getExchangeRate() {
-    return await this.getExchangeRate();
+    return await this.getExchangeRate(); 
   }
   async getExchangeRate() {
     return new Promise(async (resolve, reject) => {
