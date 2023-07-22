@@ -483,8 +483,13 @@ class CampaignService {
           null
         )
       },
+
       attributes: {
         include: [
+          'id',
+          'title',
+          'type',
+          'description',
           [
             Sequelize.fn('COUNT', Sequelize.col('proposal_requests.id')),
             'request_count'
