@@ -618,7 +618,8 @@ class CampaignController {
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Proposal Requests: ${JSON.stringify(requests)}`
+        `Proposal Requests fetched successfully.`,
+        requests
       );
       return Response.send(res);
     } catch (error) {
@@ -655,7 +656,6 @@ class CampaignController {
       const start_date = moment(data.start_date, 'DD-MM-YYYY').format();
       const end_date = moment(data.end_date, 'DD-MM-YYYY').format();
       const is_after = end_date > start_date;
-      console.log(is_after, 'is_after');
       const is_before = start_date > today;
       if (!is_after) {
         Response.setError(
@@ -675,6 +675,8 @@ class CampaignController {
       data.location = {country: data.country, state: data.state};
       data.organisation_id = organisation_id;
       data.campaign_id = campaign_id;
+      data.start_date = start_date;
+      data.end_date = end_date;
       const request = await CampaignService.proposalRequest(data);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
