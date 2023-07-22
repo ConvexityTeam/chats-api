@@ -4,7 +4,8 @@ const {
   WalletController,
   OrganisationController,
   CampaignController,
-  ComplaintController
+  ComplaintController,
+  ProductController
 } = require('../controllers');
 const CashForWorkController = require('../controllers/CashForWorkController');
 const UsersController = require('../controllers/UsersController');
@@ -636,6 +637,10 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     OrganisationController.rejectAllbeneficiaries
   );
+router
+  .route('/category-type')
+  .get(NgoSubAdminAuth, ProductController.fetchCategoryTypes)
+  .post(NgoSubAdminAuth, ProductController.addCategoryType);
 router
   .route('/products/:vendor_id')
   .get(OrganisationController.getProductVendors);
