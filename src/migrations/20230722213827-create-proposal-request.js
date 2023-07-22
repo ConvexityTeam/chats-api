@@ -19,7 +19,7 @@ module.exports = {
         defaultValue: 'product'
       },
       category_id: {
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'ProductCategories',

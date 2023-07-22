@@ -9,8 +9,7 @@ class ProductController {
 
       const rules = {
         name: 'required|string',
-        description: 'required|string',
-        organisation_id: 'required|numeric'
+        description: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -22,6 +21,7 @@ class ProductController {
         Response.setError(422, 'Category type already exists');
         return Response.send(res);
       }
+      req.body.organisation_id = req.params.organisation_id;
       const categoryType = await ProductService.addCategoryType(req.body);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -41,7 +41,9 @@ class ProductController {
 
   static async fetchCategoryTypes(req, res) {
     try {
-      const categoryTypes = await ProductService.fetchCategoryTypes();
+      const categoryTypes = await ProductService.fetchCategoryTypes(
+        req.params.organisation_id
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Category Types fetched.',
