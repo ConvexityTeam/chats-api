@@ -11,7 +11,7 @@ class ProductController {
 
       const rules = {
         name: 'required|string',
-        description: 'required|string'
+        description: 'string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
