@@ -500,7 +500,7 @@ class CampaignService {
       group: ['Campaign.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
-    return {...response, totalItems: campaign.length};
+    return {...response, totalItems: campaign.data.length};
   }
 
   static async getCampaigns(OrganisationId, extraClause = {}) {
