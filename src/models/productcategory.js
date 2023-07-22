@@ -1,7 +1,7 @@
 'use strict';
 const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class ProposalRequest extends Model {
+  class ProductCategory extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,24 +11,16 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  ProposalRequest.init(
+  ProductCategory.init(
     {
-      product_name: DataTypes.STRING,
-      tag: DataTypes.ENUM('product', 'service'),
-      category_type: DataTypes.STRING,
-      quantity: DataTypes.INTEGER,
+      name: DataTypes.STRING,
       description: DataTypes.TEXT,
-      location: DataTypes.JSON,
-      start_date: DataTypes.DATE,
-      end_date: DataTypes.DATE,
-      price: DataTypes.DOUBLE,
-      campaign_id: DataTypes.INTEGER,
       organisation_id: DataTypes.INTEGER
     },
     {
       sequelize,
-      modelName: 'ProposalRequest'
+      modelName: 'ProductCategory'
     }
   );
-  return ProposalRequest;
+  return ProductCategory;
 };

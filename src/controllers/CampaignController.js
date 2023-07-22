@@ -636,11 +636,13 @@ class CampaignController {
     try {
       const rules = {
         product_name: 'required|string',
-        product_type: 'required|in:product,service',
+        tag: 'required|in:product,service',
+        category_type: 'required|string',
+        price: 'required|numeric',
+        quantity: 'required|numeric',
         description: 'required|string',
         country: 'required|string',
         state: 'required|string',
-        price: 'required|numeric',
         start_date: 'required',
         end_date: 'required'
       };
