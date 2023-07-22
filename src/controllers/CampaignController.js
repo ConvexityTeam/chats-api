@@ -624,7 +624,7 @@ class CampaignController {
       return Response.send(res);
     } catch (error) {
       Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR + error,
         'Internal Server Error. Contact Support!..'
       );
       return Response.send(res);
@@ -686,8 +686,8 @@ class CampaignController {
       return Response.send(res);
     } catch (error) {
       Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR + error,
+        'Internal Server Error. Contact Support!..'
       );
       return Response.send(res);
     }
