@@ -492,7 +492,7 @@ class CampaignService {
         ]
       },
       include: [{model: ProposalRequest, as: 'proposal_requests'}],
-      group: ['Campaign.id']
+      group: ['Campaign.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
