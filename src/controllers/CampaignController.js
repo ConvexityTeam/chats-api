@@ -19,7 +19,6 @@ const {Op} = require('sequelize');
 const moment = require('moment');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {Response, Logger} = require('../libs');
-const {isAfter, parseISO, toDate, isDate} = require('date-fns');
 const {
   HttpStatusCode,
   SanitizeObject,
@@ -645,7 +644,6 @@ class CampaignController {
         start_date: 'required',
         end_date: 'required'
       };
-      console.log(JSON.stringify(data));
 
       const validation = new Validator(data, rules);
 
@@ -653,10 +651,13 @@ class CampaignController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const is_after = isAfter(
-        parse(data.end_date, 'dd-mm-yyyy', new Date()),
-        parse(data.start_date, 'dd-mm-yyyy', new Date())
-      );
+
+      const today = moment(new Date(), 'DD-MM-YYYY').format();
+      const start_date = moment(data.start_date, 'DD-MM-YYYY').format();
+      const end_date = moment(data.end_date, 'DD-MM-YYYY').format();
+      const is_after = end_date > start_date;
+      console.log(is_after, 'is_after');
+      const is_before = start_date > today;
       if (!is_after) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -664,18 +665,14 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      // if (
-      //   !isAfter(
-      //     parse(data.start_date, 'dd-mm-yyyy', new Date()),
-      //     parse(new Date(), 'dd-mm-yyyy', new Date())
-      //   )
-      // ) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Start date must be after today'
-      //   );
-      //   return Response.send(res);
-      // }
+      if (!is_before) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Start date must be after today'
+        );
+        return Response.send(res);
+      }
+
       data.location = {country: data.country, state: data.state};
       data.organisation_id = organisation_id;
       data.campaign_id = campaign_id;
