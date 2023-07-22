@@ -11,6 +11,7 @@ const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
+const CurrencyServices = require('./CurrencyServices');
 const {user} = require('../config/mailer');
 
 // const Vault = require('hashi-vault-js');
@@ -66,8 +67,11 @@ class AuthService {
               expiresIn: '48hr'
             }
           );
+          const currencyData = await CurrencyServices.getSpecificCurrencyExchangeRate(user.currency);
+
           resolve({
             user,
+            currencyData,
             token
           });
         }

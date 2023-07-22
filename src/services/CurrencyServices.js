@@ -1,6 +1,8 @@
 require('dotenv').config();
 const {default: axios} = require('axios');
 const {exchangeRate} = require('../config');
+const currencySymbolMap = require('currency-symbol-map');
+
 
 class CurrencyServices {
   httpService;
@@ -10,6 +12,11 @@ class CurrencyServices {
     // this.httpService = 'https://openexchangerates.org/api';
     // this.appId = process.env.OPEN_EXCHANGE_APP;
     this.exchangeData = this.getExchangeRate();
+  }
+
+  async getCurrencySymbol(currencyCode) {
+    const symbol = currencySymbolMap[currencyCode];
+    return symbol ? symbol : currencyCode;
   }
 
   async getExchangeRate() {
@@ -22,6 +29,26 @@ class CurrencyServices {
         const exchange = await axios.get(url);
         this.exchangeData = exchange.data.rates;
         resolve(this.exchangeData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  async getSpecificCurrencyExchangeRate(currencyCode) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const baseCurrency = "USD";
+        const url = 
+        `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
+        const exchangeRateData = await axios.get(url);
+        const rateData = exchangeRateData.data.rates;
+        const currencySymbol =  await this.getCurrencySymbol(currencyCode);
+        resolve({
+          currencyCode,
+          currencySymbol,
+          rateData
+        });
       } catch (error) {
         reject(error);
       }
