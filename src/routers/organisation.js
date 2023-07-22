@@ -72,6 +72,10 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.proposalRequest
   );
+router.get(
+  '/:organisation_id/proposal-requests',
+  CampaignController.fetchProposalRequests
+);
 router.post(
   '/extend-campaign/:organisation_id',
   NgoSubAdminAuth,
