@@ -457,6 +457,39 @@ class CampaignService {
       // ],
     });
   }
+
+  static async fetchProposalRequests(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      where: {
+        ...extraClause,
+        OrganisationId,
+        campaign_id: Sequelize.where(
+          Sequelize.col('proposal_requests.campaign_id'),
+          '!=',
+          null
+        )
+      },
+
+      include: [{model: ProposalRequest, as: 'proposal_requests'}]
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
+  }
+
   static async getCampaigns(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
@@ -785,41 +818,6 @@ class CampaignService {
     const response = await Pagination.getPagingData(form, page, limit);
     return response;
   }
-
-  // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
-  //   const payload = {
-  //     CampaignId: campaign.id,
-  //     NgoWalletAddress: OrgWallet.address,
-  //     CampaignWalletAddress: campaignWallet.address,
-  //     amount: campaign.budget,
-  //     beneficiaries
-  //   };
-
-  //   // : beneficiaries.map(beneficiary => {
-  //   //   const bWalletId = beneficiary.User.Wallets.length ? beneficiary.User.Wallets[0].uuid : null;
-  //   //   return [
-  //   //     beneficiary.UserId,
-  //   //     bWalletId
-  //   //   ]
-  //   // })
-
-  //   // Queue fuding disbursing
-  //   const org = await Wallet.findOne({where: {uuid: OrgWallet.uuid}})
-
-  //   if
-  //   await Wallet.update({
-  //     balance: Sequelize.literal(`balance - ${campaign.budget}`)
-  //   }, {
-  //     where: {
-  //       uuid: OrgWallet.uuid
-  //     }
-  //   });
-
-  //   return {
-  //     campaign,
-  //     transaction
-  //   }
-  // }
 }
 
 module.exports = CampaignService;

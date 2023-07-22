@@ -70,6 +70,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'beneficiaryId',
         as: 'CampaignTokens'
       });
+
+      Campaign.hasMany(models.ProposalRequest, {
+        foreignKey: 'campaign_id',
+        as: 'proposal_requests'
+      });
     }
   }
 

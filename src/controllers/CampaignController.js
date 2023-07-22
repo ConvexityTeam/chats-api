@@ -19,6 +19,7 @@ const {Op} = require('sequelize');
 const moment = require('moment');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {Response, Logger} = require('../libs');
+const {isAfter, parseISO, toDate, isDate} = require('date-fns');
 const {
   HttpStatusCode,
   SanitizeObject,
@@ -34,6 +35,7 @@ const amqp_1 = require('../libs/RabbitMQ/Connection');
 const {async} = require('regenerator-runtime');
 const Pagination = require('../utils/pagination');
 const {generateOTP} = require('../libs/Utils');
+const {parse} = require('date-fns');
 const approveToSpendQueue = amqp_1['default'].declareQueue('approveToSpend', {
   durable: true
 });
@@ -609,6 +611,26 @@ class CampaignController {
     }
   }
 
+  static async fetchProposalRequests(req, res) {
+    try {
+      const {organisation_id} = req.params;
+      const requests = await CampaignService.fetchProposalRequests(
+        organisation_id,
+        req.query
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Proposal Requests: ${JSON.stringify(requests)}`
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support!..'
+      );
+      return Response.send(res);
+    }
+  }
   static async proposalRequest(req, res) {
     const data = req.body;
     const {organisation_id, campaign_id} = req.params;
@@ -623,6 +645,7 @@ class CampaignController {
         start_date: 'required',
         end_date: 'required'
       };
+      console.log(JSON.stringify(data));
 
       const validation = new Validator(data, rules);
 
@@ -630,13 +653,29 @@ class CampaignController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      if (!(data.start_date >= Date.now())) {
+      const is_after = isAfter(
+        parse(data.end_date, 'dd-mm-yyyy', new Date()),
+        parse(data.start_date, 'dd-mm-yyyy', new Date())
+      );
+      if (!is_after) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Proposal date must start after today'
+          'End date must be after start date'
         );
         return Response.send(res);
       }
+      // if (
+      //   !isAfter(
+      //     parse(data.start_date, 'dd-mm-yyyy', new Date()),
+      //     parse(new Date(), 'dd-mm-yyyy', new Date())
+      //   )
+      // ) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Start date must be after today'
+      //   );
+      //   return Response.send(res);
+      // }
       data.location = {country: data.country, state: data.state};
       data.organisation_id = organisation_id;
       data.campaign_id = campaign_id;
