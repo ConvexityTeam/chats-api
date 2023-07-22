@@ -63,13 +63,15 @@ router.get(
   CampaignController.campaignsWithOnboardedBeneficiary
 );
 
-router.route('/:organisation_id/proposal-requests/:campaign_id').post(
-  // NgoSubAdminAuth,
-  // ParamValidator.OrganisationId,
-  // IsOrgMember,
-  // CampaignValidator.campaignBelongsToOrganisation,
-  CampaignController.proposalRequest
-);
+router
+  .route('/:organisation_id/proposal-requests/:campaign_id')
+  .post(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.proposalRequest
+  );
 router.get(
   '/:organisation_id/proposal-requests',
   CampaignController.fetchProposalRequests
