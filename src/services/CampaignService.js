@@ -483,8 +483,13 @@ class CampaignService {
           null
         )
       },
+
       attributes: {
         include: [
+          'id',
+          'title',
+          'type',
+          'description',
           [
             Sequelize.fn('COUNT', Sequelize.col('proposal_requests.id')),
             'request_count'
@@ -495,7 +500,7 @@ class CampaignService {
       group: ['Campaign.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
-    return response;
+    return {...response, totalItems: campaign.length};
   }
 
   static async getCampaigns(OrganisationId, extraClause = {}) {
