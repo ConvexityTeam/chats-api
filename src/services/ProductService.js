@@ -17,6 +17,18 @@ class ProductService {
   static addCategoryType(categoryType) {
     return ProductCategory.create(categoryType);
   }
+
+  static fetchCategoryTypes(organisation_id) {
+    return ProductCategory.findAll({
+      where: {organisation_id},
+      order: [['createdAt', 'DESC']]
+    });
+  }
+  static findCategoryType(where = {}) {
+    return ProductCategory.findOne({
+      where
+    });
+  }
   static addProduct(product, vendors, CampaignId) {
     return Promise.all(
       vendors.map(async UserId => {
