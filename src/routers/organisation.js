@@ -638,9 +638,17 @@ router
     OrganisationController.rejectAllbeneficiaries
   );
 router
-  .route('/category-type')
-  .get(NgoSubAdminAuth, ProductController.fetchCategoryTypes)
-  .post(NgoSubAdminAuth, ProductController.addCategoryType);
+  .route('/category-type/:organisation_id')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    ProductController.fetchCategoryTypes
+  )
+  .post(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    ProductController.addCategoryType
+  );
 router
   .route('/products/:vendor_id')
   .get(OrganisationController.getProductVendors);
