@@ -476,19 +476,18 @@ class CampaignService {
       ...queryOptions,
       where: {
         ...extraClause,
-        OrganisationId,
-        attributes: {
-          include: [
-            [
-              Sequelize.fn('COUNT', Sequelize.col('proposal_requests.id')),
-              'request_count'
-            ]
-          ]
-        },
-        group: ['proposal_requests.id']
+        OrganisationId
       },
-
-      include: [{model: ProposalRequest, as: 'proposal_requests'}]
+      attributes: {
+        include: [
+          [
+            Sequelize.fn('COUNT', Sequelize.col('proposal_requests.id')),
+            'request_count'
+          ]
+        ]
+      },
+      include: [{model: ProposalRequest, as: 'proposal_requests'}],
+      group: ['proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
