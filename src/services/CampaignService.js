@@ -477,11 +477,14 @@ class CampaignService {
       where: {
         ...extraClause,
         OrganisationId,
-        campaign_id: Sequelize.where(
-          Sequelize.col('proposal_requests.campaign_id'),
-          '!=',
-          null
-        )
+        attributes: {
+          include: [
+            [
+              Sequelize.fn('COUNT', Sequelize.col('proposal_requests.id')),
+              'request_count'
+            ]
+          ]
+        }
       },
 
       include: [{model: ProposalRequest, as: 'proposal_requests'}]
