@@ -1,6 +1,8 @@
 const {Response, Logger} = require('../libs');
 const {ProductService, UserService} = require('../services');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
+const Validator = require('validatorjs');
+
 const db = require('../models');
 class ProductController {
   static async addCategoryType(req, res) {
