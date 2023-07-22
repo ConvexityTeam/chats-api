@@ -13,10 +13,14 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
-      product_type: {
+      tag: {
         type: Sequelize.ENUM('product', 'service'),
         allowNull: false,
         defaultValue: 'product'
+      },
+      category_type: {
+        type: Sequelize.STRING,
+        allowNull: false
       },
       description: {
         type: Sequelize.TEXT
@@ -28,6 +32,9 @@ module.exports = {
       price: {
         type: Sequelize.DOUBLE,
         allowNull: false
+      },
+      quantity: {
+        type: Sequelize.INTEGER
       },
       start_date: {
         type: Sequelize.DATE,
