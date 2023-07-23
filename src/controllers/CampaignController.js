@@ -666,7 +666,9 @@ class CampaignController {
       const campaignProduct = await ProductService.findCampaignProducts(
         campaign_id
       );
-      const find = campaignProduct.filter(a => data.find(b => a.tag === b.tag));
+      Logger.info(`Campaign Product: ${JSON.stringify(campaignProduct)}`);
+      const find = campaignProduct.filter(a => data.find(b => b.tag === a.tag));
+      Logger.info(`Find: ${JSON.stringify(find)}`);
       if (find) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
