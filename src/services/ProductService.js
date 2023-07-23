@@ -24,6 +24,10 @@ class ProductService {
       order: [['createdAt', 'DESC']]
     });
   }
+
+  static findCategoryById(id) {
+    return ProductCategory.findByPk(id);
+  }
   static findCategoryType(where = {}) {
     return ProductCategory.findOne({
       where
