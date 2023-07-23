@@ -9,10 +9,10 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     // await queryInterface.removeColumn('Campaigns', 'location');
-    // await queryInterface.addColumn('Campaigns', 'location', {
-    //   type: Sequelize.JSON,
-    //   allowNull: true
-    // });
+    await queryInterface.addColumn('Campaigns', 'location', {
+      type: Sequelize.JSON,
+      allowNull: true
+    });
   },
 
   down: async (queryInterface, Sequelize) => {

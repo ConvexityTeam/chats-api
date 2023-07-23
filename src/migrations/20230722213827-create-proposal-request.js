@@ -15,7 +15,9 @@ module.exports = {
         references: {
           model: 'Products',
           key: 'id'
-        }
+        },
+        OnDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       campaign_id: {
         type: Sequelize.INTEGER,
@@ -23,7 +25,9 @@ module.exports = {
         references: {
           model: 'Campaigns',
           key: 'id'
-        }
+        },
+        OnDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       organisation_id: {
         type: Sequelize.INTEGER,
@@ -31,7 +35,9 @@ module.exports = {
         references: {
           model: 'Organisations',
           key: 'id'
-        }
+        },
+        OnDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

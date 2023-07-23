@@ -9,13 +9,11 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      budget: {
-        type: Sequelize.FLOAT
-      },
+
       quantity: {
         type: Sequelize.INTEGER
       },
-      unit_price: {
+      cost: {
         type: Sequelize.FLOAT
       },
       vendor_id: {
@@ -26,13 +24,25 @@ module.exports = {
           key: 'id'
         }
       },
+      product_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Products',
+          key: 'id'
+        },
+        OnDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      },
       proposal_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'ProposalRequests',
           key: 'id'
-        }
+        },
+        OnDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

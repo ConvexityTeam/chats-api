@@ -9,15 +9,17 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     // await queryInterface.removeColumn('Products', 'product_category');
-    // await queryInterface.addColumn('Products', 'category_id', {
-    //   allowNull: true,
-    //   type: Sequelize.INTEGER,
-    //   after: 'tag',
-    //   reference: {
-    //     model: 'ProductCategories',
-    //     key: 'id'
-    //   }
-    // });
+    await queryInterface.addColumn('Products', 'category_id', {
+      allowNull: true,
+      type: Sequelize.INTEGER,
+      after: 'tag',
+      reference: {
+        model: 'ProductCategories',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
