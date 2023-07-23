@@ -621,12 +621,10 @@ class CampaignController {
       for (let campaign of campaigns.data) {
         for (let request of campaign.proposal_requests) {
           if (request.category_id) {
-            console.log(request, 'request');
-
             const category_type = await ProductService.findCategoryById(
               request.category_id
             );
-            request.category_type = category_type;
+            request.dataValues.category_type = category_type;
           }
         }
       }

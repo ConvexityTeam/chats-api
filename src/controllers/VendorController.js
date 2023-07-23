@@ -27,6 +27,37 @@ class VendorController {
   constructor() {
     this.emails = [];
   }
+
+  static async submitProposal(req, res) {
+    try {
+      const rules = {
+        proposal_id: 'required|integer',
+        budget: 'required|integer',
+        quantity: 'required|integer',
+        unit_price: 'required|integer'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        if (validation.fails()) {
+          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+          return Response.send(res);
+        }
+      }
+      req.body.vendor_id = req.user.id;
+      const proposal = await VendorService.submitProposal(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Proposal submitted',
+        proposal
+      );
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
   static async getAllVendors(req, res) {
     try {
       const allVendors = await VendorService.getAllVendors();
