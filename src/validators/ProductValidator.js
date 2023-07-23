@@ -20,7 +20,7 @@ class ProductValidator extends BaseValidator {
       .notEmpty()
       .withMessage('Product/Service/Item tag is required.'),
     body('*.category_id')
-      .optional()
+      .notEmpty()
       .withMessage('Category ID is required.')
       .isInt()
       .withMessage('Category ID must be numeric.'),
