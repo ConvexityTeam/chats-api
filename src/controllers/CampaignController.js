@@ -684,7 +684,7 @@ class CampaignController {
           product.product_ref = generateProductRef();
           product.CampaignId = campaign_id;
           Logger.info(product, 'product');
-          products.proposal_id = createdProposal.id;
+          product.proposal_id = createdProposal.id;
           const createdProduct = await ProductService.addSingleProduct(product);
           Logger.info(createdProduct, 'createdProduct');
           return createdProduct;
