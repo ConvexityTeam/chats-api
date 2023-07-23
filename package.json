@@ -26,6 +26,7 @@
     "@aws-sdk/client-s3": "^3.7.0",
     "@droidsolutions-oss/amqp-ts": "^2.6.3",
     "@types/express-handlebars": "^6.0.0",
+    "@types/nodemailer-express-handlebars": "^4.0.2",
     "@types/xlsx": "^0.0.36",
     "@zohocrm/nodejs-sdk-2.0": "^5.0.0",
     "amqplib": "^0.7.1",
