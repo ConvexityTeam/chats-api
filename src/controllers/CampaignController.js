@@ -649,11 +649,11 @@ class CampaignController {
     const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
-        'product.*.category_id': 'required|numeric',
-        'product.*.tag': 'required|string',
-        'product.*.type': 'required|string,in:product,service',
-        'product.*.cost': 'required|numeric',
-        'product.*.quantity': 'required|numeric'
+        '*.category_id': 'required|numeric',
+        '*.tag': 'required|string',
+        '*.type': 'required|string,in:product,service',
+        '*.cost': 'required|numeric',
+        '*.quantity': 'required|numeric'
       };
 
       const validation = new Validator(data, rules);
@@ -666,7 +666,7 @@ class CampaignController {
       const campaignProduct = await ProductService.findCampaignProducts(
         campaign_id
       );
-      const find = campaignProduct.filter(a => body.find(b => a.tag === b.tag));
+      const find = campaignProduct.filter(a => data.find(b => a.tag === b.tag));
       if (find) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
