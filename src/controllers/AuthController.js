@@ -24,7 +24,7 @@ const amqp_1 = require('./../libs/RabbitMQ/Connection');
 const {
   UserService,
   QueueService,
-  MailerService,
+  MailerService, 
   OrganisationService,
   CampaignService,
   WalletService,
