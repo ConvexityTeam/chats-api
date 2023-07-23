@@ -500,8 +500,7 @@ class CampaignService {
       include: [
         {
           model: ProposalRequest,
-          as: 'proposal_requests',
-          include: ['category_type']
+          as: 'proposal_requests'
         }
       ],
       group: ['Campaign.id', 'proposal_requests.id', 'category_type.id']
