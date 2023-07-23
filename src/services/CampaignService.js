@@ -500,7 +500,7 @@ class CampaignService {
           include: ['proposal_products']
         }
       ],
-      group: ['Campaign.id', 'proposal_requests.id', 'proposal_requests.id']
+      group: ['Campaign.id', 'proposal_requests.id', 'proposal_products.id.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
