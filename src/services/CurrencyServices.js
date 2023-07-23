@@ -15,6 +15,7 @@ class CurrencyServices {
 
   async getCurrencySymbol(currencyCode) {
     const symbol = currencySymbolMap[currencyCode];
+    console.log("symbol", symbol);
     return symbol ? symbol : currencyCode;
   }
 
