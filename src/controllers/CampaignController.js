@@ -613,18 +613,20 @@ class CampaignController {
   static async fetchProposalRequests(req, res) {
     try {
       const {organisation_id} = req.params;
-      const requests = await CampaignService.fetchProposalRequests(
+      const campaigns = await CampaignService.fetchProposalRequests(
         organisation_id,
         req.query
       );
 
-      for (let request of requests.data) {
-        console.log(request, 'request');
-        const category_type = await ProductService.findCategoryType({
-          id: request.category_id
-        });
-        request.category_type = category_type;
+      for (let campaign of campaigns.data) {
+        for (let request of campaign.proposal_requests) {
+          const category_type = await ProductService.findCategoryType({
+            id: request.category_id
+          });
+          request.category_type = category_type;
+        }
       }
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Proposal Requests fetched successfully.`,
