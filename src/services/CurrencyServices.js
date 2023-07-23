@@ -2,6 +2,7 @@ require('dotenv').config();
 const {default: axios} = require('axios');
 const {exchangeRate} = require('../config');
 const currencySymbolMap = require('currency-symbol-map');
+const currencyCodes = require('currency-codes');
 
 class CurrencyServices {
   httpService;
@@ -14,12 +15,13 @@ class CurrencyServices {
   }
 
   async getCurrencySymbol(currencyCode) {
-    const symbol = currencySymbolMap[currencyCode];
+    const symbol = currencySymbolMap(currencyCode);
+    console.log("symbol", symbol);
     return symbol ? symbol : currencyCode;
   }
 
   async getExchangeRate() {
-    return await this.getExchangeRate();
+    return await this.getExchangeRate();  
   }
   async getExchangeRate() {
     return new Promise(async (resolve, reject) => {
