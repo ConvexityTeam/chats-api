@@ -10,7 +10,7 @@ const {
   BankAccount,
   Order,
   Market,
-  Campaign,
+  VendorProposal,
   Wallet,
   Product,
   OrderProduct,
@@ -28,6 +28,9 @@ const {
 const Pagination = require('../utils/pagination');
 
 class VendorService {
+  static submitProposal(proposal) {
+    return VendorProposal.create(proposal);
+  }
   static searchVendorStore(store_name, extraClause = null) {
     const where = {
       ...extraClause,

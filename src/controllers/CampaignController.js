@@ -621,12 +621,10 @@ class CampaignController {
       for (let campaign of campaigns.data) {
         for (let request of campaign.proposal_requests) {
           if (request.category_id) {
-            console.log(request, 'request');
-
             const category_type = await ProductService.findCategoryById(
               request.category_id
             );
-            request.category_type = category_type;
+            request.dataValues.category_type = category_type;
           }
         }
       }
@@ -647,19 +645,15 @@ class CampaignController {
   }
   static async proposalRequest(req, res) {
     const data = req.body;
+    const request = {};
     const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
-        product_name: 'required|string',
-        tag: 'required|in:product,service',
-        category_id: 'required|numeric',
-        price: 'required|numeric',
-        quantity: 'required|numeric',
-        description: 'required|string',
-        country: 'required|string',
-        state: 'required|string',
-        start_date: 'required',
-        end_date: 'required'
+        'product.*.category_id': 'required|numeric',
+        'product.*.tag': 'required|string',
+        'product.*.type': 'required|string,in:product,service',
+        'product.*.cost': 'required|numeric',
+        'product.*.quantity': 'required|numeric'
       };
 
       const validation = new Validator(data, rules);
@@ -669,36 +663,38 @@ class CampaignController {
         return Response.send(res);
       }
 
-      const today = moment(new Date(), 'DD-MM-YYYY').format();
-      const start_date = moment(data.start_date, 'DD-MM-YYYY').format();
-      const end_date = moment(data.end_date, 'DD-MM-YYYY').format();
-      const is_after = end_date > start_date;
-      const is_before = start_date > today;
-      if (!is_after) {
+      const campaignProduct = await ProductService.findCampaignProducts(
+        campaign_id
+      );
+      const find = campaignProduct.filter(a => body.find(b => a.tag === b.tag));
+      if (find) {
         Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'End date must be after start date'
-        );
-        return Response.send(res);
-      }
-      if (!is_before) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Start date must be after today'
+          HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
+          `Product with tag: ${find[0].tag} already exists`
         );
         return Response.send(res);
       }
 
-      data.location = {country: data.country, state: data.state};
-      data.organisation_id = organisation_id;
-      data.campaign_id = campaign_id;
-      data.start_date = start_date;
-      data.end_date = end_date;
-      const request = await CampaignService.proposalRequest(data);
+      const product_ids = [];
+      const products = await Promise.all(
+        data.map(async product => {
+          product.product_ref = generateProductRef();
+          product.CampaignId = campaign_id;
+          const createdProduct = await ProductService.addSingleProduct(product);
+          product_ids.push(createdProduct.id);
+          return createdProduct;
+        })
+      );
+
+      request.organisation_id = organisation_id;
+      request.campaign_id = campaign_id;
+      request.product_id = product_ids;
+      const createdProposal = await CampaignService.proposalRequest(data);
+      createdProposal.dataValues.products = products;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        'Proposal Request Sent Successfully',
-        request
+        'Proposal Request Created Successfully',
+        createdProposal
       );
       return Response.send(res);
     } catch (error) {

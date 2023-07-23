@@ -9,44 +9,13 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      product_name: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      tag: {
-        type: Sequelize.ENUM('product', 'service'),
-        allowNull: false,
-        defaultValue: 'product'
-      },
-      category_id: {
+      product_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'ProductCategories',
+          model: 'Products',
           key: 'id'
         }
-      },
-      description: {
-        type: Sequelize.TEXT
-      },
-      location: {
-        type: Sequelize.JSON,
-        allowNull: false
-      },
-      price: {
-        type: Sequelize.DOUBLE,
-        allowNull: false
-      },
-      quantity: {
-        type: Sequelize.INTEGER
-      },
-      start_date: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      end_date: {
-        type: Sequelize.DATE,
-        allowNull: false
       },
       campaign_id: {
         type: Sequelize.INTEGER,

@@ -37,6 +37,7 @@ router.get('/products/sold/value', VendorController.getSoldProductValue);
 router.get('/store/products/:storeId', VendorController.getProductByStore);
 router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
+router.post('/submit-proposal', VendorAuth, VendorController.submitProposal);
 router.post(
   '/verify/sms-token/:smstoken',
   VendorAuth,
