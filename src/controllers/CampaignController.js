@@ -681,7 +681,9 @@ class CampaignController {
         data.map(async product => {
           product.product_ref = generateProductRef();
           product.CampaignId = campaign_id;
+          Logger.info(product, 'product');
           const createdProduct = await ProductService.addSingleProduct(product);
+          Logger.info(createdProduct, 'createdProduct');
           product_ids.push(createdProduct.id);
           return createdProduct;
         })
