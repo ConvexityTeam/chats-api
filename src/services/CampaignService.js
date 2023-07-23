@@ -501,10 +501,10 @@ class CampaignService {
         {
           model: ProposalRequest,
           as: 'proposal_requests',
-          include: [{model: ProductCategory, as: 'category_type'}]
+          include: ['category_type']
         }
       ],
-      group: ['Campaign.id', 'proposal_requests.id']
+      group: ['Campaign.id', 'proposal_requests.id', 'category_type.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
