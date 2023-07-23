@@ -11,7 +11,8 @@ const {
   BlockchainService,
   AwsService,
   TransactionService,
-  CurrencyServices
+  CurrencyServices,
+  ProductService
 } = require('../services');
 const Validator = require('validatorjs');
 const db = require('../models');
@@ -616,6 +617,13 @@ class CampaignController {
         organisation_id,
         req.query
       );
+
+      for (let request of requests) {
+        const category_type = await ProductService.findCategoryType({
+          id: request.category_id
+        });
+        request.category_type = category_type;
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Proposal Requests fetched successfully.`,
