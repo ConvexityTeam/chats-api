@@ -667,10 +667,10 @@ class CampaignController {
         campaign_id
       );
       const find = campaignProduct.filter(a => data.find(b => b.tag === a.tag));
-      if (find) {
+      if (find.length > 0) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
-          `Product with tag: ${find && find[0].tag} already exists`
+          `Product with tag: ${find[0].tag} already exists`
         );
         return Response.send(res);
       }
