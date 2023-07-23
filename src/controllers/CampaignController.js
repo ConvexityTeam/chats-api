@@ -666,13 +666,11 @@ class CampaignController {
       const campaignProduct = await ProductService.findCampaignProducts(
         campaign_id
       );
-      Logger.info(`Campaign Product: ${JSON.stringify(campaignProduct)}`);
       const find = campaignProduct.filter(a => data.find(b => b.tag === a.tag));
-      Logger.info(`Find: ${JSON.stringify(find)}`);
       if (find) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
-          `Product with tag: ${find[0].tag} already exists`
+          `Product with tag: ${find && find[0].tag} already exists`
         );
         return Response.send(res);
       }
