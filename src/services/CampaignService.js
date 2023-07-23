@@ -501,7 +501,7 @@ class CampaignService {
         {
           model: ProposalRequest,
           as: 'proposal_requests',
-          include: ['category_type']
+          include: [{model: ProductCategory, as: 'category_type'}]
         }
       ],
       group: ['Campaign.id', 'proposal_requests.id']
