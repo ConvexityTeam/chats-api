@@ -691,7 +691,7 @@ class CampaignController {
 
       request.organisation_id = organisation_id;
       request.campaign_id = campaign_id;
-      request.product_id = product_ids;
+      request.product_id = product_ids.values();
       const createdProposal = await CampaignService.proposalRequest(request);
       createdProposal.dataValues.products = products;
       Response.setSuccess(
