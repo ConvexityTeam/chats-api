@@ -35,7 +35,7 @@ class ProductService {
   }
 
   static addSingleProduct(product) {
-    return Product.create(product);
+    return ProposalRequest.create({});
   }
   static addProduct(product, vendors, CampaignId) {
     return Promise.all(
