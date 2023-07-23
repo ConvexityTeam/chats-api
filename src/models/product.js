@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
   Product.init(
     {
       type: DataTypes.ENUM('product', 'service'),
-      product_category: DataTypes.STRING,
+      category_id: DataTypes.INTEGER,
       tag: DataTypes.STRING,
       cost: DataTypes.FLOAT,
       product_ref: DataTypes.STRING,
