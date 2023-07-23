@@ -28,7 +28,8 @@ const {
   GenearteSMSToken,
   GenerateSecrete,
   AclRoles,
-  generateTransactionRef
+  generateTransactionRef,
+  generateProductRef
 } = require('../utils');
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
