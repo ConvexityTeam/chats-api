@@ -24,7 +24,10 @@ module.exports = (sequelize, DataTypes) => {
         as: 'ProductBeneficiaries',
         through: 'ProductBeneficiary'
       });
-
+      Product.belongsTo(models.ProposalRequest, {
+        foreignKey: 'proposal_id',
+        as: 'proposal_products'
+      });
       //Product.hasMany(models.OrderProduct, { foreignKey: 'ProductId', as: 'Product' });
     }
   }
