@@ -219,6 +219,7 @@ class MailerService {
       template: "sendDonorInvite",
       context: 
       {
+        to,
         token,
         id,
         title,
