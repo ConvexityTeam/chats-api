@@ -9,13 +9,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      ProposalRequest.hasOne(models.ProductCategory, {
+        foreignKey: 'category_id',
+        as: 'category_type'
+      });
     }
   }
   ProposalRequest.init(
     {
       product_name: DataTypes.STRING,
       tag: DataTypes.ENUM('product', 'service'),
-      category_type: DataTypes.STRING,
+      category_id: DataTypes.INTEGER,
       quantity: DataTypes.INTEGER,
       description: DataTypes.TEXT,
       location: DataTypes.JSON,

@@ -8,6 +8,7 @@ const {
   VoucherToken,
   ProposalRequest,
   FormAnswer,
+  ProductCategory,
   AssociatedCampaign,
   CampaignForm,
   Organisation,
@@ -496,7 +497,13 @@ class CampaignService {
           ]
         ]
       },
-      include: [{model: ProposalRequest, as: 'proposal_requests'}],
+      include: [
+        {
+          model: ProposalRequest,
+          as: 'proposal_requests',
+          include: [{model: ProductCategory, as: 'category_type'}]
+        }
+      ],
       group: ['Campaign.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
