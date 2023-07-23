@@ -17,7 +17,6 @@ module.exports = (sequelize, DataTypes) => {
   }
   ProposalRequest.init(
     {
-      product_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       organisation_id: DataTypes.INTEGER
     },

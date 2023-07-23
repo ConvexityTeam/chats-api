@@ -676,23 +676,20 @@ class CampaignController {
         return Response.send(res);
       }
 
-      const product_ids = [];
+      request.organisation_id = organisation_id;
+      request.campaign_id = campaign_id;
+      const createdProposal = await CampaignService.proposalRequest(request);
       const products = await Promise.all(
         data.map(async product => {
           product.product_ref = generateProductRef();
           product.CampaignId = campaign_id;
           Logger.info(product, 'product');
+          products.proposal_id = createdProposal.id;
           const createdProduct = await ProductService.addSingleProduct(product);
           Logger.info(createdProduct, 'createdProduct');
-          product_ids.push(createdProduct.id);
           return createdProduct;
         })
       );
-
-      request.organisation_id = organisation_id;
-      request.campaign_id = campaign_id;
-      request.product_id = product_ids.values();
-      const createdProposal = await CampaignService.proposalRequest(request);
       createdProposal.dataValues.products = products;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,

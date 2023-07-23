@@ -9,16 +9,6 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      product_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'Products',
-          key: 'id'
-        },
-        OnDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      },
       campaign_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
