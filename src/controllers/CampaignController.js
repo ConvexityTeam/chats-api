@@ -619,6 +619,7 @@ class CampaignController {
       );
 
       for (let request of requests.data) {
+        console.log(request, 'request');
         const category_type = await ProductService.findCategoryType({
           id: request.category_id
         });
