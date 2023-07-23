@@ -15,6 +15,7 @@ const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
+  SuperNgoVendor,
   IsOrgMember
 } = require('../middleware');
 const multer = require('../middleware/multer');
@@ -75,6 +76,7 @@ router
   );
 router.get(
   '/:organisation_id/proposal-requests',
+  SuperNgoVendor,
   CampaignController.fetchProposalRequests
 );
 router.post(
