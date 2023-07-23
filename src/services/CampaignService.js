@@ -487,10 +487,6 @@ class CampaignService {
 
       attributes: {
         include: [
-          'id',
-          'title',
-          'type',
-          'description',
           [
             Sequelize.fn('COUNT', Sequelize.col('proposal_requests.id')),
             'request_count'
@@ -500,10 +496,11 @@ class CampaignService {
       include: [
         {
           model: ProposalRequest,
-          as: 'proposal_requests'
+          as: 'proposal_requests',
+          include: ['proposal_products']
         }
       ],
-      group: ['Campaign.id', 'proposal_requests.id']
+      group: ['Campaign.id', 'proposal_requests.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
