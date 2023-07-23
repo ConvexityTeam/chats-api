@@ -191,6 +191,8 @@ class MailerService {
     });
   }
   sendInvite(to, token, campaign, ngo, exist, message, link) {
+    const {id, title } = campaign;
+
     // const body = `
     // <div>
     //   <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
@@ -217,8 +219,10 @@ class MailerService {
       template: "sendDonorInvite",
       context: 
       {
+        to,
         token,
-        campaign,
+        id,
+        title,
         ngo, 
         exist,
         message,
