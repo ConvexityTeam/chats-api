@@ -500,11 +500,10 @@ class CampaignService {
       include: [
         {
           model: ProposalRequest,
-          as: 'proposal_requests',
-          include: ['category_type']
+          as: 'proposal_requests'
         }
       ],
-      group: ['Campaign.id', 'proposal_requests.id', 'category_type.id']
+      group: ['Campaign.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
