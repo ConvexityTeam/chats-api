@@ -33,6 +33,10 @@ class ProductService {
       where
     });
   }
+
+  static addSingleProduct(product) {
+    return Product.create(product);
+  }
   static addProduct(product, vendors, CampaignId) {
     return Promise.all(
       vendors.map(async UserId => {

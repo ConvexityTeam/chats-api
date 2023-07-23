@@ -17,15 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   ProposalRequest.init(
     {
-      product_name: DataTypes.STRING,
-      tag: DataTypes.ENUM('product', 'service'),
-      category_id: DataTypes.INTEGER,
-      quantity: DataTypes.INTEGER,
-      description: DataTypes.TEXT,
-      location: DataTypes.JSON,
-      start_date: DataTypes.DATE,
-      end_date: DataTypes.DATE,
-      price: DataTypes.DOUBLE,
+      product_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       organisation_id: DataTypes.INTEGER
     },
