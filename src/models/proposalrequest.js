@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       ProposalRequest.hasOne(models.ProductCategory, {
-        foreignKey: 'category_id',
+        foreignKey: 'id',
         as: 'category_type'
       });
     }
