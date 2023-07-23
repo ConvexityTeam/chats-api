@@ -634,7 +634,7 @@ class CampaignController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Proposal Requests fetched successfully.`,
-        requests
+        campaigns
       );
       return Response.send(res);
     } catch (error) {
