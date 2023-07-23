@@ -1,17 +1,21 @@
 <h1 class="title">Project Invitation </h1>
 <p class="text">Hello, {{to}}</p>
 <br/>
-<p> We have given you access to project titled:{{campaign.title}} 
+<p> We have given you access to project titled:{{title}} 
     so that you can manage your journey with us and get to know all the possibilities offered by CHATS
 </p>
 <br/>
 {{#if exist}}
 <p>
-    If you want to login to confirm access, please click on the following link: {{{link}}}/?token={{{token}}}&campaign_id={{{campaign.id}}}`
+    If you want to login to confirm access, please click on the following link:
+<a class="btn-link" href="{{{link}}}/?token={{{token}}}&campaign_id={{{id}}}">
+</a>
 </p>
 {{else}}
 <p>
-    If you want to create an account, please click on the following link: {{{link}}}/?token={{{token}}}&campaign_id={{{campaign.id}}}`
+    If you want to create an account, please click on the following link: 
+<a class="btn-link" href="{{{link}}}/?token={{{token}}}&campaign_id={{{id}}}">
+</a>
 </p>
 {{/if}}
 <br/>
