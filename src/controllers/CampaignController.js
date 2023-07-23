@@ -618,7 +618,7 @@ class CampaignController {
         req.query
       );
 
-      for (let request of requests) {
+      for (let request of requests.data) {
         const category_type = await ProductService.findCategoryType({
           id: request.category_id
         });
