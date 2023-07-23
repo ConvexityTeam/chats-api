@@ -620,6 +620,7 @@ class CampaignController {
 
       for (let campaign of campaigns.data) {
         for (let request of campaign.proposal_requests) {
+          console.log(request, 'request');
           if (request.category_id) {
             const category_type = await ProductService.findCategoryType({
               id: request.category_id
