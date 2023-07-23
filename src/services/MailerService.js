@@ -28,7 +28,7 @@ class MailerService {
           extname: ".handlebars",
           layoutsDir: "src/utils/emailTemplate/views/layouts/",
           partialsDir: "src/utils/emailTemplate/views/layouts/",
-          defaultLayout: "main.handlebars",
+          defaultLayout: "main.handlebars", 
         },
         viewPath: "src/utils/emailTemplate/views/",
         extName: ".handlebars",
