@@ -86,6 +86,7 @@ router.get(
   SuperAdminAuth,
   AdminController.getBeneficiaryAmountAndCampaignsTotal
 );
+router.post('/product-category', VendorController.addDefaultCategory);
 router.get('/campaigns', SuperAdminAuth, AdminController.getAllCampaigns);
 router.get('/donors', SuperAdminAuth, AdminController.getAllDonors);
 router.get(
