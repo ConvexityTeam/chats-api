@@ -408,12 +408,13 @@ class VendorController {
     }
   }
   static async approveProposal(req, res) {
-    const {campaign_id, vendor_id, product_id} = req.body;
+    const {campaign_id, vendor_id, product_id, proposal_id} = req.body;
     try {
       const rules = {
         campaign_id: 'required|integer',
         vendor_id: 'required|integer',
-        product_id: 'required|integer'
+        product_id: 'required|integer',
+        proposal_id: 'required|integer'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -422,10 +423,11 @@ class VendorController {
           return Response.send(res);
         }
       }
-      const [campaign, vendor, product] = await Promise.all([
+      const [campaign, vendor, product, proposal] = await Promise.all([
         CampaignService.getCampaignById(campaign_id),
         UserService.getAUser(vendor_id),
-        ProductService.findProduct({id: product_id})
+        ProductService.findProduct({id: product_id}),
+        CampaignService.fetchProposal(proposal_id)
       ]);
       if (!campaign) {
         Response.setError(
@@ -448,6 +450,18 @@ class VendorController {
         );
         return Response.send(res);
       }
+      if (!proposal) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Proposal not found'
+        );
+        return Response.send(res);
+      }
+      await db.OrganisationMembers.create({
+        UserId: vendor_id,
+        OrganisationId: proposal.organisation_id,
+        role: 'vendor'
+      });
       await db.VendorProduct.create({
         vendorId: vendor_id,
         productId: product_id

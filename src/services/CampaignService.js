@@ -475,6 +475,13 @@ class CampaignService {
     });
   }
 
+  static async fetchProposal(id) {
+    return await ProposalRequest.findOne({
+      where: {
+        id
+      }
+    });
+  }
   static async fetchProposalForVendors(extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
