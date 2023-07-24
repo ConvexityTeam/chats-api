@@ -30,7 +30,7 @@ const {
 } = require('../utils');
 const {data} = require('../libs/Response');
 const {user} = require('../config/mailer');
-
+const formidable = require('formidable');
 class VendorController {
   constructor() {
     this.emails = [];
@@ -99,6 +99,206 @@ class VendorController {
     }
   }
 
+  static async fetchDefaultCategory(req, res) {
+    try {
+      const categories = await db.ProductCategory.findAll({
+        where: {organisation_id: null}
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Categories fetched',
+        categories
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async addDefaultCategory(req, res) {
+    try {
+      const createdCategory = await db.ProductCategory.bulkCreate([
+        {
+          name: 'Clothing',
+          description: 'Clothing'
+        },
+        {
+          name: 'Medicine',
+          description: 'Medicine'
+        },
+        {
+          name: 'Cash',
+          description: 'Cash'
+        },
+        {
+          name: 'Hygiene Items',
+          description: 'Hygiene Items'
+        },
+        {
+          name: 'Fresh Food Items',
+          description: 'Fresh Food Items'
+        },
+        {
+          name: 'Others',
+          description: 'Others'
+        },
+        {
+          name: 'Education',
+          description: 'Education'
+        },
+        {
+          name: 'Humanitarian Overhead',
+          description: 'Humanitarian Overhead'
+        }
+      ]);
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Category added',
+        createdCategory
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async addMarket(req, res) {
+    const {store_name} = req.body;
+    try {
+      const rules = {
+        store_name: 'required|string',
+        country: 'required|alpha',
+        state: 'required|alpha',
+        website_url: 'url',
+        category_id: 'required|string'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const findStore = await CampaignService.findStoreByName(store_name);
+      if (findStore) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Store already registered'
+        );
+        return Response.send(res);
+      }
+      req.body.UserId = req.user.id;
+      req.body.location = {
+        country: req.body.country,
+        state: req.body.state
+      };
+      const createdStore = await CampaignService.addStore(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Store registered',
+        createdStore
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchBusiness(req, res) {
+    try {
+      const businesses = await db.Business.findAll({
+        where: {vendorId: req.user.id}
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Businesses fetched',
+        businesses
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async addBusiness(req, res) {
+    try {
+      var form = new formidable.IncomingForm({
+        multiples: true
+      });
+      form.parse(req, async (err, fields, files) => {
+        const rules = {
+          name: 'string',
+          bizId: 'required|string',
+          accountId: 'required|integer'
+        };
+        const validation = new Validator(fields, rules);
+        if (validation.fails()) {
+          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+          return Response.send(res);
+        }
+        if (!files.document) {
+          Response.setError(400, 'Document is required');
+          return Response.send(res);
+        }
+        const findBusiness = await db.Business.findOne({
+          where: {
+            name: fields.bizId
+          }
+        });
+        if (findBusiness) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Business already registered'
+          );
+          return Response.send(res);
+        }
+        const createdBusiness = await db.Business.create({
+          name: fields.name,
+          bizId: fields.bizId,
+          accountId: fields.accountId,
+          vendorId: req.user.id
+        });
+
+        const extension = files.document.name.substring(
+          files.document.name.lastIndexOf('.') + 1
+        );
+        await uploadFile(
+          files.document,
+          'u-' + environ + '-' + req.user.id + '-i.' + extension,
+          'convexity-profile-images'
+        ).then(url => {
+          createdBusiness.update({
+            document: url
+          });
+        });
+
+        Response.setSuccess(
+          HttpStatusCode.STATUS_CREATED,
+          'Business registered',
+          createdBusiness
+        );
+        return Response.send(res);
+      });
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+    }
+  }
   static async registeredSelf(req, res) {
     const {email} = req.body;
     try {

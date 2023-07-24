@@ -62,7 +62,19 @@ router.post(
   AuthValidator.checkResetPasswordToken,
   VendorController.confirmOTP
 );
-
+router.post(
+  '/business',
+  VendorAuth,
+  VendorValidator.VendorExists,
+  VendorController.addBusiness
+);
+router.get('/product-category', VendorController.addDefaultCategory);
+router.post(
+  '/store',
+  VendorAuth,
+  VendorValidator.VendorExists,
+  VendorController.addMarket
+);
 router
   .route('/products')
   .get(

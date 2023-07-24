@@ -8,6 +8,7 @@ const {
   VoucherToken,
   ProposalRequest,
   FormAnswer,
+  Market,
   VendorProposal,
   ProductCategory,
   AssociatedCampaign,
@@ -24,6 +25,12 @@ const Pagination = require('../utils/pagination');
 const {Logger} = require('../libs');
 
 class CampaignService {
+  static async findStoreByName(store_name) {
+    return await Market.findOne({where: {store_name}});
+  }
+  static async addStore(data) {
+    return await Market.create(data);
+  }
   static async proposalRequest(data) {
     return await ProposalRequest.create(data);
   }
