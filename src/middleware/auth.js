@@ -68,18 +68,11 @@ const Auth = (roleIds = null) => (req, res, next) => {
 };
 
 exports.Auth = Auth();
-exports.AdminVendor = Auth([SuperAdmin, Vendor]);
 exports.SuperAdminAuth = Auth([SuperAdmin]);
 exports.GodModeAuth = Auth([SuperAdmin, GodMode]);
 exports.NgoAdminAuth = Auth([NgoAdmin, SuperAdmin, Donor]);
 exports.NgoSubAdminAuth = Auth([NgoAdmin, SuperAdmin, NgoSubAdmin, Donor]);
-exports.FieldAgentAuth = Auth([
-  NgoAdmin,
-  SuperAdmin,
-  NgoSubAdmin,
-  FieldAgent,
-  Donor
-]);
+exports.FieldAgentAuth = Auth([NgoAdmin, SuperAdmin, NgoSubAdmin, FieldAgent, Donor]);
 exports.VendorAuth = Auth([Vendor]);
 exports.BeneficiaryAuth = Auth([Beneficiary]);
 exports.FieldAgentBeneficiaryAuth = Auth([Beneficiary, FieldAgent]);

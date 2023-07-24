@@ -22,8 +22,6 @@ class SmsService {
   }
 
   async send(to, sms, channel = 'dnd') {
-    console.log('number', to);
-
     const data = this._loadData({to, sms, channel});
     return new Promise(async (resolve, reject) => {
       try {

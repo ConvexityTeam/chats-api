@@ -11,7 +11,6 @@ const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
-const {user} = require('../config/mailer');
 
 // const Vault = require('hashi-vault-js');
 
@@ -82,70 +81,34 @@ class AuthService {
     });
   }
 
-  static async add2faSecret(user, tfa_method) {
+  static async add2faSecret(user) {
     return new Promise(async (resolve, reject) => {
       let qrcodeData;
 
-      generate2faSecret()
-        .then(_data => {
-          qrcodeData = _data;
-          return User.update(
-            {tfa_secret: _data.secret},
-            {where: {id: user.id}}
-          );
-        })
-        .then(() => {
-          if (tfa_method == 'sms') {
-            SmsService.send(
-              user.phone,
-              `2AF Verification Code: ${qrcodeData.code}`
+      if (!user.is_tfa_enabled) {
+        generate2faSecret()
+          .then(_data => {
+            qrcodeData = _data;
+            return User.update(
+              {tfa_secret: _data.secret},
+              {where: {id: user.id}}
             );
-            delete qrcodeData.qrcode_url;
-            delete qrcodeData.code;
-            return resolve(qrcodeData);
-          }
-          if (tfa_method == 'email') {
-            MailerService._sendMail(
-              user.email,
-              `2AF Verification Code: ${qrcodeData.code}`,
-              '<h1>2AF Verification Code: ' + qrcodeData.code + '</h1>'
-            );
-            delete qrcodeData.qrcode_url;
-            delete qrcodeData.code;
-            return resolve(qrcodeData);
-          }
-          delete qrcodeData.code;
-          return resolve(qrcodeData);
-        })
-        .catch(err => {
-          console.log(err);
-          reject(new Error(`Error updating secret. Please retry.`));
-        });
-      return;
+          })
+          .then(() => {
+            resolve(qrcodeData);
+          })
+          .catch(err => {
+            console.log(err);
+            reject(new Error(`Error updating secret. Please retry.`));
+          });
+        return;
+      }
+
+      reject(new Error(`2AF is already enanbled.`));
     });
   }
 
-  static async verify2FASecret(user, secrete) {
-    return new Promise((resolve, reject) => {
-      User.findByPk(user.id).then(_user => {
-        if (!_user) {
-          reject(new Error(`User not found.`));
-          return;
-        }
-        if (!_user.tfa_secret) {
-          reject(new Error(`2AF Secret not set.`));
-          return;
-        }
-        const verified = verify2faToken(user.tfa_secret, secrete);
-        if (!verified) {
-          reject(new Error('Invalid or wrong token.'));
-          return;
-        }
-        return resolve(verified);
-      });
-    });
-  }
-  static async enable2afCheck(user, token, tfa_method) {
+  static async enable2afCheck(user, token) {
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
         .then(_user => {
@@ -159,30 +122,10 @@ class AuthService {
             return;
           }
 
-          User.update(
-            {is_tfa_enabled: true, tfa_method, tfa_binded_date: new Date()},
-            {where: {id: user.id}}
-          )
+          User.update({is_tfa_enabled: true}, {where: {id: user.id}})
             .then(() => {
               user.is_tfa_enabled = true;
-              const uid = user.id;
-              const oids = user?.AssociatedOrganisations.map(
-                assoc => assoc.OrganisationId
-              );
-              const token = jwt.sign(
-                {
-                  uid,
-                  oids
-                },
-                process.env.SECRET_KEY,
-                {
-                  expiresIn: '48hr'
-                }
-              );
-              resolve({
-                user,
-                token
-              });
+              resolve(user.toObject());
             })
             .catch(err => {
               console.log(err);

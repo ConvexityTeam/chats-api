@@ -7,7 +7,6 @@ exports.publicAttr = [
   'gender',
   'marital_status',
   'location',
-  'tfa_binded_date',
   'profile_pic',
   'iris',
   'status',

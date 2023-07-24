@@ -252,9 +252,7 @@ class OrganisationService {
         });
     });
   }
-  static async getAllNGOs() {
-    return Organisation.findAll();
-  }
+
   static async beneficiariesTransactions(OrganisationId) {
     return Transaction.findAll({
       where: {
