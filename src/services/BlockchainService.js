@@ -465,7 +465,8 @@ class BlockchainService {
       }
     });
   }
-  static async mintToken(mintTo, amount, message, type) {
+  static async mintToken(mintTo, amount, message) {
+    const {transactionId, transactionReference, OrganisationId} = message;
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('Minting token');
@@ -498,11 +499,7 @@ class BlockchainService {
             address: mintTo,
             amount
           };
-          if (type === 'ngo') {
-            await QueueService.increaseGasForMinting(keys, message);
-          } else {
-            await QueueService.gasFundCampaignWithCrypto(keys, message);
-          }
+          await QueueService.increaseGasForMinting(keys, message);
         }
         return reject(error);
       }
@@ -634,7 +631,7 @@ class BlockchainService {
           const keys = {
             password: senderPass,
             receiverAdd,
-            amount: amount.toString()
+            amount
           };
           if (type === 'fundCampaign') {
             await QueueService.increaseTransferCampaignGas(keys, message);
@@ -642,9 +639,9 @@ class BlockchainService {
           if (type === 'BFundB') {
             await QueueService.increaseTransferBeneficiaryGas(keys, message);
           }
-          if (type === 'withHoldFunds') {
-            await QueueService.increaseGasWithHoldFunds(keys, message);
-          }
+          // if (type === 'vendorWithdrawal') {
+          //   await QueueService.increaseGasFeeVTransferFrom(keys, message);
+          // }
         }
         reject(error);
       }
@@ -669,9 +666,9 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.info(
-          `Error transferring funds from:  ${JSON.stringify(
-            error.response.data
-          )}`
+          `Error transferring funds from:  ${
+            error.response ? JSON.stringify(error.response.data) : error
+          } `
         );
 
         if (
@@ -815,27 +812,6 @@ class BlockchainService {
     } catch (error) {
       Logger.error(`Error Creating Wallet Address: ${error} `);
     }
-  }
-  static async getTransactionDetails(hash, bind, message) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        Logger.info('Confirming transaction ' + hash);
-        const data = await provider.getTransactionReceipt(hash);
-        if (!data) {
-          Logger.info(`Transaction yet to be mined`);
-        } else {
-          Logger.info('Transaction confirmed and mined ' + data);
-        }
-        resolve(data);
-      } catch (error) {
-        Logger.error(`Error confirming transaction: ${error}`);
-        const id = setTimeout(async () => {
-          await this.requeueMessage(bind, message);
-        }, RERUN_QUEUE_AFTER);
-        clearTimeout(id);
-        reject(error);
-      }
-    });
   }
 }
 

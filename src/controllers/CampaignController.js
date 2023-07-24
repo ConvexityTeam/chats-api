@@ -9,13 +9,11 @@ const {
   WalletService,
   TaskService,
   BlockchainService,
-  AwsService,
-  TransactionService
+  AwsService
 } = require('../services');
 const Validator = require('validatorjs');
 const db = require('../models');
 const {Op} = require('sequelize');
-const moment = require('moment');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const {Response, Logger} = require('../libs');
 const {
@@ -24,15 +22,11 @@ const {
   generateQrcodeURL,
   GenearteVendorId,
   GenearteSMSToken,
-  GenerateSecrete,
-  AclRoles,
-  generateTransactionRef
+  AclRoles
 } = require('../utils');
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
 const {async} = require('regenerator-runtime');
-const Pagination = require('../utils/pagination');
-const {generateOTP} = require('../libs/Utils');
 const approveToSpendQueue = amqp_1['default'].declareQueue('approveToSpend', {
   durable: true
 });
@@ -70,8 +64,10 @@ class CampaignController {
       const filter = SanitizeObject(req.query, ['status']);
       const Campaign = req.campaign.toJSON();
       filter.CampaignId = Campaign.id;
-      const {count: complaints_count, rows: Complaints} =
-        await ComplaintService.getBeneficiaryComplaints(req.user.id, filter);
+      const {
+        count: complaints_count,
+        rows: Complaints
+      } = await ComplaintService.getBeneficiaryComplaints(req.user.id, filter);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Campaign Complaints.',
@@ -122,9 +118,9 @@ class CampaignController {
       });
 
       await Promise.all(
-        allCampaign?.data.map(async campaign => {
-          //(await AwsService.getMnemonic(campaign.id)) || null;
-          campaign.dataValues.ck8 = GenerateSecrete();
+        allCampaign.map(async campaign => {
+          campaign.dataValues.ck8 =
+            (await AwsService.getMnemonic(campaign.id)) || null;
         })
       );
 
@@ -137,7 +133,7 @@ class CampaignController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.' + error
+        'Internal error occured. Please try again.'
       );
       return Response.send(res);
     }
@@ -356,8 +352,9 @@ class CampaignController {
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
-      const beneficiaries =
-        await BeneficiaryService.getApprovedFundBeneficiaries(campaign_id);
+      const beneficiaries = await BeneficiaryService.getApprovedFundBeneficiaries(
+        campaign_id
+      );
       const realBeneficiaries = beneficiaries
         .map(exist => exist.User && exist)
         .filter(x => !!x);
@@ -408,24 +405,6 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (!(campaign.start_date >= Date.now())) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign must start after today'
-        );
-        return Response.send(res);
-      }
-
-      for (let user of realBeneficiaries) {
-        user.dataValues.formAnswer = null;
-        if (user.formAnswer) {
-          const answers = await CampaignService.findCampaignFormAnswer({
-            campaignId: campaign_id,
-            beneficiaryId: user.UserId
-          });
-          user.dataValues.formAnswer = answers;
-        }
-      }
 
       if (campaign.type === 'item') {
         await QueueService.fundNFTBeneficiaries(
@@ -446,63 +425,10 @@ class CampaignController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`
+        `Campaign fund with ${realBeneficiaries.length} beneficiaries is Processing.`,
+        realBeneficiaries
       );
       return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message
-      );
-      return Response.send(res);
-    }
-  }
-
-  static async fundCampaignWithCrypto(req, res) {
-    const {organisation_id, campaign_id} = req.params;
-    const {amount} = req.body;
-    try {
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        organisation_id
-      );
-      const organisation = await OrganisationService.getOrganisationWallet(
-        organisation_id
-      );
-      const campaignWallet = campaign.Wallet;
-      const OrgWallet = organisation.Wallet;
-      if (campaign.status == 'completed') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already completed'
-        );
-        return Response.send(res);
-      }
-      if (campaign.status == 'ended') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already ended'
-        );
-        return Response.send(res);
-      }
-      if (campaign.status == 'ongoing') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already ongoing'
-        );
-        return Response.send(res);
-      }
-      await QueueService.fundCampaignWithCrypto(
-        campaign,
-        amount,
-        campaignWallet,
-        OrgWallet
-      );
-      Response.setSuccess(
-        HttpStatusCode.STATUS_OK,
-        `Campaign fund with ${amount} is Processing.`,
-        transaction
-      );
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
@@ -544,13 +470,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      // if (campaign.status == 'ongoing') {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Campaign already ongoing'
-      //   );
-      //   return Response.send(res);
-      // }
+      if (campaign.status == 'ongoing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign already ongoing'
+        );
+        return Response.send(res);
+      }
 
       if (
         (campaign.type !== 'item' && campaign.budget > balance) ||
@@ -731,35 +657,29 @@ class CampaignController {
   }
 
   static async campaignTokens(req, res) {
-    const {campaign_id, organisation_id, token_type} = req.params;
+    const {campaign_id, page, organisation_id, token_type} = req.params;
     const OrganisationId = organisation_id;
+
+    let limit = 10;
+    let offset = 0;
 
     let where = {
       tokenType: token_type,
       organisationId: OrganisationId,
       campaignId: campaign_id
     };
-
-    const {page, size} = req.query;
-
-    const {limit, offset} = await Pagination.getPagination(page, size);
-
-    let options = {};
-    if (page && size) {
-      options.limit = limit;
-      options.offset = offset;
-    }
     try {
-      const tokencount = await db.VoucherToken.findAndCountAll({
-        where,
-        ...options
-      });
-      const response = await Pagination.getPagingData(tokencount, page, limit);
+      const tokencount = await db.VoucherToken.findAndCountAll({where});
       const user = await UserService.getAllUsers();
       const campaign = await CampaignService.getAllCampaigns({OrganisationId});
       const singleCampaign = await CampaignService.getCampaignById(campaign_id);
-
-      for (let data of response.data) {
+      let pages = Math.ceil(tokencount.count / limit);
+      offset = limit * (page - 1);
+      const tokens = await db.VoucherToken.findAll({
+        where,
+        order: [['updatedAt', 'ASC']]
+      });
+      for (let data of tokens) {
         if (singleCampaign.type !== 'item') {
           const campaignAddress = await BlockchainService.setUserKeypair(
             `campaign_${campaign_id}`
@@ -780,15 +700,15 @@ class CampaignController {
         data.dataValues.Beneficiary = filteredKeywords[0];
       }
 
-      response.data.forEach(data => {
+      tokens.forEach(data => {
         var filteredKeywords = user.filter(
           user => user.id === data.beneficiaryId
         );
         data.dataValues.Beneficiary = filteredKeywords[0];
       });
 
-      response.data.forEach(data => {
-        var filteredKeywords = campaign.data.filter(
+      tokens.forEach(data => {
+        var filteredKeywords = campaign.filter(
           camp => camp.id === data.campaignId
         );
 
@@ -797,8 +717,8 @@ class CampaignController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Found ${response.data.length} ${token_type}.`,
-        response
+        `Found ${tokens.length} ${token_type}.`,
+        {tokens, page_count: pages}
       );
       return Response.send(res);
     } catch (error) {
@@ -1081,11 +1001,11 @@ class CampaignController {
           0
         )
       ).toFixed(2);
-      campaign.dataValues.Complaints = '';
-      await CampaignService.getCampaignComplaint(campaignId);
-      // (await AwsService.getMnemonic(campaign.id)) || null;
-      campaign.dataValues.ck8 = '';
-
+      campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(
+        campaignId
+      );
+      campaign.dataValues.ck8 =
+        (await AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Details',
@@ -1101,7 +1021,6 @@ class CampaignController {
       return Response.send(res);
     }
   }
-
   static async getPrivateCampaign(req, res) {
     try {
       let assignmentTask = [];
@@ -1112,8 +1031,9 @@ class CampaignController {
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
-      const campaign =
-        await CampaignService.getPrivateCampaignWithBeneficiaries(campaignId);
+      const campaign = await CampaignService.getPrivateCampaignWithBeneficiaries(
+        campaignId
+      );
       const campaignWallet = await WalletService.findOrganisationCampaignWallet(
         OrganisationId,
         campaignId
@@ -1175,8 +1095,9 @@ class CampaignController {
           0
         )
       ).toFixed(2);
-      campaign.dataValues.Complaints =
-        await CampaignService.getCampaignComplaint(campaignId);
+      campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(
+        campaignId
+      );
       campaign.dataValues.ck8 =
         (await AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
@@ -1242,15 +1163,6 @@ class CampaignController {
       );
       const onboard = [];
 
-      //const campaign = await CampaignService.getCampaignById(campaign_id);
-
-      // if (campaign.formId) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     `Campaign Has a Form Please Onboard Beneficiary From Field App`
-      //   );
-      //   return Response.send(res);
-      // }
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
           setTimeout(async () => {
@@ -1277,184 +1189,7 @@ class CampaignController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
-      );
-      return Response.send(res);
-    }
-  }
-
-  static async withdrawFund(req, res) {
-    const id = req.params.campaign_id;
-    try {
-      const campaign = await CampaignService.getCampaignById(id);
-      if (!campaign.is_funded) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign not funded`
-        );
-        return Response.send(res);
-      }
-      if (campaign.status !== 'ended') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign has not ended yet`
-        );
-        return Response.send(res);
-      }
-
-      const campaignKeys = await BlockchainService.setUserKeypair(
-        `campaign_${id}`
-      );
-      const token = await BlockchainService.balance(campaignKeys.address);
-      const balance = Number(token.Balance.split(',').join(''));
-
-      if (balance === 0) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Insufficient fund, campaign wallet balance is 0`
-        );
-        return Response.send(res);
-      }
-      await QueueService.withHoldFunds(id, campaign.OrganisationId, balance);
-      Response.setSuccess(
-        HttpStatusCode.STATUS_CREATED,
-        'Funds withdrawal processing',
-        balance
-      );
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         `Internal server error. Contact support.` + error
-      );
-      return Response.send(res);
-    }
-  }
-  static async campaignInfo(req, res) {
-    try {
-      let eighteenTo29 = 0;
-      let thirtyTo41 = 0;
-      let forty2To53 = 0;
-      let fifty4To65 = 0;
-      let sixty6Up = 0;
-      let male = 0;
-      let female = 0;
-      let Lagos = 0,
-        Abuja = 0,
-        Kaduna = 0,
-        Jos = 0;
-      let married = 0;
-      let single = 0;
-      let divorce = 0;
-      const [campaign, vendor] = await Promise.all([
-        CampaignService.getCampaignById(req.params.campaign_id),
-        CampaignService.campaignVendors(req.params.campaign_id)
-      ]);
-      if (campaign.Beneficiaries) {
-        for (let beneficiaries of campaign.Beneficiaries) {
-          if (beneficiaries.location.includes('state')) {
-            let parsedJson = JSON.parse(beneficiaries.location);
-            if (parsedJson.state === 'Abuja') Abuja++;
-            if (parsedJson.state === 'Lagos') Lagos++;
-            if (parsedJson.state === 'Kaduna') Kaduna++;
-            if (parsedJson.state === 'Jos') Jos++;
-          }
-          if (
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) >= 18 &&
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) <= 29
-          ) {
-            eighteenTo29++;
-          }
-          if (
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) >= 30 &&
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) <= 41
-          ) {
-            thirtyTo41++;
-          }
-          if (
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) >= 42 &&
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) <= 53
-          ) {
-            forty2To53++;
-          }
-          if (
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) >= 54 &&
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) <= 65
-          ) {
-            fifty4To65++;
-          }
-          if (
-            parseInt(
-              moment().format('YYYY') - moment(beneficiaries.dob).format('YYYY')
-            ) >= 66
-          ) {
-            sixty6Up++;
-          }
-          if (beneficiaries.gender == 'male') {
-            male++;
-          } else if (beneficiaries.gender == 'female') {
-            female++;
-          }
-          if (beneficiaries.marital_status == 'single') {
-            single++;
-          } else if (beneficiaries.marital_status == 'married') {
-            married++;
-          } else if (beneficiaries.marital_status == 'divorce') {
-            divorce++;
-          }
-        }
-      }
-
-      campaign.dataValues.vendor_count = vendor.length;
-      campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length;
-      campaign.dataValues.Beneficiary_gender = {
-        male,
-        female
-      };
-      campaign.dataValues.beneficiary_location = {
-        Abuja,
-        Kaduna,
-        Jos
-      };
-      campaign.dataValues.Beneficiary_marital_status = {
-        married,
-        single,
-        divorce
-      };
-      campaign.dataValues.Beneficiary_age = {
-        eighteenTo29,
-        thirtyTo41,
-        forty2To53,
-        fifty4To65,
-        sixty6Up
-      };
-      delete campaign.Beneficiaries;
-      Response.setSuccess(
-        HttpStatusCode.STATUS_OK,
-        'Campaign Info retrieved',
-        campaign
-      );
-      return Response.send(res);
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support..ll` + error
       );
       return Response.send(res);
     }
@@ -1660,7 +1395,7 @@ class CampaignController {
   static async getCampaignForm(req, res) {
     const id = req.params.organisation_id;
     try {
-      const form = await CampaignService.getCampaignForm(id, req.query);
+      const form = await CampaignService.getCampaignForm(id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign form received',

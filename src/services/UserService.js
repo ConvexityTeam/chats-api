@@ -1,25 +1,12 @@
-const {User, BankAccount, OrganisationMembers, Liveness} = require('../models');
+const {User, BankAccount, OrganisationMembers} = require('../models');
 const axios = require('axios');
+const geoIp = require('geoip-country');
 const Axios = axios.create();
 const {AclRoles} = require('../utils');
 const {Logger} = require('../libs');
 const {userConst} = require('../constants');
 
 class UserService {
-  static async createUser(data) {
-    return await User.create(data);
-  }
-  static async createLiveness(data) {
-    return await Liveness.create(data);
-  }
-  static async findLiveness(id) {
-    return await Liveness.findOne({
-      where: {
-        id: id
-      }
-    });
-  }
-
   static async getAllUsers() {
     try {
       return await User.findAll({
@@ -100,7 +87,6 @@ class UserService {
         id,
         ...extraClause
       },
-      include: ['liveness'],
       include: [
         'Store',
         {
@@ -140,8 +126,7 @@ class UserService {
 
   static findSingleUser(where) {
     return User.findOne({
-      where,
-      include: ['liveness']
+      where
     });
   }
 

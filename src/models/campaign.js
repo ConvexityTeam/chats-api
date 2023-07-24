@@ -51,7 +51,6 @@ module.exports = (sequelize, DataTypes) => {
       //   foreignKey: 'CampaignId',
       //   as: 'TransactionCampaign'
       // });
-
       Campaign.belongsTo(models.CampaignForm, {
         foreignKey: 'formId',
         as: 'campaign_form'
