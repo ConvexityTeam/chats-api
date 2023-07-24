@@ -299,7 +299,6 @@ class AuthService {
         const user = await UserService.findUser(UserId);
         const name = user.first_name + ' ' + user.last_name;
         const otp = GenerateVendorOtp();
-        console.log(otp, 'otp');
         const token = createHash(otp);
         const expires_at = moment().add(10, 'm').toDate();
         const create = await passwordToken.update({
