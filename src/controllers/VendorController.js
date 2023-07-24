@@ -6,7 +6,8 @@ const {
   CampaignService,
   BlockchainService,
   OrderService,
-  UserService
+  UserService,
+  ProductService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -32,9 +33,9 @@ class VendorController {
     try {
       const rules = {
         proposal_id: 'required|integer',
-        budget: 'required|integer',
+        product_id: 'required|integer',
         quantity: 'required|integer',
-        unit_price: 'required|integer'
+        cost: 'required|numeric'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -50,6 +51,115 @@ class VendorController {
         'Proposal submitted',
         proposal
       );
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchSubmittedProposals(req, res) {
+    const {proposal_id} = req.params;
+    try {
+      const proposals = await ProductService.vendorProposal({proposal_id});
+      for (const proposal of proposals) {
+        proposal.dataValues.vendor = await UserService.findSingleUser({
+          id: proposal.vendor_id
+        });
+        const proposal_request = await CampaignService.fetchProposalRequest(
+          proposal_id
+        );
+        const campaign = await CampaignService.getCampaignById(
+          proposal_request.campaign_id
+        );
+        proposal.dataValues.campaign_id = campaign.id;
+        proposal.dataValues.budget = campaign.budget;
+      }
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposals fetched',
+        proposals
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async ProposalRequests(req, res) {
+    const {country, state} = req.params;
+    try {
+      const campaigns = await CampaignService.fetchProposalForVendors(
+        req.query
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposals fetched',
+        campaigns
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async approveProposal(req, res) {
+    const {campaign_id, vendor_id, product_id} = req.body;
+    try {
+      const rules = {
+        campaign_id: 'required|integer',
+        vendor_id: 'required|integer',
+        product_id: 'required|integer'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        if (validation.fails()) {
+          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+          return Response.send(res);
+        }
+      }
+      const [campaign, vendor, product] = await Promise.all([
+        CampaignService.getCampaignById(campaign_id),
+        UserService.getAUser(vendor_id),
+        ProductService.findProduct({id: product_id})
+      ]);
+      if (!campaign) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+        return Response.send(res);
+      }
+      if (!vendor) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Vendor not found'
+        );
+        return Response.send(res);
+      }
+      if (!product) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Product not found'
+        );
+        return Response.send(res);
+      }
+      await db.VendorProduct.create({
+        vendorId: vendor_id,
+        productId: product_id
+      });
+      await CampaignService.approveVendorForCampaign(campaign_id, vendor_id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Proposal approved');
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,

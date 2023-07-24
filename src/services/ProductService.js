@@ -3,6 +3,7 @@ const {
   ProductCategory,
   User,
   CampaignVendor,
+  VendorProposal,
   Sequelize
 } = require('../models');
 
@@ -54,6 +55,12 @@ class ProductService {
       where: {
         ...where
       }
+    });
+  }
+  static vendorProposal(where) {
+    return VendorProposal.findAll({
+      where,
+      include: [{model: Product, as: 'vendor_proposals'}]
     });
   }
 
