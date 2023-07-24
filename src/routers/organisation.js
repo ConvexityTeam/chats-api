@@ -5,7 +5,8 @@ const {
   OrganisationController,
   CampaignController,
   ComplaintController,
-  ProductController
+  ProductController,
+  VendorController
 } = require('../controllers');
 const CashForWorkController = require('../controllers/CashForWorkController');
 const UsersController = require('../controllers/UsersController');
@@ -78,6 +79,11 @@ router.get(
   '/:organisation_id/proposal-requests',
   SuperNgoVendor,
   CampaignController.fetchProposalRequests
+);
+router.post(
+  '/approve-proposal',
+  NgoSubAdminAuth,
+  VendorController.approveProposal
 );
 router.post(
   '/extend-campaign/:organisation_id',
@@ -416,6 +422,11 @@ router
     CampaignController.approveAndFundBeneficiaries
   );
 
+router.get(
+  '/submitted-proposals/:proposal_id',
+  NgoSubAdminAuth,
+  VendorController.fetchSubmittedProposals
+);
 router
   .route('/:organisation_id/campaigns/:campaign_id/fund-campaign')
   .post(

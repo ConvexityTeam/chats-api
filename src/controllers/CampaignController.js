@@ -621,11 +621,19 @@ class CampaignController {
 
       for (let campaign of campaigns.data) {
         for (let request of campaign.proposal_requests) {
-          if (request.category_id) {
+          const submittedProposal = await ProductService.vendorProposal({
+            proposal_id: request.id
+          });
+          campaign.dataValues.proposal_received = submittedProposal.length;
+          const products = await ProductService.findProduct({
+            proposal_id: request.id
+          });
+          for (let product of products) {
             const category_type = await ProductService.findCategoryById(
-              request.category_id
+              product.category_id
             );
-            request.dataValues.category_type = category_type;
+            product.dataValues.category_type = category_type;
+            request.dataValues.product = products;
           }
         }
       }

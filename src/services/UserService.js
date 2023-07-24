@@ -150,6 +150,7 @@ class UserService {
   static findSingleUser(where) {
     return User.findOne({
       where,
+      attributes: userConst.publicAttr,
       include: ['liveness']
     });
   }

@@ -8,6 +8,7 @@ const {
   VoucherToken,
   ProposalRequest,
   FormAnswer,
+  VendorProposal,
   ProductCategory,
   AssociatedCampaign,
   CampaignForm,
@@ -459,6 +460,59 @@ class CampaignService {
     });
   }
 
+  static async fetchProposalRequest(id) {
+    return await ProposalRequest.findOne({
+      where: {
+        id
+      }
+    });
+  }
+
+  static async fetchProposalForVendors(extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      where: {
+        location: {
+          ...extraClause
+        },
+        campaign_id: Sequelize.where(
+          Sequelize.col('proposal_requests.campaign_id'),
+          Op.ne,
+          null
+        )
+      },
+
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'budget',
+        'location',
+        'end_date'
+      ],
+      include: [
+        {
+          model: ProposalRequest,
+          as: 'proposal_requests'
+        }
+      ],
+      group: ['Campaign.id', 'proposal_requests.id']
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return {...response, totalItems: campaign.rows.length};
+  }
   static async fetchProposalRequests(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
@@ -485,22 +539,14 @@ class CampaignService {
         )
       },
 
-      attributes: {
-        include: [
-          [
-            Sequelize.fn('COUNT', Sequelize.col('proposal_requests.id')),
-            'request_count'
-          ]
-        ]
-      },
+      attributes: ['id', 'title', 'description', 'budget', 'location'],
       include: [
         {
           model: ProposalRequest,
-          as: 'proposal_requests',
-          include: ['proposal_products']
+          as: 'proposal_requests'
         }
       ],
-      group: ['Campaign.id', 'proposal_requests.id', 'proposal_products.id.id']
+      group: ['Campaign.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
