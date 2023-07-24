@@ -1,6 +1,10 @@
 const {Op} = require('sequelize');
-const {generate2faSecret, verify2faToken} = require('../utils');
-const {User, PasswordResetToken, Invites} = require('../models');
+const {
+  generate2faSecret,
+  verify2faToken,
+  GenerateVendorOtp
+} = require('../utils');
+const {User, OneTimePassword, Invites} = require('../models');
 const {v4: uuidv4} = require('uuid');
 const {createHash, GenerateOtp} = require('../utils');
 const bcrypt = require('bcryptjs');
@@ -67,7 +71,10 @@ class AuthService {
               expiresIn: '48hr'
             }
           );
-          const currencyData = await CurrencyServices.getSpecificCurrencyExchangeRate(user.currency);
+          const currencyData =
+            await CurrencyServices.getSpecificCurrencyExchangeRate(
+              user.currency
+            );
 
           resolve({
             user,
@@ -267,13 +274,54 @@ class AuthService {
     });
   }
 
+  static async createPasswordToken(UserId, request_ip, expiresAfter = 10) {
+    const otp = GenerateOtp();
+    const token = createHash(otp);
+    const expires_at = moment().add(expiresAfter, 'm').toDate();
+    const user = await UserService.findUser(UserId);
+    const name = user.first_name + ' ' + user.last_name;
+    const create = await OneTimePassword.create({
+      UserId,
+      token,
+      expires_at,
+      request_ip
+    });
+
+    await SmsService.sendOtp(
+      user.phone,
+      `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
+    );
+  }
+
+  static async resendPasswordToken(UserId, passwordToken) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const user = await UserService.findUser(UserId);
+        const name = user.first_name + ' ' + user.last_name;
+        const otp = GenerateVendorOtp();
+        const token = createHash(otp);
+        const expires_at = moment().add(10, 'm').toDate();
+        const create = await passwordToken.update({
+          token,
+          expires_at
+        });
+        await SmsService.sendOtp(
+          user.phone,
+          `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
+        );
+        resolve(create);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
   static async createResetPassword(UserId, request_ip, expiresAfter = 20) {
     const otp = GenerateOtp();
     const token = createHash(otp);
     const expires_at = moment().add(expiresAfter, 'm').toDate();
     const user = await UserService.findUser(UserId);
     const name = user.first_name ? user.first_name : '';
-    const reset = await PasswordResetToken.create({
+    const reset = await OneTimePassword.create({
       UserId,
       token,
       expires_at,
@@ -293,7 +341,7 @@ class AuthService {
   }
 
   static getPasswordTokenRecord(ref) {
-    return PasswordResetToken.findOne({
+    return OneTimePassword.findOne({
       where: {
         ref,
         expires_at: {

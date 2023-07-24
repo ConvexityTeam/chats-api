@@ -7,7 +7,10 @@ const {
   BlockchainService,
   OrderService,
   UserService,
-  ProductService
+  ProductService,
+  SmsService,
+  AuthService,
+  QueueService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -20,9 +23,13 @@ const {Response} = require('../libs');
 const {
   HttpStatusCode,
   generateOrderRef,
-  generateQrcodeURL
+  generateQrcodeURL,
+  createHash,
+  AclRoles,
+  GenearteVendorId
 } = require('../utils');
 const {data} = require('../libs/Response');
+const {user} = require('../config/mailer');
 
 class VendorController {
   constructor() {
@@ -92,8 +99,96 @@ class VendorController {
     }
   }
 
+  static async registeredSelf(req, res) {
+    const {email} = req.body;
+    try {
+      const rules = {
+        first_name: 'required|alpha',
+        last_name: 'required|alpha',
+        email: 'required|email',
+        phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+        password: 'required|string'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const user = await UserService.findSingleUser({email});
+      if (user) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'User already registered'
+        );
+        return Response.send(res);
+      }
+      req.body.password = createHash(req.body.password);
+      req.body.RoleId = AclRoles.Vendor;
+      req.body.vendor_id = GenearteVendorId();
+      const createdUser = await UserService.addUser(req.body);
+      createdUser.password = null;
+      await AuthService.createPasswordToken(createdUser.id, req.ip);
+      await QueueService.createWallet(createdUser.id, 'user');
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'User registered',
+        createdUser
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async confirmOTP(req, res) {
+    try {
+      await req.user.update({is_otp_verified: true});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'OTP verified.');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Reset password request failed. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async resendPasswordToken(req, res) {
+    const {UserId} = req.body;
+    try {
+      const passwordToken = await db.OneTimePassword.findOne({
+        where: {
+          UserId
+        }
+      });
+      if (!passwordToken) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'One time token not found'
+        );
+        return Response.send(res);
+      }
+      const otp = await AuthService.resendPasswordToken(UserId, passwordToken);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'OTP has been sent to your phone.',
+        otp
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async ProposalRequests(req, res) {
-    const {country, state} = req.params;
     try {
       const campaigns = await CampaignService.fetchProposalForVendors(
         req.query

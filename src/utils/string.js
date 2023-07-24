@@ -23,6 +23,14 @@ exports.GenerateOtp = () => {
   return random;
 };
 
+exports.GenerateVendorOtp = () => {
+  const random = randomstring.generate({
+    length: 4,
+    charset: 'numeric'
+  });
+  return random;
+};
+
 exports.GenearteVendorId = () => {
   const random = randomstring.generate({
     length: 5,
