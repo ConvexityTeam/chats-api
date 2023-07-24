@@ -1,18 +1,18 @@
 stages:
-  - build
+  # - build
   - staging
   - production
 
-build:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    - echo "$DIGITALOCEAN_REGISTRY_PASSWORD" | docker login --username $DIGITALOCEAN_REGISTRY_USERNAME --password-stdin $DIGITALOCEAN_REGISTRY_URL
-    - docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
-    - docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $DIGITALOCEAN_REGISTRY_URL/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
-    - docker push $DIGITALOCEAN_REGISTRY_URL/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+# build:
+#   stage: build
+#   image: docker:latest
+#   services:
+#     - docker:dind
+#   script:
+#     - echo "$DIGITALOCEAN_REGISTRY_PASSWORD" | docker login --username $DIGITALOCEAN_REGISTRY_USERNAME --password-stdin $DIGITALOCEAN_REGISTRY_URL
+#     - docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
+#     - docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $DIGITALOCEAN_REGISTRY_URL/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+#     - docker push $DIGITALOCEAN_REGISTRY_URL/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
     # - echo "$DOCTL_CONFIG" | base64 -d > doctl-config.yaml
     # - doctl auth init --config doctl-config.yaml
     # - doctl registry login --config doctl-config.yaml
@@ -25,28 +25,28 @@ build:
 #   - chmod 600 $SSH_PRIVATE_KEY
 #   - ssh-add $SSH_PRIVATE_KEY 
 
-# deploy_staging:
-#   stage: staging
-#   script:
-#     - eval $(ssh-agent -s)
-#     - chmod 600 $SSH_PRIVATE_KEY
-#     - ssh-add $SSH_PRIVATE_KEY
-#     - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && docker image prune -a && exit"
-#   only:
-#     - develop
-#   tags:
-#     - staging
+deploy_staging:
+  stage: staging
+  script:
+    - eval $(ssh-agent -s)
+    - chmod 600 $SSH_PRIVATE_KEY
+    - ssh-add $SSH_PRIVATE_KEY
+    - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && docker image prune -a && exit"
+  only:
+    - develop
+  tags:
+    - staging
 
-# deploy_production:
-#   stage: production
-#   script:
-#     - eval $(ssh-agent -s)
-#     - chmod 600 $SSH_PRIVATE_KEY_PRODUCTION
-#     - ssh-add $SSH_PRIVATE_KEY_PRODUCTION
-#     - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/gitlab-repo && cd app && git checkout production && git reset --hard && git pull origin production && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && docker image prune -a && exit"
-#     # - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/gitlab-repo && cd app && git checkout production && git reset --hard && git pull origin production && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
-#   only:
-#     - production
-#   tags:
-#     - production
+deploy_production:
+  stage: production
+  script:
+    - eval $(ssh-agent -s)
+    - chmod 600 $SSH_PRIVATE_KEY_PRODUCTION
+    - ssh-add $SSH_PRIVATE_KEY_PRODUCTION
+    - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/gitlab-repo && cd app && git checkout production && git reset --hard && git pull origin production && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && docker image prune -a && exit"
+    # - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/gitlab-repo && cd app && git checkout production && git reset --hard && git pull origin production && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
+  only:
+    - production
+  tags:
+    - production
     
