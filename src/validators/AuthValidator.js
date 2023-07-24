@@ -53,7 +53,11 @@ class AuthValidator extends BaseValidator {
         .withMessage('Password confirmation does not match.')
     ];
   }
-
+  static confirmOTPRules() {
+    return [
+      body('otp').not().isEmpty().withMessage('reset token is required.')
+    ];
+  }
   static async canResetPassword(req, res, next) {
     const query = {};
     const {email, phone} = req.body;

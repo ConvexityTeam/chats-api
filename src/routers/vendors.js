@@ -14,7 +14,7 @@ const {
   BeneficiaryAuth,
   IsRequestWithValidPin
 } = require('../middleware');
-const {ParamValidator, FileValidator} = require('../validators');
+const {ParamValidator, FileValidator, AuthValidator} = require('../validators');
 const VendorValidator = require('../validators/VendorValidator');
 
 router.get('/', VendorController.getAllVendors);
@@ -52,6 +52,15 @@ router.post(
   VendorValidator.VendorExists,
   FileValidator.checkProfilePic(),
   VendorController.uploadprofilePic
+);
+router.post('/register', VendorController.registeredSelf);
+router.post('/resend-otp', VendorController.resendPasswordToken);
+router.post(
+  '/confirm-otp',
+  AuthValidator.confirmOTPRules(),
+  AuthValidator.validate,
+  AuthValidator.checkResetPasswordToken,
+  VendorController.confirmOTP
 );
 
 router
