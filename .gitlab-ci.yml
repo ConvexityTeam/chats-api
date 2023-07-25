@@ -1,34 +1,15 @@
 stages:
+  - build
   - staging
   - production
 
-# before_script:
-#   - eval $(ssh-agent -s)
-#   - chmod 600 $SSH_PRIVATE_KEY
-#   - ssh-add $SSH_PRIVATE_KEY 
-
-deploy_staging:
-  stage: staging
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
   script:
-    - eval $(ssh-agent -s)
-    - chmod 600 $SSH_PRIVATE_KEY
-    - ssh-add $SSH_PRIVATE_KEY
-    - ssh $USER@$APP_URL_STAGING -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/chatsapi && cd app && git checkout develop && git reset --hard && git pull origin develop && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && docker image prune -a && exit"
-  only:
-    - develop
-  tags:
-    - staging
-
-deploy_production:
-  stage: production
-  script:
-    - eval $(ssh-agent -s)
-    - chmod 600 $SSH_PRIVATE_KEY_PRODUCTION
-    - ssh-add $SSH_PRIVATE_KEY_PRODUCTION
-    - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/gitlab-repo && cd app && git checkout production && git reset --hard && git pull origin production && docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach && docker image prune -a && exit"
-    # - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/gitlab-repo && cd app && git checkout production && git reset --hard && git pull origin production && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
-  only:
-    - production
-  tags:
-    - production
-    
+    - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username $CONTAINER_REGISTRY_USERNAME --password-stdin $CONTAINER_REGISTRY_URL
+    - docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
+    - docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $CONTAINER_REGISTRY_URL/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+    - docker push $CONTAINER_REGISTRY_URL/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
