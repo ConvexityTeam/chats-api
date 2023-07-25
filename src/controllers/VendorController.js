@@ -10,7 +10,8 @@ const {
   ProductService,
   SmsService,
   AuthService,
-  QueueService
+  QueueService,
+  UtilService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -101,9 +102,7 @@ class VendorController {
 
   static async fetchDefaultCategory(req, res) {
     try {
-      const categories = await db.ProductCategory.findAll({
-        where: {organisation_id: null}
-      });
+      const categories = await ProductService.fetchCategoryTypes();
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Categories fetched',
@@ -121,41 +120,7 @@ class VendorController {
 
   static async addDefaultCategory(req, res) {
     try {
-      const createdCategory = await db.ProductCategory.bulkCreate([
-        {
-          name: 'Clothing',
-          description: 'Clothing'
-        },
-        {
-          name: 'Medicine',
-          description: 'Medicine'
-        },
-        {
-          name: 'Cash',
-          description: 'Cash'
-        },
-        {
-          name: 'Hygiene Items',
-          description: 'Hygiene Items'
-        },
-        {
-          name: 'Fresh Food Items',
-          description: 'Fresh Food Items'
-        },
-        {
-          name: 'Others',
-          description: 'Others'
-        },
-        {
-          name: 'Education',
-          description: 'Education'
-        },
-        {
-          name: 'Humanitarian Overhead',
-          description: 'Humanitarian Overhead'
-        }
-      ]);
-
+      const createdCategory = await ProductService.addDefaultCategory();
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Category added',
