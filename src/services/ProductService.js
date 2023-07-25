@@ -19,7 +19,32 @@ class ProductService {
     return ProductCategory.create(categoryType);
   }
 
-  static fetchCategoryTypes(organisation_id) {
+  static async addDefaultCategory(organisation_id = null) {
+    return await ProductCategory.bulkCreate([
+      {
+        name: 'Clothing',
+        description: 'Clothing',
+        organisation_id
+      },
+      {
+        name: 'Medicine',
+        description: 'Medicine',
+        organisation_id
+      },
+      {
+        name: 'Cash',
+        description: 'Cash',
+        organisation_id
+      },
+      {
+        name: 'Hygiene Items',
+        description: 'Hygiene Items',
+        organisation_id
+      }
+    ]);
+  }
+
+  static fetchCategoryTypes(organisation_id = null) {
     return ProductCategory.findAll({
       where: {organisation_id},
       order: [['createdAt', 'DESC']]
