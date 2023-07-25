@@ -1,7 +1,7 @@
 stages:
   - build
-  - staging
-  - production
+  - deploy-staging
+  - deploy-production
 
 build:
   stage: build
@@ -15,3 +15,21 @@ build:
     - docker build -t $CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG .
     - docker tag $CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG
     - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG
+
+staging:
+  stage: deploy-staging
+  image: docker:latest
+  script:
+    - apt-get update && apt-get install -y awscli
+    - aws configure set aws_access_key_id $ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
+    - aws configure set default.region $AWS_REGION
+
+    - docker login -u "$CONTAINER_REGISTRY_USERNAME" -p "$CONTAINER_REGISTRY_PASSWORD" "$CONTAINER_REGISTRY_URL"
+    - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
+
+    # Deploy the Docker image to the EC2 instance
+    - docker save "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG" | ssh -i /path/to/your/ec2/key.pem $USER@$APP_URL_STAGING "docker load"
+
+  only:
+    - master
