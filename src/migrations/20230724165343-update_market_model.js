@@ -8,23 +8,23 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    // await queryInterface.removeColumn('Markets', 'location');
-    // await queryInterface.addColumn('Markets', 'location', {
-    //   allowNull: true,
-    //   type: Sequelize.JSON
-    // });
-    // await queryInterface.addColumn('Markets', 'category_id', {
-    //   allowNull: true,
-    //   type: Sequelize.INTEGER,
-    //   references: {
-    //     model: 'ProductCategories',
-    //     key: 'id'
-    //   }
-    // });
-    // await queryInterface.addColumn('Markets', 'website_url', {
-    //   allowNull: true,
-    //   type: Sequelize.STRING
-    // });
+    await queryInterface.removeColumn('Markets', 'location');
+    await queryInterface.addColumn('Markets', 'location', {
+      allowNull: true,
+      type: Sequelize.JSON
+    });
+    await queryInterface.addColumn('Markets', 'category_id', {
+      allowNull: true,
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'ProductCategories',
+        key: 'id'
+      }
+    });
+    await queryInterface.addColumn('Markets', 'website_url', {
+      allowNull: true,
+      type: Sequelize.STRING
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
