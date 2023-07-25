@@ -109,3 +109,6 @@ dist
 
 # Upload temp folder
 temp
+
+# Ignore config for doctl
+config.yml
