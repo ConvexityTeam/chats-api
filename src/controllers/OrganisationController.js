@@ -756,10 +756,6 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      data.location = {
-        country: data.country,
-        state: data.state
-      };
       data.is_processing = false;
       CampaignService.addCampaign({
         ...data,
