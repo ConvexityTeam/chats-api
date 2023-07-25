@@ -8,6 +8,7 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
+    //update market order
     await queryInterface.removeColumn('Markets', 'location');
     await queryInterface.addColumn('Markets', 'location', {
       allowNull: true,
