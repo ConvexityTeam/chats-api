@@ -31,7 +31,7 @@ staging:
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
 
     # Deploy the Docker image to the EC2 instance
-    - aws ssm send-command --instance-ids $API_STAGING --document-name "AWS-RunShellScript" --query "Command.CommandId" --output text --parameters commands="docker save \"$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG\" | docker load"
+    - aws ssm send-command --instance-ids $API_STAGING --document-name "AWS-RunShellScript" --query "Command.CommandId" --output text --parameters commands="docker save \'$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG\' | docker load"
 
   only:
     - staging
