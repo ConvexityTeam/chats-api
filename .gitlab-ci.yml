@@ -32,4 +32,4 @@ staging:
     - docker save "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG" | ssh -i /path/to/your/ec2/key.pem $USER@$APP_URL_STAGING "docker load"
 
   only:
-    - master
+    - staging
