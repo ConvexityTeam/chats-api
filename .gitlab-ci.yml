@@ -26,13 +26,12 @@ staging:
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
     - aws configure set default.region $AWS_REGION
-
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password "$CONTAINER_REGISTRY_URL"
     # - docker login --username $CONTAINER_REGISTRY_USERNAME --password $CONTAINER_REGISTRY_PASSWORD $CONTAINER_REGISTRY_URL
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
 
     # Deploy the Docker image to the EC2 instance
-    - docker save "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG" | ssh -i /path/to/your/ec2/key.pem $USER@$APP_URL_STAGING "docker load"
+    - docker save "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG" | ssh -i /path/to/your/ec2/key.pem $USER@$API_STAGING "docker load"
 
   only:
     - staging
