@@ -12,7 +12,6 @@ build:
     - apk add --no-cache git
   script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
-    # - docker login --username $CONTAINER_REGISTRY_USERNAME --password $CONTAINER_REGISTRY_PASSWORD $CONTAINER_REGISTRY_URL
     - docker build -t $CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG .
     - docker tag $CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG
     - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG
@@ -29,11 +28,10 @@ staging:
     - aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
     - aws configure set default.region $AWS_REGION
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
-    # - docker login --username $CONTAINER_REGISTRY_USERNAME --password $CONTAINER_REGISTRY_PASSWORD $CONTAINER_REGISTRY_URL
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
 
     # Deploy the Docker image to the EC2 instance
-    - docker save "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG" | ssh -i /path/to/your/ec2/key.pem $USER@$API_STAGING "docker load"
+    - aws ssm send-command --instance-ids $API_STAGING --document-name "AWS-RunShellScript" --query "Command.CommandId" --output text --parameters commands="docker save \"$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG\" | docker load"
 
   only:
     - staging
