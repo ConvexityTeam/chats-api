@@ -255,7 +255,7 @@ class VendorController {
         }
         const findBusiness = await db.Business.findOne({
           where: {
-            name: fields.bizId
+            bizId: fields.bizId
           }
         });
         if (findBusiness) {
