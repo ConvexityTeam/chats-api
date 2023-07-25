@@ -691,8 +691,8 @@ class OrganisationController {
   static async createCampaign(req, res) {
     try {
       const rules = {
-        country: 'required|string',
-        state: 'required|string',
+        'location.country': 'required|string',
+        'location.state': 'required|string',
         formId: 'numeric'
       };
 
