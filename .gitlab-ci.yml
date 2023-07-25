@@ -19,8 +19,9 @@ build:
 staging:
   stage: deploy-staging
   image: docker:latest
+  before_script:
+    - apk add --update --no-cache aws-cli
   script:
-    - apt-get update && apt-get install -y awscli
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
     - aws configure set default.region $AWS_REGION
