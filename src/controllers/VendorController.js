@@ -249,7 +249,7 @@ class VendorController {
           Response.setError(422, Object.values(validation.errors.errors)[0][0]);
           return Response.send(res);
         }
-        if (!files.document) {
+        if (!files) {
           Response.setError(400, 'Document is required');
           return Response.send(res);
         }
@@ -278,7 +278,7 @@ class VendorController {
         await uploadFile(
           files.document,
           'u-' + environ + '-' + req.user.id + '-i.' + extension,
-          'convexity-profile-images'
+          'chats-vendor-document'
         ).then(url => {
           createdBusiness.update({
             document: url
