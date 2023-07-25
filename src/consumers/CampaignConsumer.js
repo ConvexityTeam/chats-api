@@ -14,13 +14,7 @@ const {
   CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO,
   INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO
 } = require('../constants/queues.constant');
-const {
-  BlockchainService,
-  QueueService,
-  WalletService,
-  TransactionService,
-  CampaignService
-} = require('../services');
+const {BlockchainService, QueueService} = require('../services');
 
 const consumerFunctions = require('../utils/consumerFunctions');
 
@@ -134,7 +128,7 @@ RabbitMq['default'].completeConfiguration().then(() => {
         msg.nack();
         return;
       }
-      await update_transaction(
+      await consumerFunctions.update_transaction(
         {
           transaction_hash: gasFee.retried
         },

@@ -1,5 +1,8 @@
 require('dotenv').config();
 const {default: axios} = require('axios');
+const {exchangeRate} = require('../config');
+const currencySymbolMap = require('currency-symbol-map');
+const currencyCodes = require('currency-codes');
 
 class CurrencyServices {
   httpService;
@@ -11,16 +14,45 @@ class CurrencyServices {
     this.exchangeData = this.getExchangeRate();
   }
 
+  async getCurrencySymbol(currencyCode) {
+    const symbol = currencySymbolMap(currencyCode);
+    console.log("symbol", symbol);
+    return symbol ? symbol : currencyCode;
+  }
+
   async getExchangeRate() {
-    return await this.getExchangeRate();
+    return await this.getExchangeRate();  
   }
   async getExchangeRate() {
-    // const appId = process.env.OPEN_EXCHANGE_APP;
-    // console.log(appId);
-    const url = `https://openexchangerates.org/api/latest.json?app_id=da41a176c0874c4498594d728d2aa4ca`;
-    const exchange = await axios.get(url);
-    this.exchangeData = exchange.data.rates;
-    return this.exchangeData;
+    return new Promise(async (resolve, reject) => {
+      try {
+        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}`;
+        const exchange = await axios.get(url);
+        this.exchangeData = exchange.data.rates;
+        resolve(this.exchangeData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  async getSpecificCurrencyExchangeRate(currencyCode) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const baseCurrency = 'USD';
+        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
+        const exchangeRateData = await axios.get(url);
+        const rateData = exchangeRateData.data.rates;
+        const currencySymbol = await this.getCurrencySymbol(currencyCode);
+        resolve({
+          currencyCode,
+          currencySymbol,
+          rateData
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   async convertCurrency(fromCurrency, toCurrency, amount) {

@@ -1,0 +1,23 @@
+<h1 class="title">Project Invitation </h1>
+<p class="text"><b>Hello, {{to}}</b></p>
+<p> <b>We have given you access to project :{{title}} 
+    so that you can manage your journey with us as a Donor and get to know all the possibilities offered by CHATS
+    </b>
+</p>
+<br/>
+{{#if exist}}
+<p>
+<a class="btn-link" href="{{link}}/?token={{token}}&campaign_id={{id}}">To confirm access, kindly navigate to your dashboard</a>
+</p>
+{{else}}
+<p>
+<a class="btn-link" href="{{link}}/?token={{token}}&campaign_id={{id}}">To confirm access, kindly set up an account</a>
+</p>
+{{/if}}
+<br/>
+<p><b>{{message}}</b></p>
+<br/>
+<p class="text"> <b> Best,</b></p>
+<p><b>The {{ngo}} team</b></p>
+
+<p class="text"> <b>CHATS - Convexity</b></p>

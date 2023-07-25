@@ -27,6 +27,10 @@ class WalletController {
             req.query
           );
         for (let tran of transactions.data) {
+          if (tran.narration === 'crypto funding') {
+            tran.dataValues.funded_with = 'Crypto';
+          } else tran.dataValues.funded_with = 'Fiat';
+
           if (tran.CampaignId) {
             let hash = null;
             if (tran.transaction_hash) {
@@ -34,13 +38,11 @@ class WalletController {
                 tran.transaction_hash
               );
             }
-
             const campaign = await CampaignService.getCampaignById(
               tran.CampaignId
             );
             tran.dataValues.transaction_hash = hash;
             tran.dataValues.campaign_name = campaign.title;
-            tran.dataValues.funded_with = null;
           }
         }
 

@@ -58,6 +58,7 @@ class AdminController {
         );
         return Response.send(res);
       }
+      userExist.dataValues.is_verified_all = true;
       const updatesUser = await userExist.update({status: data.status});
 
       const to = userExist.email;
@@ -206,6 +207,20 @@ class AdminController {
       return Response.send(res);
     } catch (error) {
       console.log(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchLiveness(req, res) {
+    try {
+      const liveness = await UserService.fetchLiveness();
+      Response.setSuccess(200, 'Liveness retrieved', liveness);
+      return Response.send(res);
+    } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error.'

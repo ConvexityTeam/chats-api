@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+var hbs = require('nodemailer-express-handlebars');
 const {mailerConfig} = require('../config');
 
 class MailerService {
@@ -19,6 +20,21 @@ class MailerService {
         rejectUnauthorized: false
       }
     });
+
+    this.transporter.use(
+      "compile",
+      hbs({
+        viewEngine: {
+          extname: ".handlebars",
+          layoutsDir: "src/utils/emailTemplate/views/layouts/",
+          partialsDir: "src/utils/emailTemplate/views/layouts/",
+          defaultLayout: "main.handlebars", 
+        },
+        viewPath: "src/utils/emailTemplate/views/",
+        extName: ".handlebars",
+        cache: false, 
+      })
+    );
   }
 
   _sendMail(to, subject, html) {
@@ -68,21 +84,30 @@ class MailerService {
   }
 
   sendPassword(to, name, password, vendor_id) {
-    const body = `
-    <div>
-      <p>Hi, ${name}\nYour CHATS account ${
-      vendor_id
-        ? 'ID is: ' + vendor_id + ', password is: ' + password
-        : 'password is: ' + password
-    }</p>
-      <p>Best,\nCHATS - Convexity</p>
-    </div>
-    `;
+    // const body = `
+    // <div>
+    //   <p>Hi, ${name}\nYour CHATS account ${
+    //   vendor_id
+    //     ? 'ID is: ' + vendor_id + ', password is: ' + password
+    //     : 'password is: ' + password
+    // }</p>
+    //   <p>Best,\nCHATS - Convexity</p>
+    // </div>
+    // `;
     const options = {
       from: this.config.from,
       to,
-      subject: 'Account Credentials',
-      html: body
+      subject: 'Your Vendor Account Credentials',
+      // html: body
+      isHtml: false,
+        template: "vendorDetails",
+        context: 
+        {
+          name,
+          vendor_id,
+          password
+        }, 
+        layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -97,18 +122,26 @@ class MailerService {
     });
   }
   sendSMSToken(smsToken, to, name) {
-    const body = `
-    <div>
-      <p>Hello ${name},</p>
-      <p>Your Convexity token is: ${smsToken}</p>
-      <p>CHATS - Convexity</p>
-    </div>
-    `;
+    // const body = `
+    // <div>
+    //   <p>Hello ${name},</p>
+    //   <p>Your Convexity token is: ${smsToken}</p>
+    //   <p>CHATS - Convexity</p>
+    // </div>
+    // `;
     const options = {
       from: this.config.from,
       to,
       subject: 'SMS Token',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "sendSMSToken",
+      context: 
+      {
+        name,
+        smsToken
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -124,18 +157,27 @@ class MailerService {
   }
 
   sendOTP(otp, ref, to, name) {
-    const body = `
-    <div>
-      <p>Hello ${name},</p>
-      <p>Your Convexity reset password OTP is: ${otp} and ref is: ${ref}</p>
-      <p>CHATS - Convexity</p>
-    </div>
-    `;
+    // const body = `
+    // <div>
+    //   <p>Hello ${name},</p>
+    //   <p>Your Convexity reset password OTP is: ${otp} and ref is: ${ref}</p>
+    //   <p>CHATS - Convexity</p>
+    // </div>
+    // `;
     const options = {
       from: this.config.from,
       to,
       subject: 'Reset password',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "resetPasswordOTP",
+      context: 
+      {
+        name,
+        otp,
+        ref
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -149,28 +191,44 @@ class MailerService {
     });
   }
   sendInvite(to, token, campaign, ngo, exist, message, link) {
-    const body = `
-    <div>
-      <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
-      <p>We’ve given you access to campaign titled: ${
-        campaign.title
-      } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
-      <p>${
-        exist
-          ? `If you want to login to confirm access, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
-          : `If you want to create an account, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
-      }</p>
-      <p>${message}</p>
-      <p>Enjoy!</p>
-      <p>Best,</p>
-      <p>The ${ngo} team</p>
-      </div>
-    `;
+    const {id, title } = campaign;
+
+    // const body = `
+    // <div>
+    //   <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
+    //   <p>We’ve given you access to campaign titled: ${
+    //     campaign.title
+    //   } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
+    //   <p>${
+    //     exist
+    //       ? `If you want to login to confirm access, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
+    //       : `If you want to create an account, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
+    //   }</p>
+    //   <p>${message}</p>
+    //   <p>Enjoy!</p>
+    //   <p>Best,</p>
+    //   <p>The ${ngo} team</p>
+    //   </div>
+    // `;
     const options = {
       from: this.config.from,
       to,
       subject: 'Donor Invitation',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "sendDonorInvite",
+      context: 
+      {
+        to,
+        token,
+        id,
+        title,
+        ngo, 
+        exist,
+        message,
+        link
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -186,18 +244,25 @@ class MailerService {
   }
 
   sendAdminSmsCreditMail(to, amount) {
-    const body = `
-    <div>
-      <p>Hello Admin,</p>
-      <p>This is to inform you that your SMS service balance is running low. Current balance is ${amount}. Please recharge your account.</p>
-      <p>CHATS - Convexity</p>
-    </div>
-    `;
+    // const body = `
+    // <div>
+    //   <p>Hello Admin,</p>
+    //   <p>This is to inform you that your SMS service balance is running low. Current balance is ${amount}. Please recharge your account.</p>
+    //   <p>CHATS - Convexity</p>
+    // </div>
+    // `;
     const options = {
       from: this.config.from,
       to: [to, 'charles@withconvexity.com'],
       subject: 'Recharge Your Wallet Balance',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "sendAdminSMSCreditMail",
+      context: 
+      {
+        amount
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -213,18 +278,25 @@ class MailerService {
   }
 
   sendAdminNinCreditMail(to, amount) {
-    const body = `
-    <div>
-      <p>Hello Admin,</p>
-      <p>This is to inform you that your NIN service balance is running low. Current balance is ${amount}. Please recharge your account</p>
-      <p>CHATS - Convexity</p>
-    </div>
-    `;
+    // const body = `
+    // <div>
+    //   <p>Hello Admin,</p>
+    //   <p>This is to inform you that your NIN service balance is running low. Current balance is ${amount}. Please recharge your account</p>
+    //   <p>CHATS - Convexity</p>
+    // </div>
+    // `;
     const options = {
       from: this.config.from,
       to: [to, 'charles@withconvexity.com'],
       subject: 'Recharge Your Wallet Balance',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "sendAdminNINCreditMail",
+      context: 
+      {
+        amount
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -240,18 +312,25 @@ class MailerService {
   }
 
   sendAdminBlockchainCreditMail(to, amount) {
-    const body = `
-    <div>
-      <p>Hello Admin,</p>
-      <p>This is to inform you that your Blockchain service balance that covers for gas is running low. Current balance is ${amount}. Please recharge your account</p>
-      <p>CHATS - Convexity</p>
-    </div>
-    `;
+    // const body = `
+    // <div>
+    //   <p>Hello Admin,</p>
+    //   <p>This is to inform you that your Blockchain service balance that covers for gas is running low. Current balance is ${amount}. Please recharge your account</p>
+    //   <p>CHATS - Convexity</p>
+    // </div>
+    // `;
     const options = {
       from: this.config.from,
       to: [to, 'charles@withconvexity.com'],
       subject: 'Recharge Your Wallet Balance',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "sendAdminBlockchainCreditMail",
+      context: 
+      {
+        amount
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -266,20 +345,28 @@ class MailerService {
     });
   }
   sendEmailVerification(to, orgName, url) {
-    const body = `
-    <div>
-    <h2>Hello, ${orgName}</h2>
-    <p>Thank you for  creating an account on CHATS platform. 
-    Please confirm your email by clicking on the following link</p>
-    <a href="${url}"> Click here</a>
-      <p>Best,\n CHATS - Convexity</p>
-    </div>
-    `;
+    // const body = `
+    // <div>
+    // <h2>Hello, ${orgName}</h2>
+    // <p>Thank you for  creating an account on CHATS platform. 
+    // Please confirm your email by clicking on the following link</p>
+    // <a href="${url}"> Click here</a>
+    //   <p>Best,\n CHATS - Convexity</p>
+    // </div>
+    // `;
     const options = {
       from: this.config.from,
       to: to,
       subject: 'Please confirm your account',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "sendEmailVerification",
+      context: 
+      {
+        orgName,
+        url
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -294,20 +381,27 @@ class MailerService {
     });
   }
   ngoApprovedMail(to, orgname) {
-    const body = `
-    <div>
-    <h2>Congratulations, ${orgname}</h2>
-    <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaigns.<br/>
-If you have any questions, please contact us via the contact form on your dashboard.</p>
-    <a href="https://chats.cash/"> Click here To Get Started</a>
-      <p>Regards,\n CHATS - Convexity</p>
-    </div>
-    `;
+//     const body = `
+//     <div>
+//     <h2>Congratulations, ${orgname}</h2>
+//     <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaigns.<br/>
+// If you have any questions, please contact us via the contact form on your dashboard.</p>
+//     <a href="https://chats.cash/"> Click here To Get Started</a>
+//       <p>Regards,\n CHATS - Convexity</p>
+//     </div>
+//     `;
     const options = {
       from: this.config.from,
       to: to,
       subject: 'Congratulations Account Approved!',
-      html: body
+      // html: body
+      isHtml: false,
+      template: "ngoApprovedMail",
+      context: 
+      {
+        orgname
+      }, 
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {

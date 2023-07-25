@@ -372,6 +372,7 @@ class UsersController {
         }
         fields.liveness_capture = liveness_capture;
         fields.nin_photo_url = nin_photo_url;
+        fields.authorized_by = req.user.id;
 
         const liveness = await UserService.createLiveness(fields);
         Response.setSuccess(

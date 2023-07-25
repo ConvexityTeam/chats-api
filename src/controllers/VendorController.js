@@ -6,7 +6,12 @@ const {
   CampaignService,
   BlockchainService,
   OrderService,
-  UserService
+  UserService,
+  ProductService,
+  SmsService,
+  AuthService,
+  QueueService,
+  UtilService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -19,13 +24,423 @@ const {Response} = require('../libs');
 const {
   HttpStatusCode,
   generateOrderRef,
-  generateQrcodeURL
+  generateQrcodeURL,
+  createHash,
+  AclRoles,
+  GenearteVendorId
 } = require('../utils');
 const {data} = require('../libs/Response');
-
+const {user} = require('../config/mailer');
+const formidable = require('formidable');
 class VendorController {
   constructor() {
     this.emails = [];
+  }
+
+  static async submitProposal(req, res) {
+    try {
+      const rules = {
+        proposal_id: 'required|integer',
+        product_id: 'required|integer',
+        quantity: 'required|integer',
+        cost: 'required|numeric'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        if (validation.fails()) {
+          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+          return Response.send(res);
+        }
+      }
+      req.body.vendor_id = req.user.id;
+      const proposal = await VendorService.submitProposal(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Proposal submitted',
+        proposal
+      );
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchSubmittedProposals(req, res) {
+    const {proposal_id} = req.params;
+    try {
+      const proposals = await ProductService.vendorProposal({proposal_id});
+      for (const proposal of proposals) {
+        proposal.dataValues.vendor = await UserService.findSingleUser({
+          id: proposal.vendor_id
+        });
+        const proposal_request = await CampaignService.fetchProposalRequest(
+          proposal_id
+        );
+        const campaign = await CampaignService.getCampaignById(
+          proposal_request.campaign_id
+        );
+        proposal.dataValues.campaign_id = campaign.id;
+        proposal.dataValues.budget = campaign.budget;
+      }
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposals fetched',
+        proposals
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchDefaultCategory(req, res) {
+    try {
+      const categories = await ProductService.fetchCategoryTypes();
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Categories fetched',
+        categories
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async addDefaultCategory(req, res) {
+    try {
+      const createdCategory = await ProductService.addDefaultCategory();
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Category added',
+        createdCategory
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async addMarket(req, res) {
+    const {store_name} = req.body;
+    try {
+      const rules = {
+        store_name: 'required|string',
+        country: 'required|alpha',
+        state: 'required|alpha',
+        website_url: 'url',
+        category_id: 'required|string'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const findStore = await CampaignService.findStoreByName(store_name);
+      if (findStore) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Store already registered'
+        );
+        return Response.send(res);
+      }
+      req.body.UserId = req.user.id;
+      req.body.location = {
+        country: req.body.country,
+        state: req.body.state
+      };
+      const createdStore = await CampaignService.addStore(req.body);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Store registered',
+        createdStore
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchBusiness(req, res) {
+    try {
+      const businesses = await db.Business.findAll({
+        where: {vendorId: req.user.id}
+      });
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Businesses fetched',
+        businesses
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async addBusiness(req, res) {
+    try {
+      var form = new formidable.IncomingForm({
+        multiples: true
+      });
+      form.parse(req, async (err, fields, files) => {
+        const rules = {
+          name: 'string',
+          bizId: 'required|string',
+          accountId: 'required|integer'
+        };
+        const validation = new Validator(fields, rules);
+        if (validation.fails()) {
+          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+          return Response.send(res);
+        }
+        if (!files) {
+          Response.setError(400, 'Document is required');
+          return Response.send(res);
+        }
+        const findBusiness = await db.Business.findOne({
+          where: {
+            bizId: fields.bizId
+          }
+        });
+        if (findBusiness) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Business already registered'
+          );
+          return Response.send(res);
+        }
+        const createdBusiness = await db.Business.create({
+          name: fields.name,
+          bizId: fields.bizId,
+          accountId: fields.accountId,
+          vendorId: req.user.id
+        });
+
+        const extension = files.document.name.substring(
+          files.document.name.lastIndexOf('.') + 1
+        );
+        await uploadFile(
+          files.document,
+          'u-' + environ + '-' + req.user.id + '-i.' + extension,
+          'chats-vendor-document'
+        ).then(url => {
+          createdBusiness.update({
+            document: url
+          });
+        });
+
+        Response.setSuccess(
+          HttpStatusCode.STATUS_CREATED,
+          'Business registered',
+          createdBusiness
+        );
+        return Response.send(res);
+      });
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+    }
+  }
+  static async registeredSelf(req, res) {
+    const {email} = req.body;
+    try {
+      const rules = {
+        first_name: 'required|alpha',
+        last_name: 'required|alpha',
+        email: 'required|email',
+        phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+        password: 'required|string'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const user = await UserService.findSingleUser({email});
+      if (user) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'User already registered'
+        );
+        return Response.send(res);
+      }
+      req.body.password = createHash(req.body.password);
+      req.body.RoleId = AclRoles.Vendor;
+      req.body.vendor_id = GenearteVendorId();
+      const createdUser = await UserService.addUser(req.body);
+      createdUser.password = null;
+      await AuthService.createPasswordToken(createdUser.id, req.ip);
+      await QueueService.createWallet(createdUser.id, 'user');
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'User registered',
+        createdUser
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async confirmOTP(req, res) {
+    try {
+      await req.user.update({is_otp_verified: true});
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'OTP verified.');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Reset password request failed. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async resendPasswordToken(req, res) {
+    const {UserId} = req.body;
+    try {
+      const passwordToken = await db.OneTimePassword.findOne({
+        where: {
+          UserId
+        }
+      });
+      if (!passwordToken) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'One time token not found'
+        );
+        return Response.send(res);
+      }
+      const otp = await AuthService.resendPasswordToken(UserId, passwordToken);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'OTP has been sent to your phone.',
+        otp
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async ProposalRequests(req, res) {
+    try {
+      const campaigns = await CampaignService.fetchProposalForVendors(
+        req.query
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposals fetched',
+        campaigns
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async approveProposal(req, res) {
+    const {campaign_id, vendor_id, product_id, proposal_id} = req.body;
+    try {
+      const rules = {
+        campaign_id: 'required|integer',
+        vendor_id: 'required|integer',
+        product_id: 'required|integer',
+        proposal_id: 'required|integer'
+      };
+      const validation = new Validator(req.body, rules);
+      if (validation.fails()) {
+        if (validation.fails()) {
+          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+          return Response.send(res);
+        }
+      }
+      const [campaign, vendor, product, proposal] = await Promise.all([
+        CampaignService.getCampaignById(campaign_id),
+        UserService.getAUser(vendor_id),
+        ProductService.findProduct({id: product_id}),
+        CampaignService.fetchProposal(proposal_id)
+      ]);
+      if (!campaign) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+        return Response.send(res);
+      }
+      if (!vendor) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Vendor not found'
+        );
+        return Response.send(res);
+      }
+      if (!product) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Product not found'
+        );
+        return Response.send(res);
+      }
+      if (!proposal) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Proposal not found'
+        );
+        return Response.send(res);
+      }
+      await db.OrganisationMembers.create({
+        UserId: vendor_id,
+        OrganisationId: proposal.organisation_id,
+        role: 'vendor'
+      });
+      await db.VendorProduct.create({
+        vendorId: vendor_id,
+        productId: product_id
+      });
+      await CampaignService.approveVendorForCampaign(campaign_id, vendor_id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Proposal approved');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
   }
   static async getAllVendors(req, res) {
     try {

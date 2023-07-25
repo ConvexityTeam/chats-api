@@ -1,3 +1,4 @@
+const path = require('path');
 const {Op} = require('sequelize');
 const {
   AclRoles,
@@ -27,9 +28,11 @@ const {
   OrganisationService,
   CampaignService,
   WalletService,
-  BlockchainService
+  BlockchainService,
+  ProductService
 } = require('../services');
 const BeneficiariesService = require('../services/BeneficiaryService');
+const {async} = require('regenerator-runtime');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
   {
@@ -39,7 +42,8 @@ const ninVerificationQueue = amqp_1['default'].declareQueue(
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
-const __basedir = __dirname + '/..';
+const __basedir = path.join(__dirname, '..');
+
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
 class AuthController {
@@ -131,9 +135,10 @@ class AuthController {
         return Response.send(res);
       }
       const {campaignId} = req.body;
+      const CampaignId = Number(campaignId);
 
       const campaignExist = await db.Campaign.findOne({
-        where: {id: campaignId}
+        where: {id: CampaignId}
       });
 
       if (!campaignExist) {
@@ -148,7 +153,7 @@ class AuthController {
       let existingEmails = []; //existings
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
-      readXlsxFile(path).then(rows => {
+      readXlsxFile(path).then(async rows => {
         // skip header or first row
         rows.shift();
         let beneficiaries = [];
@@ -171,28 +176,28 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
-
         //loop through all the beneficiaries list to populate them in the db
-        beneficiaries.forEach(async beneficiary => {
-          const user_exist = await db.User.findOne({
-            where: {email: beneficiary.email}
-          });
+        // await Promise.all(
+        beneficiaries.forEach(async (beneficiary, index) => {
+          setTimeout(async () => {
+            const user_exist = await db.User.findOne({
+              where: {email: beneficiary.email}
+            });
 
-          if (!user_exist) {
-            bcrypt.genSalt(10, (err, salt) => {
-              if (err) {
-                console.log('Error Ocurred hashing');
-              }
-              const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
-              bcrypt
-                .hash(beneficiary.password, salt)
-                .then(async hash => {
+            if (!user_exist) {
+              bcrypt.genSalt(10, (err, salt) => {
+                if (err) {
+                  console.log('Error Ocurred hashing');
+                }
+                const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
+                bcrypt.hash(beneficiary.password, salt).then(async hash => {
                   const encryptedPassword = hash;
+                  const phoneInString = beneficiary.phone.toString();
                   const user = await db.User.create({
                     RoleId: AclRoles.Beneficiary,
                     first_name: beneficiary.first_name,
                     last_name: beneficiary.last_name,
-                    phone: beneficiary.phone,
+                    phone: phoneInString,
                     email: beneficiary.email,
                     password: encryptedPassword,
                     gender: beneficiary.gender,
@@ -203,47 +208,35 @@ class AuthController {
                     dob: beneficiary.dob,
                     pin: encryptedPin
                   });
-                  if (user) {
-                    await QueueService.createWallet(user.id, 'user');
-                    if (campaignExist.type === 'campaign') {
-                      const benef = await Beneficiary.create({
-                        UserId: user.id,
-                        CampaignId: campaignExist.id,
-                        approved: true,
-                        source: 'Excel File Upload'
-                      });
-                      if (benef) {
-                        await QueueService.createWallet(
-                          user.id,
-                          'user',
-                          // fields.campaign
-                          campaignId
-                        );
-                      }
-                    }
+                  // .then(async user => {
+                  await QueueService.createWallet(user.id, 'user');
+                  if (campaignExist.type === 'campaign') {
+                    const res = await CampaignService.addBeneficiary(
+                      campaignExist.id,
+                      user.id,
+                      'web app'
+                    );
                   }
+
                   createdSuccess.push(beneficiary.email); //add to success list
-                  Response.setSuccess(
-                    200,
-                    'Beneficiaries Uploaded Successfully:',
-                    user.id
-                  );
-                  return Response.send(res);
-                })
-                .catch(err => {
-                  Response.setError(
-                    HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-                    err
-                  );
-                  // return Response.send(res);
-                  createdFailed.push(beneficiary.email);
+                  // })
+                  // .catch(err => {
+                  //   Response.setError(
+                  //     HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+                  //     err
+                  //   );
+                  //   // return Response.send(res);
+                  //   createdFailed.push(beneficiary.email);
+                  // });
                 });
-            });
-          } else {
-            //include the email in the existing list
-            existingEmails.push(beneficiary.email);
-          }
+              });
+            } else {
+              //include the email in the existing list
+              existingEmails.push(beneficiary.email);
+            }
+          }, index * 10000);
         });
+        // )
         Response.setSuccess(
           200,
           'Beneficiaries Uploaded Successfully:',
@@ -1146,6 +1139,10 @@ class AuthController {
       }
       const orgId = user.AssociatedOrganisations[0].OrganisationId;
       const orgWallet = await WalletService.findMainOrganisationWallet(orgId);
+      const findCategoryType = await ProductService.fetchCategoryTypes(orgId);
+      if (findCategoryType.length == 0) {
+        await ProductService.addDefaultCategory(orgId);
+      }
       if (!orgWallet) {
         await QueueService.createWallet(orgId, 'organisation');
       }
@@ -1159,6 +1156,7 @@ class AuthController {
       if (user.is_tfa_enabled && user.tfa_method !== 'qrCode') {
         await AuthService.add2faSecret(user, user.tfa_method);
       }
+
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
