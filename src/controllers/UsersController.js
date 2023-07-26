@@ -509,10 +509,7 @@ class UsersController {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
-          {
-            userProfile,
-            currencyData
-          }
+          req.user.toObject()
         );
         return Response.send(res);
       }
