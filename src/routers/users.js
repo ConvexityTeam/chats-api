@@ -55,7 +55,7 @@ router
   .get(VendorBeneficiaryAuth, UsersController.getUserAccouns)
   .post(
     VendorBeneficiaryAuth,
-    IsUserVerified,
+    // IsUserVerified,
     UserValidator.addAccountValidation,
     UsersController.addBankAccount
   );

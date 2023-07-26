@@ -692,7 +692,7 @@ class OrganisationController {
     try {
       const rules = {
         'location.country': 'required|string',
-        'location.state': 'required|string',
+        'location.state': 'required|array',
         formId: 'numeric'
       };
 

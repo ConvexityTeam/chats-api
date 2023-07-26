@@ -11,7 +11,8 @@ const {
   SmsService,
   AuthService,
   QueueService,
-  UtilService
+  UtilService,
+  PaystackService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -27,7 +28,8 @@ const {
   generateQrcodeURL,
   createHash,
   AclRoles,
-  GenearteVendorId
+  GenearteVendorId,
+  SanitizeObject
 } = require('../utils');
 const {data} = require('../libs/Response');
 const {user} = require('../config/mailer');
@@ -40,10 +42,10 @@ class VendorController {
   static async submitProposal(req, res) {
     try {
       const rules = {
-        proposal_id: 'required|integer',
-        product_id: 'required|integer',
-        quantity: 'required|integer',
-        cost: 'required|numeric'
+        '.*.proposal_id': 'required|integer',
+        '.*.product_id': 'required|integer',
+        '.*.quantity': 'required|integer',
+        '.*.cost': 'required|numeric'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -141,7 +143,7 @@ class VendorController {
       const rules = {
         store_name: 'required|string',
         country: 'required|alpha',
-        state: 'required|alpha',
+        state: 'required|array',
         website_url: 'url',
         category_id: 'required|string'
       };
@@ -207,7 +209,8 @@ class VendorController {
         const rules = {
           name: 'string',
           bizId: 'required|string',
-          accountId: 'required|integer'
+          account_number: 'required|string',
+          bank_code: 'required|string'
         };
         const validation = new Validator(fields, rules);
         if (validation.fails()) {
@@ -230,24 +233,53 @@ class VendorController {
           );
           return Response.send(res);
         }
-        const createdBusiness = await db.Business.create({
-          name: fields.name,
-          bizId: fields.bizId,
-          accountId: fields.accountId,
-          vendorId: req.user.id
-        });
+        const data = {
+          account_number: fields.account_number,
+          bank_code: fields.bank_code
+        };
 
+        console.log(data, 'bank');
+        try {
+          const resolved = await PaystackService.resolveAccount(
+            data.account_number,
+            data.bank_code
+          );
+          console.log(resolved, 'resolved');
+          data.account_name = resolved.account_name;
+        } catch (err) {
+          Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, err.message);
+          return Response.send(res);
+        }
+
+        try {
+          const recipient = await PaystackService.createRecipientReference(
+            data.account_name,
+            data.account_number,
+            data.bank_code
+          );
+          data.bank_name = recipient.details.bank_name;
+          data.recipient_code = recipient.recipient_code;
+          data.type = recipient.type;
+        } catch (err) {
+          Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, err.message);
+          return Response.send(res);
+        }
+        const account = await UserService.addUserAccount(req.user.id, data);
         const extension = files.document.name.substring(
           files.document.name.lastIndexOf('.') + 1
         );
-        await uploadFile(
+        const document = await uploadFile(
           files.document,
           'u-' + environ + '-' + req.user.id + '-i.' + extension,
-          'chats-vendor-document'
-        ).then(url => {
-          createdBusiness.update({
-            document: url
-          });
+          'convexity-profile-images'
+        );
+
+        const createdBusiness = await db.Business.create({
+          name: fields.name || null,
+          bizId: fields.bizId,
+          accountId: account.id,
+          vendorId: req.user.id,
+          document
         });
 
         Response.setSuccess(
