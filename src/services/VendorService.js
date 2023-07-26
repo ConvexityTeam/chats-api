@@ -29,7 +29,7 @@ const Pagination = require('../utils/pagination');
 
 class VendorService {
   static submitProposal(proposal) {
-    return VendorProposal.bulkCreate(proposal);
+    return VendorProposal.create(proposal);
   }
   static searchVendorStore(store_name, extraClause = null) {
     const where = {

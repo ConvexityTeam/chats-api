@@ -9,13 +9,13 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      VendorProposal.hasMany(models.Product, {
-        foreignKey: 'proposal_id',
-        as: 'vendor_proposals'
-      });
+      // VendorProposal.hasMany(models.Product, {
+      //   foreignKey: 'proposal_id',
+      //   as: 'proposal_product'
+      // });
       VendorProposal.hasMany(models.User, {
         foreignKey: 'vendor_id',
-        as: 'vendor_request'
+        as: 'proposalOwner'
       });
     }
   }
@@ -23,9 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       vendor_id: DataTypes.INTEGER,
       proposal_id: DataTypes.INTEGER,
-      product_id: DataTypes.INTEGER,
-      quantity: DataTypes.INTEGER,
-      cost: DataTypes.FLOAT
+      status: DataTypes.ENUM('pending', 'approved', 'rejected')
     },
     {
       sequelize,

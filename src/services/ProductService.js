@@ -19,6 +19,14 @@ class ProductService {
     return ProductCategory.create(categoryType);
   }
 
+  static fetchMyProposals(vendor_id) {
+    return VendorProposal.findAll({
+      where: {
+        vendor_id
+      }
+    });
+  }
+
   static async addDefaultCategory(organisation_id = null) {
     return await ProductCategory.bulkCreate([
       {
@@ -104,8 +112,8 @@ class ProductService {
   }
   static vendorProposal(where) {
     return VendorProposal.findAll({
-      where,
-      include: [{model: Product, as: 'vendor_proposals'}]
+      where
+      // include: [{model: Product, as: 'vendor_proposals'}]
     });
   }
 

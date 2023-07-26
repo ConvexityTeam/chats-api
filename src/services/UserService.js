@@ -61,7 +61,8 @@ class UserService {
       const theUser = await User.findOne({
         where: {
           id: id
-        }
+        },
+        attributes: userConst.publicAttr
       });
 
       return theUser;

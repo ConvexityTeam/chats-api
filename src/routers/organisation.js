@@ -77,7 +77,7 @@ router
   );
 
 router.get(
-  '/:organisation_id/requests',
+  '/:organisation_id/requests/:proposal_id',
   CampaignController.getProposalRequests
 );
 router.get(
