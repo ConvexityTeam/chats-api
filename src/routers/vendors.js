@@ -37,7 +37,7 @@ router.get('/products/sold/value', VendorController.getSoldProductValue);
 router.get('/store/products/:storeId', VendorController.getProductByStore);
 router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
-router.get('/proposals', VendorController.ProposalRequests);
+router.get('/proposals', VendorAuth, VendorController.ProposalRequests);
 router.post('/submit-proposal', VendorAuth, VendorController.submitProposal);
 router.post(
   '/verify/sms-token/:smstoken',
@@ -74,6 +74,14 @@ router.post(
   VendorAuth,
   VendorValidator.VendorExists,
   VendorController.addMarket
+);
+router.get('/store', VendorAuth, VendorController.fetchVendorStore);
+router.delete('/store/:id', VendorAuth, VendorController.destroyStore);
+router.put(
+  '/store',
+  VendorAuth,
+  VendorValidator.VendorExists,
+  VendorController.updateStore
 );
 router
   .route('/products')

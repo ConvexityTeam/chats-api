@@ -22,6 +22,21 @@ class ProductService {
   static async addDefaultCategory(organisation_id = null) {
     return await ProductCategory.bulkCreate([
       {
+        name: 'Education',
+        description: 'Education',
+        organisation_id
+      },
+      {
+        name: 'Fresh Food Items',
+        description: 'Fresh Food Items',
+        organisation_id
+      },
+      {
+        name: 'Processed Food Items',
+        description: 'Processed Food Items',
+        organisation_id
+      },
+      {
         name: 'Clothing',
         description: 'Clothing',
         organisation_id
@@ -39,6 +54,11 @@ class ProductService {
       {
         name: 'Hygiene Items',
         description: 'Hygiene Items',
+        organisation_id
+      },
+      {
+        name: 'Humanitarian Overhead',
+        description: 'Humanitarian Overhead',
         organisation_id
       }
     ]);

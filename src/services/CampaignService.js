@@ -482,7 +482,7 @@ class CampaignService {
       }
     });
   }
-  static async fetchProposalForVendors(extraClause = {}) {
+  static async fetchProposalForVendors(location, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
 
@@ -499,7 +499,12 @@ class CampaignService {
       ...queryOptions,
       where: {
         location: {
-          ...extraClause
+          country: location.country,
+          state: {
+            [Op.like]: {
+              [Op.any]: location.state
+            }
+          }
         },
         campaign_id: Sequelize.where(
           Sequelize.col('proposal_requests.campaign_id'),
