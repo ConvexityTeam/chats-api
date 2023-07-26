@@ -13,14 +13,23 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'proposal_id',
         as: 'vendor_proposals'
       });
+      ProposalRequest.belongsTo(models.Campaign, {
+        foreignKey: 'campaign_id',
+        as: 'campaign_requests'
+      });
       ProposalRequest.hasMany(models.VendorProposal, {
         foreignKey: 'vendor_id',
         as: 'requests'
       });
+      // ProposalRequest.hasOne(models.ProductCategory, {
+      //   foreignKey: 'category_id',
+      //   as: 'proposal_type'
+      // });
     }
   }
   ProposalRequest.init(
     {
+      category_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       organisation_id: DataTypes.INTEGER
     },
