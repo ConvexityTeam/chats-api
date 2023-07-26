@@ -532,6 +532,21 @@ class CampaignService {
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
   }
+
+  static async fetchRequest(id) {
+    return await ProposalRequest.findOne({
+      where: {
+        id
+      },
+      include: [
+        {
+          model: VendorProposal,
+          as: 'requests',
+          include: [{model: User, as: 'vendor_request'}]
+        }
+      ]
+    });
+  }
   static async fetchProposalRequests(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;

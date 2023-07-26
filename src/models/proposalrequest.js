@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'proposal_id',
         as: 'vendor_proposals'
       });
+      ProposalRequest.hasMany(models.VendorProposal, {
+        foreignKey: 'vendor_id',
+        as: 'requests'
+      });
     }
   }
   ProposalRequest.init(
