@@ -353,10 +353,41 @@ class VendorController {
       return Response.send(res);
     }
   }
+  static async destroyStore(req, res) {
+    const {id} = req.params;
+    try {
+      const store = await VendorService.vendorStore(id, req.user.id);
+      if (!store) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Store not found');
+        return Response.send(res);
+      }
+      await store.destroy();
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Store deleted', store);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
   static async ProposalRequests(req, res) {
     try {
+      const store = await VendorService.findVendorStore(req.user.id);
+      if (!store) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Store not found');
+        return Response.send(res);
+      }
+      if (!store.location) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Store location not found'
+        );
+        return Response.send(res);
+      }
       const campaigns = await CampaignService.fetchProposalForVendors(
-        req.query
+        store.location
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -367,7 +398,7 @@ class VendorController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.'
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -478,6 +509,36 @@ class VendorController {
     }
   }
 
+  static async fetchVendorStore(req, res) {
+    try {
+      const store = await VendorService.findVendorStore(req.user.id);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Store fetched', store);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async updateStore(req, res) {
+    try {
+      const store = await VendorService.findVendorStore(req.user.id);
+      if (!store) {
+        Response.setError(400, 'Store not found');
+        return util.send(res);
+      }
+      store.update(req.body);
+      Response.setSuccess(200, 'Store updated');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+    }
+  }
   static async updateVendor(req, res) {
     try {
       const data = req.body;
