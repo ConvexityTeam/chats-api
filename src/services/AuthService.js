@@ -76,13 +76,15 @@ class AuthService {
               user.currency
             );
 
-             user = {
+            const mergedUser = {
               ...user,
               ...currencyData
             }
 
           resolve({
-            user,
+            // user,
+            // currencyData,
+            mergedUser,
             token
           });
         }
