@@ -141,7 +141,7 @@ class VendorController {
       const rules = {
         store_name: 'required|string',
         country: 'required|alpha',
-        state: 'required|alpha',
+        state: 'required|array',
         website_url: 'url',
         category_id: 'required|string'
       };
