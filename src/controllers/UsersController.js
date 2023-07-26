@@ -271,7 +271,7 @@ class UsersController {
         data.is_verified = true;
         data.is_nin_verified = true;
         data.nin = hash;
-        await user.update(data);
+        await req.user.update(data);
       }
       data.is_verified = true;
       data.is_nin_verified = true;
