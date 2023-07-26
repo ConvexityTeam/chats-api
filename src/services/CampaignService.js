@@ -560,27 +560,26 @@ class CampaignService {
       queryOptions.offset = offset;
     }
 
-    const campaign = await Campaign.findAndCountAll({
+    const campaign = await ProposalRequest.findAndCountAll({
       order: [['createdAt', 'DESC']],
       ...queryOptions,
       where: {
         ...extraClause,
-        OrganisationId,
-        campaign_id: Sequelize.where(
-          Sequelize.col('proposal_requests.campaign_id'),
-          Op.ne,
-          null
-        )
+        organisation_id: OrganisationId
+        // campaign_id: Sequelize.where(
+        //   Sequelize.col('proposal_requests.campaign_id'),
+        //   Op.ne,
+        //   null
+        // )
       },
-
-      attributes: ['id', 'title', 'description', 'budget', 'location'],
       include: [
         {
-          model: ProposalRequest,
-          as: 'proposal_requests'
+          model: Campaign,
+          as: 'campaign_requests',
+          attributes: ['id', 'title', 'description', 'budget', 'location']
         }
-      ],
-      group: ['Campaign.id', 'proposal_requests.id']
+      ]
+      // group: ['Campaign.id', 'proposal_requests.id']
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
