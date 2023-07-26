@@ -57,6 +57,14 @@ class VendorController {
         }
       }
 
+      const findRequest = await CampaignService.fetchVendorProposalRequest({
+        proposal_id,
+        vendor_id: req.user.id
+      });
+      if (findRequest) {
+        Response.setError(422, 'Proposal already submitted for this request');
+        return Response.send(res);
+      }
       const proposal = await VendorService.submitProposal({
         vendor_id: req.user.id,
         proposal_id
