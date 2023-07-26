@@ -76,14 +76,14 @@ class AuthService {
               user.currency
             );
 
-            for (const key in currencyData) {
-              if (currencyData.hasOwnProperty(key)) {
-                user[key] = currencyData[key];
-              }
-            }
+            // for (const key in currencyData) {
+            //   if (currencyData.hasOwnProperty(key)) {
+            //     user[key] = currencyData[key];
+            //   }
+            // }
 
           resolve({
-            user,
+            user:{...user, currencyData},
             token
           });
         }
