@@ -25,7 +25,8 @@ const {
   WalletService,
   SmsService,
   MailerService,
-  CampaignService
+  CampaignService,
+  CurrencyServices
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -471,6 +472,7 @@ class UsersController {
           return Response.send(res);
         }
       }
+      let userProfile;
 
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
@@ -497,10 +499,20 @@ class UsersController {
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
+        userProfile = req.user.toObject();
+
+        const currencyData =
+        await CurrencyServices.getSpecificCurrencyExchangeRate(
+          data.currency
+        );
+
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
-          req.user.toObject()
+          {
+            userProfile,
+            currencyData
+          }
         );
         return Response.send(res);
       }
