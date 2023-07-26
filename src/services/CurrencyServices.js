@@ -16,7 +16,6 @@ class CurrencyServices {
 
   async getCurrencySymbol(currencyCode) {
     const symbol = currencySymbolMap(currencyCode);
-    console.log("symbol", symbol);
     return symbol ? symbol : currencyCode;
   }
 
@@ -44,7 +43,6 @@ class CurrencyServices {
         const exchangeRateData = await axios.get(url);
         const rateData = exchangeRateData.data.rates;
         const rate = rateData[currencyCode].toString();
-        console.log("rateData",rate);
         const currencySymbol = await this.getCurrencySymbol(currencyCode);
         resolve({
           currencyCode,
