@@ -693,7 +693,8 @@ class OrganisationController {
       const rules = {
         'location.country': 'required|string',
         'location.state': 'required|array',
-        formId: 'numeric'
+        formId: 'numeric',
+        category_id: 'numeric'
       };
 
       const validation = new Validator(req.body, rules);

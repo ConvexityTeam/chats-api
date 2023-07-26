@@ -75,6 +75,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'campaign_id',
         as: 'proposal_requests'
       });
+      // Campaign.belongsTo(models.ProductCategory, {
+      //   foreignKey: 'category_id',
+      //   as: 'category_type'
+      // });
     }
   }
 
@@ -82,6 +86,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       OrganisationId: DataTypes.INTEGER,
       formId: DataTypes.INTEGER,
+      category_id: DataTypes.INTEGER,
       title: DataTypes.STRING,
       minting_limit: DataTypes.INTEGER,
       is_processing: DataTypes.BOOLEAN,

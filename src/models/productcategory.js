@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      // ProductCategory.belongsTo(models.ProposalRequest, {
+      // ProductCategory.belongsTo(models.Campaign, {
       //   foreignKey: 'category_id',
       //   as: 'category_type'
       // });

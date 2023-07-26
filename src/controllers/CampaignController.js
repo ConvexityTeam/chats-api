@@ -611,6 +611,23 @@ class CampaignController {
     }
   }
 
+  static async getProposalRequests(req, res) {
+    try {
+      const requests = await CampaignService.fetchRequest(1);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Proposal Requests fetched successfully.`,
+        requests
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support!..' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async fetchProposalRequests(req, res) {
     try {
       const {organisation_id} = req.params;
@@ -620,6 +637,10 @@ class CampaignController {
       );
 
       for (let campaign of campaigns.data) {
+        const category = await ProductService.findCategoryById(
+          campaign.category_id
+        );
+        campaign.dataValues.category_type = category?.name || null;
         for (let request of campaign.proposal_requests) {
           const submittedProposal = await ProductService.vendorProposal({
             proposal_id: request.id
@@ -632,7 +653,7 @@ class CampaignController {
             const category_type = await ProductService.findCategoryById(
               product.category_id
             );
-            product.dataValues.category_type = category_type;
+            product.dataValues.product_category_type = category_type;
             request.dataValues.product = products;
           }
         }

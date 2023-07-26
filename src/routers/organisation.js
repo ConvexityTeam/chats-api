@@ -75,6 +75,11 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.proposalRequest
   );
+
+router.get(
+  '/:organisation_id/requests',
+  CampaignController.getProposalRequests
+);
 router.get(
   '/:organisation_id/proposal-requests',
   SuperNgoVendor,
