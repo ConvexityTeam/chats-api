@@ -76,15 +76,14 @@ class AuthService {
               user.currency
             );
 
-            const mergedUser = {
-              ...user,
-              ...currencyData
+            for (const key in currencyData) {
+              if (currencyData.hasOwnProperty(key)) {
+                user[key] = currencyData[key];
+              }
             }
 
           resolve({
-            // user,
-            // currencyData,
-            mergedUser,
+            user,
             token
           });
         }
