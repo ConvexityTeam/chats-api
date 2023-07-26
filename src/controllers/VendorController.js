@@ -40,10 +40,10 @@ class VendorController {
   static async submitProposal(req, res) {
     try {
       const rules = {
-        proposal_id: 'required|integer',
-        product_id: 'required|integer',
-        quantity: 'required|integer',
-        cost: 'required|numeric'
+        '.*.proposal_id': 'required|integer',
+        '.*.product_id': 'required|integer',
+        '.*.quantity': 'required|integer',
+        '.*.cost': 'required|numeric'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
