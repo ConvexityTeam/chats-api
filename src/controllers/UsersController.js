@@ -241,6 +241,52 @@ class UsersController {
       return Response.send(res);
     }
   }
+
+  static async verifyNin(req, res) {
+    const data = req.body;
+    try {
+      const rules = {
+        vnin: 'required|size:16',
+        country: 'string'
+      };
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      if (data.vnin && process.env.ENVIRONMENT !== 'staging') {
+        const hash = createHash(data.vnin);
+
+        const nin = await UserService.nin_verification(
+          {number: data.vnin},
+          data.country || 'Nigeria'
+        );
+        if (!nin.status) {
+          Response.setError(
+            HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+            'Not a Valid NIN'
+          );
+          return Response.send(res);
+        }
+        data.is_verified = true;
+        data.is_nin_verified = true;
+        data.nin = hash;
+        await req.user.update(data);
+      }
+      data.is_verified = true;
+      data.is_nin_verified = true;
+      data.nin = hash;
+      await req.user.update(data);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'NIN Verified');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async addBankAccount(req, res) {
     try {
       const data = SanitizeObject(req.body, ['account_number', 'bank_code']);
