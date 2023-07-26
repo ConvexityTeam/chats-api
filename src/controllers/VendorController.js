@@ -29,7 +29,8 @@ const {
   createHash,
   AclRoles,
   GenearteVendorId,
-  SanitizeObject
+  SanitizeObject,
+  generateProductRef
 } = require('../utils');
 const {data} = require('../libs/Response');
 const {user} = require('../config/mailer');
@@ -40,12 +41,13 @@ class VendorController {
   }
 
   static async submitProposal(req, res) {
+    const {proposal_id, products} = req.body;
     try {
       const rules = {
-        '.*.proposal_id': 'required|integer',
-        '.*.product_id': 'required|integer',
-        '.*.quantity': 'required|integer',
-        '.*.cost': 'required|numeric'
+        proposal_id: 'required|numeric',
+        'products.*.tag': 'required|string',
+        'products.*.quantity': 'required|integer',
+        'products.*.cost': 'required|numeric'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -54,17 +56,31 @@ class VendorController {
           return Response.send(res);
         }
       }
-      req.body.vendor_id = req.user.id;
-      const proposal = await VendorService.submitProposal(req.body);
+
+      const proposal = await VendorService.submitProposal({
+        vendor_id: req.user.id,
+        proposal_id
+      });
+      const entered_products = await Promise.all(
+        products.map(async product => {
+          product.product_ref = generateProductRef();
+          product.vendor_proposal_id = proposal.id;
+          product.proposal_id = proposal_id;
+          const createdProduct = await ProductService.addSingleProduct(product);
+          return createdProduct;
+        })
+      );
+      proposal.dataValues.products = entered_products;
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Proposal submitted',
         proposal
       );
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.'
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -400,6 +416,24 @@ class VendorController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async myProposal(req, res) {
+    try {
+      const proposals = await ProductService.fetchMyProposals(req.user.id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposals fetched',
+        proposals
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }

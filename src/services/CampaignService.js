@@ -11,6 +11,7 @@ const {
   Market,
   VendorProposal,
   ProductCategory,
+  Product,
   AssociatedCampaign,
   CampaignForm,
   Organisation,
@@ -20,7 +21,7 @@ const {
 const {userConst, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
-const {generateTransactionRef} = require('../utils');
+const {generateTransactionRef, AclRoles} = require('../utils');
 const Pagination = require('../utils/pagination');
 const {Logger} = require('../libs');
 
@@ -533,16 +534,20 @@ class CampaignService {
     return {...response, totalItems: campaign.rows.length};
   }
 
-  static async fetchRequest(id) {
-    return await ProposalRequest.findOne({
+  static async fetchRequest(proposal_id) {
+    return await User.findAll({
       where: {
-        id
+        RoleId: AclRoles.Vendor,
+        proposal_id: Sequelize.where(
+          Sequelize.col('proposalOwner.proposal_id'),
+          proposal_id
+        )
       },
+      attributes: userConst.publicAttr,
       include: [
         {
           model: VendorProposal,
-          as: 'requests',
-          include: [{model: User, as: 'vendor_request'}]
+          as: 'proposalOwner'
         }
       ]
     });

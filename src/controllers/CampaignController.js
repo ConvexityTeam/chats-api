@@ -612,12 +612,32 @@ class CampaignController {
   }
 
   static async getProposalRequests(req, res) {
+    const {proposal_id} = req.params;
     try {
-      const requests = await CampaignService.fetchRequest(1);
+      const vendors = await CampaignService.fetchRequest(proposal_id);
+
+      // const campaign = await CampaignService.getCampaignById(proposal_id);
+      const org_proposal = await CampaignService.fetchProposalRequest(
+        proposal_id
+      );
+      const campaign = await CampaignService.getCampaignById(
+        org_proposal.campaign_id
+      );
+
+      const data = {vendors, campaign};
+      data.campaign = campaign;
+      data.total_request = vendors.length;
+      for (let request of data.vendors) {
+        const products = await ProductService.findProduct({
+          proposal_id: request.proposalOwner.proposal_id
+        });
+        request.dataValues.proposal_products = products;
+      }
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Proposal Requests fetched successfully.`,
-        requests
+        data
       );
       return Response.send(res);
     } catch (error) {
@@ -703,6 +723,7 @@ class CampaignController {
         return Response.send(res);
       }
 
+      request.category_id = data.category_id;
       request.organisation_id = organisation_id;
       request.campaign_id = campaign_id;
       const createdProposal = await CampaignService.proposalRequest(request);
@@ -710,7 +731,6 @@ class CampaignController {
         data.map(async product => {
           product.product_ref = generateProductRef();
           product.CampaignId = campaign_id;
-          Logger.info(product, 'product');
           product.proposal_id = createdProposal.id;
           const createdProduct = await ProductService.addSingleProduct(product);
           Logger.info(createdProduct, 'createdProduct');
