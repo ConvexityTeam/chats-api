@@ -519,10 +519,22 @@ class UsersController {
       data.is_nin_verified = true;
       data.is_verified = true;
       await req.user.update(data);
+
+      userProfile = req.user.toObject();
+
+      const currencyData =
+      await CurrencyServices.getSpecificCurrencyExchangeRate(
+        data.currency
+      );
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
-        req.user.toObject()
+        // req.user.toObject()
+        {
+          userProfile,
+          currencyData
+        }
       );
       return Response.send(res);
     } catch (error) {
