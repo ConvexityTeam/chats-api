@@ -179,7 +179,7 @@ class AuthService {
             {is_tfa_enabled: true, tfa_method, tfa_binded_date: new Date()},
             {where: {id: user.id}}
           )
-            .then(() => {
+            .then( async () => {
               user.is_tfa_enabled = true;
               const uid = user.id;
               const oids = user?.AssociatedOrganisations.map(
@@ -195,8 +195,14 @@ class AuthService {
                   expiresIn: '48hr'
                 }
               );
+
+              const currencyData =
+              await CurrencyServices.getSpecificCurrencyExchangeRate(
+                user.currency
+              );
+
               resolve({
-                user,
+                user:{...user, currencyData},
                 token
               });
             })
