@@ -200,6 +200,7 @@ class VendorController {
       return Response.send(res);
     }
   }
+
   static async addBusiness(req, res) {
     try {
       var form = new formidable.IncomingForm({
@@ -238,7 +239,6 @@ class VendorController {
           bank_code: fields.bank_code
         };
 
-        console.log(data, 'bank');
         try {
           const resolved = await PaystackService.resolveAccount(
             data.account_number,
