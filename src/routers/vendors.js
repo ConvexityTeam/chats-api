@@ -68,7 +68,7 @@ router.post(
   VendorValidator.VendorExists,
   VendorController.addBusiness
 );
-router.get('/product-category', VendorController.addDefaultCategory);
+router.get('/product-category', VendorController.fetchDefaultCategory);
 router.post(
   '/store',
   VendorAuth,
