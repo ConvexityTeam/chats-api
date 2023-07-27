@@ -1163,8 +1163,9 @@ class AuthController {
       );
       const data = await AuthService.login(user, req.body.password);
       console.log("data1", data);
-      console.log("data2", data.user.dataValues.currencyData);
-        data.user.dataValues.currencyData = currencyData;      
+      console.log("data2", currencyData);
+      console.log("data3", data.user.currencyData);
+        data.user.currencyData = currencyData;      
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
