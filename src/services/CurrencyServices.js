@@ -37,10 +37,11 @@ class CurrencyServices {
 
   async getSpecificCurrencyExchangeRate(currencyCode) {
     return new Promise(async (resolve, reject) => {
+      console.log("currency", currencyCode)
       try {
         const baseCurrency = 'USD';
         const usdUrl = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=NGN`;
-        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
+        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=NGN`;
         const exchangeRateDataUSD = await axios.get(usdUrl);
         const rateDataUSD = exchangeRateDataUSD.data.rates;
         const usdBase = rateDataUSD["NGN"].toString();
