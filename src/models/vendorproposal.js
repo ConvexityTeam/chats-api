@@ -9,10 +9,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      // VendorProposal.hasMany(models.Product, {
-      //   foreignKey: 'proposal_id',
-      //   as: 'proposal_product'
-      // });
+      VendorProposal.hasMany(models.Product, {
+        foreignKey: 'vendor_proposal_id',
+        as: 'proposal_products'
+      });
       VendorProposal.hasMany(models.User, {
         foreignKey: 'vendor_id',
         as: 'proposalOwner'

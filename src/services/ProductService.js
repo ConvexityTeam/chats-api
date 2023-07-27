@@ -110,10 +110,23 @@ class ProductService {
       }
     });
   }
-  static vendorProposal(where) {
-    return VendorProposal.findAll({
-      where
-      // include: [{model: Product, as: 'vendor_proposals'}]
+  static vendorProposal(user_id, proposal_id) {
+    return User.findOne({
+      where: {
+        id: user_id,
+        proposal_id: Sequelize.where(
+          Sequelize.col('proposalOwner.proposal_id'),
+          proposal_id
+        )
+      },
+      attributes: userConst.publicAttr,
+      include: [
+        {
+          model: VendorProposal,
+          as: 'proposalOwner',
+          include: ['proposal_products']
+        }
+      ]
     });
   }
 
