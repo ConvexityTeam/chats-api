@@ -49,13 +49,6 @@ class CurrencyServices {
         const rateData = exchangeRateData.data.rates;
         const rate = rateData[currencyCode].toString();
         const currencySymbol = await this.getCurrencySymbol(currencyCode);
-
-        if (rate === undefined) {
-          resolve({
-            usdBase
-          });
-        }
-
         resolve({
           usdBase,
           currencyCode,
