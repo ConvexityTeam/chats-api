@@ -474,10 +474,8 @@ class UsersController {
       }
 
       const currencyData =
-      await CurrencyServices.getSpecificCurrencyExchangeRate(
-        data.currency
-      );
-      console.log("currencyData", currencyData);
+        await CurrencyServices.getSpecificCurrencyExchangeRate(data.currency);
+      console.log('currencyData', currencyData);
 
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
@@ -505,26 +503,26 @@ class UsersController {
         data.nin = hash;
         await req.user.update(data);
 
-        const userObject = req.user.toObject()
+        const userObject = req.user.toObject();
 
-        if (req.user.RoleId === (AclRoles.NgoSubAdmin || AclRoles.NgoAdmin)) {
-          userObject.currencyData = currencyData
+        if (req.user.RoleId === AclRoles.NgoAdmin) {
+          userObject.currencyData = currencyData;
         }
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
-          userObject
+          req.user.toObject()
         );
         return Response.send(res);
       }
       data.is_nin_verified = true;
       data.is_verified = true;
       await req.user.update(data);
-      const userObject = req.user.toObject()
+      const userObject = req.user.toObject();
 
-      if (req.user.RoleId === (AclRoles.NgoSubAdmin || AclRoles.NgoAdmin)) {
-        userObject.currencyData = currencyData
-        console.log("user", userObject);
+      if (req.user.RoleId === AclRoles.NgoAdmin) {
+        userObject.currencyData = currencyData;
+        console.log('user', userObject);
       }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
