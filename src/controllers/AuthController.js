@@ -1157,8 +1157,12 @@ class AuthController {
       if (user.is_tfa_enabled && user.tfa_method !== 'qrCode') {
         await AuthService.add2faSecret(user, user.tfa_method);
       }
-
+      const currencyData =
+      await CurrencyServices.getSpecificCurrencyExchangeRate(
+        user.currency
+      );
       const data = await AuthService.login(user, req.body.password);
+      data.user.dataValues.currencyData = currencyData;
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {

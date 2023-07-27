@@ -71,10 +71,6 @@ class AuthService {
               expiresIn: '48hr'
             }
           );
-          const currencyData =
-            await CurrencyServices.getSpecificCurrencyExchangeRate(
-              user.currency
-            );
 
             // for (const key in currencyData) {
             //   if (currencyData.hasOwnProperty(key)) {
@@ -83,7 +79,7 @@ class AuthService {
             // }
 
           resolve({
-            user:{...user, currencyData},
+            user,
             token
           });
         }

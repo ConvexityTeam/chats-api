@@ -473,6 +473,11 @@ class UsersController {
         }
       }
 
+      const currencyData =
+      await CurrencyServices.getSpecificCurrencyExchangeRate(
+        data.currency
+      );
+
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
         const isExist = await UserService.findSingleUser({nin: data.nin});
@@ -499,12 +504,10 @@ class UsersController {
         data.nin = hash;
         await req.user.update(data);
 
-        const currencyData =
-        await CurrencyServices.getSpecificCurrencyExchangeRate(
-          data.currency
-        );
 
-        req.user.dataValues.currencyData = currencyData
+        if (req.user.RoleId === (AclRoles.NgoSubAdmin || AclRoles.NgoAdmin)) {
+          req.user.dataValues.currencyData = currencyData
+        }
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
@@ -516,11 +519,9 @@ class UsersController {
       data.is_verified = true;
       await req.user.update(data);
 
-      const currencyData =
-      await CurrencyServices.getSpecificCurrencyExchangeRate(
-        data.currency
-      );
-      req.user.dataValues.currencyData = currencyData
+      if (req.user.RoleId === (AclRoles.NgoSubAdmin || AclRoles.NgoAdmin)) {
+        req.user.dataValues.currencyData = currencyData
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
