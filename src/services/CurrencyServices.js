@@ -38,6 +38,8 @@ class CurrencyServices {
   async getSpecificCurrencyExchangeRate(currencyCode) {
     return new Promise(async (resolve, reject) => {
       try {
+
+        console.log("currency", currencyCode);
         const baseCurrency = 'USD';
         const usdUrl = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=NGN`;
         const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
