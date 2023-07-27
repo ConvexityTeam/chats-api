@@ -129,6 +129,7 @@ class ProductService {
       ]
     });
   }
+  //vendor proposals
   static vendorProposals(proposal_id) {
     return VendorProposal.findAll({
       where: {
