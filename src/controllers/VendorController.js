@@ -102,12 +102,15 @@ class VendorController {
         proposal_id
       );
 
-      proposal.dataValues.proposed_budget =
-        proposal?.proposalOwner?.proposal_products?.reduce((a, b) => {
-          return a + b.cost * b.quantity;
-        }, 0) || 0;
-      proposal.dataValues.submitted_date =
-        proposal?.proposalOwner?.createdAt || '';
+      if (proposal) {
+        proposal.dataValues.proposed_budget =
+          proposal?.proposalOwner?.proposal_products?.reduce((a, b) => {
+            return a + b.cost * b.quantity;
+          }, 0) || 0;
+        proposal.dataValues.submitted_date =
+          proposal?.proposalOwner?.createdAt || '';
+      }
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Proposals fetched',
@@ -115,6 +118,7 @@ class VendorController {
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal error occured. Please try again.' + error
