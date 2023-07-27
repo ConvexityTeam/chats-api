@@ -475,7 +475,6 @@ class UsersController {
 
       const currencyData =
         await CurrencyServices.getSpecificCurrencyExchangeRate(data.currency);
-      console.log('currencyData', currencyData);
 
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
@@ -522,7 +521,6 @@ class UsersController {
 
       if (req.user.RoleId === AclRoles.NgoAdmin) {
         userObject.currencyData = currencyData;
-        console.log('user', userObject);
       }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
