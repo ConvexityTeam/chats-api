@@ -43,7 +43,7 @@ class CurrencyServices {
         const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
         const exchangeRateDataUSD = await axios.get(usdUrl);
         const rateDataUSD = exchangeRateDataUSD.data.rates;
-        const usdBase = rateDataUSD[currencyCode].toString();
+        const usdBase = rateDataUSD["NGN"].toString();
 
         const exchangeRateData = await axios.get(url);
         const rateData = exchangeRateData.data.rates;
