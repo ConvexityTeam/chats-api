@@ -428,7 +428,7 @@ router
   );
 
 router.get(
-  '/submitted-proposals/:proposal_id',
+  '/:proposal_id/submitted-proposals/:vendor_id',
   NgoSubAdminAuth,
   VendorController.fetchSubmittedProposals
 );

@@ -95,32 +95,28 @@ class VendorController {
   }
 
   static async fetchSubmittedProposals(req, res) {
-    const {proposal_id} = req.params;
+    const {proposal_id, vendor_id} = req.params;
     try {
-      const proposals = await ProductService.vendorProposal({proposal_id});
-      for (const proposal of proposals) {
-        proposal.dataValues.vendor = await UserService.findSingleUser({
-          id: proposal.vendor_id
-        });
-        const proposal_request = await CampaignService.fetchProposalRequest(
-          proposal_id
-        );
-        const campaign = await CampaignService.getCampaignById(
-          proposal_request.campaign_id
-        );
-        proposal.dataValues.campaign_id = campaign.id;
-        proposal.dataValues.budget = campaign.budget;
-      }
+      const proposal = await ProductService.vendorProposal(
+        vendor_id,
+        proposal_id
+      );
+
+      proposal.dataValues.proposed_budget =
+        proposal.proposalOwner.proposal_products.reduce((a, b) => {
+          return a + b.cost;
+        }, 0);
+      proposal.dataValues.submitted_date = proposal.proposalOwner.createdAt;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Proposals fetched',
-        proposals
+        proposal
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.'
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }

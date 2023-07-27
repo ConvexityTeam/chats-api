@@ -116,11 +116,11 @@ module.exports = (sequelize, DataTypes) => {
         through: 'VendorProduct',
         as: 'ProductVendors'
       });
-
       User.hasOne(models.VendorProposal, {
         foreignKey: 'vendor_id',
         as: 'proposalOwner'
       });
+
       //Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
     }
   }
