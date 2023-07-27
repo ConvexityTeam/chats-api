@@ -506,6 +506,7 @@ class UsersController {
           data.currency
         );
 
+        req.user.dataValues.currencyData = currencyData
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
@@ -516,14 +517,13 @@ class UsersController {
       data.is_nin_verified = true;
       data.is_verified = true;
       await req.user.update(data);
-
       userProfile = req.user.toObject();
 
       const currencyData =
       await CurrencyServices.getSpecificCurrencyExchangeRate(
         data.currency
       );
-
+      req.user.dataValues.currencyData = currencyData
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
