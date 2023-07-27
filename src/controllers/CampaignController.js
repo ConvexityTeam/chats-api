@@ -661,9 +661,9 @@ class CampaignController {
           proposals.category_id
         );
         proposal.dataValues.category_type = category?.name || null;
-        const submittedProposal = await ProductService.vendorProposal({
-          proposal_id: proposal.id
-        });
+        const submittedProposal = await ProductService.vendorProposals(
+          proposal.id
+        );
         proposal.dataValues.proposal_received = submittedProposal.length;
         const products = await ProductService.findProduct({
           proposal_id: proposal.id
