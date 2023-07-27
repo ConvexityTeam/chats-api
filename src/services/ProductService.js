@@ -137,6 +137,15 @@ class ProductService {
       }
     });
   }
+
+  static findOneProposal(id, vendor_id) {
+    return VendorProposal.findOne({
+      where: {
+        id,
+        vendor_id
+      }
+    });
+  }
   static findCampaignProducts(CampaignId) {
     return Product.findAll({
       where: {CampaignId},
