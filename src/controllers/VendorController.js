@@ -106,7 +106,7 @@ class VendorController {
         proposal.proposalOwner.proposal_products.reduce((a, b) => {
           return a + b.cost;
         }, 0);
-
+      proposal.dataValues.submitted_date = proposal.proposalOwner.createdAt;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Proposals fetched',
