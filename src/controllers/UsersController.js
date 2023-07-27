@@ -505,30 +505,31 @@ class UsersController {
         data.nin = hash;
         await req.user.update(data);
 
-        console.log("datavalues1", req.user.dataValues.currencyData);
-        console.log("datavalues2", req.user.currencyData);
-        
+        const userObject = req.user.toObject()
+
         if (req.user.RoleId === (AclRoles.NgoSubAdmin || AclRoles.NgoAdmin)) {
-          req.user.currencyData = currencyData
+          userObject.currencyData = currencyData
         }
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
-          req.user.toObject()
+          userObject
         );
         return Response.send(res);
       }
       data.is_nin_verified = true;
       data.is_verified = true;
       await req.user.update(data);
+      const userObject = req.user.toObject()
 
       if (req.user.RoleId === (AclRoles.NgoSubAdmin || AclRoles.NgoAdmin)) {
-        req.user.dataValues.currencyData = currencyData
+        userObject.currencyData = currencyData
+        console.log("user", userObject);
       }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
-        req.user.toObject()
+        userObject
       );
       return Response.send(res);
     } catch (error) {
