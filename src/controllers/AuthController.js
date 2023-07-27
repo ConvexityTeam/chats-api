@@ -1162,10 +1162,9 @@ class AuthController {
         user.currency
       );
       const data = await AuthService.login(user, req.body.password);
-      data.user.dataValues.currencyData = currencyData;
-      console.log("data", data.user.dataValues.currencyData);
-      console.log("data", currencyData);
-      
+      console.log("data1", data);
+      console.log("data2", data.user.dataValues.currencyData);
+        data.user.dataValues.currencyData = currencyData;      
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
