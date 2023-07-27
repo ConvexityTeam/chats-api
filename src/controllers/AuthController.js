@@ -1158,20 +1158,15 @@ class AuthController {
         await AuthService.add2faSecret(user, user.tfa_method);
       }
       const currencyData =
-      await CurrencyServices.getSpecificCurrencyExchangeRate(
-        user.currency
-      );
+        await CurrencyServices.getSpecificCurrencyExchangeRate(user.currency);
       const data = await AuthService.login(user, req.body.password);
-      console.log("data1", data);
-      console.log("data2", currencyData);
-      console.log("data3", data.user.currencyData);
-        data.user.currencyData = currencyData;      
+      data.user.currencyData = currencyData;
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
       Logger.error(`Internal Server Error: ${error}`);
       const message =
-        error.status == 401 ? error.message : 'Internal Server Error';
+        error.status == 401 ? error.message : 'Internal Server Error' + error;
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1520,7 +1515,6 @@ class AuthController {
       // await CurrencyServices.getSpecificCurrencyExchangeRate(
       //   user.currency
       // );
-
 
       Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
