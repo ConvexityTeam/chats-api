@@ -19,11 +19,14 @@ class TransactionService {
       where: {OrganisationId},
       ...queryOptions,
       attributes: [
+        'OrganisationId',
+        'CampaignId',
         'reference',
         'amount',
         'status',
         'transaction_hash',
         'transaction_type',
+        'narration',
         'createdAt',
         'updatedAt'
       ],

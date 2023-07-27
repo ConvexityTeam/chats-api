@@ -10,7 +10,7 @@ const {
   BankAccount,
   Order,
   Market,
-  Campaign,
+  VendorProposal,
   Wallet,
   Product,
   OrderProduct,
@@ -28,6 +28,9 @@ const {
 const Pagination = require('../utils/pagination');
 
 class VendorService {
+  static submitProposal(proposal) {
+    return VendorProposal.create(proposal);
+  }
   static searchVendorStore(store_name, extraClause = null) {
     const where = {
       ...extraClause,
@@ -246,6 +249,13 @@ class VendorService {
     return null;
   }
 
+  static async stores(UserId) {
+    return Market.findAll({UserId});
+  }
+
+  static async vendorStore(id, UserId) {
+    return Market.findOne({id, UserId});
+  }
   static async findVendorStore(UserId) {
     return Market.findOne({
       include: [
@@ -519,6 +529,7 @@ class VendorService {
     return Transaction.findAll({
       where: {
         ...filter,
+        OrganisationId,
         transaction_origin: 'store'
       },
       attributes: ['reference', 'amount', 'createdAt', 'updatedAt'],
@@ -533,9 +544,6 @@ class VendorService {
               model: Organisation,
               as: 'Organisations',
               attributes: [],
-              where: {
-                id: OrganisationId
-              },
               through: {
                 attributes: []
               }

@@ -395,6 +395,14 @@ class BeneficiariesService {
     });
   }
 
+  static async fetchCampaignBeneficiaries(CampaignId) {
+    return Beneficiary.findAll({
+      where: {
+        CampaignId
+      }
+    });
+  }
+
   static async findCampaignBeneficiary(UserId) {
     return Beneficiary.findAll({
       where: {

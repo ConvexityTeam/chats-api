@@ -14,7 +14,7 @@ const {
   BeneficiaryAuth,
   IsRequestWithValidPin
 } = require('../middleware');
-const {ParamValidator, FileValidator} = require('../validators');
+const {ParamValidator, FileValidator, AuthValidator} = require('../validators');
 const VendorValidator = require('../validators/VendorValidator');
 
 router.get('/', VendorController.getAllVendors);
@@ -37,6 +37,9 @@ router.get('/products/sold/value', VendorController.getSoldProductValue);
 router.get('/store/products/:storeId', VendorController.getProductByStore);
 router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
+router.get('/proposals', VendorAuth, VendorController.ProposalRequests);
+router.get('/my-proposals', VendorAuth, VendorController.myProposal);
+router.post('/submit-proposal', VendorAuth, VendorController.submitProposal);
 router.post(
   '/verify/sms-token/:smstoken',
   VendorAuth,
@@ -51,7 +54,36 @@ router.post(
   FileValidator.checkProfilePic(),
   VendorController.uploadprofilePic
 );
-
+router.post('/register', VendorController.registeredSelf);
+router.post('/resend-otp', VendorController.resendPasswordToken);
+router.post(
+  '/confirm-otp',
+  AuthValidator.confirmOTPRules(),
+  AuthValidator.validate,
+  AuthValidator.checkResetPasswordToken,
+  VendorController.confirmOTP
+);
+router.post(
+  '/business',
+  VendorAuth,
+  VendorValidator.VendorExists,
+  VendorController.addBusiness
+);
+router.get('/product-category', VendorController.fetchDefaultCategory);
+router.post(
+  '/store',
+  VendorAuth,
+  VendorValidator.VendorExists,
+  VendorController.addMarket
+);
+router.get('/store', VendorAuth, VendorController.fetchVendorStore);
+router.delete('/store/:id', VendorAuth, VendorController.destroyStore);
+router.put(
+  '/store',
+  VendorAuth,
+  VendorValidator.VendorExists,
+  VendorController.updateStore
+);
 router
   .route('/products')
   .get(

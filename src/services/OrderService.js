@@ -38,6 +38,7 @@ class OrderService {
       ReceiverWallet: vendorWallet.uuid,
       OrderId: order.id,
       CampaignId: campaign.id,
+      OrganisationId: campaign.OrganisationId,
       VendorId: vendor.id,
       BeneficiaryId: beneficiaryWallet.UserId,
       narration: 'Vendor Order'

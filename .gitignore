@@ -109,3 +109,5 @@ dist
 
 # Upload temp folder
 temp
+
+src/beneficiaries/upload
