@@ -47,9 +47,8 @@ class CurrencyServices {
 
         const exchangeRateData = await axios.get(url);
         const rateData = exchangeRateData.data.rates;
-        const currencyType = currencyCode ? currencyCode : "NGN";
-        const rate = rateData[currencyType].toString();
-        const currencySymbol = await this.getCurrencySymbol(currencyType);
+        const rate = rateData["NGN"].toString();
+        const currencySymbol = await this.getCurrencySymbol("NGN");
         resolve({
           usdBase,
           currencyCode,
