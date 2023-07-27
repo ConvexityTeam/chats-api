@@ -472,7 +472,6 @@ class UsersController {
           return Response.send(res);
         }
       }
-      let userProfile;
 
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
@@ -499,7 +498,6 @@ class UsersController {
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
-        userProfile = req.user.toObject();
 
         const currencyData =
         await CurrencyServices.getSpecificCurrencyExchangeRate(
@@ -517,7 +515,6 @@ class UsersController {
       data.is_nin_verified = true;
       data.is_verified = true;
       await req.user.update(data);
-      userProfile = req.user.toObject();
 
       const currencyData =
       await CurrencyServices.getSpecificCurrencyExchangeRate(

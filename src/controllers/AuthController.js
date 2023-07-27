@@ -29,7 +29,8 @@ const {
   CampaignService,
   WalletService,
   BlockchainService,
-  ProductService
+  ProductService,
+  CurrencyServices
 } = require('../services');
 const BeneficiariesService = require('../services/BeneficiaryService');
 const {async} = require('regenerator-runtime');
@@ -1507,6 +1508,14 @@ class AuthController {
         token,
         req.body.tfa_method
       );
+
+      const currencyData =
+      await CurrencyServices.getSpecificCurrencyExchangeRate(
+        user.currency
+      );
+
+      user.dataValues.currencyData = currencyData
+
       Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
     } catch (error) {
