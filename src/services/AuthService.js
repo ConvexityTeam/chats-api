@@ -196,10 +196,12 @@ class AuthService {
                 }
               );
 
-              // const currencyData =
-              // await CurrencyServices.getSpecificCurrencyExchangeRate(
-              //   user.currency
-              // );
+              const currencyData =
+              await CurrencyServices.getSpecificCurrencyExchangeRate(
+                user.currency
+              );
+
+              user.dataValues.currencyData = currencyData
 
               resolve({
                 user,

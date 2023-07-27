@@ -1509,12 +1509,11 @@ class AuthController {
         req.body.tfa_method
       );
 
-      const currencyData =
-      await CurrencyServices.getSpecificCurrencyExchangeRate(
-        user.currency
-      );
+      // const currencyData =
+      // await CurrencyServices.getSpecificCurrencyExchangeRate(
+      //   user.currency
+      // );
 
-      user.dataValues.currencyData = currencyData
 
       Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
