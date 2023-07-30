@@ -83,6 +83,44 @@ class MailerService {
     });
   }
 
+  sendFieldPassword(to, name, password) {
+    // const body = `
+    // <div>
+    //   <p>Hi, ${name}\nYour CHATS account ${
+    //   vendor_id
+    //     ? 'ID is: ' + vendor_id + ', password is: ' + password
+    //     : 'password is: ' + password
+    // }</p>
+    //   <p>Best,\nCHATS - Convexity</p>
+    // </div>
+    // `;
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'Your Field Agent Account Credentials',
+      // html: body
+      isHtml: false,
+        template: "fieldDetails",
+        context: 
+        {
+          name,
+          password
+        }, 
+        layout: false,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          console.log('sent');
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
   sendPassword(to, name, password, vendor_id) {
     // const body = `
     // <div>
