@@ -61,6 +61,10 @@ module.exports = (sequelize, DataTypes) => {
         as: 'CampaignProducts'
       });
 
+      Campaign.hasMany(models.Product, {
+        foreignKey: 'CampaignId',
+        as: 'ProjectProducts'
+      });
       Campaign.hasMany(models.User, {
         as: 'CampaignVendors',
         foreignKey: 'vendor_id'
@@ -75,9 +79,9 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'campaign_id',
         as: 'proposal_requests'
       });
-      // Campaign.belongsTo(models.ProductCategory, {
-      //   foreignKey: 'category_id',
-      //   as: 'category_type'
+      // Campaign.belongsTo(models.VendorProposal, {
+      //   foreignKey: 'CampaignId',
+      //   as: 'campaign'
       // });
     }
   }

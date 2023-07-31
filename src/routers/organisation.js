@@ -691,6 +691,10 @@ router
     OrganisationController.addCampaignProduct
   );
 router.post(
+  '/campaign/:organisation_id/:id/destroy',
+  CampaignController.deleteCampaign
+);
+router.post(
   '/product/:organisation_id/:campaign_id/destroy',
   NgoAdminAuth,
   ParamValidator.OrganisationId,
