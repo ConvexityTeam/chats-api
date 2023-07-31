@@ -1386,13 +1386,6 @@ class AuthController {
         req.body.password.trim(),
         AclRoles.Vendor
       );
-      const wallet = await WalletService.findSingleWallet({
-        UserId: user.id,
-        CampaignId: null
-      });
-      if (!wallet) {
-        await QueueService.createWallet(user.id, 'user');
-      }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {

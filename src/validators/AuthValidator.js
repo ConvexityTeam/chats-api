@@ -119,7 +119,7 @@ class AuthValidator extends BaseValidator {
       );
       return Response.send(res);
     }
-
+    req.record = record;
     req.user = await record.getUser();
     next();
   }

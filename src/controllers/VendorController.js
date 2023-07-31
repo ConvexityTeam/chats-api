@@ -163,33 +163,38 @@ class VendorController {
     }
   }
   static async addMarket(req, res) {
-    const {store_name} = req.body;
+    const {store_name, vendor_id} = req.body;
     try {
       const rules = {
+        vendor_id: 'required|numeric',
         store_name: 'required|string',
-        country: 'required|alpha',
-        state: 'required|array',
+        'location.country': 'required|alpha',
+        'location.state': 'required|array',
         website_url: 'url',
-        category_id: 'required|string'
+        category_id: 'required|numeric'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+      const vendor = await UserService.getAUser(vendor_id);
+      if (!vendor) {
+        Response.setError(
+          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+          'Vendor not found'
+        );
+        return Response.send(res);
+      }
       const findStore = await CampaignService.findStoreByName(store_name);
       if (findStore) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Store already registered'
+          'Store name already taken'
         );
         return Response.send(res);
       }
-      req.body.UserId = req.user.id;
-      req.body.location = {
-        country: req.body.country,
-        state: req.body.state
-      };
+      req.body.UserId = vendor_id;
       const createdStore = await CampaignService.addStore(req.body);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -236,7 +241,8 @@ class VendorController {
           name: 'string',
           bizId: 'required|string',
           account_number: 'required|string',
-          bank_code: 'required|string'
+          bank_code: 'required|string',
+          vendor_id: 'required|string'
         };
         const validation = new Validator(fields, rules);
         if (validation.fails()) {
@@ -245,6 +251,14 @@ class VendorController {
         }
         if (!files) {
           Response.setError(400, 'Document is required');
+          return Response.send(res);
+        }
+        const vendor = await UserService.getAUser(fields.vendor_id);
+        if (!vendor) {
+          Response.setError(
+            HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+            'Vendor not found'
+          );
           return Response.send(res);
         }
         const findBusiness = await db.Business.findOne({
@@ -269,7 +283,6 @@ class VendorController {
             data.account_number,
             data.bank_code
           );
-          console.log(resolved, 'resolved');
           data.account_name = resolved.account_name;
         } catch (err) {
           Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, err.message);
@@ -289,13 +302,16 @@ class VendorController {
           Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, err.message);
           return Response.send(res);
         }
-        const account = await UserService.addUserAccount(req.user.id, data);
+        const account = await UserService.addUserAccount(
+          fields.vendor_id,
+          data
+        );
         const extension = files.document.name.substring(
           files.document.name.lastIndexOf('.') + 1
         );
         const document = await uploadFile(
           files.document,
-          'u-' + environ + '-' + req.user.id + '-i.' + extension,
+          'u-' + environ + '-' + fields.vendor_id + '-i.' + extension,
           'convexity-profile-images'
         );
 
@@ -303,7 +319,7 @@ class VendorController {
           name: fields.name || null,
           bizId: fields.bizId,
           accountId: account.id,
-          vendorId: req.user.id,
+          vendorId: fields.vendor_id,
           document
         });
 
@@ -370,7 +386,12 @@ class VendorController {
   static async confirmOTP(req, res) {
     try {
       await req.user.update({is_otp_verified: true});
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'OTP verified.');
+      req.record.token = null;
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'OTP verified.',
+        req.record
+      );
       return Response.send(res);
     } catch (error) {
       Response.setError(
