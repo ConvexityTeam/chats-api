@@ -733,7 +733,6 @@ class CampaignController {
           product.CampaignId = campaign_id;
           product.proposal_id = createdProposal.id;
           const createdProduct = await ProductService.addSingleProduct(product);
-          Logger.info(createdProduct, 'createdProduct');
           return createdProduct;
         })
       );

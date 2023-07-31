@@ -72,11 +72,11 @@ class AuthService {
             }
           );
 
-            // for (const key in currencyData) {
-            //   if (currencyData.hasOwnProperty(key)) {
-            //     user[key] = currencyData[key];
-            //   }
-            // }
+          // for (const key in currencyData) {
+          //   if (currencyData.hasOwnProperty(key)) {
+          //     user[key] = currencyData[key];
+          //   }
+          // }
 
           resolve({
             user,
@@ -175,7 +175,7 @@ class AuthService {
             {is_tfa_enabled: true, tfa_method, tfa_binded_date: new Date()},
             {where: {id: user.id}}
           )
-            .then( async () => {
+            .then(async () => {
               user.is_tfa_enabled = true;
               const uid = user.id;
               const oids = user?.AssociatedOrganisations.map(
@@ -193,11 +193,11 @@ class AuthService {
               );
 
               const currencyData =
-              await CurrencyServices.getSpecificCurrencyExchangeRate(
-                user.currency
-              );
+                await CurrencyServices.getSpecificCurrencyExchangeRate(
+                  user.currency
+                );
 
-              user.dataValues.currencyData = currencyData
+              user.dataValues.currencyData = currencyData;
 
               resolve({
                 user,
@@ -284,7 +284,7 @@ class AuthService {
   }
 
   static async createPasswordToken(UserId, request_ip, expiresAfter = 10) {
-    const otp = GenerateOtp();
+    const otp = GenerateVendorOtp();
     const token = createHash(otp);
     const expires_at = moment().add(expiresAfter, 'm').toDate();
     const user = await UserService.findUser(UserId);

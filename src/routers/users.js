@@ -59,7 +59,7 @@ router
     UserValidator.addAccountValidation,
     UsersController.addBankAccount
   );
-router.post('/verify-nin', VendorBeneficiaryAuth, UsersController.verifyNin);
+router.post('/verify-nin', UsersController.verifyNin);
 router
   .route('/profile')
   .get(Auth, UsersController.findProfile)

@@ -65,17 +65,11 @@ router.post(
 );
 router.post(
   '/business',
-  VendorAuth,
   VendorValidator.VendorExists,
   VendorController.addBusiness
 );
 router.get('/product-category', VendorController.fetchDefaultCategory);
-router.post(
-  '/store',
-  VendorAuth,
-  VendorValidator.VendorExists,
-  VendorController.addMarket
-);
+router.post('/store', VendorController.addMarket);
 router.get('/store', VendorAuth, VendorController.fetchVendorStore);
 router.delete('/store/:id', VendorAuth, VendorController.destroyStore);
 router.put(
