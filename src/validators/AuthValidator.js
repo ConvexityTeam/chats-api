@@ -4,7 +4,7 @@ const {isEmail} = require('validator');
 const {HttpStatusCode, compareHash} = require('../utils');
 const {UserService, AuthService} = require('../services');
 const BaseValidator = require('./BaseValidator');
-const {SuperAdmin, GodMode, NgoAdmin, Vendor, Beneficiary, Donor} =
+const {SuperAdmin, GodMode, NgoAdmin, Vendor, Beneficiary, Donor, NgoSubAdmin} =
   require('../utils').AclRoles;
 
 class AuthValidator extends BaseValidator {
@@ -13,6 +13,7 @@ class AuthValidator extends BaseValidator {
     Donor,
     GodMode,
     NgoAdmin,
+    NgoSubAdmin,
     Vendor,
     Beneficiary
   ];
