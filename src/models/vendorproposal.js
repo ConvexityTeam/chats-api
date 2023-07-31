@@ -17,10 +17,15 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'vendor_id',
         as: 'proposalOwner'
       });
+      VendorProposal.belongsTo(models.Campaign, {
+        foreignKey: 'CampaignId',
+        as: 'campaign'
+      });
     }
   }
   VendorProposal.init(
     {
+      CampaignId: DataTypes.INTEGER,
       vendor_id: DataTypes.INTEGER,
       proposal_id: DataTypes.INTEGER,
       status: DataTypes.ENUM('pending', 'approved', 'rejected')

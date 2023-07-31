@@ -697,11 +697,11 @@ class CampaignController {
     const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
-        '*.category_id': 'required|numeric',
-        '*.tag': 'required|string',
-        '*.type': 'required|string,in:product,service',
-        '*.cost': 'required|numeric',
-        '*.quantity': 'required|numeric'
+        '.*.category_id': 'required|numeric',
+        '.*.tag': 'required|string',
+        '.*.type': 'required|string,in:product,service',
+        '.*.cost': 'required|numeric',
+        '.*.quantity': 'required|numeric'
       };
 
       const validation = new Validator(data, rules);
@@ -1089,7 +1089,7 @@ class CampaignController {
 
   static async deleteCampaign(req, res) {
     const {id} = req.params;
-    if (!Number(id)) {
+    if (!id) {
       Response.setError(400, 'Please provide a numeric value');
       return Response.send(res);
     }
