@@ -504,6 +504,48 @@ class VendorController {
       return Response.send(res);
     }
   }
+
+  static async ProposalRequest(req, res) {
+    const {campaign_id} = req.params;
+    try {
+      const store = await VendorService.findVendorStore(req.user.id);
+      if (!store) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Store not found');
+        return Response.send(res);
+      }
+      if (!store.location) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Store location not found'
+        );
+        return Response.send(res);
+      }
+      const campaigns = await CampaignService.fetchProposalForVendor(
+        store.location,
+        campaign_id
+      );
+      if (!campaigns) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+        return Response.send(res);
+      }
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposals fetched',
+        campaigns
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async approveProposal(req, res) {
     const {vendor_id, proposal_owner_id, proposal_id} = req.body;
     try {
