@@ -552,6 +552,41 @@ class CampaignService {
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
   }
+  static async fetchProposalForVendor(location, id) {
+    return await Campaign.findOne({
+      where: {
+        id,
+        location: {
+          country: location.country,
+          state: {
+            [Op.like]: {
+              [Op.any]: location.state
+            }
+          }
+        }
+      },
+
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'budget',
+        'location',
+        'end_date'
+      ],
+
+      include: [
+        {
+          model: Product,
+          as: 'ProjectProducts'
+        },
+        {
+          model: ProposalRequest,
+          as: 'proposal_requests'
+        }
+      ]
+    });
+  }
 
   static async fetchRequest(proposal_id) {
     return await User.findAll({
