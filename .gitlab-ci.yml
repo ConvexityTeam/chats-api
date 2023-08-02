@@ -30,10 +30,18 @@ staging:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
 
-    # Deploy the Docker image to the EC2 instance
+  # Echo the content of deploy.sh to ensure it is being read correctly
+    - echo "Content of deploy.sh:"
+    - cat ./deploy.sh
+
+    # Convert deploy.sh to base64 and echo the base64 content
     - >
       SCRIPT=$(cat ./deploy.sh | base64)
-      aws ssm send-command \
+      echo "Base64-encoded content of deploy.sh:"
+      echo "$SCRIPT"
+
+    # Deploy the Docker image to the EC2 instance
+    - aws ssm send-command \
         --instance-ids "i-06f240a3b2e573928" \
         --document-name "AWS-RunShellScript" \
         --query "Command.CommandId" \
