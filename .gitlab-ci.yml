@@ -31,7 +31,7 @@ staging:
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
 
     # Deploy the Docker image to the EC2 instance
-    - cat deploy.sh | base64 | aws ssm send-command --instance-ids "i-06f240a3b2e573928" --document-name "AWS-RunShellScript" --query "Command.CommandId" --output text --parameters commands=base64
+    - cat ./deploy.sh | base64 | aws ssm send-command --instance-ids "i-06f240a3b2e573928" --document-name "AWS-RunShellScript" --query "Command.CommandId" --output text --parameters commands=base64
 
   only:
     - staging
