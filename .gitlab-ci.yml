@@ -38,15 +38,10 @@ staging:
     - >
       SCRIPT=$(cat ./deploy.sh | base64)
       echo "Base64-encoded content of deploy.sh:"
-      echo "$SCRIPT"
+      echo $SCRIPT
 
     # Send the Docker Compose commands via AWS SSM Run Command
-    - aws ssm send-command \
-        --instance-ids "i-06f240a3b2e573928" \
-        --document-name "AWS-RunShellScript" \
-        --query "Command.CommandId" \
-        --output text \
-        --parameters commands="$SCRIPT"
+    - aws ssm send-command --instance-ids "i-06f240a3b2e573928" --document-name "AWS-RunShellScript" --query "Command.CommandId" --output text --parameters commands=$SCRIPT
 
   only:
     - staging
