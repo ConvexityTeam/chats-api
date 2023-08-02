@@ -37,8 +37,8 @@ staging:
         --instance-ids "i-06f240a3b2e573928" \
         --document-name "AWS-RunShellScript" \
         --parameters commands=$COMPOSE_COMMANDS
-        --query "Command.CommandId" \
         --output text \
+        --query "Command.CommandId" \
 
   only:
     - staging
