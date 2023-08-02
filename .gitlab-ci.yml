@@ -32,7 +32,7 @@ staging:
 
     # Send the Docker Compose commands via AWS SSM Run Command
     - >
-      COMPOSE_COMMANDS="docker-compose up -d"
+      COMPOSE_COMMANDS="docker-compose -f docker-compose.prod.yml up -d"
       aws ssm send-command \
         --instance-ids "i-06f240a3b2e573928" \
         --document-name "AWS-RunShellScript" \
