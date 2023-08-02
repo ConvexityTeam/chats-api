@@ -1,2 +1,2 @@
 #!/bin/bash
-docker compose up -d
+docker-compose -f docker-compose.prod.yml up --build --force-recreate --remove-orphans --detach
