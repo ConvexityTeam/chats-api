@@ -411,13 +411,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (!(campaign.start_date >= Date.now())) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign must start after today'
-        );
-        return Response.send(res);
-      }
+      // if (!(campaign.start_date >= Date.now())) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign must start after today'
+      //   );
+      //   return Response.send(res);
+      // }
 
       for (let user of realBeneficiaries) {
         user.dataValues.formAnswer = null;
