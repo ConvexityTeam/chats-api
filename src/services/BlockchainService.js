@@ -558,6 +558,7 @@ class BlockchainService {
     message,
     type
   ) {
+    Logger.info(`Approving to spend: ${ownerPassword} ${spenderAdd} ${amount}`);
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');

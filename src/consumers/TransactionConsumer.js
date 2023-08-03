@@ -1455,8 +1455,6 @@ RabbitMq['default']
         const beneficiary = await BlockchainService.setUserKeypair(
           `user_${beneficiaryWallet.UserId}campaign_${beneficiaryWallet.CampaignId}`
         );
-        Logger.info(`beneficiary: ${JSON.stringify(beneficiary)}`);
-        Logger.info(`campaign: ${JSON.stringify(campaign)}`);
         const approve_to_spend = await BlockchainService.approveToSpend(
           campaign.privateKey,
           beneficiary.address,
@@ -1470,7 +1468,6 @@ RabbitMq['default']
           },
           'single'
         );
-        Logger.info(`approve_to_spend: ${JSON.stringify(approve_to_spend)}`);
         if (!approve_to_spend) {
           msg.nack();
           return;
