@@ -1449,12 +1449,25 @@ RabbitMq['default']
           transaction
         } = msg.getContent();
 
+        Logger.info(`beneficiaryWallet,
+          campaignWallet,
+          task_assignment,
+          amount_disburse,
+          transaction ${JSON.stringify(
+            beneficiaryWallet,
+            campaignWallet,
+            task_assignment,
+            amount_disburse,
+            transaction
+          )}`);
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
         const beneficiary = await BlockchainService.setUserKeypair(
           `user_${beneficiaryWallet.UserId}campaign_${beneficiaryWallet.CampaignId}`
         );
+        Logger.info('Single beneficiary funding');
+
         const approve_to_spend = await BlockchainService.approveToSpend(
           campaign.privateKey,
           beneficiary.address,
@@ -1468,7 +1481,6 @@ RabbitMq['default']
           },
           'single'
         );
-        Logger.info('Single beneficiary funding');
         if (!approve_to_spend) {
           msg.nack();
           return;
