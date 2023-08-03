@@ -31,16 +31,24 @@ staging:
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
 
     # Send the Docker Compose commands via AWS SSM Run Command
+    # Run the AWS SSM Run Command and capture the Command ID
     - >
-       aws ssm send-command \
+      COMMAND_ID=$(aws ssm send-command \
         --instance-ids "i-06f240a3b2e573928" \
         --document-name "AWS-RunShellScript" \
         --comment "Deploying chats api" \
-        --parameters commands="docker pull registry.gitlab.com/convexityteam/chats-api" \
+        --parameters commands="docker-compose -f docker-compose.prod.yml up -d" \
         --output text \
-        --query "Command.CommandId" \
-       
-       aws ssm list-command-invocations --instance-id "i-06f240a3b2e573928" --query "CommandInvocations[].Status"
+        --query "Command.CommandId") \
+
+        aws ssm list-command-invocations \
+          --instance-id "i-06f240a3b2e573928" \
+          --query "CommandInvocations[].Status" \
+          
+        aws ssm get-command-invocation \
+          --instance-id "i-06f240a3b2e573928" \
+          --command-id "$COMMAND_ID" \
+          --query "StandardOutputContent" \
 
   only:
     - staging
