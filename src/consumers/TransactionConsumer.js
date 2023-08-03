@@ -1448,6 +1448,7 @@ RabbitMq['default']
           amount_disburse,
           transaction
         } = msg.getContent();
+
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -1467,7 +1468,7 @@ RabbitMq['default']
           },
           'single'
         );
-
+        Logger.info('Single beneficiary funding');
         if (!approve_to_spend) {
           msg.nack();
           return;
