@@ -802,6 +802,13 @@ class CampaignController {
       const task_assignment = await db.TaskAssignment.findByPk(
         taskAssignmentId
       );
+      if (task_assignment.status === 'disbursed') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Task already disbursed'
+        );
+        return Response.send(res);
+      }
       const task = await db.Task.findOne({where: {id: task_assignment.TaskId}});
 
       const amount_disburse = task.amount / task.assignment_count;
@@ -828,6 +835,7 @@ class CampaignController {
         task_assignment,
         amount_disburse
       );
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Transaction Processing`);
       return Response.send(res);
     } catch (error) {

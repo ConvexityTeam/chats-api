@@ -1600,6 +1600,7 @@ class QueueService {
         contentType: 'application/json'
       })
     );
+    Logger.info(`fund single beneficiary: ${JSON.stringify(payload)}`);
     return transaction;
   }
 
