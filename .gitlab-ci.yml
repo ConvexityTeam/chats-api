@@ -40,5 +40,8 @@ staging:
         --output text \
         --query "Command.CommandId" \
 
+    - >
+       aws ssm list-command-invocations --instance-id "i-06f240a3b2e573928" --query "CommandInvocations[].Status
+
   only:
     - staging
