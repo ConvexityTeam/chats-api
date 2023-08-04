@@ -130,11 +130,13 @@ class OrderController {
         Logger.error('Invalid beneficiary');
         return Response.send(res);
       }
+      console.log("user", user);
       if (!user.pin) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
         Logger.error('Pin not set');
         return Response.send(res);
       }
+      
       if (!compareHash(pin, user.pin)) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
