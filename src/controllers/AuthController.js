@@ -1122,6 +1122,7 @@ class AuthController {
           }
         }
       });
+      console.log("user", user);
 
       if (user && user.is_email_verified === false) {
         Response.setError(
@@ -1140,7 +1141,10 @@ class AuthController {
       }
       const orgId = user.AssociatedOrganisations[0].OrganisationId;
       const orgWallet = await WalletService.findMainOrganisationWallet(orgId);
+      console.log("orgWallet", orgWallet);
       const findCategoryType = await ProductService.fetchCategoryTypes(orgId);
+      console.log("findCategoryType", findCategoryType);
+
       if (findCategoryType.length == 0) {
         await ProductService.addDefaultCategory(orgId);
       }
@@ -1151,6 +1155,9 @@ class AuthController {
         UserId: user.id,
         CampaignId: null
       });
+      console.log("wallet", wallet);
+
+      
       if (!wallet) {
         await QueueService.createWallet(user.id, 'user');
       }
@@ -1159,7 +1166,11 @@ class AuthController {
       }
       const currencyData =
         await CurrencyServices.getSpecificCurrencyExchangeRate(user.currency);
+        console.log("currencyData", currencyData);
+
       const data = await AuthService.login(user, req.body.password);
+      console.log("data", data);
+
       data.user.currencyData = currencyData;
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
