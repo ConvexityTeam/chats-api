@@ -5,7 +5,7 @@ exports.publicAttr = [
   'first_name',
   'last_name',
   'gender',
-  'pin',
+  // 'pin',
   'marital_status',
   'location',
   'tfa_binded_date',
