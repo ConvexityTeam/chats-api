@@ -38,34 +38,17 @@ class CurrencyServices {
   async getSpecificCurrencyExchangeRate(currencyCode) {
     return new Promise(async (resolve, reject) => {
       try {
-        console.log("currencyCode", currencyCode);
         const baseCurrency = 'USD';
         const usdUrl = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=NGN`;
-        console.log("usdUrl", usdUrl);
         const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
-        console.log("url", url);
         const exchangeRateDataUSD = await axios.get(usdUrl);
-        console.log("exchangeRateDataUSD", exchangeRateDataUSD);
-
         const rateDataUSD = exchangeRateDataUSD.data.rates;
-        console.log("rateDataUSD", rateDataUSD);
-
         const usdBase = rateDataUSD['NGN'];
-        console.log("usdBase", usdBase);
-
 
         const exchangeRateData = await axios.get(url);
-        console.log("exchangeRateData", exchangeRateData);
-
         const rateData = exchangeRateData.data.rates;
-        console.log("rateData", rateData);
-
         const rate = rateData[currencyCode];
-        console.log("rate", rate);
-
         const currencySymbol = await this.getCurrencySymbol(currencyCode);
-        console.log("currencySymbol", currencySymbol);
-
         resolve({
           usdBase,
           currencyCode,
