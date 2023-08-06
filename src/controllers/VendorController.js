@@ -368,15 +368,12 @@ class VendorController {
       req.body.RoleId = AclRoles.Vendor;
       req.body.vendor_id = GenearteVendorId();
       const createdUser = await UserService.addUser(req.body);
+      console.log("createduser", createdUser)
       createdUser.password = null;
 
       const otpData = await AuthService.createPasswordToken(createdUser.id, req.ip);
-      for (const key in otpData) {
-        if (otpData.hasOwnProperty(key)) {
-          createdUser[key] = otpData[key];
-        }
-      }
-      // createdUser.otpData = otpData;
+
+      createdUser.otpData = otpData.toObject();
       await QueueService.createWallet(createdUser.id, 'user');
 
       Response.setSuccess(
