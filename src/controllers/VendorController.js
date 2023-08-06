@@ -371,7 +371,12 @@ class VendorController {
       createdUser.password = null;
 
       const otpData = await AuthService.createPasswordToken(createdUser.id, req.ip);
-      createdUser.otpData = otpData;
+      for (const key in otpData) {
+        if (otpData.hasOwnProperty(key)) {
+          createdUser[key] = otpData[key];
+        }
+      }
+      // createdUser.otpData = otpData;
       await QueueService.createWallet(createdUser.id, 'user');
 
       Response.setSuccess(
