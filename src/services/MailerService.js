@@ -194,6 +194,41 @@ class MailerService {
     });
   }
 
+  sendVendorOTP(otp, ref, to, name) {
+    // const body = `
+    // <div>
+    //   <p>Hello ${name},</p>
+    //   <p>Your Convexity reset password OTP is: ${otp} and ref is: ${ref}</p>
+    //   <p>CHATS - Convexity</p>
+    // </div>
+    // `;
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'Vendor Registration OTP',
+      // html: body
+      isHtml: false,
+      template: "vendorRegistration",
+      context: 
+      {
+        name,
+        otp,
+        ref
+      }, 
+      layout: false,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
   sendOTP(otp, ref, to, name) {
     // const body = `
     // <div>

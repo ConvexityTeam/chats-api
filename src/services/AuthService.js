@@ -296,10 +296,13 @@ class AuthService {
       request_ip
     });
 
-    await SmsService.sendOtp(
-      user.phone,
-      `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
-    );
+    // await SmsService.sendOtp(
+    //   user.phone,
+    //   `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
+    // );
+
+    await MailerService.sendVendorOTP(otp, create.ref, user.email, name);
+    return create;
   }
 
   static async resendPasswordToken(UserId, passwordToken) {
