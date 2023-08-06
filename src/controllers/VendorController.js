@@ -369,14 +369,9 @@ class VendorController {
       req.body.vendor_id = GenearteVendorId();
       const createdUser = await UserService.addUser(req.body);
       createdUser.password = null;
-
       const otpData = await AuthService.createPasswordToken(createdUser.id, req.ip);
-
       createdUser.dataValues.otpData = otpData;
       await QueueService.createWallet(createdUser.id, 'user');
-      console.log("createduser", createdUser)
-
-
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'User registered',
