@@ -1728,6 +1728,7 @@ RabbitMq['default']
         const campaignBalance = Number(
           campaignToken.Balance.split(',').join('')
         );
+        console.log("order", order);
 
         await update_order(order.reference, {status: 'confirmed'});
         await deductWalletAmount(beneficiaryBalance, beneficiaryWallet.uuid);
