@@ -243,13 +243,13 @@ class VendorController {
       });
       form.parse(req, async (err, fields, files) => {
         console.log("fields", fields); 
-        console.log("vendor from fields", fields.vendor_id);
+        console.log("vendor from fields", req.vendor);
         const rules = {
           name: 'string',
           bizId: 'required|string',
           account_number: 'required|string',
           bank_code: 'required|string',
-          vendor_id: 'required|string' 
+          // vendor_id: 'required|string' 
         };
         const validation = new Validator(fields, rules);
         if (validation.fails()) {
@@ -260,7 +260,7 @@ class VendorController {
           Response.setError(400, 'Document is required');
           return Response.send(res);
         }
-        const vendor = await UserService.getAUser(fields.vendor_id);
+        const vendor = await UserService.getAUser(req.vendor);
         if (!vendor) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -310,7 +310,7 @@ class VendorController {
           return Response.send(res);
         }
         const account = await UserService.addUserAccount(
-          fields.vendor_id,
+          req.vendor,
           data
         );
         const extension = files.document.name.substring(
@@ -318,7 +318,7 @@ class VendorController {
         );
         const document = await uploadFile(
           files.document,
-          'u-' + environ + '-' + fields.vendor_id + '-i.' + extension,
+          'u-' + environ + '-' + req.vendor + '-i.' + extension,
           'convexity-profile-images'
         );
 
@@ -326,7 +326,7 @@ class VendorController {
           name: fields.name || null,
           bizId: fields.bizId,
           accountId: account.id,
-          vendorId: fields.vendor_id,
+          vendorId: req.vendor,
           document
         });
 
