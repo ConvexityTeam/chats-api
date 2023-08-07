@@ -114,7 +114,7 @@ class VendorValidator extends BaseValidator {
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Invalid vendor account or vendor ID.');
       return Response.send(res);
     } catch (error) {
-      
+      console.log("error", error);
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Contact support.');
       return Response.send(res);
     }
