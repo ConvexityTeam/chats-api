@@ -75,7 +75,7 @@ router.post(
   VendorController.confirmOTP
 );
 router.post(
-  '/business',
+  '/business/:vendor_id',
   VendorValidator.VendorExists,
   VendorController.addBusiness
 );
