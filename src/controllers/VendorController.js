@@ -237,6 +237,7 @@ class VendorController {
 
   static async addBusiness(req, res) {
     try {
+      const vendorId = req.vendor.dataValues.id;
       var form = new formidable.IncomingForm({
         multiples: true
       });
@@ -257,7 +258,7 @@ class VendorController {
           Response.setError(400, 'Document is required');
           return Response.send(res);
         }
-        const vendor = await UserService.getAUser(req.vendor);
+        const vendor = await UserService.getAUser(vendorId);
         if (!vendor) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -307,7 +308,7 @@ class VendorController {
           return Response.send(res);
         }
         const account = await UserService.addUserAccount(
-          req.vendor,
+          vendorId,
           data
         );
         const extension = files.document.name.substring(
@@ -315,7 +316,7 @@ class VendorController {
         );
         const document = await uploadFile(
           files.document,
-          'u-' + environ + '-' + req.vendor + '-i.' + extension,
+          'u-' + environ + '-' + vendorId + '-i.' + extension,
           'convexity-profile-images'
         );
 
@@ -323,7 +324,7 @@ class VendorController {
           name: fields.name || null,
           bizId: fields.bizId,
           accountId: account.id,
-          vendorId: req.vendor,
+          vendorId: vendorId,
           document
         });
 
