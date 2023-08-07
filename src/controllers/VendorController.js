@@ -249,7 +249,7 @@ class VendorController {
           bizId: 'required|string',
           account_number: 'required|string',
           bank_code: 'required|string',
-          vendor_id: 'required|string'
+          vendor_id: 'required|string' 
         };
         const validation = new Validator(fields, rules);
         if (validation.fails()) {
