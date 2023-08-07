@@ -236,11 +236,14 @@ class VendorController {
   }
 
   static async addBusiness(req, res) {
+    console.log("vendor from controller", req.vendor);
     try {
       var form = new formidable.IncomingForm({
         multiples: true
       });
       form.parse(req, async (err, fields, files) => {
+        console.log("fields", fields); 
+        console.log("vendor from fields", fields.vendor_id);
         const rules = {
           name: 'string',
           bizId: 'required|string',

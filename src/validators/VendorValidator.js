@@ -108,6 +108,7 @@ class VendorValidator extends BaseValidator {
       const vendor = await VendorService.getVendor(id);
       if (vendor) {
         req.vendor = vendor;
+        console.log("vendor from middleware", req.vendor);
         return next();
       }
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Invalid vendor account or vendor ID.');
