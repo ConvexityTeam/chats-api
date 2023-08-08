@@ -130,11 +130,12 @@ class AuthController {
   }
   static async beneficiariesExcel(req, res) {
     try {
+      const campaignId = req.body.campaignId;
+
       if (req.file == undefined) {
         Response.setError(404, 'Please upload an excel file!');
         return Response.send(res);
       }
-      const {campaignId} = req.body;
       const CampaignId = Number(campaignId);
 
       const campaignExist = await db.Campaign.findOne({
@@ -149,7 +150,6 @@ class AuthController {
         );
         return Response.send(res);
       }
-      const campaignId = req.body.campaign;
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
 
       let existingEmails = []; //existings
