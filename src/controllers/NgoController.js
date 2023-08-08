@@ -4,7 +4,7 @@ const {
   OrganisationService,
   NgoService,
   ProductService,
-  MailerService
+  MailerService,
 } = require('../services');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const utils = require('../libs/Utils');
@@ -34,7 +34,7 @@ class NgoController {
       return Response.send(res);
     }
     try {
-      const theNgo = await OrganisationService.getOrganisation(id);
+      const theNgo = await OrganisationService.getAOrganisation(id);
       if (!theNgo) {
         Response.setError(404, `Cannot find NGO with the id ${id}`);
       } else {
@@ -52,24 +52,25 @@ class NgoController {
       const {role, ...data} = SanitizeObject(req.body);
       const {user, organisation} = req;
       const newPassword = utils.generatePassword();
+
       const admin = await NgoService.createAdminAccount(
         organisation,
         data,
         role,
-        newPassword
+        newPassword,
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Account Created.',
-        admin
+        admin,
       );
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        `Internal server error. Contact support.`,
       );
       return Response.send(res);
     }
@@ -84,7 +85,7 @@ class NgoController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Server Error: Please retry.`
+        `Server Error: Please retry.`,
       );
       return Response.send(res);
     }
@@ -99,7 +100,7 @@ class NgoController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Server Error: Please retry.`
+        `Server Error: Please retry.`,
       );
       return Response.send(res);
     }

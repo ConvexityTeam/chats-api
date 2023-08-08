@@ -8,17 +8,13 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.addColumn('FundAccounts', 'CampaignId', {
+    await queryInterface.addColumn('VendorProposals', 'status', {
+      type: Sequelize.ENUM('pending', 'approved', 'rejected'),
       allowNull: true,
-      type: Sequelize.INTEGER,
-      references: {
-        model: {
-          tableName: 'Campaigns'
-        },
-        key: 'id'
-      }
+      defaultValue: 'pending'
     });
   },
+
   down: async (queryInterface, Sequelize) => {
     /**
      * Add reverting commands here.
@@ -26,6 +22,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.removeColumn('FundAccounts', 'CampaignId');
+    await queryInterface.removeColumn('VendorProposals', 'status');
   }
 };

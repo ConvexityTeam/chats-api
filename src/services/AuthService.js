@@ -15,6 +15,7 @@ const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
+
 const CurrencyServices = require('./CurrencyServices');
 const {user} = require('../config/mailer');
 
@@ -71,14 +72,15 @@ class AuthService {
               expiresIn: '48hr'
             }
           );
-          const currencyData =
-            await CurrencyServices.getSpecificCurrencyExchangeRate(
-              user.currency
-            );
+
+          // for (const key in currencyData) {
+          //   if (currencyData.hasOwnProperty(key)) {
+          //     user[key] = currencyData[key];
+          //   }
+          // }
 
           resolve({
             user,
-            currencyData,
             token
           });
         }
@@ -93,70 +95,34 @@ class AuthService {
     });
   }
 
-  static async add2faSecret(user, tfa_method) {
+  static async add2faSecret(user) {
     return new Promise(async (resolve, reject) => {
       let qrcodeData;
 
-      generate2faSecret()
-        .then(_data => {
-          qrcodeData = _data;
-          return User.update(
-            {tfa_secret: _data.secret},
-            {where: {id: user.id}}
-          );
-        })
-        .then(() => {
-          if (tfa_method == 'sms') {
-            SmsService.send(
-              user.phone,
-              `2AF Verification Code: ${qrcodeData.code}`
+      if (!user.is_tfa_enabled) {
+        generate2faSecret()
+          .then(_data => {
+            qrcodeData = _data;
+            return User.update(
+              {tfa_secret: _data.secret},
+              {where: {id: user.id}}
             );
-            delete qrcodeData.qrcode_url;
-            delete qrcodeData.code;
-            return resolve(qrcodeData);
-          }
-          if (tfa_method == 'email') {
-            MailerService._sendMail(
-              user.email,
-              `2AF Verification Code: ${qrcodeData.code}`,
-              '<h1>2AF Verification Code: ' + qrcodeData.code + '</h1>'
-            );
-            delete qrcodeData.qrcode_url;
-            delete qrcodeData.code;
-            return resolve(qrcodeData);
-          }
-          delete qrcodeData.code;
-          return resolve(qrcodeData);
-        })
-        .catch(err => {
-          console.log(err);
-          reject(new Error(`Error updating secret. Please retry.`));
-        });
-      return;
+          })
+          .then(() => {
+            resolve(qrcodeData);
+          })
+          .catch(err => {
+            console.log(err);
+            reject(new Error(`Error updating secret. Please retry.`));
+          });
+        return;
+      }
+
+      reject(new Error(`2AF is already enanbled.`));
     });
   }
 
-  static async verify2FASecret(user, secrete) {
-    return new Promise((resolve, reject) => {
-      User.findByPk(user.id).then(_user => {
-        if (!_user) {
-          reject(new Error(`User not found.`));
-          return;
-        }
-        if (!_user.tfa_secret) {
-          reject(new Error(`2AF Secret not set.`));
-          return;
-        }
-        const verified = verify2faToken(user.tfa_secret, secrete);
-        if (!verified) {
-          reject(new Error('Invalid or wrong token.'));
-          return;
-        }
-        return resolve(verified);
-      });
-    });
-  }
-  static async enable2afCheck(user, token, tfa_method) {
+  static async enable2afCheck(user, token) {
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
         .then(_user => {
@@ -174,7 +140,7 @@ class AuthService {
             {is_tfa_enabled: true, tfa_method, tfa_binded_date: new Date()},
             {where: {id: user.id}}
           )
-            .then(() => {
+            .then(async () => {
               user.is_tfa_enabled = true;
               const uid = user.id;
               const oids = user?.AssociatedOrganisations.map(
@@ -190,6 +156,14 @@ class AuthService {
                   expiresIn: '48hr'
                 }
               );
+
+              const currencyData =
+                await CurrencyServices.getSpecificCurrencyExchangeRate(
+                  user.currency
+                );
+
+              user.dataValues.currencyData = currencyData;
+
               resolve({
                 user,
                 token
@@ -275,7 +249,7 @@ class AuthService {
   }
 
   static async createPasswordToken(UserId, request_ip, expiresAfter = 10) {
-    const otp = GenerateOtp();
+    const otp = GenerateVendorOtp();
     const token = createHash(otp);
     const expires_at = moment().add(expiresAfter, 'm').toDate();
     const user = await UserService.findUser(UserId);
@@ -287,10 +261,13 @@ class AuthService {
       request_ip
     });
 
-    await SmsService.sendOtp(
-      user.phone,
-      `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
-    );
+    // await SmsService.sendOtp(
+    //   user.phone,
+    //   `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
+    // );
+
+    await MailerService.sendVendorOTP(otp, create.ref, user.email, name);
+    return create;
   }
 
   static async resendPasswordToken(UserId, passwordToken) {

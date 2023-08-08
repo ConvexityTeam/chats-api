@@ -25,7 +25,6 @@ const {
   generateQrcodeURL,
   GenearteVendorId
 } = require('../utils');
-const Pagination = require('../utils/pagination');
 
 class VendorService {
   static submitProposal(proposal) {
@@ -171,7 +170,12 @@ class VendorService {
 
   static async vendorStoreProducts(vendorId, where = {}) {
     return Product.findAll({
-      where,
+      where: {
+        ...where,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      },
       include: [
         {
           model: User,
@@ -185,6 +189,16 @@ class VendorService {
     });
   }
 
+  static async vendorStoreMarketProducts(CampaignId) {
+    return Product.findAll({
+      where: {
+        CampaignId,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      }
+    });
+  }
   static async createOrder(order, Cart) {
     return Order.create(
       {
@@ -249,6 +263,13 @@ class VendorService {
     return null;
   }
 
+  static async stores(UserId) {
+    return Market.findAll({UserId});
+  }
+
+  static async vendorStore(id, UserId) {
+    return Market.findOne({id, UserId});
+  }
   static async findVendorStore(UserId) {
     return Market.findOne({
       include: [

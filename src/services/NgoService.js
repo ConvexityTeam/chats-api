@@ -25,7 +25,7 @@ class NgoService {
             OrganisationId: organisation.id,
             role
           });
-          MailerService.verify(
+          MailerService.sendFieldPassword(
             user.email,
             user.first_name + ' ' + user.last_name,
             newPassword

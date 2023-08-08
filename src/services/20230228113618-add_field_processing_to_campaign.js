@@ -9,16 +9,17 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     //await queryInterface.removeColumn('Campaigns', 'type');
-    // await queryInterface.addColumn('Campaigns', 'type', {
-    //   type: Sequelize.ENUM('campaign', 'cash-for-work', 'item'),
-    //   defaultValue: 'campaign'
-    // });
+    await queryInterface.addColumn('Campaigns', 'is_processing', {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: true
+    });
     // await queryInterface.addColumn('Campaigns', 'minting_limit', {
     //   type: Sequelize.INTEGER,
     //   allowNull: true,
     //   defaultValue: 0
     // });
-  },
+  }, 
 
   down: async (queryInterface, Sequelize) => {
     /**
@@ -28,10 +29,6 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     // await queryInterface.removeColumn('Campaigns', 'type');
-    await queryInterface.addColumn('Campaigns', 'type', {
-      type: Sequelize.STRING,
-      defaultValue: 'campaign'
-    });
-    await queryInterface.removeColumn('Campaigns', 'minting_limit');
+    await queryInterface.removeColumn('Campaigns', 'is_processing');
   }
 };

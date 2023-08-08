@@ -54,7 +54,7 @@ class MailerService {
       });
     });
   }
-  async verify(to, name, password, vendor_id) {
+  verify(to, name, password, vendor_id) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
         if (!err) {
@@ -77,6 +77,44 @@ class MailerService {
           resolve(success);
         } else {
           console.log('Not verified', err);
+          reject(err);
+        }
+      });
+    });
+  }
+
+  sendFieldPassword(to, name, password) {
+    // const body = `
+    // <div>
+    //   <p>Hi, ${name}\nYour CHATS account ${
+    //   vendor_id
+    //     ? 'ID is: ' + vendor_id + ', password is: ' + password
+    //     : 'password is: ' + password
+    // }</p>
+    //   <p>Best,\nCHATS - Convexity</p>
+    // </div>
+    // `;
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'Your Field Agent Account Credentials',
+      // html: body
+      isHtml: false,
+        template: "fieldDetails",
+        context: 
+        {
+          name,
+          password
+        }, 
+        layout: false,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
+          console.log('sent');
+          resolve(data);
+        } else {
           reject(err);
         }
       });
@@ -148,6 +186,41 @@ class MailerService {
       this.transporter.sendMail(options, (err, data) => {
         if (!err) {
           console.log('sent');
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  sendVendorOTP(otp, ref, to, name) {
+    // const body = `
+    // <div>
+    //   <p>Hello ${name},</p>
+    //   <p>Your Convexity reset password OTP is: ${otp} and ref is: ${ref}</p>
+    //   <p>CHATS - Convexity</p>
+    // </div>
+    // `;
+    const options = {
+      from: this.config.from,
+      to,
+      subject: 'Vendor Registration OTP',
+      // html: body
+      isHtml: false,
+      template: "vendorRegistration",
+      context: 
+      {
+        name,
+        otp,
+        ref
+      }, 
+      layout: false,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.transporter.sendMail(options, (err, data) => {
+        if (!err) {
           resolve(data);
         } else {
           reject(err);
@@ -356,7 +429,7 @@ class MailerService {
     // `;
     const options = {
       from: this.config.from,
-      to: to,
+      to:to,
       subject: 'Please confirm your account',
       // html: body
       isHtml: false,

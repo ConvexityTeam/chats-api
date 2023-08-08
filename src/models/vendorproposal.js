@@ -10,18 +10,25 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       VendorProposal.hasMany(models.Product, {
-        foreignKey: 'proposal_id',
-        as: 'vendor_proposals'
+        foreignKey: 'vendor_proposal_id',
+        as: 'proposal_products'
+      });
+      VendorProposal.hasMany(models.User, {
+        foreignKey: 'vendor_id',
+        as: 'proposalOwner'
+      });
+      VendorProposal.belongsTo(models.Campaign, {
+        foreignKey: 'CampaignId',
+        as: 'campaign'
       });
     }
   }
   VendorProposal.init(
     {
+      CampaignId: DataTypes.INTEGER,
       vendor_id: DataTypes.INTEGER,
       proposal_id: DataTypes.INTEGER,
-      product_id: DataTypes.INTEGER,
-      quantity: DataTypes.INTEGER,
-      cost: DataTypes.FLOAT
+      status: DataTypes.ENUM('pending', 'approved', 'rejected')
     },
     {
       sequelize,

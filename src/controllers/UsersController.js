@@ -1,15 +1,10 @@
 const util = require('../libs/Utils');
-
-const fs = require('fs');
 const {Op} = require('sequelize');
 const {
   compareHash,
   createHash,
   SanitizeObject,
-  HttpStatusCode,
-  AclRoles,
-  generateRandom,
-  GenearteVendorId
+  HttpStatusCode
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -25,7 +20,8 @@ const {
   WalletService,
   SmsService,
   MailerService,
-  CampaignService
+  CampaignService,
+  CurrencyServices
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -35,7 +31,6 @@ const codeGenerator = require('./QrCodeController');
 const ZohoService = require('../services/ZohoService');
 const sanitizeObject = require('../utils/sanitizeObject');
 const AwsUploadService = require('../services/AwsUploadService');
-const {data} = require('../libs/Response');
 
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
   durable: true
@@ -241,6 +236,58 @@ class UsersController {
       return Response.send(res);
     }
   }
+
+  static async verifyNin(req, res) {
+    const data = req.body;
+    try {
+      const rules = {
+        vnin: 'required|size:16',
+        country: 'string',
+        user_id: 'required|numeric'
+      };
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const user = await UserService.getAUser(data.user_id);
+      if (!user) {
+        Response.setError(404, 'User not found');
+        return Response.send(res);
+      }
+      if (data.vnin && process.env.ENVIRONMENT !== 'staging') {
+        const hash = createHash(data.vnin);
+
+        const nin = await UserService.nin_verification(
+          {number: data.vnin},
+          data.country || 'Nigeria'
+        );
+        if (!nin.status) {
+          Response.setError(
+            HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+            'Not a Valid NIN'
+          );
+          return Response.send(res);
+        }
+        data.is_verified = true;
+        data.is_nin_verified = true;
+        data.nin = hash;
+        await user.update(data);
+      }
+      data.is_verified = true;
+      data.is_nin_verified = true;
+      data.nin = hash;
+      await user.update(data);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'NIN Verified');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async addBankAccount(req, res) {
     try {
       const data = SanitizeObject(req.body, ['account_number', 'bank_code']);
@@ -426,6 +473,9 @@ class UsersController {
         }
       }
 
+      const currencyData =
+        await CurrencyServices.getSpecificCurrencyExchangeRate(data.currency);
+
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
         const isExist = await UserService.findSingleUser({nin: data.nin});
@@ -447,10 +497,15 @@ class UsersController {
           );
           return Response.send(res);
         }
-        data.is_verified = true;
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
+
+        const userObject = req.user.toObject();
+
+        if (req.user.RoleId === AclRoles.NgoAdmin) {
+          userObject.currencyData = currencyData;
+        }
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
@@ -459,16 +514,20 @@ class UsersController {
         return Response.send(res);
       }
       data.is_nin_verified = true;
-      data.is_verified = true;
+
       await req.user.update(data);
+      const userObject = req.user.toObject();
+
+      if (req.user.RoleId === AclRoles.NgoAdmin) {
+        userObject.currencyData = currencyData;
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
-        req.user.toObject()
+        userObject
       );
       return Response.send(res);
     } catch (error) {
-      Logger.error(`Server Error. Please retry: ${JSON.stringify(error)}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server Error. Please retry.' + error

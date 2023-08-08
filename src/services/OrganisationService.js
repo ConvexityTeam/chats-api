@@ -142,7 +142,7 @@ class OrganisationService {
   }
 
   static async isMember(organisation, user) {
-    return database.OrganisationMembers.findOne({
+    return OrganisationMembers.findOne({
       where: {
         OrganisationId: organisation,
         UserId: user
@@ -252,9 +252,7 @@ class OrganisationService {
         });
     });
   }
-  static async getAllNGOs() {
-    return Organisation.findAll();
-  }
+
   static async beneficiariesTransactions(OrganisationId) {
     return Transaction.findAll({
       where: {

@@ -8,6 +8,7 @@ const {
   Campaign,
   Order,
   User,
+  sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
 const {userConst} = require('../constants');
@@ -33,15 +34,15 @@ class MarketService {
                   include: [
                     {
                       model: OrderProduct,
-                      as: 'Product',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+                      as: 'Product'
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
   }
 }

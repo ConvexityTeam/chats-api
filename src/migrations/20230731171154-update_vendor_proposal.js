@@ -8,10 +8,13 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.addColumn('Users', 'tfa_method', {
-      type: Sequelize.ENUM('qrCode', 'email', 'sms'),
+    await queryInterface.addColumn('VendorProposals', 'CampaignId', {
+      type: Sequelize.INTEGER,
       allowNull: true,
-      after: 'tfa_secret'
+      references: {
+        model: 'Campaigns',
+        key: 'id'
+      }
     });
   },
 
@@ -22,6 +25,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.removeColumn('Users', 'tfa_method');
+    await queryInterface.removeColumn('VendorProposals', 'CampaignId');
   }
 };

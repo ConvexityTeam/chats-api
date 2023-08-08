@@ -8,11 +8,15 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-
-    await queryInterface.addColumn('Campaigns', 'unit_cost', {
-      type: Sequelize.FLOAT,
+    await queryInterface.addColumn('Campaigns', 'category_id', {
+      type: Sequelize.INTEGER,
       allowNull: true,
-      defaultValue: 0.0
+      references: {
+        model: {
+          tableName: 'ProductCategories'
+        },
+        key: 'id'
+      }
     });
   },
 
@@ -23,6 +27,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.removeColumn('Campaigns', 'unit_cost');
+    await queryInterface.dropTable('Campaigns');
   }
 };

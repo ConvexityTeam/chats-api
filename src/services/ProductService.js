@@ -3,6 +3,7 @@ const {
   ProductCategory,
   User,
   CampaignVendor,
+  Campaign,
   VendorProposal,
   Sequelize
 } = require('../models');
@@ -13,14 +14,88 @@ const {userConst} = require('../constants');
 
 const VendorService = require('./VendorService');
 const CampaignService = require('./CampaignService');
+const {Op} = require('sequelize');
 
 class ProductService {
   static addCategoryType(categoryType) {
     return ProductCategory.create(categoryType);
   }
 
+  static fetchOneMyProposals(extraClause = {}) {
+    return VendorProposal.findOne({
+      where: {
+        ...extraClause,
+        vendor_proposal_id: Sequelize.where(
+          Sequelize.col('proposal_products.vendor_proposal_id'),
+          Op.ne,
+          null
+        )
+      },
+      include: [
+        {
+          model: Campaign,
+          as: 'campaign',
+          attributes: [
+            'id',
+            'OrganisationId',
+            'title',
+            'description',
+            'budget',
+            'end_date',
+            'category_id'
+          ]
+        },
+        {model: Product, as: 'proposal_products'}
+      ]
+    });
+  }
+  static fetchMyProposals(vendor_id, extraClause = {}) {
+    return VendorProposal.findAll({
+      where: {
+        vendor_id,
+        ...extraClause,
+        vendor_proposal_id: Sequelize.where(
+          Sequelize.col('proposal_products.vendor_proposal_id'),
+          Op.ne,
+          null
+        )
+      },
+      include: [
+        {
+          model: Campaign,
+          as: 'campaign',
+          attributes: [
+            'id',
+            'OrganisationId',
+            'title',
+            'description',
+            'budget',
+            'end_date',
+            'category_id'
+          ]
+        },
+        {model: Product, as: 'proposal_products'}
+      ]
+    });
+  }
+
   static async addDefaultCategory(organisation_id = null) {
     return await ProductCategory.bulkCreate([
+      {
+        name: 'Education',
+        description: 'Education',
+        organisation_id
+      },
+      {
+        name: 'Fresh Food Items',
+        description: 'Fresh Food Items',
+        organisation_id
+      },
+      {
+        name: 'Processed Food Items',
+        description: 'Processed Food Items',
+        organisation_id
+      },
       {
         name: 'Clothing',
         description: 'Clothing',
@@ -39,6 +114,11 @@ class ProductService {
       {
         name: 'Hygiene Items',
         description: 'Hygiene Items',
+        organisation_id
+      },
+      {
+        name: 'Humanitarian Overhead',
+        description: 'Humanitarian Overhead',
         organisation_id
       }
     ]);
@@ -82,13 +162,42 @@ class ProductService {
       }
     });
   }
-  static vendorProposal(where) {
+  static vendorProposal(user_id, proposal_id) {
+    return User.findOne({
+      where: {
+        id: user_id,
+        proposal_id: Sequelize.where(
+          Sequelize.col('proposalOwner.proposal_id'),
+          proposal_id
+        )
+      },
+      attributes: userConst.publicAttr,
+      include: [
+        {
+          model: VendorProposal,
+          as: 'proposalOwner',
+          include: ['proposal_products']
+        }
+      ]
+    });
+  }
+  //vendor proposals
+  static vendorProposals(proposal_id) {
     return VendorProposal.findAll({
-      where,
-      include: [{model: Product, as: 'vendor_proposals'}]
+      where: {
+        proposal_id
+      }
     });
   }
 
+  static findOneProposal(id, vendor_id) {
+    return VendorProposal.findOne({
+      where: {
+        id,
+        vendor_id
+      }
+    });
+  }
   static findCampaignProducts(CampaignId) {
     return Product.findAll({
       where: {CampaignId},

@@ -8,12 +8,18 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.removeColumn('Organisations', 'website_url');
-    await queryInterface.addColumn('Organisations', 'website_url', {
-      type: Sequelize.STRING,
-      allowNull: true
+    await queryInterface.addColumn('ProposalRequests', 'category_id', {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'ProductCategories'
+        },
+        key: 'id'
+      }
     });
   },
+
   down: async (queryInterface, Sequelize) => {
     /**
      * Add reverting commands here.
@@ -21,6 +27,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.removeColumn('Organisations', 'name');
+    await queryInterface.dropTable('ProposalRequests');
   }
 };

@@ -23,7 +23,6 @@ router.post(
   UsersController.vendorWithdrawFromBankAccount
 );
 
-router.post('/liveness', Auth, UsersController.liveness);
 router.post('/support', UsersController.createTicket);
 
 router
@@ -59,7 +58,7 @@ router
     UserValidator.addAccountValidation,
     UsersController.addBankAccount
   );
-
+router.post('/verify-nin', UsersController.verifyNin);
 router
   .route('/profile')
   .get(Auth, UsersController.findProfile)

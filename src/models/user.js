@@ -93,14 +93,6 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.BankAccount, {
         as: 'BankAccounts'
       });
-      User.hasOne(models.Group, {
-        as: 'members',
-        foreignKey: 'representative_id'
-      });
-      User.hasOne(models.Liveness, {
-        as: 'liveness',
-        foreignKey: 'authorized_by'
-      });
       User.hasMany(models.VerificationToken, {
         as: 'VerificationTokens'
       });
@@ -116,6 +108,11 @@ module.exports = (sequelize, DataTypes) => {
         through: 'VendorProduct',
         as: 'ProductVendors'
       });
+      User.hasOne(models.VendorProposal, {
+        foreignKey: 'vendor_id',
+        as: 'proposalOwner'
+      });
+
       //Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
     }
   }
@@ -164,16 +161,11 @@ module.exports = (sequelize, DataTypes) => {
       is_public: DataTypes.BOOLEAN,
       is_tfa_enabled: DataTypes.BOOLEAN,
       tfa_secret: DataTypes.STRING,
-      tfa_method: DataTypes.ENUM('qrCode', 'email', 'sms'),
-      iris: DataTypes.JSON,
+      iris: DataTypes.TEXT,
       last_login: DataTypes.DATE,
       profile_pic: DataTypes.STRING,
       nfc: DataTypes.STRING,
-      dob: DataTypes.DATE,
-      tfa_binded_date: DataTypes.DATE,
-      is_verified: DataTypes.BOOLEAN,
-      is_verified_all: DataTypes.BOOLEAN,
-      registration_type: DataTypes.ENUM('individual', 'organisation')
+      dob: DataTypes.DATE
     },
     {
       sequelize,

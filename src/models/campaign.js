@@ -51,7 +51,6 @@ module.exports = (sequelize, DataTypes) => {
       //   foreignKey: 'CampaignId',
       //   as: 'TransactionCampaign'
       // });
-
       Campaign.belongsTo(models.CampaignForm, {
         foreignKey: 'formId',
         as: 'campaign_form'
@@ -61,6 +60,10 @@ module.exports = (sequelize, DataTypes) => {
         as: 'CampaignProducts'
       });
 
+      Campaign.hasMany(models.Product, {
+        foreignKey: 'CampaignId',
+        as: 'ProjectProducts'
+      });
       Campaign.hasMany(models.User, {
         as: 'CampaignVendors',
         foreignKey: 'vendor_id'
@@ -75,6 +78,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'campaign_id',
         as: 'proposal_requests'
       });
+      // Campaign.belongsTo(models.VendorProposal, {
+      //   foreignKey: 'CampaignId',
+      //   as: 'campaign'
+      // });
     }
   }
 
@@ -82,6 +89,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       OrganisationId: DataTypes.INTEGER,
       formId: DataTypes.INTEGER,
+      category_id: DataTypes.INTEGER,
       title: DataTypes.STRING,
       minting_limit: DataTypes.INTEGER,
       is_processing: DataTypes.BOOLEAN,
