@@ -17,15 +17,11 @@ const {
   UserService,
   PaystackService,
   QueueService,
-<<<<<<< HEAD
   WalletService,
   SmsService,
   MailerService,
   CampaignService,
   CurrencyServices
-=======
-  WalletService
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -77,7 +73,6 @@ class UsersController {
     }
   }
 
-<<<<<<< HEAD
   static async createVendor(req, res) {
     const {first_name, last_name, email, phone, address, location, store_name} =
       req.body;
@@ -293,8 +288,6 @@ class UsersController {
       return Response.send(res);
     }
   }
-=======
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
   static async addBankAccount(req, res) {
     try {
       const data = SanitizeObject(req.body, ['account_number', 'bank_code']);
@@ -353,7 +346,6 @@ class UsersController {
     }
   }
 
-<<<<<<< HEAD
   static async liveness(req, res) {
     try {
       const rules = {
@@ -445,8 +437,6 @@ class UsersController {
       return Response.send(res);
     }
   }
-=======
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
   static async updateProfile(req, res) {
     try {
       const data = req.body;

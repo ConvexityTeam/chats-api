@@ -42,10 +42,7 @@ const ninVerificationQueue = amqp_1['default'].declareQueue(
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
-<<<<<<< HEAD
 const __basedir = path.join(__dirname, '..');
-=======
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
@@ -134,7 +131,6 @@ class AuthController {
   static async beneficiariesExcel(req, res) {
     try {
       if (req.file == undefined) {
-<<<<<<< HEAD
         Response.setError(404, 'Please upload an excel file!');
         return Response.send(res);
       }
@@ -152,9 +148,6 @@ class AuthController {
           'Invalid Campaign ID'
         );
         return Response.send(res);
-=======
-        return res.status(400).send('Please upload an excel file!');
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
       }
       const campaignId = req.body.campaign;
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
@@ -184,7 +177,6 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
-<<<<<<< HEAD
         //loop through all the beneficiaries list to populate them in the db
         // await Promise.all(
         beneficiaries.forEach(async (beneficiary, index) => {
@@ -203,40 +195,6 @@ class AuthController {
                   const encryptedPassword = hash;
                   const phoneInString = beneficiary.phone.toString();
                   const user = await db.User.create({
-=======
-        // console.log(beneficiaries);
-        //loop through all the beneficiaries list to populate them in the db
-        beneficiaries.forEach(async beneficiary => {
-          let campaignExist = await db.Campaign.findOne({
-            where: {
-              id: campaignId,
-              type: 'campaign'
-            }
-          });
-          if (!campaignExist) {
-            Response.setError(400, 'Invalid Campaign ID');
-            return Response.send(res);
-          }
-          const user_exist = await db.User.findOne({
-            where: {
-              email: beneficiary.email
-            }
-          });
-          if (user_exist) {
-            //include the email in the existing list
-            existingEmails.push(beneficiary.email);
-          } else {
-            bcrypt.genSalt(10, (err, salt) => {
-              if (err) {
-                console.log('Error Ocurred hashing');
-              }
-              const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
-              bcrypt
-                .hash(beneficiary.password, salt)
-                .then(async hash => {
-                  const encryptedPassword = hash;
-                  await db.User.create({
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
                     RoleId: AclRoles.Beneficiary,
                     first_name: beneficiary.first_name,
                     last_name: beneficiary.last_name,
@@ -250,7 +208,6 @@ class AuthController {
                     referal_id: beneficiary.referal_id,
                     dob: beneficiary.dob,
                     pin: encryptedPin
-<<<<<<< HEAD
                   });
                   // .then(async user => {
                   await QueueService.createWallet(user.id, 'user');
@@ -286,41 +243,6 @@ class AuthController {
           'Beneficiaries Uploaded Successfully:',
           createdSuccess
         );
-=======
-                  }).then(async user => {
-                    await QueueService.createWallet(user.id, 'user');
-                    if (campaignExist.type === 'campaign') {
-                      await Beneficiary.create({
-                        UserId: user.id,
-                        CampaignId: campaignExist.id,
-                        approved: true,
-                        source: 'Excel File Upload'
-                      }).then(async () => {
-                        await QueueService.createWallet(
-                          user.id,
-                          'user',
-                          fields.campaign
-                        );
-                      });
-                    }
-                  });
-                  createdSuccess.push(beneficiary.email); //add to success list
-                  Response.setSuccess(
-                    200,
-                    'Beneficiaries Uploaded Successfully:',
-                    user.id
-                  );
-                  // return Response.send(res);
-                })
-                .catch(err => {
-                  Response.setError(500, err.message);
-                  // return Response.send(res);
-                  createdFailed.push(beneficiary.email);
-                });
-            });
-          }
-        });
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
         return Response.send(res);
       });
     } catch (error) {
@@ -753,7 +675,7 @@ class AuthController {
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
-    
+
     try {
       const rules = {
         organisation_name: 'required|string',
@@ -765,7 +687,7 @@ class AuthController {
       const validation = new Validator(data, rules, {
         url: 'Only valid url with https or http allowed'
       });
-   
+
       if (validation.fails()) {
         Response.setError(400, validation.errors);
         return Response.send(res);
@@ -774,7 +696,7 @@ class AuthController {
         const domain = extractDomain(url_string);
         const email = data.email;
         const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-   
+
         const userExist = await db.User.findOne({
           where: {
             email: data.email
@@ -1101,27 +1023,18 @@ class AuthController {
       if (!wallet) {
         await QueueService.createWallet(user.id, 'user');
       }
-<<<<<<< HEAD
       if (user.is_tfa_enabled && user.tfa_method !== 'qrCode') {
         await AuthService.add2faSecret(user, user.tfa_method);
       }
       const currencyData =
         await CurrencyServices.getSpecificCurrencyExchangeRate(user.currency);
-=======
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
       const data = await AuthService.login(user, req.body.password);
       data.user.currencyData = currencyData;
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
       const message =
-<<<<<<< HEAD
         error.status == 401 ? error.message : 'Internal Server Error' + error;
-=======
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1412,7 +1325,6 @@ class AuthController {
         return Response.send(res);
       }
 
-<<<<<<< HEAD
       const data = await AuthService.enable2afCheck(
         user,
         token,
@@ -1425,10 +1337,6 @@ class AuthController {
       // );
 
       Response.setSuccess(200, 'Two factor authentication enabled.', data);
-=======
-      const user = await AuthService.enable2afCheck(req.user, token);
-      Response.setSuccess(200, 'Two factor authentication enabled.', user);
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
       return Response.send(res);
     } catch (error) {
       Response.setError(400, error.message);

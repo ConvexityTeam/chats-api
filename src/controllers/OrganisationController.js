@@ -288,7 +288,6 @@ class OrganisationController {
         OrganisationService.getOrganisationWallet(organisation.id),
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
-<<<<<<< HEAD
       Logger.info(`Transaction...: ${JSON.stringify(transaction)}`);
       if (campaigns.associatedCampaigns) {
         for (let campaign of campaigns.associatedCampaigns) {
@@ -320,40 +319,6 @@ class OrganisationController {
               campaign.dataValues.iDonate = true;
               campaign.dataValues.amount_donated = tran.amount;
               campaign.dataValues.donation_date = tran.createdAt;
-=======
-      for (let campaign of campaigns.associatedCampaigns) {
-        if (new Date(campaign.end_date) < new Date())
-          campaign.update({status: 'completed'});
-        for (let task of campaign.Jobs) {
-          const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'}
-          });
-          assignmentTask.push(assignment);
-        }
-
-        (campaign.dataValues.beneficiaries_count =
-          campaign.Beneficiaries.length),
-          (campaign.dataValues.task_count = campaign.Jobs.length);
-        campaign.dataValues.completed_task = completed_task;
-
-        campaign.dataValues.iDonate = false;
-        const campaignW = await CampaignService.getCampaignWallet(
-          campaign.id,
-          organisation.id
-        );
-        if (
-          campaignW !== null &&
-          campaignW.Wallet &&
-          organisationW !== null &&
-          organisationW.Wallet
-        ) {
-          for (let tran of transaction) {
-            if (
-              tran.ReceiverWalletId === campaignW.Wallet.uuid &&
-              tran.SenderWalletId === organisationW.Wallet.uuid
-            ) {
-              campaign.dataValues.iDonate = true;
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
             }
           }
         }
@@ -478,9 +443,10 @@ class OrganisationController {
 
   static async getBeneficiariesTransactions(req, res) {
     try {
-      const transactions = await BeneficiaryService.findOrganisationVendorTransactions(
-        req.organisation.id
-      );
+      const transactions =
+        await BeneficiaryService.findOrganisationVendorTransactions(
+          req.organisation.id
+        );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiaries transactions.',
@@ -1000,13 +966,8 @@ class OrganisationController {
   }
 
   static async extendCampaign(req, res) {
-    const {
-      end_date,
-      description,
-      location,
-      campaign_id,
-      additional_budget
-    } = req.body;
+    const {end_date, description, location, campaign_id, additional_budget} =
+      req.body;
     const today = moment();
     const endDate = moment(end_date);
     try {
@@ -1325,9 +1286,8 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       //const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
-      const transactions = await BeneficiaryService.findVendorTransactionsPerBene(
-        CampaignId
-      );
+      const transactions =
+        await BeneficiaryService.findVendorTransactionsPerBene(CampaignId);
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1548,9 +1508,8 @@ class OrganisationController {
   static async getOrganisationBeneficiaries(req, res) {
     try {
       const organisation = req.organisation;
-      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
-        organisation.id
-      );
+      const beneficiaries =
+        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation beneficiaries',
@@ -1645,12 +1604,11 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      const [
-        approvals
-      ] = await BeneficiaryService.approveAllCampaignBeneficiaries(
-        campaign.id,
-        ids
-      );
+      const [approvals] =
+        await BeneficiaryService.approveAllCampaignBeneficiaries(
+          campaign.id,
+          ids
+        );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
         approvals
       });
@@ -1675,12 +1633,11 @@ class OrganisationController {
         );
         return Response.send(res);
       }
-      const [
-        approvals
-      ] = await BeneficiaryService.rejectAllCampaignBeneficiaries(
-        campaign.id,
-        ids
-      );
+      const [approvals] =
+        await BeneficiaryService.rejectAllCampaignBeneficiaries(
+          campaign.id,
+          ids
+        );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries rejected!', {
         approvals
       });
@@ -2452,9 +2409,10 @@ class OrganisationController {
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true
       });
-      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId
-      );
+      const isOrganisationCampWallet =
+        await WalletService.findOrganisationCampaignWallets(
+          isOrgMember.OrganisationId
+        );
       isOrganisationCamp.forEach(matric => {
         disbursedDates.push(matric.updatedAt);
       });
@@ -2480,9 +2438,10 @@ class OrganisationController {
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true
       });
-      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
-        isOrgMember.OrganisationId
-      );
+      const isOrganisationCampWallet =
+        await WalletService.findOrganisationCampaignWallets(
+          isOrgMember.OrganisationId
+        );
       function getDifference() {
         return isOrganisationCampWallet.filter(wallet => {
           return isOrganisationCamp.some(campaign => {

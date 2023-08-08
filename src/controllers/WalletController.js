@@ -239,17 +239,12 @@ class WalletController {
       const data = SanitizeObject(req.body, ['amount', 'currency']);
       const {organisation_id} = req.params;
       if (!data.currency) data.currency = 'NGN';
-<<<<<<< HEAD
       const CampaignId = req.body.CampaignId ? req.body.CampaignId : null;
       const organisation = await OrganisationService.checkExistEmail(
         req.user.email
       );
       // organisation.dataValues.email = req.user.email;
 
-=======
-      const organisation = req.organisation;
-      organisation.dataValues.email = req.user.email;
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
       const wallet = await WalletService.findMainOrganisationWallet(
         organisation_id
       );
