@@ -1663,12 +1663,12 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        // await update_transaction(
-        //   {
-        //     transaction_hash: gasFee.retried
-        //   },
-        //   transactionId
-        // );
+        await update_transaction(
+          {
+            transaction_hash: gasFee.retried
+          },
+          transactionId
+        );
         await QueueService.confirmVendorOrder(
           gasFee.retried,
           amount,
@@ -1732,11 +1732,7 @@ RabbitMq['default']
 
         await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
-          {
-            transaction_hash: hash,
-            status: 'success',
-            is_approved: true
-          },
+          {status: 'success', is_approved: true},
           transactionId
         );
         order.Cart.forEach(async prod => {
