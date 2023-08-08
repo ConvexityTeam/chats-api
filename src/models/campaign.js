@@ -60,6 +60,10 @@ module.exports = (sequelize, DataTypes) => {
         as: 'CampaignProducts'
       });
 
+      Campaign.hasMany(models.Product, {
+        foreignKey: 'CampaignId',
+        as: 'ProjectProducts'
+      });
       Campaign.hasMany(models.User, {
         as: 'CampaignVendors',
         foreignKey: 'vendor_id'
@@ -69,6 +73,15 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'beneficiaryId',
         as: 'CampaignTokens'
       });
+
+      Campaign.hasMany(models.ProposalRequest, {
+        foreignKey: 'campaign_id',
+        as: 'proposal_requests'
+      });
+      // Campaign.belongsTo(models.VendorProposal, {
+      //   foreignKey: 'CampaignId',
+      //   as: 'campaign'
+      // });
     }
   }
 
@@ -76,6 +89,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       OrganisationId: DataTypes.INTEGER,
       formId: DataTypes.INTEGER,
+      category_id: DataTypes.INTEGER,
       title: DataTypes.STRING,
       minting_limit: DataTypes.INTEGER,
       is_processing: DataTypes.BOOLEAN,
@@ -98,7 +112,7 @@ module.exports = (sequelize, DataTypes) => {
       budget: DataTypes.FLOAT,
       contractIndex: DataTypes.INTEGER,
       amount_disbursed: DataTypes.FLOAT,
-      location: DataTypes.STRING,
+      location: DataTypes.JSON,
       start_date: DataTypes.DATE,
       paused_date: DataTypes.DATE,
       end_date: DataTypes.DATE

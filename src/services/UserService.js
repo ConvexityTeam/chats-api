@@ -1,6 +1,5 @@
 const {User, BankAccount, OrganisationMembers} = require('../models');
 const axios = require('axios');
-const geoIp = require('geoip-country');
 const Axios = axios.create();
 const {AclRoles} = require('../utils');
 const {Logger} = require('../libs');
@@ -48,7 +47,8 @@ class UserService {
       const theUser = await User.findOne({
         where: {
           id: id
-        }
+        },
+        attributes: userConst.publicAttr
       });
 
       return theUser;
@@ -98,12 +98,21 @@ class UserService {
     });
   }
 
+  static async fetchLiveness() {
+    return await Liveness.findAll();
+  }
+  static findLivenessByUserId(authorized_by) {
+    return Liveness.findOne({
+      where: {authorized_by}
+    });
+  }
   static findByEmail(email, extraClause = null) {
     return User.findOne({
       where: {
         email,
         ...extraClause
-      }
+      },
+      include: ['liveness']
     });
   }
   static findByUsername(username, extraClause = null) {
@@ -126,7 +135,9 @@ class UserService {
 
   static findSingleUser(where) {
     return User.findOne({
-      where
+      where,
+      attributes: userConst.publicAttr,
+      include: ['liveness']
     });
   }
 

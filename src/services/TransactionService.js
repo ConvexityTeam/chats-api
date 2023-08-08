@@ -13,10 +13,13 @@ class TransactionService {
         OrganisationId
       },
       attributes: [
+        'OrganisationId',
+        'CampaignId',
         'reference',
         'amount',
         'status',
         'transaction_type',
+        'narration',
         'createdAt',
         'updatedAt'
       ],

@@ -40,6 +40,7 @@ class PaystackService {
       amount,
 
       metadata: {
+        CampaignId: CampaignId,
         organisation_id: organisation.id
       },
       ...(dev_data && {

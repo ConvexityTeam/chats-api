@@ -6,8 +6,12 @@ const {
   Complaint,
   Beneficiary,
   VoucherToken,
-  Transaction,
+  ProposalRequest,
   FormAnswer,
+  Market,
+  VendorProposal,
+  ProductCategory,
+  Product,
   AssociatedCampaign,
   CampaignForm,
   Organisation,
@@ -17,9 +21,20 @@ const {
 const {userConst, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
-const {generateTransactionRef} = require('../utils');
+const {generateTransactionRef, AclRoles} = require('../utils');
+const Pagination = require('../utils/pagination');
+const {Logger} = require('../libs');
 
 class CampaignService {
+  static async findStoreByName(store_name) {
+    return await Market.findOne({where: {store_name}});
+  }
+  static async addStore(data) {
+    return await Market.create(data);
+  }
+  static async proposalRequest(data) {
+    return await ProposalRequest.create(data);
+  }
   static campaignHistory(id) {
     return Campaign.findByPk(id, {
       include: ['history']
@@ -194,6 +209,14 @@ class CampaignService {
     });
   }
 
+  static async getCampaignVendor(VendorId, CampaignId) {
+    return CampaignVendor.findOne({
+      where: {
+        VendorId,
+        CampaignId
+      }
+    });
+  }
   static async getVendorCampaigns(VendorId) {
     return CampaignVendor.findAll({
       where: {
@@ -429,9 +452,189 @@ class CampaignService {
       // ],
     });
   }
-  static getCampaigns(queryClause = {}) {
-    const where = queryClause;
-    return Campaign.findAll({
+
+  static async fetchProposalRequest(id) {
+    return await ProposalRequest.findOne({
+      where: {
+        id
+      }
+    });
+  }
+
+  static async fetchVendorProposalRequest(where = {}) {
+    return await VendorProposal.findOne({
+      where
+    });
+  }
+
+  static async fetchProposal(id) {
+    return await ProposalRequest.findOne({
+      where: {
+        id
+      }
+    });
+  }
+  static async fetchProposalForVendors(location, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      where: {
+        location: {
+          country: location.country,
+          state: {
+            [Op.like]: {
+              [Op.any]: location.state
+            }
+          }
+        }
+        // campaign_id: Sequelize.where(
+        //   Sequelize.col('proposal_requests.campaign_id'),
+        //   Op.ne,
+        //   null
+        // )
+      },
+
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'budget',
+        'location',
+        'end_date'
+      ],
+
+      include: [
+        {
+          model: Product,
+          as: 'ProjectProducts'
+        },
+        {
+          model: ProposalRequest,
+          as: 'proposal_requests'
+        }
+      ]
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return {...response, totalItems: campaign.rows.length};
+  }
+  static async fetchProposalForVendor(location, id) {
+    return await Campaign.findOne({
+      where: {
+        id,
+        location: {
+          country: location.country,
+          state: {
+            [Op.like]: {
+              [Op.any]: location.state
+            }
+          }
+        }
+      },
+
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'budget',
+        'location',
+        'end_date'
+      ],
+
+      include: [
+        {
+          model: Product,
+          as: 'ProjectProducts'
+        },
+        {
+          model: ProposalRequest,
+          as: 'proposal_requests'
+        }
+      ]
+    });
+  }
+
+  static async fetchRequest(proposal_id) {
+    return await User.findAll({
+      where: {
+        RoleId: AclRoles.Vendor,
+        proposal_id: Sequelize.where(
+          Sequelize.col('proposalOwner.proposal_id'),
+          proposal_id
+        )
+      },
+      attributes: userConst.publicAttr,
+      include: [
+        {
+          model: VendorProposal,
+          as: 'proposalOwner'
+        }
+      ]
+    });
+  }
+  static async fetchProposalRequests(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const campaign = await ProposalRequest.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      where: {
+        ...extraClause,
+        organisation_id: OrganisationId
+        // campaign_id: Sequelize.where(
+        //   Sequelize.col('proposal_requests.campaign_id'),
+        //   Op.ne,
+        //   null
+        // )
+      },
+      include: [
+        {
+          model: Campaign,
+          as: 'campaign_requests',
+          attributes: ['id', 'title', 'description', 'budget', 'location']
+        }
+      ]
+      // group: ['Campaign.id', 'proposal_requests.id']
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return {...response, totalItems: campaign.rows.length};
+  }
+
+  static async getCampaigns(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       where: {
         ...where
@@ -699,41 +902,6 @@ class CampaignService {
       include: ['campaigns']
     });
   }
-
-  // static async handleCampaignApproveAndFund(campaign, campaignWallet, OrgWallet, beneficiaries) {
-  //   const payload = {
-  //     CampaignId: campaign.id,
-  //     NgoWalletAddress: OrgWallet.address,
-  //     CampaignWalletAddress: campaignWallet.address,
-  //     amount: campaign.budget,
-  //     beneficiaries
-  //   };
-
-  //   // : beneficiaries.map(beneficiary => {
-  //   //   const bWalletId = beneficiary.User.Wallets.length ? beneficiary.User.Wallets[0].uuid : null;
-  //   //   return [
-  //   //     beneficiary.UserId,
-  //   //     bWalletId
-  //   //   ]
-  //   // })
-
-  //   // Queue fuding disbursing
-  //   const org = await Wallet.findOne({where: {uuid: OrgWallet.uuid}})
-
-  //   if
-  //   await Wallet.update({
-  //     balance: Sequelize.literal(`balance - ${campaign.budget}`)
-  //   }, {
-  //     where: {
-  //       uuid: OrgWallet.uuid
-  //     }
-  //   });
-
-  //   return {
-  //     campaign,
-  //     transaction
-  //   }
-  // }
 }
 
 module.exports = CampaignService;

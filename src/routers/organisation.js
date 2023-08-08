@@ -4,7 +4,9 @@ const {
   WalletController,
   OrganisationController,
   CampaignController,
-  ComplaintController
+  ComplaintController,
+  ProductController,
+  VendorController
 } = require('../controllers');
 const CashForWorkController = require('../controllers/CashForWorkController');
 
@@ -13,6 +15,7 @@ const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
+  SuperNgoVendor,
   IsOrgMember
 } = require('../middleware');
 const multer = require('../middleware/multer');
@@ -60,6 +63,31 @@ router.get(
   IsOrgMember,
   ParamValidator.CampaignIdOptional,
   CampaignController.campaignsWithOnboardedBeneficiary
+);
+
+router
+  .route('/:organisation_id/proposal-requests/:campaign_id')
+  .post(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    IsOrgMember,
+    CampaignValidator.campaignBelongsToOrganisation,
+    CampaignController.proposalRequest
+  );
+
+router.get(
+  '/:organisation_id/requests/:proposal_id',
+  CampaignController.getProposalRequests
+);
+router.get(
+  '/:organisation_id/proposal-requests',
+  SuperNgoVendor,
+  CampaignController.fetchProposalRequests
+);
+router.post(
+  '/approve-proposal',
+  NgoSubAdminAuth,
+  VendorController.approveProposal
 );
 router.post(
   '/extend-campaign/:organisation_id',
@@ -159,16 +187,14 @@ router
     WalletController.getOrganisationCampaignWallet
   );
 
-router
-  .route('/:organisation_id/wallets/paystack-deposit')
-  .post(
-    NgoSubAdminAuth,
-    ParamValidator.OrganisationId,
-    IsOrgMember,
-    WalletValidator.fiatDepositRules(),
-    WalletValidator.validate,
-    WalletController.paystackDeposit
-  );
+router.route('/:organisation_id/wallets/paystack-deposit').post(
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  // IsOrgMember,
+  WalletValidator.fiatDepositRules(),
+  WalletValidator.validate,
+  WalletController.paystackDeposit
+);
 router
   .route('/:organisation_id/wallets/:wallet_id?')
   .get(
@@ -381,6 +407,11 @@ router
     CampaignController.approveAndFundBeneficiaries
   );
 
+router.get(
+  '/:proposal_id/submitted-proposals/:vendor_id',
+  NgoSubAdminAuth,
+  VendorController.fetchSubmittedProposals
+);
 router
   .route('/:organisation_id/campaigns/:campaign_id/fund-campaign')
   .post(
@@ -596,6 +627,18 @@ router
     OrganisationController.rejectAllbeneficiaries
   );
 router
+  .route('/category-type/:organisation_id')
+  .get(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    ProductController.fetchCategoryTypes
+  )
+  .post(
+    NgoSubAdminAuth,
+    ParamValidator.OrganisationId,
+    ProductController.addCategoryType
+  );
+router
   .route('/products/:vendor_id')
   .get(OrganisationController.getProductVendors);
 
@@ -618,6 +661,10 @@ router
     ProductValidator.addProductRules,
     OrganisationController.addCampaignProduct
   );
+router.post(
+  '/campaign/:organisation_id/:id/destroy',
+  CampaignController.deleteCampaign
+);
 router.post(
   '/product/:organisation_id/:campaign_id/destroy',
   NgoAdminAuth,

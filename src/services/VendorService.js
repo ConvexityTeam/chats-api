@@ -10,7 +10,7 @@ const {
   BankAccount,
   Order,
   Market,
-  Campaign,
+  VendorProposal,
   Wallet,
   Product,
   OrderProduct,
@@ -27,6 +27,9 @@ const {
 } = require('../utils');
 
 class VendorService {
+  static submitProposal(proposal) {
+    return VendorProposal.create(proposal);
+  }
   static searchVendorStore(store_name, extraClause = null) {
     const where = {
       ...extraClause,
@@ -167,7 +170,12 @@ class VendorService {
 
   static async vendorStoreProducts(vendorId, where = {}) {
     return Product.findAll({
-      where,
+      where: {
+        ...where,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      },
       include: [
         {
           model: User,
@@ -181,6 +189,16 @@ class VendorService {
     });
   }
 
+  static async vendorStoreMarketProducts(CampaignId) {
+    return Product.findAll({
+      where: {
+        CampaignId,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      }
+    });
+  }
   static async createOrder(order, Cart) {
     return Order.create(
       {
@@ -245,6 +263,13 @@ class VendorService {
     return null;
   }
 
+  static async stores(UserId) {
+    return Market.findAll({UserId});
+  }
+
+  static async vendorStore(id, UserId) {
+    return Market.findOne({id, UserId});
+  }
   static async findVendorStore(UserId) {
     return Market.findOne({
       include: [
@@ -518,6 +543,7 @@ class VendorService {
     return Transaction.findAll({
       where: {
         ...filter,
+        OrganisationId,
         transaction_origin: 'store'
       },
       attributes: ['reference', 'amount', 'createdAt', 'updatedAt'],
@@ -532,9 +558,6 @@ class VendorService {
               model: Organisation,
               as: 'Organisations',
               attributes: [],
-              where: {
-                id: OrganisationId
-              },
               through: {
                 attributes: []
               }

@@ -1,3 +1,4 @@
+const path = require('path');
 const {Op} = require('sequelize');
 const {
   AclRoles,
@@ -26,9 +27,12 @@ const {
   OrganisationService,
   CampaignService,
   WalletService,
-  BlockchainService
+  BlockchainService,
+  ProductService
 } = require('../services');
 const BeneficiariesService = require('../services/BeneficiaryService');
+const {async} = require('regenerator-runtime');
+const CurrencyServices = require('../services/CurrencyServices');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
   {
@@ -38,6 +42,7 @@ const ninVerificationQueue = amqp_1['default'].declareQueue(
 const createWalletQueue = amqp_1['default'].declareQueue('createWallet', {
   durable: true
 });
+const __basedir = path.join(__dirname, '..');
 
 const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
 
@@ -125,16 +130,32 @@ class AuthController {
   }
   static async beneficiariesExcel(req, res) {
     try {
+      const campaignId = req.body.campaignId;
+
       if (req.file == undefined) {
-        return res.status(400).send('Please upload an excel file!');
+        Response.setError(404, 'Please upload an excel file!');
+        return Response.send(res);
       }
-      const campaignId = req.body.campaign;
+      const CampaignId = Number(campaignId);
+
+      const campaignExist = await db.Campaign.findOne({
+        where: {id: CampaignId}
+      });
+
+      if (!campaignExist) {
+        console.log('Campaign not found');
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Invalid Campaign ID'
+        );
+        return Response.send(res);
+      }
       let path = __basedir + '/beneficiaries/upload/' + req.file.filename;
 
       let existingEmails = []; //existings
       let createdSuccess = []; //successfully created
       let createdFailed = []; //failed to create
-      readXlsxFile(path).then(rows => {
+      readXlsxFile(path).then(async rows => {
         // skip header or first row
         rows.shift();
         let beneficiaries = [];
@@ -156,42 +177,28 @@ class AuthController {
           };
           beneficiaries.push(beneficiary);
         });
-        // console.log(beneficiaries);
         //loop through all the beneficiaries list to populate them in the db
-        beneficiaries.forEach(async beneficiary => {
-          let campaignExist = await db.Campaign.findOne({
-            where: {
-              id: campaignId,
-              type: 'campaign'
-            }
-          });
-          if (!campaignExist) {
-            Response.setError(400, 'Invalid Campaign ID');
-            return Response.send(res);
-          }
-          const user_exist = await db.User.findOne({
-            where: {
-              email: beneficiary.email
-            }
-          });
-          if (user_exist) {
-            //include the email in the existing list
-            existingEmails.push(beneficiary.email);
-          } else {
-            bcrypt.genSalt(10, (err, salt) => {
-              if (err) {
-                console.log('Error Ocurred hashing');
-              }
-              const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
-              bcrypt
-                .hash(beneficiary.password, salt)
-                .then(async hash => {
+        // await Promise.all(
+        beneficiaries.forEach(async (beneficiary, index) => {
+          setTimeout(async () => {
+            const user_exist = await db.User.findOne({
+              where: {email: beneficiary.email}
+            });
+
+            if (!user_exist) {
+              bcrypt.genSalt(10, (err, salt) => {
+                if (err) {
+                  console.log('Error Ocurred hashing');
+                }
+                const encryptedPin = createHash('0000'); //createHash(fields.pin);//set pin to zero 0
+                bcrypt.hash(beneficiary.password, salt).then(async hash => {
                   const encryptedPassword = hash;
-                  await db.User.create({
+                  const phoneInString = beneficiary.phone.toString();
+                  const user = await db.User.create({
                     RoleId: AclRoles.Beneficiary,
                     first_name: beneficiary.first_name,
                     last_name: beneficiary.last_name,
-                    phone: beneficiary.phone,
+                    phone: phoneInString,
                     email: beneficiary.email,
                     password: encryptedPassword,
                     gender: beneficiary.gender,
@@ -201,39 +208,41 @@ class AuthController {
                     referal_id: beneficiary.referal_id,
                     dob: beneficiary.dob,
                     pin: encryptedPin
-                  }).then(async user => {
-                    await QueueService.createWallet(user.id, 'user');
-                    if (campaignExist.type === 'campaign') {
-                      await Beneficiary.create({
-                        UserId: user.id,
-                        CampaignId: campaignExist.id,
-                        approved: true,
-                        source: 'Excel File Upload'
-                      }).then(async () => {
-                        await QueueService.createWallet(
-                          user.id,
-                          'user',
-                          fields.campaign
-                        );
-                      });
-                    }
                   });
+                  // .then(async user => {
+                  await QueueService.createWallet(user.id, 'user');
+                  if (campaignExist.type === 'campaign') {
+                    const res = await CampaignService.addBeneficiary(
+                      campaignExist.id,
+                      user.id,
+                      'web app'
+                    );
+                  }
+
                   createdSuccess.push(beneficiary.email); //add to success list
-                  Response.setSuccess(
-                    200,
-                    'Beneficiaries Uploaded Successfully:',
-                    user.id
-                  );
-                  // return Response.send(res);
-                })
-                .catch(err => {
-                  Response.setError(500, err.message);
-                  // return Response.send(res);
-                  createdFailed.push(beneficiary.email);
+                  // })
+                  // .catch(err => {
+                  //   Response.setError(
+                  //     HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+                  //     err
+                  //   );
+                  //   // return Response.send(res);
+                  //   createdFailed.push(beneficiary.email);
+                  // });
                 });
-            });
-          }
+              });
+            } else {
+              //include the email in the existing list
+              existingEmails.push(beneficiary.email);
+            }
+          }, index * 10000);
         });
+        // )
+        Response.setSuccess(
+          200,
+          'Beneficiaries Uploaded Successfully:',
+          createdSuccess
+        );
         return Response.send(res);
       });
     } catch (error) {
@@ -666,7 +675,7 @@ class AuthController {
   static async createNgoAccount(req, res) {
     let user = null;
     const data = req.body;
-    
+
     try {
       const rules = {
         organisation_name: 'required|string',
@@ -678,7 +687,7 @@ class AuthController {
       const validation = new Validator(data, rules, {
         url: 'Only valid url with https or http allowed'
       });
-   
+
       if (validation.fails()) {
         Response.setError(400, validation.errors);
         return Response.send(res);
@@ -687,7 +696,7 @@ class AuthController {
         const domain = extractDomain(url_string);
         const email = data.email;
         const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-   
+
         const userExist = await db.User.findOne({
           where: {
             email: data.email
@@ -1000,6 +1009,10 @@ class AuthController {
       }
       const orgId = user.AssociatedOrganisations[0].OrganisationId;
       const orgWallet = await WalletService.findMainOrganisationWallet(orgId);
+      const findCategoryType = await ProductService.fetchCategoryTypes(orgId);
+      if (findCategoryType.length == 0) {
+        await ProductService.addDefaultCategory(orgId);
+      }
       if (!orgWallet) {
         await QueueService.createWallet(orgId, 'organisation');
       }
@@ -1010,14 +1023,18 @@ class AuthController {
       if (!wallet) {
         await QueueService.createWallet(user.id, 'user');
       }
+      if (user.is_tfa_enabled && user.tfa_method !== 'qrCode') {
+        await AuthService.add2faSecret(user, user.tfa_method);
+      }
+      const currencyData =
+        await CurrencyServices.getSpecificCurrencyExchangeRate(user.currency);
       const data = await AuthService.login(user, req.body.password);
+      data.user.currencyData = currencyData;
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
       const message =
-        error.status == 401
-          ? error.message
-          : 'Login failed. Please try again later.';
+        error.status == 401 ? error.message : 'Internal Server Error' + error;
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1243,13 +1260,6 @@ class AuthController {
         req.body.password.trim(),
         AclRoles.Vendor
       );
-      const wallet = await WalletService.findSingleWallet({
-        UserId: user.id,
-        CampaignId: null
-      });
-      if (!wallet) {
-        await QueueService.createWallet(user.id, 'user');
-      }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -1315,8 +1325,18 @@ class AuthController {
         return Response.send(res);
       }
 
-      const user = await AuthService.enable2afCheck(req.user, token);
-      Response.setSuccess(200, 'Two factor authentication enabled.', user);
+      const data = await AuthService.enable2afCheck(
+        user,
+        token,
+        req.body.tfa_method
+      );
+
+      // const currencyData =
+      // await CurrencyServices.getSpecificCurrencyExchangeRate(
+      //   user.currency
+      // );
+
+      Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
     } catch (error) {
       Response.setError(400, error.message);
@@ -1512,6 +1532,7 @@ class AuthController {
           return Response.send(res);
         }
         const ngo = await OrganisationService.checkExist(token_exist.inviterId);
+
         const donor = await OrganisationService.checkExistEmail(
           token_exist.email
         );
@@ -1554,6 +1575,21 @@ class AuthController {
             DonorId: donor.id,
             CampaignId: campaignId
           });
+        }
+        if (userExist) {
+          const isMember = await db.OrganisationMembers.findOne({
+            where: {
+              UserId: userExist.id,
+              OrganisationId: isAdded.inviterId
+            }
+          });
+          if (!isMember) {
+            await db.OrganisationMembers.create({
+              UserId: userExist.id,
+              role: 'donor',
+              OrganisationId: isAdded.inviterId
+            });
+          }
         }
 
         await isAdded.update({isAdded: true});

@@ -135,6 +135,7 @@ class OrderController {
         Logger.error('Pin not set');
         return Response.send(res);
       }
+      
       if (!compareHash(pin, user.pin)) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -601,6 +602,7 @@ class OrderController {
               productId: cart.ProductId,
               product_name: cart.Product.tag,
               vendorId: product.Vendor.id,
+              product_category: cart.Product.product_category,
               vendor_name:
                 product.Vendor.first_name + ' ' + product.Vendor.first_name,
               sales_volume: cart.total_amount,

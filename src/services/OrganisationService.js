@@ -142,7 +142,7 @@ class OrganisationService {
   }
 
   static async isMember(organisation, user) {
-    return database.OrganisationMembers.findOne({
+    return OrganisationMembers.findOne({
       where: {
         OrganisationId: organisation,
         UserId: user

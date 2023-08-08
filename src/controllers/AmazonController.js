@@ -8,6 +8,7 @@ const s3 = new AWS.S3({
 });
 
 async function uploadFile(fileName, fileKey, bucket) {
+  console.log(fileName.type, 'type');
   return new Promise(async function (resolve, reject) {
     const params = {
       Bucket: bucket,

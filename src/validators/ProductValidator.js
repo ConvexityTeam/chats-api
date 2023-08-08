@@ -19,13 +19,11 @@ class ProductValidator extends BaseValidator {
     body('*.tag')
       .notEmpty()
       .withMessage('Product/Service/Item tag is required.'),
-    // body('*.cost')
-    //   .optional()
-    //   .withMessage('Product/Service cost is required.')
-    //   .isFloat()
-    //   .withMessage('Valid Product/Service cost is required.')
-    //   .custom(value => parseFloat(value) > 0)
-    //   .withMessage('Product/Service cost must be positive.'),
+    // body('*.category_id')
+    //   .notEmpty()
+    //   .withMessage('Category ID is required.')
+    //   .isInt()
+    //   .withMessage('Category ID must be numeric.'),
     body('*.vendors')
       .isArray({min: 1})
       .withMessage('Minimum of 1 vendor is required.'),

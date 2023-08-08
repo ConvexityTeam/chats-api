@@ -1,9 +1,7 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class PasswordResetToken extends Model {
+  class OneTimePassword extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,33 +9,36 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      PasswordResetToken.belongsTo(models.User, {
-        foreignKey: "UserId",
-        as: "User"
+      OneTimePassword.belongsTo(models.User, {
+        foreignKey: 'UserId',
+        as: 'User'
       });
     }
-  };
-  PasswordResetToken.init({
-    ref: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
+  }
+  OneTimePassword.init(
+    {
+      ref: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+      },
+      UserId: DataTypes.INTEGER,
+      token: DataTypes.STRING,
+      request_ip: DataTypes.STRING,
+      expires_at: DataTypes.DATE
     },
-    UserId: DataTypes.INTEGER,
-    token: DataTypes.STRING,
-    request_ip: DataTypes.STRING,
-    expires_at: DataTypes.DATE
-  }, {
-    sequelize,
-    modelName: 'PasswordResetToken',
-    tableName: 'PasswordResetTokens'
-  });
+    {
+      sequelize,
+      modelName: 'OneTimePassword',
+      tableName: 'OneTimePasswords'
+    }
+  );
 
-  PasswordResetToken.prototype.toObject = function() {
+  OneTimePassword.prototype.toObject = function () {
     const data = this.toJSON();
     delete data.token;
     delete data.UserId;
     return data;
-  }
-  return PasswordResetToken;
+  };
+  return OneTimePassword;
 };

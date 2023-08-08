@@ -56,6 +56,7 @@ class AdminController {
         );
         return Response.send(res);
       }
+      userExist.dataValues.is_verified_all = true;
       const updatesUser = await userExist.update({status: data.status});
       updatesUser.dataValues.password = null;
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, `User status updated`);
@@ -172,6 +173,7 @@ class AdminController {
         const user = await UserService.findUser(ngo.Members[0].UserId);
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
+        ngo.dataValues.liveness = user.liveness;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
             campaign.id
@@ -193,6 +195,35 @@ class AdminController {
       return Response.send(res);
     } catch (error) {
       console.log(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchLiveness(req, res) {
+    try {
+      const liveness = await UserService.fetchLiveness();
+      Response.setSuccess(200, 'Liveness retrieved', liveness);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async findLiveness(req, res) {
+    try {
+      const liveness = await UserService.findLivenessByUserId(
+        req.params.user_id
+      );
+      Response.setSuccess(200, 'Liveness retrieved', liveness);
+      return Response.send(res);
+    } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error.'
@@ -442,21 +473,6 @@ class AdminController {
         delete donor.dataValues.associatedCampaigns;
       }
 
-      // for (let users of allDonors) {
-      //   for (let organisation of users.Organisations) {
-      //     const campaign = await OrganisationService.getAssociatedCampaigns(
-      //       organisation.id
-      //     );
-      //     const sum = organisation.Transactions.reduce(
-      //       (accumulator, object) => {
-      //         return accumulator + object.amount;
-      //       },
-      //       0
-      //     );
-      //     organisation.dataValues.AssociatedCampaign = campaign;
-      //     organisation.dataValues.total_donation = sum;
-      //   }
-      // }
       if (allDonors.length > 0) {
         Response.setSuccess(200, 'Donors retrieved', allDonors);
       } else {

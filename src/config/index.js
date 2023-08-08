@@ -7,7 +7,8 @@ const awsConfig = require('./aws');
 const termiiConfig = require('./termii');
 const mailerConfig = require('./mailer');
 const zohoCrmConfig = require('./zohocrm');
-const switchWallet = require('./switchwallet')
+const switchWallet = require('./switchwallet');
+const exchangeRate = require('./openRate');
 
 module.exports = {
   switchWallet,
@@ -15,9 +16,10 @@ module.exports = {
   paystackConfig,
   rabbitmqConfig,
   termiiConfig,
+  exchangeRate,
   mailerConfig,
   tokenConfig,
   bantuConfig,
   awsConfig,
   zohoCrmConfig
-}
+};
