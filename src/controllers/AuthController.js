@@ -28,11 +28,11 @@ const {
   CampaignService,
   WalletService,
   BlockchainService,
-  ProductService,
-  CurrencyServices
+  ProductService
 } = require('../services');
 const BeneficiariesService = require('../services/BeneficiaryService');
 const {async} = require('regenerator-runtime');
+const CurrencyServices = require('../services/CurrencyServices');
 const ninVerificationQueue = amqp_1['default'].declareQueue(
   'nin_verification',
   {
