@@ -621,6 +621,7 @@ class CampaignService {
     return {...response, totalItems: campaign.rows.length};
   }
 
+  //conflict
   static async getCampaigns(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
