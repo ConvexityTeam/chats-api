@@ -25,7 +25,6 @@ const {
   generateQrcodeURL,
   GenearteVendorId
 } = require('../utils');
-const Pagination = require('../utils/pagination');
 
 class VendorService {
   static submitProposal(proposal) {

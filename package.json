@@ -6,9 +6,9 @@
   "scripts": {
     "test": "mocha --recursive --exit",
     "start": "npm run db:migrate && node src/index.js",
-    "start:dev": "nodemon -L src/index.js",
+    "start:dev": "nodemon src/index.js",
     "start:consumer": "node src/consumer.js",
-    "start:consumer:dev": "nodemon -L src/consumer.js",
+    "start:consumer:dev": "nodemon src/consumer.js",
     "db:create": "npx sequelize-cli db:create",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
@@ -25,7 +25,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.7.0",
     "@droidsolutions-oss/amqp-ts": "^2.6.3",
-    "@types/geoip-country": "^4.0.0",
     "@zohocrm/nodejs-sdk-2.0": "^5.0.0",
     "amqplib": "^0.7.1",
     "aws-sdk": "^2.856.0",
@@ -44,7 +43,6 @@
     "faker": "^5.4.0",
     "formidable": "^1.2.2",
     "g": "^2.0.1",
-    "geoip-country": "^4.1.25",
     "helmet": "^4.1.1",
     "js-sha512": "^0.8.0",
     "jsonwebtoken": "^8.5.1",

@@ -1,15 +1,10 @@
 const util = require('../libs/Utils');
-
-const fs = require('fs');
 const {Op} = require('sequelize');
 const {
   compareHash,
   createHash,
   SanitizeObject,
-  HttpStatusCode,
-  AclRoles,
-  generateRandom,
-  GenearteVendorId
+  HttpStatusCode
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -22,11 +17,15 @@ const {
   UserService,
   PaystackService,
   QueueService,
+<<<<<<< HEAD
   WalletService,
   SmsService,
   MailerService,
   CampaignService,
   CurrencyServices
+=======
+  WalletService
+>>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -36,7 +35,6 @@ const codeGenerator = require('./QrCodeController');
 const ZohoService = require('../services/ZohoService');
 const sanitizeObject = require('../utils/sanitizeObject');
 const AwsUploadService = require('../services/AwsUploadService');
-const {data} = require('../libs/Response');
 
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
   durable: true
@@ -79,6 +77,7 @@ class UsersController {
     }
   }
 
+<<<<<<< HEAD
   static async createVendor(req, res) {
     const {first_name, last_name, email, phone, address, location, store_name} =
       req.body;
@@ -294,6 +293,8 @@ class UsersController {
       return Response.send(res);
     }
   }
+=======
+>>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
   static async addBankAccount(req, res) {
     try {
       const data = SanitizeObject(req.body, ['account_number', 'bank_code']);
@@ -352,6 +353,7 @@ class UsersController {
     }
   }
 
+<<<<<<< HEAD
   static async liveness(req, res) {
     try {
       const rules = {
@@ -443,6 +445,8 @@ class UsersController {
       return Response.send(res);
     }
   }
+=======
+>>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
   static async updateProfile(req, res) {
     try {
       const data = req.body;
@@ -503,7 +507,6 @@ class UsersController {
           );
           return Response.send(res);
         }
-        data.is_verified = true;
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
@@ -521,7 +524,7 @@ class UsersController {
         return Response.send(res);
       }
       data.is_nin_verified = true;
-      data.is_verified = true;
+
       await req.user.update(data);
       const userObject = req.user.toObject();
 
@@ -535,7 +538,6 @@ class UsersController {
       );
       return Response.send(res);
     } catch (error) {
-      Logger.error(`Server Error. Please retry: ${JSON.stringify(error)}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server Error. Please retry.' + error

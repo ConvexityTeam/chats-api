@@ -54,7 +54,7 @@ class MailerService {
       });
     });
   }
-  async verify(to, name, password, vendor_id) {
+  verify(to, name, password, vendor_id) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
         if (!err) {
@@ -429,7 +429,7 @@ class MailerService {
     // `;
     const options = {
       from: this.config.from,
-      to: to,
+      to:to,
       subject: 'Please confirm your account',
       // html: body
       isHtml: false,
