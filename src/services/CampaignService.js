@@ -622,10 +622,9 @@ class CampaignService {
   }
 
   //conflict
-  static async getCampaigns(OrganisationId, extraClause = {}) {
+static async getCampaigns(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
-
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
@@ -634,27 +633,22 @@ class CampaignService {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
-
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      ...queryOptions,
       where: {
-        ...where
+        ...extraClause,
+        OrganisationId
       },
-      // attributes: {
-      //   include: [
-      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-      //   ]
-      // },
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
       ]
-      // includeIgnoreAttributes: false,
-      // group: [
-      //   "Campaign.id"
-      // ],
     });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
   }
+
   static getCash4W(OrganisationId) {
     return Campaign.findAll({
       where: {
