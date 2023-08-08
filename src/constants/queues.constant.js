@@ -68,6 +68,7 @@ module.exports = {
   INCREASE_GAS_MINT_NFT: 'increaseGasMintNFT',
   ESCROW_HASH: 'escrowHash',
   APPROVE_NFT_SPENDING: 'approveNFTSpending',
+<<<<<<< HEAD
   INCREASE_GAS_APPROVE_SPENDING: 'increaseGasApproveSpending',
   WITHHELD_FUND: 'withHeldFund',
   CONFIRM_WITHHOLDING_FUND: 'confirmWithHoldingFunds',
@@ -79,4 +80,7 @@ module.exports = {
   RE_FUN_BENEFICIARIES: 'reFundBeneficiaries',
   CONFIRM_RE_FUND_BENEFICIARIES: 'confirmReFundBeneficiaries',
   INCREASE_GAS_FOR_RE_FUND_BENEFICIARIES: 'increaseGasForReFundBeneficiaries'
+=======
+  INCREASE_GAS_APPROVE_SPENDING: 'increaseGasApproveSpending'
+>>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 };

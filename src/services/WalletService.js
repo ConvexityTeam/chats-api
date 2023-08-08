@@ -1,7 +1,6 @@
 const {Op} = require('sequelize');
 const {walletConst, userConst} = require('../constants');
 const {Wallet, User} = require('../models');
-
 class WalletService {
   static findSingleWallet(where) {
     return Wallet.findOne({

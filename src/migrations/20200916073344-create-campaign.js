@@ -8,7 +8,16 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-
+      // formId: {
+      //   type: Sequelize.INTEGER,
+      //   allowNull: true,
+      //   references: {
+      //     model: {
+      //       tableName: 'CampaignForms'
+      //     },
+      //     key: 'id'
+      //   }
+      // },
       OrganisationMemberId: {
         allowNull: false,
         type: Sequelize.INTEGER,

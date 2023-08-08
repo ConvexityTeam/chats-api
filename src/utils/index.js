@@ -7,22 +7,15 @@ const Encryption = require('./encryption');
 const File = require('./file');
 const DateUtil = require('./date');
 const QrCodeUtil = require('./qrcode');
-const Pagination = require('./pagination');
 
 module.exports = {
-  Types,
-  ...Types,
-  StringUtil,
-  ...StringUtil,
-  ...SeconFactorUtil,
-  SanitizeObject,
+  Types, ...Types, 
+  StringUtil, ...StringUtil, 
+  ...SeconFactorUtil, 
+  SanitizeObject, 
   ...ResponseCodes,
-  Encryption,
-  ...Encryption,
-  File,
-  ...File,
-  DateUtil,
-  ...DateUtil,
-  QrCodeUtil,
-  ...QrCodeUtil
+  Encryption, ...Encryption,
+  File, ...File,
+  DateUtil, ...DateUtil,
+  QrCodeUtil, ...QrCodeUtil
 };
