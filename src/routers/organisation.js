@@ -9,7 +9,6 @@ const {
   VendorController
 } = require('../controllers');
 const CashForWorkController = require('../controllers/CashForWorkController');
-const UsersController = require('../controllers/UsersController');
 
 const {
   DonorAuth,
@@ -124,15 +123,6 @@ router.post(
   ParamValidator.CampaignIdOptional,
   CampaignController.importBeneficiary
 );
-router.post(
-  '/:organisation_id/campaign-funds-withdrawal/:campaign_id',
-  NgoSubAdminAuth,
-  ParamValidator.OrganisationId,
-  IsOrgMember,
-  ParamValidator.CampaignIdOptional,
-  CampaignController.withdrawFund
-);
-
 router.get(
   '/beneficiaries-summary/:id',
   OrganisationController.getBeneficiariesFinancials
@@ -182,6 +172,7 @@ router
   .get(
     FieldAgentAuth,
     ParamValidator.OrganisationId,
+    IsOrgMember,
     ParamValidator.ReferenceOptional,
     WalletController.getOrgnaisationTransaction
   );
@@ -350,11 +341,7 @@ router
     IsOrgMember,
     OrganisationController.getAllOrgCampaigns
   );
-router.post(
-  '/group-beneficiaries',
-  FieldAgentAuth,
-  UsersController.groupAccount
-);
+
 router
   .route('/donations/private_donor/campaigns/all')
   .get(DonorAuth, OrganisationController.getAllPrivateDonorCampaigns);
@@ -363,7 +350,7 @@ router.get(
   '/donations/public_donor/campaigns/all',
   OrganisationController.getAllPublicDonorCampaigns
 );
-router.get('/public-ngos', OrganisationController.getAllNGOs);
+
 router
   .route('/:organisation_id/cash4works')
   .get(
@@ -382,13 +369,6 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.getPrivateCampaign
   );
-
-router.get(
-  '/:organisation_id/public-campaigns/:campaign_id',
-  ParamValidator.OrganisationId,
-  CampaignValidator.campaignBelongsToOrganisation,
-  CampaignController.getCampaign
-);
 router
   .route('/:organisation_id/campaigns/:campaign_id')
   .get(
@@ -440,15 +420,6 @@ router
     IsOrgMember,
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.approveAndFundCampaign
-  );
-
-router
-  .route('/:organisation_id/campaigns/:campaign_id/fund-crypto-pay')
-  .post(
-    NgoAdminAuth,
-    ParamValidator.OrganisationId,
-    ParamValidator.CampaignId,
-    CampaignController.fundCampaignWithCrypto
   );
 
 router.get('/chain_currency', NgoSubAdminAuth, CampaignController.networkChain);
@@ -505,7 +476,7 @@ router
     CampaignController.fundApprovedBeneficiary
   );
 router
-  .route('/:organisation_id/:campaign_id/:token_type/tokens')
+  .route('/:organisation_id/:campaign_id/:token_type/tokens/:page')
   .get(
     NgoAdminAuth,
     ParamValidator.OrganisationId,

@@ -13,7 +13,8 @@ const {
   QueueService,
   UtilService,
   PaystackService,
-  OrganisationService
+  OrganisationService,
+  MailerService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -31,7 +32,8 @@ const {
   AclRoles,
   GenearteVendorId,
   SanitizeObject,
-  generateProductRef
+  generateProductRef,
+  generateRandom
 } = require('../utils');
 const {data} = require('../libs/Response');
 const {user} = require('../config/mailer');
@@ -236,17 +238,21 @@ class VendorController {
   }
 
   static async addBusiness(req, res) {
+    console.log("vendor from controller", req.vendor);
     try {
+      const vendorId = req.vendor.dataValues.id;
       var form = new formidable.IncomingForm({
         multiples: true
       });
       form.parse(req, async (err, fields, files) => {
+        console.log("fields", fields); 
+        console.log("vendor from fields", req.vendor);
         const rules = {
           name: 'string',
           bizId: 'required|string',
           account_number: 'required|string',
           bank_code: 'required|string',
-          vendor_id: 'required|string'
+          // vendor_id: 'required|string' 
         };
         const validation = new Validator(fields, rules);
         if (validation.fails()) {
@@ -257,7 +263,7 @@ class VendorController {
           Response.setError(400, 'Document is required');
           return Response.send(res);
         }
-        const vendor = await UserService.getAUser(fields.vendor_id);
+        const vendor = await UserService.getAUser(vendorId);
         if (!vendor) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -307,7 +313,7 @@ class VendorController {
           return Response.send(res);
         }
         const account = await UserService.addUserAccount(
-          fields.vendor_id,
+          vendorId,
           data
         );
         const extension = files.document.name.substring(
@@ -315,7 +321,7 @@ class VendorController {
         );
         const document = await uploadFile(
           files.document,
-          'u-' + environ + '-' + fields.vendor_id + '-i.' + extension,
+          'u-' + environ + '-' + vendorId + '-i.' + extension,
           'convexity-profile-images'
         );
 
@@ -323,9 +329,17 @@ class VendorController {
           name: fields.name || null,
           bizId: fields.bizId,
           accountId: account.id,
-          vendorId: fields.vendor_id,
+          vendorId: vendorId,
           document
         });
+        const rawPassword = generateRandom(8);
+
+        MailerService.verify(
+          vendorDetails.email,
+          vendorDetails.first_name + ' ' + vendorDetails.last_name,
+          rawPassword,
+          vendorDetails.id
+        );
 
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
@@ -369,9 +383,9 @@ class VendorController {
       req.body.vendor_id = GenearteVendorId();
       const createdUser = await UserService.addUser(req.body);
       createdUser.password = null;
-      await AuthService.createPasswordToken(createdUser.id, req.ip);
+      const otpData = await AuthService.createPasswordToken(createdUser.id, req.ip);
+      createdUser.dataValues.otpData = otpData;
       await QueueService.createWallet(createdUser.id, 'user');
-
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'User registered',
