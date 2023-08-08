@@ -8,11 +8,13 @@ const {
   Transaction,
   Market,
   FormAnswer,
+  Group,
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
 const {userConst, walletConst} = require('../constants');
 const moment = require('moment');
+const Pagination = require('../utils/pagination');
 
 class BeneficiariesService {
   static capitalizeFirstLetter(str) {
@@ -225,7 +227,9 @@ class BeneficiariesService {
         id
       },
       attributes: userConst.publicAttr,
+
       include: [
+        {model: Group, as: 'members', include: ['group_members']},
         {
           order: [['createdAt', 'ASC']],
           model: Campaign,
@@ -342,8 +346,20 @@ class BeneficiariesService {
     });
   }
 
-  static async findOrgnaisationBeneficiaries(OrganisationId) {
-    return User.findAll({
+  static async findOrgnaisationBeneficiaries(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const users = await User.findAndCountAll({
+      ...options,
       where: {
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
@@ -362,28 +378,20 @@ class BeneficiariesService {
           },
           attributes: [],
           require: true
-        }
+        },
+        {model: Group, as: 'members'}
       ]
     });
+    const response = await Pagination.getPagingData(users, page, limit);
+    return response;
   }
 
-  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
-    return Beneficiary.findAll({
+  static async fetchCampaignBeneficiary(CampaignId, UserId) {
+    return Beneficiary.findOne({
       where: {
-        ...extraClause,
+        UserId,
         CampaignId
-      },
-      include: [
-        {
-          model: User,
-          as: 'User',
-          attributes: userConst.publicAttr,
-          include: {
-            model: FormAnswer,
-            as: 'Answers'
-          }
-        }
-      ]
+      }
     });
   }
 
@@ -416,7 +424,28 @@ class BeneficiariesService {
       ]
     });
   }
-
+  static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
+    return Beneficiary.findAll({
+      where: {
+        ...extraClause,
+        CampaignId
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConst.publicAttr,
+          include: [
+            {
+              model: FormAnswer,
+              as: 'Answers'
+            },
+            {model: Group, as: 'members', include: ['group_members']}
+          ]
+        }
+      ]
+    });
+  }
   static async getBeneficiariesAdmin() {
     return User.findAll({
       where: {
@@ -536,8 +565,23 @@ class BeneficiariesService {
 
   //get all beneficiaries by marital status
 
-  static async findOrganisationVendorTransactions(OrganisationId) {
-    return Transaction.findAll({
+  static async findOrganisationVendorTransactions(
+    OrganisationId,
+    extraClause = {}
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const transactions = await Transaction.findAndCountAll({
+      ...options,
       include: [
         {
           model: Wallet,
@@ -564,6 +608,8 @@ class BeneficiariesService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(transactions, page, limit);
+    return response;
   }
 
   static async findVendorTransactionsPerBene(CampaignId) {

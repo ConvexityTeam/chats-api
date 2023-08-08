@@ -8,15 +8,10 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.addColumn('Campaigns', 'formId', {
-      type: Sequelize.INTEGER,
+    await queryInterface.addColumn('Products', 'product_category', {
       allowNull: true,
-      references: {
-        model: {
-          tableName: 'CampaignForms'
-        },
-        key: 'id'
-      }
+      type: Sequelize.STRING,
+      after: 'tag'
     });
   },
 
@@ -27,6 +22,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable('Campaigns');
+    await queryInterface.dropColumn('Products', 'product_category');
   }
 };

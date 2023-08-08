@@ -6,7 +6,12 @@ const {Logger} = require('../libs');
 const paystack = require('paystack-api')(paystackConfig.secretKey);
 
 class PaystackService {
-  static async buildDepositData(organisation, _amount, _currency = null) {
+  static async buildDepositData(
+    organisation,
+    _amount,
+    CampaignId,
+    _currency = null
+  ) {
     let dev_data = null;
     const amount = _amount * 100;
     const currency = _currency || paystackConfig.defaultCurrency;
@@ -27,6 +32,7 @@ class PaystackService {
       channel: 'fiat',
       service: 'paystack',
       OrganisationId: organisation.id,
+      CampaignId,
       amount: _amount,
       transactionReference: ref
     });

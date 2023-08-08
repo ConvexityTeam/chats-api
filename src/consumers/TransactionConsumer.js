@@ -448,14 +448,12 @@ RabbitMq['default']
           transactionId,
           transactionReference,
           OrganisationId,
+          CampaignId,
           approved,
           status,
           amount
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
-          const organisation = await BlockchainService.setUserKeypair(
-            `organisation_${OrganisationId}`
-          );
           const message = msg.getContent();
           let mint;
           if (CampaignId) {
@@ -488,6 +486,7 @@ RabbitMq['default']
           await QueueService.confirmNGO_FUNDING(
             mint.Minted,
             OrganisationId,
+            CampaignId,
             transactionId,
             transactionReference,
             amount
@@ -504,8 +503,13 @@ RabbitMq['default']
     increaseGasForMinting
       .activateConsumer(async msg => {
         const {keys, message} = msg.getContent();
-        const {OrganisationId, transactionId, transactionReference, amount} =
-          message;
+        const {
+          OrganisationId,
+          transactionId,
+          CampaignId,
+          transactionReference,
+          amount
+        } = message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'mint',
@@ -525,6 +529,7 @@ RabbitMq['default']
         await QueueService.confirmNGO_FUNDING(
           gasFee.retried,
           OrganisationId,
+          CampaignId,
           transactionId,
           transactionReference,
           amount
@@ -544,13 +549,11 @@ RabbitMq['default']
         const {
           hash,
           OrganisationId,
+          CampaignId,
           transactionId,
           transactionReference,
           amount
         } = msg.getContent();
-        const wallet = await WalletService.findMainOrganisationWallet(
-          OrganisationId
-        );
 
         const confirm = await BlockchainService.confirmTransaction(hash);
 
@@ -611,7 +614,7 @@ RabbitMq['default']
         await DepositService.updateFiatDeposit(transactionReference, {
           status: 'successful'
         });
-        Logger.info('NGO funded');
+        Logger.info('NGO funded / Campaign funded');
         msg.ack();
       })
       .catch(error => {
@@ -897,27 +900,26 @@ RabbitMq['default']
         );
         let lastIndex;
         const realBudget = campaign.budget;
-        const parsedAmount =
-          parseInt(campaign.budget / beneficiaries.length) *
-          beneficiaries.length;
         for (let [index, beneficiary] of beneficiaries.entries()) {
           let wallet = beneficiary.User.Wallets[0];
 
           const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
             `user_${wallet.UserId}campaign_${campaign.id}`
           );
-          const share = parseInt(campaign.budget / beneficiaries.length);
-
-          // const transaction = await create_transaction(
-          //   beneficiaries.length > 0 ? parsedAmount : realBudget,
-          //   OrgWallet.uuid,
-          //   wallet.uuid,
-          //   {
-          //     BeneficiaryId: wallet.UserId,
-          //     OrganisationId: campaign.OrganisationId,
-          //     CampaignId: campaign.id
-          //   }
-          // );
+          let share = parseInt(campaign.budget / beneficiaries.length);
+          Logger.info(`Campaign Form: ${beneficiary.formAnswer}`);
+          if (beneficiary.formAnswer) {
+            const sum = beneficiary.formAnswer.questions.map(val => {
+              const total = val.reward.reduce((accumulator, currentValue) => {
+                return accumulator + currentValue;
+              }, 0);
+              return total;
+            });
+            const formShare = sum.reduce((accumulator, currentValue) => {
+              return accumulator + currentValue;
+            }, 0);
+            share = formShare;
+          }
           if (beneficiaries.length - 1 == index) {
             lastIndex = index;
           }
@@ -1010,19 +1012,23 @@ RabbitMq['default']
           },
           amount
         };
+
         if (token_type === 'papertoken') {
           QrCode = await generateQrcodeURL(JSON.stringify(qrCodeData));
+          Logger.info('Generating QrCode');
+
           istoken = true;
         } else if (token_type === 'smstoken') {
-          SmsService.sendOtp(
-            beneficiary.User.phone,
+          Logger.info('Generating SmsToken');
+          istoken = true;
+          await SmsService.sendOtp(
+            `+${beneficiary.User.phone}`,
             `Hello ${
               beneficiary.User.first_name || beneficiary.User.last_name
                 ? beneficiary.User.first_name + ' ' + beneficiary.User.last_name
                 : ''
-            } your convexity token is ${smsToken}, you are approved to spend ${share}.`
+            } your convexity token is ${smsToken}, you are approved to spend ${amount}.`
           );
-          istoken = true;
         }
         if (istoken) {
           await VoucherToken.create({
@@ -1663,12 +1669,12 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await update_transaction(
-          {
-            transaction_hash: gasFee.retried
-          },
-          transactionId
-        );
+        // await update_transaction(
+        //   {
+        //     transaction_hash: gasFee.retried
+        //   },
+        //   transactionId
+        // );
         await QueueService.confirmVendorOrder(
           gasFee.retried,
           amount,
@@ -1732,7 +1738,11 @@ RabbitMq['default']
 
         await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
-          {status: 'success', is_approved: true},
+          {
+            transaction_hash: hash,
+            status: 'success',
+            is_approved: true
+          },
           transactionId
         );
         order.Cart.forEach(async prod => {

@@ -1,10 +1,15 @@
 const util = require('../libs/Utils');
+
+const fs = require('fs');
 const {Op} = require('sequelize');
 const {
   compareHash,
   createHash,
   SanitizeObject,
-  HttpStatusCode
+  HttpStatusCode,
+  AclRoles,
+  generateRandom,
+  GenearteVendorId
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -31,6 +36,7 @@ const codeGenerator = require('./QrCodeController');
 const ZohoService = require('../services/ZohoService');
 const sanitizeObject = require('../utils/sanitizeObject');
 const AwsUploadService = require('../services/AwsUploadService');
+const {data} = require('../libs/Response');
 
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
   durable: true
@@ -497,6 +503,7 @@ class UsersController {
           );
           return Response.send(res);
         }
+        data.is_verified = true;
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
@@ -514,7 +521,7 @@ class UsersController {
         return Response.send(res);
       }
       data.is_nin_verified = true;
-
+      data.is_verified = true;
       await req.user.update(data);
       const userObject = req.user.toObject();
 
@@ -528,6 +535,7 @@ class UsersController {
       );
       return Response.send(res);
     } catch (error) {
+      Logger.error(`Server Error. Please retry: ${JSON.stringify(error)}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server Error. Please retry.' + error

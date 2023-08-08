@@ -14,7 +14,9 @@ async function uploadFile(fileName, fileKey, bucket) {
       Bucket: bucket,
       Key: fileKey,
       ACL: 'public-read',
-      Body: fileSystem.createReadStream(fileName.path),
+      Body: fileName.path
+        ? fileSystem.createReadStream(fileName.path)
+        : fileName,
       ContentType: fileName.type
     };
     await s3.upload(params, function (s3Err, data) {

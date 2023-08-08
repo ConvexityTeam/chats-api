@@ -81,7 +81,21 @@ class CampaignService {
   }
 
   static getCampaignById(id) {
-    return Campaign.findByPk(id);
+    return Campaign.findByPk(id, {
+      include: ['Organisation'],
+      include: {
+        model: User,
+        as: 'Beneficiaries',
+        attributes: [
+          'first_name',
+          'last_name',
+          'gender',
+          'marital_status',
+          'dob',
+          'location'
+        ]
+      }
+    });
   }
   static getPubCampaignById(id) {
     return Campaign.findOne({where: {id, is_public: true}});
@@ -366,7 +380,7 @@ class CampaignService {
       where: {
         ...where
       },
-
+      include: ['Organisation'],
       include: [
         {model: Task, as: 'Jobs'},
         {
@@ -377,38 +391,47 @@ class CampaignService {
       ]
     });
   }
-  static getPrivateCampaigns(queryClause = {}, id) {
-    let where = queryClause;
-    return Organisation.findOne({
+  static async getPrivateCampaigns(extraClause = {}, id) {
+    // const page = extraClause.page;
+    // const size = extraClause.size;
+
+    // const {limit, offset} = await Pagination.getPagination(page, size);
+    // delete extraClause.page;
+    // delete extraClause.size;
+    // let queryOptions = {};
+    // if (page && size) {
+    //   queryOptions.limit = limit;
+    //   queryOptions.offset = offset;
+    // }
+    const campaigns = await Organisation.findOne({
       where: {
         id
       },
       order: [['createdAt', 'DESC']],
-      include: {
-        model: Campaign,
-        where: {
-          ...where,
-          is_public: false
-        },
-        as: 'associatedCampaigns',
+      include: [
+        {
+          // ...queryOptions,
+          model: Campaign,
+          where: {
+            ...extraClause,
+            is_public: false
+          },
+          as: 'associatedCampaigns',
 
-        include: [
-          {model: Task, as: 'Jobs'},
-          {model: User, as: 'Beneficiaries'}
-        ]
-      }
-      // where: {
-      //   ...where,
-      // },
-      // include: {
-      //   model: Campaign,
-      //   as: 'associatedCampaigns',
-      //   include: [
-      //   {model: Task, as: 'Jobs'},
-      //   {model: User, as: 'Beneficiaries'},
-      // ],
-      // }
+          include: [
+            {model: Task, as: 'Jobs'},
+            {model: User, as: 'Beneficiaries'}
+          ]
+        }
+      ]
     });
+
+    return campaigns;
+    // return await Pagination.getPagingData(
+    //   campaigns.associatedCampaigns,
+    //   page,
+    //   limit
+    // );
   }
 
   static getPrivateCampaignsAdmin(id) {
@@ -621,10 +644,10 @@ class CampaignService {
     return {...response, totalItems: campaign.rows.length};
   }
 
-  //conflict
-static async getCampaigns(OrganisationId, extraClause = {}) {
+  static async getCampaigns(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
+
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
@@ -633,6 +656,7 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
+
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       ...queryOptions,
@@ -640,6 +664,7 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
         ...extraClause,
         OrganisationId
       },
+
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
@@ -648,26 +673,17 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
     const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
   }
-
   static getCash4W(OrganisationId) {
     return Campaign.findAll({
       where: {
         type: 'cash-for-work',
         OrganisationId
       },
-      // attributes: {
-      //   include: [
-      //     [Sequelize.fn("COUNT", Sequelize.col("Beneficiaries.id")), "beneficiaries_count"]
-      //   ]
-      // },
+
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries'}
       ]
-      // includeIgnoreAttributes: false,
-      // group: [
-      //   "Campaign.id"
-      // ],
     });
   }
 
@@ -679,14 +695,42 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
     });
   }
 
-  static async getAllCampaigns(queryClause = null) {
-    return Campaign.findAll({
+  // static async getAllCampaigns(OrganisationId) {
+  //   return Campaign.findAll({
+  //     order: [['createdAt', 'DESC']],
+  //     attributes: [
+  //       [Sequelize.fn('sum', Sequelize.col('minting_limit')), 'total_items'],
+  //       [Sequelize.fn('sum', Sequelize.col('minting_limit')), 'total_cash']
+  //     ],
+  //     where: {
+  //       is_funded: true,
+  //       OrganisationId
+  //     },
+  //     include: ['Organisation']
+  //   });
+  // }
+  static async getAllCampaigns(extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      ...options,
       where: {
-        ...queryClause
+        ...extraClause
       },
       include: ['Organisation']
     });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
   }
   static async getOurCampaigns(
     userId,
@@ -841,10 +885,12 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
         id: Number(id),
         OrganisationId
       },
-      include: {
-        model: Wallet,
-        as: 'Wallet'
-      }
+      include: [
+        {
+          model: Wallet,
+          as: 'Wallet'
+        }
+      ]
       // include: ["Beneficiaries"],
     });
   }
@@ -866,6 +912,16 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
       include: ['campaigns']
     });
   }
+  static async findCampaignFormAnswer(where) {
+    return await FormAnswer.findOne({
+      where
+    });
+  }
+  static async findCampaignFormAnswers(where) {
+    return await FormAnswer.findAll({
+      where
+    });
+  }
   static async findCampaignFormBeneficiary(id) {
     return await CampaignForm.findOne({
       where: {id},
@@ -881,6 +937,11 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
       where: {title}
     });
   }
+  static async findCampaignFormById(id) {
+    return await CampaignForm.findOne({
+      where: {id}
+    });
+  }
   static async findCampaignFormByCampaignId(id) {
     return await Campaign.findOne({
       where: {id},
@@ -890,12 +951,26 @@ static async getCampaigns(OrganisationId, extraClause = {}) {
   static async campaignForm(data) {
     return await CampaignForm.create(data);
   }
-  static async getCampaignForm(organisationId) {
-    return await CampaignForm.findAll({
+  static async getCampaignForm(organisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
-      where: {organisationId},
-      include: ['campaigns']
+      where: {organisationId, ...extraClause},
+      ...options
+      // include: ['campaigns']
     });
+    const response = await Pagination.getPagingData(form, page, limit);
+    return response;
   }
 }
 
