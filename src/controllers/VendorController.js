@@ -13,7 +13,8 @@ const {
   QueueService,
   UtilService,
   PaystackService,
-  OrganisationService
+  OrganisationService,
+  MailerService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -31,7 +32,8 @@ const {
   AclRoles,
   GenearteVendorId,
   SanitizeObject,
-  generateProductRef
+  generateProductRef,
+  generateRandom
 } = require('../utils');
 const {data} = require('../libs/Response');
 const {user} = require('../config/mailer');
@@ -237,7 +239,7 @@ class VendorController {
 
   static async addBusiness(req, res) {
     try {
-      const vendorId = req.vendor.dataValues.id;
+      const vendorDetails = req.vendor.dataValues;
       var form = new formidable.IncomingForm({
         multiples: true
       });
@@ -258,7 +260,7 @@ class VendorController {
           Response.setError(400, 'Document is required');
           return Response.send(res);
         }
-        const vendor = await UserService.getAUser(vendorId);
+        const vendor = await UserService.getAUser(vendorDetails.id);
         if (!vendor) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -308,7 +310,7 @@ class VendorController {
           return Response.send(res);
         }
         const account = await UserService.addUserAccount(
-          vendorId,
+          vendorDetails.id,
           data
         );
         const extension = files.document.name.substring(
@@ -316,7 +318,7 @@ class VendorController {
         );
         const document = await uploadFile(
           files.document,
-          'u-' + environ + '-' + vendorId + '-i.' + extension,
+          'u-' + environ + '-' + vendorDetails.id + '-i.' + extension,
           'convexity-profile-images'
         );
 
@@ -324,9 +326,17 @@ class VendorController {
           name: fields.name || null,
           bizId: fields.bizId,
           accountId: account.id,
-          vendorId: vendorId,
+          vendorId: vendorDetails.id,
           document
         });
+        const rawPassword = generateRandom(8);
+
+        MailerService.verify(
+          vendorDetails.email,
+          vendorDetails.first_name + ' ' + vendorDetails.last_name,
+          rawPassword,
+          vendorDetails.id
+        );
 
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,
