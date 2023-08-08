@@ -457,7 +457,6 @@ RabbitMq['default']
             `organisation_${OrganisationId}`
           );
           const message = msg.getContent();
-<<<<<<< HEAD
           let mint;
           if (CampaignId) {
             const campaignAddress = await BlockchainService.setUserKeypair(
@@ -478,14 +477,6 @@ RabbitMq['default']
               message
             );
           }
-=======
-          const mint = await BlockchainService.mintToken(
-            organisation.address,
-            amount,
-            message
-          );
-
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
           if (!mint) {
             msg.nack();
             return;
@@ -513,12 +504,8 @@ RabbitMq['default']
     increaseGasForMinting
       .activateConsumer(async msg => {
         const {keys, message} = msg.getContent();
-        const {
-          OrganisationId,
-          transactionId,
-          transactionReference,
-          amount
-        } = message;
+        const {OrganisationId, transactionId, transactionReference, amount} =
+          message;
         const gasFee = await BlockchainService.reRunContract(
           'token',
           'mint',
@@ -575,7 +562,6 @@ RabbitMq['default']
           {status: 'success', is_approved: true},
           transactionId
         );
-<<<<<<< HEAD
         if (CampaignId) {
           const campaignWallet = await WalletService.findSingleWallet({
             CampaignId,
@@ -622,12 +608,6 @@ RabbitMq['default']
             // fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
           });
         }
-=======
-        await wallet.update({
-          balance: Sequelize.literal(`balance + ${amount}`),
-          fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
-        });
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
         await DepositService.updateFiatDeposit(transactionReference, {
           status: 'successful'
         });
@@ -728,13 +708,8 @@ RabbitMq['default']
     });
     processCampaignFund
       .activateConsumer(async msg => {
-        const {
-          OrgWallet,
-          campaignWallet,
-          campaign,
-          transactionId,
-          realBudget
-        } = msg.getContent();
+        const {OrgWallet, campaignWallet, campaign, transactionId, realBudget} =
+          msg.getContent();
         const campaignAddress = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -823,13 +798,8 @@ RabbitMq['default']
       });
     confirmCampaignFunding
       .activateConsumer(async msg => {
-        const {
-          hash,
-          transactionId,
-          campaign,
-          OrgWallet,
-          amount
-        } = msg.getContent();
+        const {hash, transactionId, campaign, OrgWallet, amount} =
+          msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
 
@@ -920,13 +890,8 @@ RabbitMq['default']
       });
     processFundBeneficiaries
       .activateConsumer(async msg => {
-        const {
-          OrgWallet,
-          campaignWallet,
-          beneficiaries,
-          campaign,
-          token_type
-        } = msg.getContent();
+        const {OrgWallet, campaignWallet, beneficiaries, campaign, token_type} =
+          msg.getContent();
         const campaignKeyPair = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -1087,13 +1052,8 @@ RabbitMq['default']
       });
     processBeneficiaryPaystackWithdrawal
       .activateConsumer(async msg => {
-        const {
-          bankAccount,
-          campaignWallet,
-          userWallet,
-          amount,
-          transaction
-        } = msg.getContent();
+        const {bankAccount, campaignWallet, userWallet, amount, transaction} =
+          msg.getContent();
         const campaignAddress = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -1443,13 +1403,8 @@ RabbitMq['default']
       });
     confirmVRedeem
       .activateConsumer(async msg => {
-        const {
-          hash,
-          amount,
-          recipient_code,
-          transactionId,
-          uuid
-        } = msg.getContent();
+        const {hash, amount, recipient_code, transactionId, uuid} =
+          msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
 

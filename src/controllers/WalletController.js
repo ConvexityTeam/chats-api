@@ -6,25 +6,21 @@ const {
   TransactionService,
   OrderService,
   BlockchainService,
-<<<<<<< HEAD
   CampaignService,
   CurrencyServices,
   OrganisationService
-=======
-  CampaignService
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 } = require('../services');
 const {Logger, Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const {Op} = require('sequelize');
 const {logger} = require('../libs/Logger');
+
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
     try {
-      const OrganisationId = req.organisation.id;
+      const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
-<<<<<<< HEAD
         const transactions =
           await TransactionService.findOrgnaisationTransactions(
             OrganisationId,
@@ -50,11 +46,6 @@ class WalletController {
           }
         }
 
-=======
-        const transactions = await TransactionService.findOrgnaisationTransactions(
-          OrganisationId
-        );
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Organisation Transactions',
@@ -63,11 +54,11 @@ class WalletController {
         return Response.send(res);
       }
 
-      const transaction = await TransactionService.findTransaction({
+      const transactions = await TransactionService.findTransaction({
         OrganisationId,
         reference
       });
-      if (!transaction) {
+      if (!transactions) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Transaction not found.'
@@ -75,10 +66,20 @@ class WalletController {
         return Response.send(res);
       }
 
+      for (let transaction of transactions) {
+        if (typeof transaction.CampaignId === 'number') {
+          const campaign = await CampaignService.getACampaign(
+            transaction.CampaignId,
+            req.organisation.id
+          );
+          transaction.dataValues.campaign_name = campaign.title;
+        }
+      }
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Transaction Details',
-        transaction
+        transactions
       );
       return Response.send(res);
     } catch (error) {
@@ -98,6 +99,9 @@ class WalletController {
       const token = await BlockchainService.balance(user.address);
       const balance = Number(token.Balance.split(',').join(''));
       const OrganisationId = req.organisation.id;
+      let usersCurrency = req.user.currency;
+      let exchangeRate = 0.0;
+      // let currencyData = {};
       const uuid = req.params.wallet_id;
       if (uuid) {
         return WalletController._handleSingleWallet(res, {
@@ -106,26 +110,55 @@ class WalletController {
         });
       }
 
-      let [
-        {total: total_deposit}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        status: 'success',
-        is_approved: true,
-        transaction_type: 'deposit'
-      });
+      let [{total: total_deposit}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          status: 'success',
+          is_approved: true,
+          transaction_type: 'deposit'
+        });
 
-      let [
-        {total: spend_for_campaign}
-      ] = await TransactionService.getTotalTransactionAmount({
-        OrganisationId,
-        is_approved: true,
-        status: 'success',
-        transaction_type: 'transfer',
-        CampaignId: {
-          [Op.not]: null
-        }
-      });
+      let [{total: spend_for_campaign}] =
+        await TransactionService.getTotalTransactionAmount({
+          OrganisationId,
+          is_approved: true,
+          status: 'success',
+          transaction_type: 'transfer',
+          CampaignId: {
+            [Op.not]: null
+          }
+        });
+
+      const currencyObj = CurrencyServices;
+      //convert currency to set currency if not in USD
+      //get users set currency
+      if (
+        usersCurrency === '' ||
+        usersCurrency == null ||
+        usersCurrency === 'USD'
+      ) {
+        usersCurrency = 'USD';
+        //  console.log(usersCurrency);
+        exchangeRate = await currencyObj.convertCurrency(
+          usersCurrency,
+          'USD',
+          1
+        );
+      } else if (usersCurrency !== 'USD') {
+        //  console.log(usersCurrency);
+        exchangeRate = await currencyObj.convertCurrency(
+          'USD',
+          usersCurrency,
+          1
+        );
+      }
+
+      console.log('ExchangeRate: ' + exchangeRate);
+      //set the users currency
+      // currencyData = {
+      //   users_currency: usersCurrency,
+      //   currency_symbol: '$'
+      // };
 
       const wallet = await WalletService.findMainOrganisationWallet(
         OrganisationId
@@ -133,7 +166,6 @@ class WalletController {
       if (!wallet) {
         await QueueService.createWallet(OrganisationId, 'organisation');
       }
-<<<<<<< HEAD
       if (wallet) {
         const MainWallet = wallet.toObject();
         // total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
@@ -164,23 +196,8 @@ class WalletController {
         );
         return Response.send(res);
       }
-=======
-
-      const MainWallet = wallet.toObject();
-      total_deposit = total_deposit || 0;
-      spend_for_campaign = spend_for_campaign || 0;
-      MainWallet.balance = balance;
-      MainWallet.fiat_balance = balance;
-      MainWallet.address = user.address;
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
-        MainWallet,
-        total_deposit,
-        spend_for_campaign
-      });
-      return Response.send(res);
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
     } catch (error) {
-      console.log(error);
+      console.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Server Error: Unexpected error occured.'
@@ -239,17 +256,12 @@ class WalletController {
       const data = SanitizeObject(req.body, ['amount', 'currency']);
       const {organisation_id} = req.params;
       if (!data.currency) data.currency = 'NGN';
-<<<<<<< HEAD
       const CampaignId = req.body.CampaignId ? req.body.CampaignId : null;
       const organisation = await OrganisationService.checkExistEmail(
         req.user.email
       );
       // organisation.dataValues.email = req.user.email;
 
-=======
-      const organisation = req.organisation;
-      organisation.dataValues.email = req.user.email;
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
       const wallet = await WalletService.findMainOrganisationWallet(
         organisation_id
       );
@@ -263,10 +275,10 @@ class WalletController {
       const response = await PaystackService.buildDepositData(
         organisation,
         data.amount,
+        CampaignId,
         data.currency
       );
       logger.info(`Initiated PayStack Transaction`);
-      //QueueService.createPayStack(wallet.address, data.amount)
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Deposit data generated.',

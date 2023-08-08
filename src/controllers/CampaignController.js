@@ -9,14 +9,10 @@ const {
   WalletService,
   TaskService,
   BlockchainService,
-<<<<<<< HEAD
   AwsService,
   TransactionService,
   CurrencyServices,
   ProductService
-=======
-  AwsService
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 } = require('../services');
 const Validator = require('validatorjs');
 const db = require('../models');
@@ -29,14 +25,10 @@ const {
   generateQrcodeURL,
   GenearteVendorId,
   GenearteSMSToken,
-<<<<<<< HEAD
   GenerateSecrete,
   AclRoles,
   generateTransactionRef,
   generateProductRef
-=======
-  AclRoles
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 } = require('../utils');
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
@@ -78,10 +70,8 @@ class CampaignController {
       const filter = SanitizeObject(req.query, ['status']);
       const Campaign = req.campaign.toJSON();
       filter.CampaignId = Campaign.id;
-      const {
-        count: complaints_count,
-        rows: Complaints
-      } = await ComplaintService.getBeneficiaryComplaints(req.user.id, filter);
+      const {count: complaints_count, rows: Complaints} =
+        await ComplaintService.getBeneficiaryComplaints(req.user.id, filter);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Campaign Complaints.',
@@ -366,9 +356,8 @@ class CampaignController {
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
-      const beneficiaries = await BeneficiaryService.getApprovedFundBeneficiaries(
-        campaign_id
-      );
+      const beneficiaries =
+        await BeneficiaryService.getApprovedFundBeneficiaries(campaign_id);
       const realBeneficiaries = beneficiaries
         .map(exist => exist.User && exist)
         .filter(x => !!x);
@@ -419,7 +408,6 @@ class CampaignController {
         );
         return Response.send(res);
       }
-<<<<<<< HEAD
       // if (!(campaign.start_date >= Date.now())) {
       //   Response.setError(
       //     HttpStatusCode.STATUS_BAD_REQUEST,
@@ -438,8 +426,6 @@ class CampaignController {
           user.dataValues.formAnswer = answers;
         }
       }
-=======
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
 
       if (campaign.type === 'item') {
         await QueueService.fundNFTBeneficiaries(
@@ -472,7 +458,6 @@ class CampaignController {
       return Response.send(res);
     }
   }
-<<<<<<< HEAD
 
   static async fundCampaignWithCrypto(req, res) {
     const {organisation_id, campaign_id} = req.params;
@@ -534,8 +519,6 @@ class CampaignController {
       return Response.send(res);
     }
   }
-=======
->>>>>>> 7919295ac2d911dd9090da80bcd53c37ef8b7495
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
@@ -1248,9 +1231,8 @@ class CampaignController {
           0
         )
       ).toFixed(2);
-      campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(
-        campaignId
-      );
+      campaign.dataValues.Complaints =
+        await CampaignService.getCampaignComplaint(campaignId);
       campaign.dataValues.ck8 =
         (await AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
@@ -1278,9 +1260,8 @@ class CampaignController {
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
-      const campaign = await CampaignService.getPrivateCampaignWithBeneficiaries(
-        campaignId
-      );
+      const campaign =
+        await CampaignService.getPrivateCampaignWithBeneficiaries(campaignId);
       const campaignWallet = await WalletService.findOrganisationCampaignWallet(
         OrganisationId,
         campaignId
@@ -1342,9 +1323,8 @@ class CampaignController {
           0
         )
       ).toFixed(2);
-      campaign.dataValues.Complaints = await CampaignService.getCampaignComplaint(
-        campaignId
-      );
+      campaign.dataValues.Complaints =
+        await CampaignService.getCampaignComplaint(campaignId);
       campaign.dataValues.ck8 =
         (await AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
@@ -1666,7 +1646,7 @@ async function loopCampaigns(campaignId, beneficiaries) {
     }
     return beneficiaries;
   } catch (error) {
-    return error; 
+    return error;
   }
 }
 
