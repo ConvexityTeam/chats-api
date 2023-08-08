@@ -485,8 +485,13 @@ RabbitMq['default']
 
     mintNFT
       .activateConsumer(async msg => {
-        const {collection, transaction, receiver, contractIndex, tokenURI} =
-          msg.getContent();
+        const {
+          collection,
+          transaction,
+          receiver,
+          contractIndex,
+          tokenURI
+        } = msg.getContent();
         const createdMintingLimit = await BlockchainService.mintNFT(
           receiver,
           contractIndex,
@@ -553,8 +558,9 @@ RabbitMq['default']
             msg.nack();
             return;
           }
-          const collectionAddress =
-            await BlockchainService.getCollectionAddress(confirmTransaction);
+          const collectionAddress = await BlockchainService.getCollectionAddress(
+            confirmTransaction
+          );
           if (!collectionAddress) {
             msg.nack();
             return;
@@ -575,6 +581,7 @@ RabbitMq['default']
             uuid,
             {
               BeneficiaryId: beneficiary.User.id,
+              OrganisationId: campaign.OrganisationId,
               CampaignId: campaign.id
             }
           );
@@ -650,18 +657,22 @@ RabbitMq['default']
       .activateConsumer(async msg => {
         const {beneficiaryId, campaignId} = msg.getContent();
 
-        const [beneficiaryAddress, campaignAddress, wallet, campaign] =
-          await Promise.all([
-            BlockchainService.setUserKeypair(
-              `user_${beneficiaryId}campaign_${campaignId}`
-            ),
-            BlockchainService.setUserKeypair(`campaign_${campaignId}`),
-            WalletService.findSingleWallet({
-              CampaignId: campaignId,
-              UserId: beneficiaryId
-            }),
-            CampaignService.getCampaignById(campaignId)
-          ]);
+        const [
+          beneficiaryAddress,
+          campaignAddress,
+          wallet,
+          campaign
+        ] = await Promise.all([
+          BlockchainService.setUserKeypair(
+            `user_${beneficiaryId}campaign_${campaignId}`
+          ),
+          BlockchainService.setUserKeypair(`campaign_${campaignId}`),
+          WalletService.findSingleWallet({
+            CampaignId: campaignId,
+            UserId: beneficiaryId
+          }),
+          CampaignService.getCampaignById(campaignId)
+        ]);
         const confirmTransaction = await BlockchainService.confirmTransaction(
           campaign.collection_hash
         );

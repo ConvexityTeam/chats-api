@@ -13,7 +13,8 @@ const {
   QueueService,
   UtilService,
   PaystackService,
-  OrganisationService
+  OrganisationService,
+  MailerService
 } = require('../services');
 const Validator = require('validatorjs');
 const sequelize = require('sequelize');
@@ -31,7 +32,8 @@ const {
   AclRoles,
   GenearteVendorId,
   SanitizeObject,
-  generateProductRef
+  generateProductRef,
+  generateRandom
 } = require('../utils');
 const {data} = require('../libs/Response');
 const {user} = require('../config/mailer');
@@ -236,12 +238,15 @@ class VendorController {
   }
 
   static async addBusiness(req, res) {
+    console.log("vendor from controller", req.vendor);
     try {
       const vendorId = req.vendor.dataValues.id;
       var form = new formidable.IncomingForm({
         multiples: true
       });
       form.parse(req, async (err, fields, files) => {
+        console.log("fields", fields); 
+        console.log("vendor from fields", req.vendor);
         const rules = {
           name: 'string',
           bizId: 'required|string',
@@ -327,6 +332,14 @@ class VendorController {
           vendorId: vendorId,
           document
         });
+        const rawPassword = generateRandom(8);
+
+        MailerService.verify(
+          vendorDetails.email,
+          vendorDetails.first_name + ' ' + vendorDetails.last_name,
+          rawPassword,
+          vendorDetails.id
+        );
 
         Response.setSuccess(
           HttpStatusCode.STATUS_CREATED,

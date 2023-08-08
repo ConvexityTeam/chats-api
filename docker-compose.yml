@@ -21,20 +21,6 @@ services:
       - POSTGRES_PASSWORD=postgres
     restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    depends_on:
-      - postgres
-    ports:
-      - "5555:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
-      - PGADMIN_DEFAULT_PASSWORD=admin
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    restart: unless-stopped
-
   backend:
     depends_on:
       - postgres
@@ -89,11 +75,10 @@ networks:
     driver: bridge
     name: gateway
   rabbitmq:
-    internal: true 
+    internal: true
   postgres:
     internal: true
 
 volumes:
-  pgadmin-data:
   postgres:
-    external: false
+    external: true
