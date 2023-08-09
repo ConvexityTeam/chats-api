@@ -1223,7 +1223,7 @@ class QueueService {
     } else {
       wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
       if (!wallet) {
-        wallet = await QueueService.createWallet(
+        wallet = await QueueService.createWallet( 
           OrganisationId,
           'organisation'
         );
