@@ -1214,7 +1214,7 @@ class QueueService {
       if (!wallet) {
         wallet = await QueueService.createWallet(
           OrganisationId, 
-          'organisation',
+          'organisation', 
           CampaignId
         );
         Logger.info(`Created wallet from QueService`);
