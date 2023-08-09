@@ -54,12 +54,12 @@ class MailerService {
       });
     });
   }
-  async verify(to, name, password, vendor_id) {
+  async verify(to, name, vendor_id, password = null) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
         if (!err) {
           console.log('Server is ready to take our messages');
-          this.sendPassword(to, name, password, vendor_id);
+          this.sendPassword(to, name, vendor_id, password);
           resolve(success);
         } else {
           console.log('Not verified', err);
@@ -121,7 +121,7 @@ class MailerService {
     });
   }
 
-  sendPassword(to, name, password, vendor_id) {
+  sendPassword(to, name, vendor_id, password) {
     // const body = `
     // <div>
     //   <p>Hi, ${name}\nYour CHATS account ${

@@ -329,13 +329,13 @@ class VendorController {
           vendorId: vendorDetails.id,
           document
         });
-        const rawPassword = generateRandom(8);
+        // const rawPassword = generateRandom(8);
+        const vendor_id = GenearteVendorId();
 
         MailerService.verify(
           vendorDetails.email,
           vendorDetails.first_name + ' ' + vendorDetails.last_name,
-          rawPassword,
-          vendorDetails.id
+          vendor_id
         );
 
         Response.setSuccess(
