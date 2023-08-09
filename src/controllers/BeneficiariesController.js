@@ -5,7 +5,9 @@ const {
   QueueService,
   OrganisationService,
   BlockchainService,
-  UserService
+  UserService,
+  MailerService,
+  SmsService
 } = require('../services');
 const util = require('../libs/Utils');
 const db = require('../models');
@@ -14,7 +16,14 @@ const Validator = require('validatorjs');
 const {Response} = require('../libs');
 
 const moment = require('moment');
-const {HttpStatusCode, compareHash, BeneficiarySource} = require('../utils');
+const {
+  HttpStatusCode,
+  compareHash,
+  BeneficiarySource,
+  AclRoles,
+  generateRandom,
+  createHash
+} = require('../utils');
 const {type} = require('../libs/Utils');
 class BeneficiariesController {
   static async getAllUsers(req, res) {
@@ -532,8 +541,9 @@ class BeneficiariesController {
   static async getProfile(req, res) {
     try {
       let total_wallet_spent = 0;
-      let total_wallet_balance = 0;
+      let total_cash_balance = 0;
       let total_wallet_received = 0;
+      let personal_wallet_balance = 0;
 
       const _beneficiary = await BeneficiaryService.beneficiaryProfile(
         req.user.id
@@ -556,7 +566,7 @@ class BeneficiariesController {
           );
           const token = await BlockchainService.balance(address.address);
           const balance = Number(token.Balance.split(',').join(''));
-          total_wallet_balance += balance;
+          personal_wallet_balance += balance;
         }
         if (wallet.CampaignId) {
           const campaignAddress = await BlockchainService.setUserKeypair(
@@ -571,16 +581,15 @@ class BeneficiariesController {
             beneficiaryAddress.address
           );
           const balance = Number(token.Allowed.split(',').join(''));
-          total_wallet_balance += balance;
+          total_cash_balance += balance;
         }
       }
 
       const beneficiary = _beneficiary.toObject();
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Profile.', {
-        total_wallet_balance,
-        total_wallet_received,
-        total_wallet_spent,
+        total_cash_balance,
+        personal_wallet_balance,
         ...beneficiary
       });
       return Response.send(res);
@@ -874,9 +883,10 @@ class BeneficiariesController {
       let nineHundredKToOneMill = 0;
       let total_wallet_balance = 0;
       const org = await OrganisationService.isMemberUser(req.user.id);
-      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount(
-        org.OrganisationId
-      );
+      const beneficiaries =
+        await BeneficiaryService.getBeneficiariesTotalAmount(
+          org.OrganisationId
+        );
 
       const walletBalance = [];
       beneficiaries.forEach(beneficiary => {
@@ -970,6 +980,7 @@ class BeneficiariesController {
           transaction.dataValues.narration = `Payment from (${
             ngo.name || ngo.email
           })`;
+
           transaction.dataValues.transaction_type = 'credit';
         }
         if (transaction.narration === 'Vendor Order') {
@@ -1207,19 +1218,100 @@ class BeneficiariesController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const question = await CampaignService.findCampaignFormByCampaignId(id);
-      if (!question && question.campaign_form) {
+      const beneficiary = await BeneficiaryService.fetchCampaignBeneficiary(
+        id,
+        data.beneficiaryId
+      );
+      if (!beneficiary) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign not found'
+          "Beneficiary dos'nt belong to campaign"
         );
+        return Response.send(res);
       }
+      const formAnswer = await CampaignService.findCampaignFormAnswer({
+        campaignId: id,
+        beneficiaryId: data.beneficiaryId
+      });
+      if (formAnswer) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Survey already submitted for this form'
+        );
+        return Response.send(res);
+      }
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+
+      if (question && !question.campaign_form) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          "Campaign dos'nt have a form"
+        );
+        return Response.send(res);
+      }
+
       req.body.campaignId = id;
       const createdForm = await CampaignService.formAnswer(req.body);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Questionnaire submitted',
         createdForm
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async adminRegisterBeneficiary(req, res) {
+    const data = req.body;
+
+    const {first_name, last_name, email, phone} = req.body;
+    try {
+      const rules = {
+        first_name: 'required|alpha',
+        last_name: 'required|alpha',
+        email: 'required|email',
+        phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/']
+      };
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const rawPassword = generateRandom(8);
+      const password = createHash(rawPassword);
+      data.RoleId = AclRoles.Beneficiary;
+      const beneficiary = await UserService.findByEmail(data.email);
+      if (beneficiary) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Email already taken'
+        );
+        return Response.send(res);
+      }
+      req.body.password = password;
+      const createdBeneficiary = await UserService.addUser(data);
+      await MailerService.verify(
+        email,
+        first_name + ' ' + last_name,
+        rawPassword
+      );
+      createdBeneficiary.dataValues.password = null;
+      await SmsService.sendOtp(
+        phone,
+        `Hi, ${first_name}  ${last_name} your CHATS account password is: ${rawPassword}`
+      );
+      await QueueService.createWallet(createdBeneficiary.id, 'user');
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Beneficiary registered successfully',
+        createdBeneficiary
       );
       return Response.send(res);
     } catch (error) {
