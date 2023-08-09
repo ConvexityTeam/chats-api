@@ -171,7 +171,12 @@ class VendorService {
 
   static async vendorStoreProducts(vendorId, where = {}) {
     return Product.findAll({
-      where,
+      where: {
+        ...where,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      },
       include: [
         {
           model: User,
@@ -185,6 +190,16 @@ class VendorService {
     });
   }
 
+  static async vendorStoreMarketProducts(CampaignId) {
+    return Product.findAll({
+      where: {
+        CampaignId,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      }
+    });
+  }
   static async createOrder(order, Cart) {
     return Order.create(
       {

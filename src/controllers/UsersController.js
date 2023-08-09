@@ -25,7 +25,8 @@ const {
   WalletService,
   SmsService,
   MailerService,
-  CampaignService
+  CampaignService,
+  CurrencyServices
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -247,11 +248,17 @@ class UsersController {
     try {
       const rules = {
         vnin: 'required|size:16',
-        country: 'string'
+        country: 'string',
+        user_id: 'required|numeric'
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const user = await UserService.getAUser(data.user_id);
+      if (!user) {
+        Response.setError(404, 'User not found');
         return Response.send(res);
       }
       if (data.vnin && process.env.ENVIRONMENT !== 'staging') {
@@ -271,12 +278,12 @@ class UsersController {
         data.is_verified = true;
         data.is_nin_verified = true;
         data.nin = hash;
-        await req.user.update(data);
+        await user.update(data);
       }
       data.is_verified = true;
       data.is_nin_verified = true;
       data.nin = hash;
-      await req.user.update(data);
+      await user.update(data);
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'NIN Verified');
       return Response.send(res);
     } catch (error) {
@@ -472,6 +479,9 @@ class UsersController {
         }
       }
 
+      const currencyData =
+        await CurrencyServices.getSpecificCurrencyExchangeRate(data.currency);
+
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
         const isExist = await UserService.findSingleUser({nin: data.nin});
@@ -497,6 +507,12 @@ class UsersController {
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
+
+        const userObject = req.user.toObject();
+
+        if (req.user.RoleId === AclRoles.NgoAdmin) {
+          userObject.currencyData = currencyData;
+        }
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
@@ -507,10 +523,15 @@ class UsersController {
       data.is_nin_verified = true;
       data.is_verified = true;
       await req.user.update(data);
+      const userObject = req.user.toObject();
+
+      if (req.user.RoleId === AclRoles.NgoAdmin) {
+        userObject.currencyData = currencyData;
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
-        req.user.toObject()
+        userObject
       );
       return Response.send(res);
     } catch (error) {

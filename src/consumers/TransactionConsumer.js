@@ -1448,6 +1448,7 @@ RabbitMq['default']
           amount_disburse,
           transaction
         } = msg.getContent();
+
         const campaign = await BlockchainService.setUserKeypair(
           `campaign_${campaignWallet.CampaignId}`
         );
@@ -1467,7 +1468,6 @@ RabbitMq['default']
           },
           'single'
         );
-
         if (!approve_to_spend) {
           msg.nack();
           return;
@@ -1669,12 +1669,12 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await update_transaction(
-          {
-            transaction_hash: gasFee.retried
-          },
-          transactionId
-        );
+        // await update_transaction(
+        //   {
+        //     transaction_hash: gasFee.retried
+        //   },
+        //   transactionId
+        // );
         await QueueService.confirmVendorOrder(
           gasFee.retried,
           amount,
@@ -1738,7 +1738,11 @@ RabbitMq['default']
 
         await blockchainBalance(balance, vendorWallet.uuid);
         await update_transaction(
-          {status: 'success', is_approved: true},
+          {
+            transaction_hash: hash,
+            status: 'success',
+            is_approved: true
+          },
           transactionId
         );
         order.Cart.forEach(async prod => {

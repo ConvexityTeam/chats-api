@@ -411,13 +411,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (!(campaign.start_date >= Date.now())) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign must start after today'
-        );
-        return Response.send(res);
-      }
+      // if (!(campaign.start_date >= Date.now())) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign must start after today'
+      //   );
+      //   return Response.send(res);
+      // }
 
       for (let user of realBeneficiaries) {
         user.dataValues.formAnswer = null;
@@ -697,11 +697,11 @@ class CampaignController {
     const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
-        '*.category_id': 'required|numeric',
-        '*.tag': 'required|string',
-        '*.type': 'required|string,in:product,service',
-        '*.cost': 'required|numeric',
-        '*.quantity': 'required|numeric'
+        '.*.category_id': 'required|numeric',
+        '.*.tag': 'required|string',
+        '.*.type': 'required|string,in:product,service',
+        '.*.cost': 'required|numeric',
+        '.*.quantity': 'required|numeric'
       };
 
       const validation = new Validator(data, rules);
@@ -733,7 +733,6 @@ class CampaignController {
           product.CampaignId = campaign_id;
           product.proposal_id = createdProposal.id;
           const createdProduct = await ProductService.addSingleProduct(product);
-          Logger.info(createdProduct, 'createdProduct');
           return createdProduct;
         })
       );
@@ -803,6 +802,13 @@ class CampaignController {
       const task_assignment = await db.TaskAssignment.findByPk(
         taskAssignmentId
       );
+      if (task_assignment.status === 'disbursed') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Task already disbursed'
+        );
+        return Response.send(res);
+      }
       const task = await db.Task.findOne({where: {id: task_assignment.TaskId}});
 
       const amount_disburse = task.amount / task.assignment_count;
@@ -829,6 +835,7 @@ class CampaignController {
         task_assignment,
         amount_disburse
       );
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Transaction Processing`);
       return Response.send(res);
     } catch (error) {
@@ -1090,7 +1097,7 @@ class CampaignController {
 
   static async deleteCampaign(req, res) {
     const {id} = req.params;
-    if (!Number(id)) {
+    if (!id) {
       Response.setError(400, 'Please provide a numeric value');
       return Response.send(res);
     }

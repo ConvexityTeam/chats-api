@@ -3,6 +3,7 @@ const {
   ProductCategory,
   User,
   CampaignVendor,
+  Campaign,
   VendorProposal,
   Sequelize
 } = require('../models');
@@ -13,17 +14,68 @@ const {userConst} = require('../constants');
 
 const VendorService = require('./VendorService');
 const CampaignService = require('./CampaignService');
+const {Op} = require('sequelize');
 
 class ProductService {
   static addCategoryType(categoryType) {
     return ProductCategory.create(categoryType);
   }
 
-  static fetchMyProposals(vendor_id) {
+  static fetchOneMyProposals(extraClause = {}) {
+    return VendorProposal.findOne({
+      where: {
+        ...extraClause,
+        vendor_proposal_id: Sequelize.where(
+          Sequelize.col('proposal_products.vendor_proposal_id'),
+          Op.ne,
+          null
+        )
+      },
+      include: [
+        {
+          model: Campaign,
+          as: 'campaign',
+          attributes: [
+            'id',
+            'OrganisationId',
+            'title',
+            'description',
+            'budget',
+            'end_date',
+            'category_id'
+          ]
+        },
+        {model: Product, as: 'proposal_products'}
+      ]
+    });
+  }
+  static fetchMyProposals(vendor_id, extraClause = {}) {
     return VendorProposal.findAll({
       where: {
-        vendor_id
-      }
+        vendor_id,
+        ...extraClause,
+        vendor_proposal_id: Sequelize.where(
+          Sequelize.col('proposal_products.vendor_proposal_id'),
+          Op.ne,
+          null
+        )
+      },
+      include: [
+        {
+          model: Campaign,
+          as: 'campaign',
+          attributes: [
+            'id',
+            'OrganisationId',
+            'title',
+            'description',
+            'budget',
+            'end_date',
+            'category_id'
+          ]
+        },
+        {model: Product, as: 'proposal_products'}
+      ]
     });
   }
 
@@ -129,10 +181,20 @@ class ProductService {
       ]
     });
   }
+  //vendor proposals
   static vendorProposals(proposal_id) {
     return VendorProposal.findAll({
       where: {
         proposal_id
+      }
+    });
+  }
+
+  static findOneProposal(id, vendor_id) {
+    return VendorProposal.findOne({
+      where: {
+        id,
+        vendor_id
       }
     });
   }

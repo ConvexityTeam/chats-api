@@ -223,6 +223,14 @@ class CampaignService {
     });
   }
 
+  static async getCampaignVendor(VendorId, CampaignId) {
+    return CampaignVendor.findOne({
+      where: {
+        VendorId,
+        CampaignId
+      }
+    });
+  }
   static async getVendorCampaigns(VendorId) {
     return CampaignVendor.findAll({
       where: {
@@ -501,6 +509,7 @@ class CampaignService {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
+
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       ...queryOptions,
@@ -512,12 +521,12 @@ class CampaignService {
               [Op.any]: location.state
             }
           }
-        },
-        campaign_id: Sequelize.where(
-          Sequelize.col('proposal_requests.campaign_id'),
-          Op.ne,
-          null
-        )
+        }
+        // campaign_id: Sequelize.where(
+        //   Sequelize.col('proposal_requests.campaign_id'),
+        //   Op.ne,
+        //   null
+        // )
       },
 
       attributes: [
@@ -528,16 +537,55 @@ class CampaignService {
         'location',
         'end_date'
       ],
+
       include: [
+        {
+          model: Product,
+          as: 'ProjectProducts'
+        },
         {
           model: ProposalRequest,
           as: 'proposal_requests'
         }
-      ],
-      group: ['Campaign.id', 'proposal_requests.id']
+      ]
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return {...response, totalItems: campaign.rows.length};
+  }
+  static async fetchProposalForVendor(location, id) {
+    return await Campaign.findOne({
+      where: {
+        id,
+        location: {
+          country: location.country,
+          state: {
+            [Op.like]: {
+              [Op.any]: location.state
+            }
+          }
+        }
+      },
+
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'budget',
+        'location',
+        'end_date'
+      ],
+
+      include: [
+        {
+          model: Product,
+          as: 'ProjectProducts'
+        },
+        {
+          model: ProposalRequest,
+          as: 'proposal_requests'
+        }
+      ]
+    });
   }
 
   static async fetchRequest(proposal_id) {

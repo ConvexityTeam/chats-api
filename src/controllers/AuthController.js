@@ -29,7 +29,8 @@ const {
   CampaignService,
   WalletService,
   BlockchainService,
-  ProductService
+  ProductService,
+  CurrencyServices
 } = require('../services');
 const BeneficiariesService = require('../services/BeneficiaryService');
 const {async} = require('regenerator-runtime');
@@ -1156,14 +1157,16 @@ class AuthController {
       if (user.is_tfa_enabled && user.tfa_method !== 'qrCode') {
         await AuthService.add2faSecret(user, user.tfa_method);
       }
-
+      const currencyData =
+        await CurrencyServices.getSpecificCurrencyExchangeRate(user.currency);
       const data = await AuthService.login(user, req.body.password);
+      data.user.currencyData = currencyData;
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
       Logger.error(`Internal Server Error: ${error}`);
       const message =
-        error.status == 401 ? error.message : 'Internal Server Error';
+        error.status == 401 ? error.message : 'Internal Server Error' + error;
       Response.setError(401, message);
       return Response.send(res);
     }
@@ -1383,13 +1386,6 @@ class AuthController {
         req.body.password.trim(),
         AclRoles.Vendor
       );
-      const wallet = await WalletService.findSingleWallet({
-        UserId: user.id,
-        CampaignId: null
-      });
-      if (!wallet) {
-        await QueueService.createWallet(user.id, 'user');
-      }
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
     } catch (error) {
@@ -1507,6 +1503,12 @@ class AuthController {
         token,
         req.body.tfa_method
       );
+
+      // const currencyData =
+      // await CurrencyServices.getSpecificCurrencyExchangeRate(
+      //   user.currency
+      // );
+
       Response.setSuccess(200, 'Two factor authentication enabled.', data);
       return Response.send(res);
     } catch (error) {

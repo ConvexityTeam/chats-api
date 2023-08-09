@@ -38,8 +38,19 @@ router.get('/store/products/:storeId', VendorController.getProductByStore);
 router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
 router.get('/proposals', VendorAuth, VendorController.ProposalRequests);
+router.get(
+  '/proposal/:campaign_id',
+  VendorAuth,
+  VendorController.ProposalRequest
+);
+
 router.get('/my-proposals', VendorAuth, VendorController.myProposal);
-router.post('/submit-proposal', VendorAuth, VendorController.submitProposal);
+router.post(
+  '/submit-proposal/:campaign_id',
+  VendorAuth,
+  ParamValidator.CampaignId,
+  VendorController.submitProposal
+);
 router.post(
   '/verify/sms-token/:smstoken',
   VendorAuth,
@@ -64,18 +75,12 @@ router.post(
   VendorController.confirmOTP
 );
 router.post(
-  '/business',
-  VendorAuth,
+  '/business/:vendor_id',
   VendorValidator.VendorExists,
   VendorController.addBusiness
 );
 router.get('/product-category', VendorController.fetchDefaultCategory);
-router.post(
-  '/store',
-  VendorAuth,
-  VendorValidator.VendorExists,
-  VendorController.addMarket
-);
+router.post('/store', VendorController.addMarket);
 router.get('/store', VendorAuth, VendorController.fetchVendorStore);
 router.delete('/store/:id', VendorAuth, VendorController.destroyStore);
 router.put(
@@ -101,11 +106,10 @@ router
   );
 
 router
-  .route('/campaigns/:campaign_id/products')
+  .route('/campaigns/:campaign_id/products/:vendor_id?')
   .get(
     VendorAuth,
     ParamValidator.CampaignId,
-    VendorValidator.VendorExists,
     VendorController.vendorCampaignProducts
   );
 

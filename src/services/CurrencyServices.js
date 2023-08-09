@@ -16,12 +16,11 @@ class CurrencyServices {
 
   async getCurrencySymbol(currencyCode) {
     const symbol = currencySymbolMap(currencyCode);
-    console.log("symbol", symbol);
     return symbol ? symbol : currencyCode;
   }
 
   async getExchangeRate() {
-    return await this.getExchangeRate();  
+    return await this.getExchangeRate();
   }
   async getExchangeRate() {
     return new Promise(async (resolve, reject) => {
@@ -40,14 +39,21 @@ class CurrencyServices {
     return new Promise(async (resolve, reject) => {
       try {
         const baseCurrency = 'USD';
+        const usdUrl = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=NGN`;
         const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
+        const exchangeRateDataUSD = await axios.get(usdUrl);
+        const rateDataUSD = exchangeRateDataUSD.data.rates;
+        const usdBase = rateDataUSD['NGN'];
+
         const exchangeRateData = await axios.get(url);
         const rateData = exchangeRateData.data.rates;
+        const rate = rateData[currencyCode];
         const currencySymbol = await this.getCurrencySymbol(currencyCode);
         resolve({
+          usdBase,
           currencyCode,
           currencySymbol,
-          rateData
+          rate
         });
       } catch (error) {
         reject(error);

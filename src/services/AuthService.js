@@ -71,14 +71,15 @@ class AuthService {
               expiresIn: '48hr'
             }
           );
-          const currencyData =
-            await CurrencyServices.getSpecificCurrencyExchangeRate(
-              user.currency
-            );
+
+          // for (const key in currencyData) {
+          //   if (currencyData.hasOwnProperty(key)) {
+          //     user[key] = currencyData[key];
+          //   }
+          // }
 
           resolve({
             user,
-            currencyData,
             token
           });
         }
@@ -174,7 +175,7 @@ class AuthService {
             {is_tfa_enabled: true, tfa_method, tfa_binded_date: new Date()},
             {where: {id: user.id}}
           )
-            .then(() => {
+            .then(async () => {
               user.is_tfa_enabled = true;
               const uid = user.id;
               const oids = user?.AssociatedOrganisations.map(
@@ -190,6 +191,14 @@ class AuthService {
                   expiresIn: '48hr'
                 }
               );
+
+              const currencyData =
+                await CurrencyServices.getSpecificCurrencyExchangeRate(
+                  user.currency
+                );
+
+              user.dataValues.currencyData = currencyData;
+
               resolve({
                 user,
                 token
@@ -275,7 +284,7 @@ class AuthService {
   }
 
   static async createPasswordToken(UserId, request_ip, expiresAfter = 10) {
-    const otp = GenerateOtp();
+    const otp = GenerateVendorOtp();
     const token = createHash(otp);
     const expires_at = moment().add(expiresAfter, 'm').toDate();
     const user = await UserService.findUser(UserId);
@@ -287,10 +296,13 @@ class AuthService {
       request_ip
     });
 
-    await SmsService.sendOtp(
-      user.phone,
-      `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
-    );
+    // await SmsService.sendOtp(
+    //   user.phone,
+    //   `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
+    // );
+
+    await MailerService.sendVendorOTP(otp, create.ref, user.email, name);
+    return create;
   }
 
   static async resendPasswordToken(UserId, passwordToken) {

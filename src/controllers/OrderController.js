@@ -135,6 +135,7 @@ class OrderController {
         Logger.error('Pin not set');
         return Response.send(res);
       }
+      
       if (!compareHash(pin, user.pin)) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
