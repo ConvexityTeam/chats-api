@@ -11,7 +11,7 @@ class CurrencyServices {
   constructor() {
     // this.httpService = 'https://openexchangerates.org/api';
     // this.appId = process.env.OPEN_EXCHANGE_APP;
-    this.exchangeData = this.getExchangeRate();
+    // this.exchangeData = this.getExchangeRate();
   }
 
   async getCurrencySymbol(currencyCode) {

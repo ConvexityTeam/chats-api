@@ -1,7 +1,7 @@
 require('dotenv').config();
 const db = require('../models');
 const {util, Response, Logger} = require('../libs');
-const {HttpStatusCode} = require('../utils');
+const {HttpStatusCode, GenearteVendorId} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
 const {
@@ -24,6 +24,30 @@ const SmsService = require('../services/SmsService');
 const {AclRoles} = require('../utils');
 
 class AdminController {
+  static async testEmail(req, res) {
+    try {
+      const vendor_id = GenearteVendorId();
+      MailerService.verify(
+        'jibrilmohammed39@gmail.com',
+        'Jibril mohammed',
+        vendor_id,
+        'password'
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Email verified',
+        vendor_id
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
   static async updateStatus(req, res) {
     const data = req.body;
 
