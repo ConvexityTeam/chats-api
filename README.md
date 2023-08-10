@@ -60,7 +60,7 @@ Click on "New merge request" to create a new merge request from your branch to t
 Provide a descriptive title and detailed description of your changes in the merge request.
 
 
-## Convexity Humanitarian Aid Transfer Solution (CHATS) Starting Guide
+## License
 
 CHATS API
 Copyright (C) 2023  Convexity CVA Inc.
