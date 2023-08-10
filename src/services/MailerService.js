@@ -54,7 +54,7 @@ class MailerService {
       });
     });
   }
-  async verify(to, name, vendor_id, password = null) {
+  async verify(to, name, vendor_id, password) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
         if (!err) {
