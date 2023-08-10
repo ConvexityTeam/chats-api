@@ -906,7 +906,8 @@ RabbitMq['default']
           const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
             `user_${wallet.UserId}campaign_${campaign.id}`
           );
-          let share = parseInt(campaign.budget / beneficiaries.length);
+
+          let share = Math.floor(parseInt(campaign.budget) / parseInt(beneficiaries.length) )
           Logger.info(`Campaign Form: ${beneficiary.formAnswer}`);
           if (beneficiary.formAnswer) {
             const sum = beneficiary.formAnswer.questions.map(val => {
