@@ -329,14 +329,12 @@ class VendorController {
           vendorId: vendorDetails.id,
           document
         });
-        const rawPassword = generateRandom(8);
         const vendor_id = GenearteVendorId();
         await vendor.update({vendor_id});
         MailerService.verify(
           vendorDetails.email,
           vendorDetails.first_name + ' ' + vendorDetails.last_name,
-          vendor_id,
-          rawPassword
+          vendor_id
         );
 
         Response.setSuccess(
