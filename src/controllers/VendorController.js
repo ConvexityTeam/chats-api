@@ -329,9 +329,8 @@ class VendorController {
           vendorId: vendorDetails.id,
           document
         });
-        // const rawPassword = generateRandom(8);
         const vendor_id = GenearteVendorId();
-
+        await vendor.update({vendor_id});
         MailerService.verify(
           vendorDetails.email,
           vendorDetails.first_name + ' ' + vendorDetails.last_name,
@@ -360,7 +359,7 @@ class VendorController {
         last_name: 'required|alpha',
         email: 'required|email',
         phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-        password: 'required|string'
+        // password: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {

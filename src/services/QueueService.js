@@ -71,6 +71,7 @@ const {
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 const CampaignService = require('./CampaignService');
+const OrganisationService = require('./OrganisationService');
 
 const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
   durable: true
@@ -1204,32 +1205,18 @@ class QueueService {
     amount,
     CampaignId
   }) {
+
     let wallet = null;
     if (CampaignId) {
-      wallet = await WalletService.findOrganisationCampaignWallet(
+      wallet = await CampaignService.getCampaignWallet(
         OrganisationId,
         CampaignId
       );
-
-      if (!wallet) {
-        wallet = await QueueService.createWallet(
-          OrganisationId, 
-          'organisation', 
-          CampaignId
-        );
-        Logger.info(`Created wallet from QueService`);
-        return;
-      }
     } else {
-      wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
-      if (!wallet) {
-        wallet = await QueueService.createWallet(  
-          OrganisationId,
-          'organisation'
-        );
-        Logger.info(`Created wallet from QueService`);
-        return;
-      }
+      wallet = await OrganisationService.getOrganisationWallet(
+        OrganisationId
+      );
+      
     }
 
     const transaction = await Transaction.create({
