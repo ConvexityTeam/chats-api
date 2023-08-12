@@ -212,7 +212,7 @@ class UserService {
         const KE = 'ke/national_id';
         const {data} = await Axios.post(
           `https://api.myidentitypay.com/api/v2/biometrics/merchant/data/verification/${
-            country === 'Nigeria' || country === 'NG' ? NG : KE
+            country === 'Nigeria' ? NG : KE
           }`,
           number,
           {

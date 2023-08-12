@@ -100,9 +100,9 @@ class UserValidator extends BaseValidator {
     body('country')
     .optional({
       checkFalsy: true
-    })
-    .isIn(countryCodes)
-    .withMessage('Inalid country code'),
+    }),
+    // .isIn(countryCodes)
+    // .withMessage('Inalid country code'),
     body('currency')
     .optional({
       checkFalsy: true
