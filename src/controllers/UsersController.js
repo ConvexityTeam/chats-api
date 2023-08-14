@@ -491,6 +491,7 @@ class UsersController {
           );
           return Response.send(res);
         }
+        Logger.info(data.nin, 'nin data')
         const nin = await UserService.nin_verification(
           {number: data.nin},
           data.country ? data.country : JSON.parse(req.user.location).country
