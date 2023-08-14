@@ -496,6 +496,7 @@ class UsersController {
           {number: data.nin},
           data.country ? data.country : JSON.parse(req.user.location).country
         );
+        console.log("NIN", nin);
         if (!nin.status) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
