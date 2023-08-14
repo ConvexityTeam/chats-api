@@ -494,7 +494,7 @@ class UsersController {
         }
         const nin = await UserService.nin_verification(
           {number: data.nin},
-          location.country || req.body.country
+          data.country ? data.country : JSON.parse(req.user.location).country
         );
         if (!nin.status) {
           Response.setError(
