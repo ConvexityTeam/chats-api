@@ -513,20 +513,12 @@ class CampaignService {
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
       ...queryOptions,
+      // where: Sequelize.literal(`JSON_CONTAINS(location.state, '${JSON.stringify(location.state)}')`),
       where: {
         location: {
-          country: location.country,
-          state: {
-            [Op.like]: {
-              [Op.any]: location.state
-            }
-          }
+          country: location.country
         }
-        // campaign_id: Sequelize.where(
-        //   Sequelize.col('proposal_requests.campaign_id'),
-        //   Op.ne,
-        //   null
-        // )
+  
       },
 
       attributes: [
@@ -549,8 +541,12 @@ class CampaignService {
         }
       ]
     });
-    const response = await Pagination.getPagingData(campaign, page, limit);
-    return {...response, totalItems: campaign.rows.length};
+    const matchingItems = campaign.rows.filter((item) => {
+      const itemTags = item.location.state; // Assuming that `tags` is an array in your model
+      return location.state.some((tag) => itemTags.includes(tag));
+    });
+    const response = await Pagination.getPagingData({rows: matchingItems}, page, limit);
+    return {...response, totalItems: matchingItems.length};
   }
   static async fetchProposalForVendor(location, id) {
     return await Campaign.findOne({
