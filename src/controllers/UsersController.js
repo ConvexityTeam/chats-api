@@ -491,18 +491,18 @@ class UsersController {
           );
           return Response.send(res);
         }
-        Logger.info(data.nin, 'nin data')
-        const nin = await UserService.nin_verification(
+        if(!data.country){
+          const nin = await UserService.nin_verification(
           {number: data.nin},
-          data.country ? data.country : JSON.parse(req.user.location).country
+          JSON.parse(req.user.location).country
         );
-        console.log("NIN", nin);
         if (!nin.status) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
             'Not a Valid NIN'
           );
           return Response.send(res);
+        }
         }
         data.is_verified = true;
         data.is_nin_verified = true;
