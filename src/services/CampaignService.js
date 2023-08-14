@@ -549,16 +549,11 @@ class CampaignService {
     return {...response, totalItems: matchingItems.length};
   }
   static async fetchProposalForVendor(location, id) {
-    return await Campaign.findOne({
+    const campaign = await Campaign.findOne({
       where: {
         id,
         location: {
-          country: location.country,
-          state: {
-            [Op.like]: {
-              [Op.any]: location.state
-            }
-          }
+          country: location.country
         }
       },
 
@@ -582,6 +577,12 @@ class CampaignService {
         }
       ]
     });
+    // const matchingItems = campaign.filter((item) => {
+    //   const itemTags = item.location.state; // Assuming that `tags` is an array in your model
+    //   return location.state.some((tag) => itemTags.includes(tag));
+    // });
+    
+    return campaign
   }
 
   static async fetchRequest(proposal_id) {
