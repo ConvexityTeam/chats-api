@@ -225,7 +225,6 @@ class OrganisationService {
         })
         .then(async _store => {
           store = _store;
-          await QueueService.createWallet(account.id, 'user');
           MailerService.verify(
             data.email,
             data.first_name + ' ' + data.last_name,

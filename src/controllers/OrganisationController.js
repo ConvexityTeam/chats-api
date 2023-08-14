@@ -2384,10 +2384,12 @@ class OrganisationController {
         data,
         user
       );
+       await QueueService.createWallet(vendor.id, 'user');
+
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, `Internal server error. Contact support.`+ error);
       return Response.send(res);
     }
   }
