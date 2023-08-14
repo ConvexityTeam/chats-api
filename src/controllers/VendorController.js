@@ -489,6 +489,7 @@ class VendorController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Store not found');
         return Response.send(res);
       }
+      console.log(store.location.state, 'store');
       if (!store.location) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,

@@ -414,7 +414,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error
+        'Request failed. Please try again' + error
       );
       return Response.send(res);
     }
