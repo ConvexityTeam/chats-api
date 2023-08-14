@@ -907,7 +907,7 @@ RabbitMq['default']
             `user_${wallet.UserId}campaign_${campaign.id}`
           );
 
-          let share = Math.floor(parseInt(campaign.budget) / parseInt(beneficiaries.length) )
+          let share = parseInt(parseInt(campaign.budget) / parseInt(beneficiaries.length) )
           Logger.info(`Campaign Form: ${beneficiary.formAnswer}`);
           if (beneficiary.formAnswer) {
             const sum = beneficiary.formAnswer.questions.map(val => {
