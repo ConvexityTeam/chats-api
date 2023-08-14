@@ -2368,6 +2368,8 @@ class OrganisationController {
   static async createVendor(req, res) {
     try {
       const {user, organisation} = req;
+      console.log("user", user)
+      console.log("organisation", organisation)
       const data = SanitizeObject(req.body, [
         'first_name',
         'last_name',

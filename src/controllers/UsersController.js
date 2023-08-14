@@ -130,8 +130,9 @@ class UsersController {
       await MailerService.verify(
         email,
         first_name + ' ' + last_name,
-        rawPassword,
-        vendor_id
+        vendor_id,
+        rawPassword
+        
       );
       await QueueService.createWallet(createdVendor.id, 'user');
 
