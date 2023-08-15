@@ -66,7 +66,7 @@ class OrderController {
       ]);
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         
-        let amount = parseInt(parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length) )
+        let amount = (parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length) ).toFixed(2)
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
           beneficiaryWallet.address,
