@@ -908,6 +908,7 @@ RabbitMq['default']
           );
 
           let share = parseInt(parseInt(campaign.budget) / parseInt(beneficiaries.length) )
+          Logger.info(`Beneficiary share: ${share}`);
           Logger.info(`Campaign Form: ${beneficiary.formAnswer}`);
           if (beneficiary.formAnswer) {
             const sum = beneficiary.formAnswer.questions.map(val => {
