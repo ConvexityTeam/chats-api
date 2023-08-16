@@ -638,7 +638,7 @@ setInterval(async () => {
   });
   if (process.env.NODE_ENV === 'production') {
     const balance = await BlockchainService.getNativeBalance(
-      '0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63'
+      process.env.BLOCKCHAIN_ADMIN
     );
     if (parseInt(balance) < 2) {
       await MailerService.sendAdminBlockchainCreditMail(user.email, balance);
