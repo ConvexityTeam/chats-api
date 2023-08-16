@@ -110,4 +110,4 @@ dist
 # Upload temp folder
 temp
 
-src/beneficiaries/upload
+# src/beneficiaries/upload
