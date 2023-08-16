@@ -4,7 +4,7 @@ const {exchangeRate} = require('../config');
 const currencySymbolMap = require('currency-symbol-map');
 const currencyCodes = require('currency-codes');
 
-class CurrencyServices {
+class CurrencyServices { 
   httpService;
   appId;
   exchangeData;
