@@ -15,6 +15,17 @@ exports.GenerateSecrete = () => {
   return result;
 };
 
+exports.GenerateUserId = () => {
+  var result = '';
+  var characters =
+    'ABCDEFGHJKMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
+  var charactersLength = characters.length;
+  for (var i = 0; i < 10; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
+
 exports.GenerateOtp = () => {
   const random = randomstring.generate({
     length: 6,
