@@ -203,6 +203,7 @@ class UsersController {
         }
         representative.RoleId = AclRoles.Beneficiary;
         representative.password = createHash('0000');
+        representative.pin = createHash('0000');
         const parent = await db.User.create(representative, {transaction: t});
         await db.Beneficiary.create(
           {
