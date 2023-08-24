@@ -65,8 +65,9 @@ class OrderController {
         })
       ]);
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
-        
-        let amount = (parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length) ).toFixed(2)
+        let amount = (
+          parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
+        ).toFixed(2);
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
           beneficiaryWallet.address,
@@ -131,20 +132,20 @@ class OrderController {
         Logger.error('Invalid beneficiary');
         return Response.send(res);
       }
-      if (!user.pin) {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
-        Logger.error('Pin not set');
-        return Response.send(res);
-      }
-      
-      if (!compareHash(pin, user.pin)) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Invalid or wrong PIN.'
-        );
-        Logger.error('Invalid or wrong PIN.');
-        return Response.send(res);
-      }
+      // if (!user.pin) {
+      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
+      //   Logger.error('Pin not set');
+      //   return Response.send(res);
+      // }
+
+      // if (!compareHash(pin, user.pin)) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Invalid or wrong PIN.'
+      //   );
+      //   Logger.error('Invalid or wrong PIN.');
+      //   return Response.send(res);
+      // }
 
       if (!data) {
         Response.setError(
