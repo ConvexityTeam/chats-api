@@ -132,20 +132,20 @@ class OrderController {
         Logger.error('Invalid beneficiary');
         return Response.send(res);
       }
-      // if (!user.pin) {
-      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
-      //   Logger.error('Pin not set');
-      //   return Response.send(res);
-      // }
+      if (!user.pin && data.order.CampaignId != 188) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
+        Logger.error('Pin not set');
+        return Response.send(res);
+      }
 
-      // if (!compareHash(pin, user.pin)) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Invalid or wrong PIN.'
-      //   );
-      //   Logger.error('Invalid or wrong PIN.');
-      //   return Response.send(res);
-      // }
+      if (!compareHash(pin, user.pin) && data.order.CampaignId != 188) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Invalid or wrong PIN.'
+        );
+        Logger.error('Invalid or wrong PIN.');
+        return Response.send(res);
+      }
 
       if (!data) {
         Response.setError(
