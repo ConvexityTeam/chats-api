@@ -537,8 +537,8 @@ class QueueService {
       })
     );
   }
-  static async confirmOneBeneficiary(hash, uuid, transactionId) {
-    const payload = {hash, uuid, transactionId};
+  static async confirmOneBeneficiary(hash, uuid, transactionId, beneficiary) {
+    const payload = {hash, uuid, transactionId, beneficiary};
     confirmOneBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'
@@ -1205,7 +1205,6 @@ class QueueService {
     amount,
     CampaignId
   }) {
-
     let wallet = null;
     if (CampaignId) {
       wallet = await CampaignService.getCampaignWallet(
@@ -1213,10 +1212,7 @@ class QueueService {
         CampaignId
       );
     } else {
-      wallet = await OrganisationService.getOrganisationWallet(
-        OrganisationId
-      );
-      
+      wallet = await OrganisationService.getOrganisationWallet(OrganisationId);
     }
 
     const transaction = await Transaction.create({

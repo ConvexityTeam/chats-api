@@ -38,6 +38,7 @@ const {
   Wallet,
   VoucherToken,
   Campaign,
+  Beneficiary,
   TaskAssignment,
   ProductBeneficiary,
   Order
@@ -684,6 +685,10 @@ RabbitMq['default']
             collectionAddress
           );
         }
+        const find = await Beneficiary.findOne({
+          UserId: beneficiaryId
+        });
+        await find.update({approve_spending: true});
         Logger.info(`Approve Beneficiary NFT Spending`);
         msg.nack();
       })
