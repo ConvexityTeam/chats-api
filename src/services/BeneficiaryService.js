@@ -641,6 +641,7 @@ class BeneficiariesService {
       ]
     });
   }
+
   static async getApprovedBeneficiaries(CampaignId) {
     return Beneficiary.findAll({
       where: {
@@ -665,6 +666,15 @@ class BeneficiariesService {
           ]
         }
       ]
+    });
+  }
+  static async getApprovedBeneficiary(CampaignId, UserId) {
+    return Beneficiary.findOne({
+      where: {
+        CampaignId,
+        UserId,
+        approved: true
+      }
     });
   }
   static async getApprovedFundBeneficiaries(CampaignId) {

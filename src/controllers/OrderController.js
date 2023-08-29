@@ -48,12 +48,17 @@ class OrderController {
       const [
         campaign,
         approvedBeneficiaries,
+        approvedBeneficiary,
         campaign_token,
         beneficiaryWallet,
         user
       ] = await Promise.all([
         CampaignService.getCampaignById(data.campaign_id),
         BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
+        BeneficiariesService.getApprovedBeneficiary(
+          data.campaign_id,
+          data.beneficiary_id
+        ),
         BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
         WalletService.findUserCampaignWallet(
           data.beneficiary_id,
@@ -102,7 +107,11 @@ class OrderController {
         Logger.error('Campaign not found');
         return Response.send(res);
       }
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Initializing payment');
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Initializing payment',
+        approvedBeneficiary
+      );
       Logger.info('Initializing payment');
       return Response.send(res);
     } catch (error) {
