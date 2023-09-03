@@ -512,13 +512,13 @@ class CampaignService {
 
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      distinct: true,
       ...queryOptions,
       // where: Sequelize.literal(`JSON_CONTAINS(location.state, '${JSON.stringify(location.state)}')`),
       where: {
         location: {
           country: location.country
         }
-  
       },
 
       attributes: [
@@ -541,11 +541,15 @@ class CampaignService {
         }
       ]
     });
-    const matchingItems = campaign.rows.filter((item) => {
+    const matchingItems = campaign.rows.filter(item => {
       const itemTags = item.location.state; // Assuming that `tags` is an array in your model
-      return location.state.some((tag) => itemTags.includes(tag));
+      return location.state.some(tag => itemTags.includes(tag));
     });
-    const response = await Pagination.getPagingData({rows: matchingItems}, page, limit);
+    const response = await Pagination.getPagingData(
+      {rows: matchingItems},
+      page,
+      limit
+    );
     return {...response, totalItems: matchingItems.length};
   }
   static async fetchProposalForVendor(location, id) {
@@ -581,8 +585,8 @@ class CampaignService {
     //   const itemTags = item.location.state; // Assuming that `tags` is an array in your model
     //   return location.state.some((tag) => itemTags.includes(tag));
     // });
-    
-    return campaign
+
+    return campaign;
   }
 
   static async fetchRequest(proposal_id) {
@@ -628,6 +632,7 @@ class CampaignService {
         //   null
         // )
       },
+      distinct: true,
       include: [
         {
           model: Campaign,
@@ -661,7 +666,7 @@ class CampaignService {
         ...extraClause,
         OrganisationId
       },
-
+      distinct: true,
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
@@ -720,6 +725,7 @@ class CampaignService {
     }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      distinct: true,
       ...options,
       where: {
         ...extraClause
@@ -962,6 +968,7 @@ class CampaignService {
 
     const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      distinct: true,
       where: {organisationId, ...extraClause},
       ...options
       // include: ['campaigns']
