@@ -1352,7 +1352,7 @@ class OrganisationController {
         CampaignId
       );
 
-      beneficiaries.forEach(beneficiary => {
+      beneficiaries.data.forEach(beneficiary => {
         beneficiary.User.Answers.forEach(answer => {
           if (answer.campaignId == CampaignId) {
             beneficiary.dataValues.User.dataValues.Answers = [answer];
