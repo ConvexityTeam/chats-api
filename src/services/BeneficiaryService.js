@@ -359,6 +359,7 @@ class BeneficiariesService {
       options.offset = offset;
     }
     const users = await User.findAndCountAll({
+      distinct: true,
       ...options,
       where: {
         OrganisationId: Sequelize.where(
@@ -425,9 +426,20 @@ class BeneficiariesService {
     });
   }
   static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
-    return Beneficiary.findAll({
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const beneficiaries = await Beneficiary.findAndCountAll({
       where: {
-        ...extraClause,
+        ...options,
         CampaignId
       },
       include: [
@@ -445,6 +457,8 @@ class BeneficiariesService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(beneficiaries, page, limit);
+    return response;
   }
   static async getBeneficiariesAdmin() {
     return User.findAll({
