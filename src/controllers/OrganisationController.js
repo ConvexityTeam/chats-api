@@ -472,7 +472,8 @@ class OrganisationController {
     try {
       const transactions =
         await BeneficiaryService.findOrganisationVendorTransactions(
-          req.organisation.id
+          req.organisation.id,
+          req.query
         );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
