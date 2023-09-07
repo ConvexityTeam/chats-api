@@ -1349,7 +1349,8 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
       beneficiaries.data.forEach(beneficiary => {
