@@ -16,6 +16,7 @@ class TransactionService {
       queryOptions.limit = limit;
     }
     const transaction = await Transaction.findAndCountAll({
+      distinct: true,
       where: {OrganisationId},
       ...queryOptions,
       attributes: [
