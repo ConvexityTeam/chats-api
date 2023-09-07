@@ -596,6 +596,8 @@ class BeneficiariesService {
       options.offset = offset;
     }
     const transactions = await Transaction.findAndCountAll({
+      distinct: true,
+      order: [['createdAt', 'ASC']],
       ...options,
       include: [
         {
