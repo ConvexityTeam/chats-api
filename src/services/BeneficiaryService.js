@@ -428,8 +428,8 @@ class BeneficiariesService {
   static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
     const page = extraClause.page;
     const size = extraClause.size;
-    delete extraClause.page;
-    delete extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
 
     let options = {};
@@ -438,6 +438,7 @@ class BeneficiariesService {
       options.offset = offset;
     }
     const beneficiaries = await Beneficiary.findAndCountAll({
+      distinct: true,
       where: {
         ...options,
         CampaignId
