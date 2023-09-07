@@ -284,8 +284,11 @@ class AdminController {
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
-          count = count + beneficiaries.length;
+            await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id,
+              req.query
+            );
+          count = count + beneficiaries.data.length;
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;

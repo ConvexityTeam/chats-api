@@ -1405,9 +1405,10 @@ class OrganisationController {
         Jos = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      for (let beneficiary of beneficiaries) {
+      for (let beneficiary of beneficiaries.data) {
         if (beneficiary.User.location.includes('state')) {
           let parsedJson = JSON.parse(beneficiary.User.location);
           if (parsedJson.state === 'Abuja') Abuja++;
@@ -1439,10 +1440,11 @@ class OrganisationController {
       let divorce = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      if (beneficiaries.length > 0) {
-        for (let i = 0; i < beneficiaries.length; i++) {
+      if (beneficiaries.data.length > 0) {
+        for (let i = 0; i < beneficiaries.data.length; i++) {
           if (beneficiaries[i].User.marital_status == 'single') {
             single++;
           } else if (beneficiaries[i].User.marital_status == 'married') {
@@ -1476,10 +1478,11 @@ class OrganisationController {
       let sixty6Up = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
-      for (let i = 0; i < beneficiaries.length; i++) {
+      for (let i = 0; i < beneficiaries.data.length; i++) {
         if (
           parseInt(
             moment().format('YYYY') -
