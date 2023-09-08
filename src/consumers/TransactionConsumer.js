@@ -2090,6 +2090,7 @@ RabbitMq['default']
           return;
         }
         await find.update({status: 'processing'});
+        Logger.info(`Approve Spending Processing: ${find.status}`);
         await QueueService.confirmOneBeneficiary(
           Approved,
           wallet_uuid,
@@ -2120,7 +2121,8 @@ RabbitMq['default']
         const find = await Beneficiary.findOne({
           UserId: beneficiary.id
         });
-        await find.update({status: 'success'});
+        const status = await find.update({status: 'success'});
+        Logger.info(`Approve Spending Processing: ${status.status}`);
         await updateWasFunded(uuid);
       })
       .catch(error => {
