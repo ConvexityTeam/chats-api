@@ -118,7 +118,30 @@ class OrderController {
       Logger.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.' + error,
+        'Internal server error. Please try again later.',
+        error
+      );
+      return Response.send(res);
+    }
+  }
+  static async approveStatus(req, res) {
+    const {campaign_id, beneficiary_id} = req.params;
+    try {
+      const is_approved = await BeneficiariesService.getApprovedBeneficiary(
+        campaign_id,
+        beneficiary_id
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Checking beneficiary approve status',
+        is_approved
+      );
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.',
         error
       );
       return Response.send(res);

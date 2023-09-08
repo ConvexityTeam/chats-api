@@ -650,7 +650,9 @@ RabbitMq['default']
     approveNFTSpending
       .activateConsumer(async msg => {
         const {beneficiaryId, campaignId} = msg.getContent();
-
+        const find = await Beneficiary.findOne({
+          UserId: beneficiaryId
+        });
         const [beneficiaryAddress, campaignAddress, wallet, campaign] =
           await Promise.all([
             BlockchainService.setUserKeypair(
@@ -685,10 +687,8 @@ RabbitMq['default']
             collectionAddress
           );
         }
-        const find = await Beneficiary.findOne({
-          UserId: beneficiaryId
-        });
-        await find.update({approve_spending: true});
+        await find.update({status: 'success'});
+
         Logger.info(`Approve Beneficiary NFT Spending`);
         msg.nack();
       })
