@@ -2065,6 +2065,10 @@ RabbitMq['default']
 
         Logger.info(`Message: ${JSON.stringify(msg.getContent())}`);
         const share = amount;
+        const find = await Beneficiary.findOne({
+          UserId: beneficiary.id
+        });
+
         const {Approved} = await BlockchainService.approveToSpend(
           campaignPrivateKey,
           BAddress,
@@ -2081,9 +2085,11 @@ RabbitMq['default']
           'multiple'
         );
         if (!Approved) {
+          await find.update({status: 'error'});
           msg.nack();
           return;
         }
+        await find.update({status: 'processing'});
         await QueueService.confirmOneBeneficiary(
           Approved,
           wallet_uuid,
@@ -2114,7 +2120,7 @@ RabbitMq['default']
         const find = await Beneficiary.findOne({
           UserId: beneficiary.id
         });
-        await find.update({approve_spending: true});
+        await find.update({status: 'success'});
         await updateWasFunded(uuid);
       })
       .catch(error => {
