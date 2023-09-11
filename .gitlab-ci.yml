@@ -19,7 +19,7 @@ build:
     - docker tag $CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG
     - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG
   only:
-    - staging  # Specify the branches where this stage should run
+    - staging
 
 deploy-staging:
   stage: deploy-staging
@@ -35,7 +35,7 @@ deploy-staging:
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
     - >
       COMMAND_ID=$(aws ssm create-document \
-        --name "DockerComposeDeploy" \
+        --name "AppDockerComposeDeploy" \
         --document-type "Command" \
         --document-format "YAML" \
         --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
