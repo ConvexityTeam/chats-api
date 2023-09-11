@@ -65,7 +65,7 @@ router.get(
   AdminController.findLiveness
 );
 router.post('/auth/login', AuthController.signInAdmin);
-router.get('/ngos', AdminController.getAllNGO);
+router.get('/ngos', SuperAdminAuth, AdminController.getAllNGO);
 // router.get('/ngo/:organisation_id', SuperAdminAuth, AdminController.getAnNGO);
 router.get(
   '/ngos/:organisation_id/',
