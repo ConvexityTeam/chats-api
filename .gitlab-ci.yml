@@ -12,10 +12,11 @@ services:
 
 before_script:
   - apt-get update -qy
-  - apt-get install -y git
+  - apt-get install -y git aws-cli
 
 build:
   stage: build
+  image: docker:latest
   script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     - docker build -t $CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG .
@@ -26,6 +27,7 @@ build:
 
 deploy-staging:
   stage: deploy-staging
+  image: docker:latest
   script:
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
