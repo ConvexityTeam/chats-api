@@ -37,7 +37,7 @@ deploy-staging:
       COMMAND_ID=$(aws ssm create-document \
         --name "DockerComposeDeploy" \
         --document-type "Command" \
-        --document-format "yaml" \
+        --document-format "YAML" \
         --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
     - >
       EXECUTION_ID=$(aws ssm create-association \
