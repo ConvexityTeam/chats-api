@@ -9,7 +9,7 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.addColumn('Beneficiaries', 'status', {
-      type: Sequelize.ENUM('processing', 'success', 'error'),
+      type: Sequelize.ENUM('pending', 'processing', 'success', 'error'),
       defaultValue: 'processing'
     });
   },

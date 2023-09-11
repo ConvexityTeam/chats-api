@@ -69,6 +69,14 @@ class OrderController {
           id: data.beneficiary_id
         })
       ]);
+      if (approvedBeneficiary.status === 'processing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Approve spending is already processing.'
+        );
+        Logger.error('Approve spending is already processing.');
+        return Response.send(res);
+      }
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = (
           parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
