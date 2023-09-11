@@ -11,8 +11,7 @@ services:
     alias: docker
 
 before_script:
-  - apt-get update -qy
-  - apt-get install -y git aws-cli
+  - apk add --update --no-cache git aws-cli
 
 build:
   stage: build
