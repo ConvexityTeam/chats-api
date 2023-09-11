@@ -37,7 +37,7 @@ staging:
         --instance-ids "i-06f240a3b2e573928" \
         --document-name "AWS-RunShellScript" \
         --comment "Deploying chats api" \
-        --parameters commands="ls" \
+        --parameters commands="docker" \
         --output text \
         --query "Command.CommandId")
 
