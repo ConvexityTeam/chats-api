@@ -220,7 +220,7 @@ class AdminController {
         ngo.dataValues.UserId = user.id;
         ngo.dataValues.liveness = user.liveness;
         for (let campaign of ngo.Campaigns) {
-          if (campaign.is_funded === true) {
+          if (campaign.is_funded) {
             let beneficiaries =
               await BeneficiaryService.findCampaignBeneficiaries(
                 campaign.id,
