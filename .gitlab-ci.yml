@@ -42,16 +42,16 @@ staging:
         --query "Command.CommandId")
 
         # Wait for a few seconds to allow the command to be executed
-        sleep 5
+        # sleep 5
 
         # aws ssm list-command-invocations \
         #   --instance-id "i-06f240a3b2e573928" \
         #   --query "CommandInvocations[].Status" \
           
-        aws ssm get-command-invocation \
-          --instance-id "i-06f240a3b2e573928" \
-          --command-id "$COMMAND_ID" \
-          --query "StandardOutputContent" \
+        # aws ssm get-command-invocation \
+        #   --instance-id "i-06f240a3b2e573928" \
+        #   --command-id "$COMMAND_ID" \
+        #   --query "StandardOutputContent" \
 
   only:
     - staging
