@@ -36,17 +36,10 @@ class OrganisationService {
           as: 'Members'
         },
         {
-          where: {
-            transaction_type: 'transfer',
-            status: 'success',
-            BeneficiaryId: null,
-            VendorId: null
-          },
           model: Transaction,
           as: 'Transactions'
         },
         {
-          where: {is_funded: true},
           model: Campaign,
           as: 'Campaigns'
         }
@@ -230,7 +223,6 @@ class OrganisationService {
             data.first_name + ' ' + data.last_name,
             vendor_id,
             rawPassword
-            
           );
           SmsService.sendOtp(
             data.phone,
