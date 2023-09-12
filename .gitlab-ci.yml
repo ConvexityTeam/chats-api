@@ -33,8 +33,6 @@ deploy-staging:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
     - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
-    - docker create --name temp_container "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
-    - docker cp temp_container:./docker-compose.prod.yml ./docker-compose.prod.yml
     - >
       DOCUMENT_NAME="AppDockerComposeDeploy_$(date +'%Y%m%d%H%M%S')"
       COMMAND_ID=$(aws ssm create-document \
