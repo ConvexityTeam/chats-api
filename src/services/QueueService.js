@@ -1235,8 +1235,7 @@ class QueueService {
       CampaignId,
       approved,
       status,
-      amount,
-      wallet
+      amount
     };
     verifyFaitDepositQueue.send(
       new Message(payload, {
