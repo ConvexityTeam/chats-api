@@ -39,7 +39,7 @@ deploy-staging:
         --name "$DOCUMENT_NAME" \
         --document-type "Command" \
         --document-format "YAML" \
-        --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"aws s3 cp s3://chats-docker/docker-compose.prod.yml ./docker-compose.prod.yml\",\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
+        --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"cd /app \",\"aws s3 cp s3://chats-docker/docker-compose.prod.yml ./docker-compose.prod.yml\",\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
 
     - >
       EXECUTION_ID=$(aws ssm send-command \
