@@ -51,6 +51,8 @@ deploy-staging:
     # Implement a retry mechanism with exponential backoff
     - MAX_RETRIES=10
     - RETRY_INTERVAL=10  # Initial retry interval in seconds
+    - echo "Document Name: $DOCUMENT_NAME"
+    - echo "Execution ID: $EXECUTION_ID"
 
     - >
       retry() {
@@ -64,7 +66,6 @@ deploy-staging:
           --command-id "$EXECUTION_ID" \
           --query "Status" \
           --output text)
-        
         echo "Current execution status: $EXECUTION_STATUS"
 
         if [ "$EXECUTION_STATUS" = "Success" ]; then
@@ -81,44 +82,10 @@ deploy-staging:
         fi
       }
       # Call the retry function
-      retry
+    - echo "Calling the retry function..."
+    - retry
+
 
   only:
     - staging
-
-deploy-production:
-  stage: deploy-production
-  script:
-    - aws configure set aws_access_key_id $ACCESS_KEY_ID
-    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    - aws configure set region $AWS_DEFAULT_REGION
-    - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
-    - >
-      COMMAND_ID=$(aws ssm create-document \
-        --name "DockerComposeDeploy" \
-        --document-type "Command" \
-        --document-format "yaml" \
-        --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
-    - >
-      EXECUTION_ID=$(aws ssm create-association \
-        --name "DockerComposeDeploy" \
-        --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-xxxxxxxxxxxxxxxxx\"]}]" \
-        --association-name "DockerComposeDeploy" \
-        --document-version "\$LATEST" \
-        --output text \
-        --query "AssociationDescription.AssociationId")
-    - >
-      EXECUTION_STATUS=$(aws ssm wait command-executed \
-        --instance-id "i-xxxxxxxxxxxxxxxxx" \
-        --command-id "$EXECUTION_ID" \
-        --query "Status")
-    - >
-      if [ "$EXECUTION_STATUS" == "Success" ]; then
-        echo "Docker Compose deployment to production successful."
-      else
-        echo "Docker Compose deployment to production failed."
-        exit 1
-      fi
-  only:
-    - production
 
