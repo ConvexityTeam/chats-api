@@ -51,8 +51,8 @@ deploy-staging:
     # Implement a retry mechanism with exponential backoff
     - MAX_RETRIES=10
     - RETRY_INTERVAL=10  # Initial retry interval in seconds
+
     - >
-      # Your existing script up to the definition of retry()
       retry() {
         if [ "$MAX_RETRIES" -eq 0 ]; then
           echo "Docker Compose deployment to staging failed after $MAX_RETRIES attempts."
@@ -80,7 +80,6 @@ deploy-staging:
           exit 1
         fi
       }
-
       # Call the retry function
       retry
 
