@@ -43,7 +43,7 @@ deploy-staging:
 
     - >
       EXECUTION_ID=$(aws ssm send-command \
-        --name "$DOCUMENT_NAME" \
+        --document-name "$DOCUMENT_NAME" \
         --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-06f240a3b2e573928\"]}]" \
         --output text \
         --query "Command.CommandId")
