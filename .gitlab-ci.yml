@@ -52,6 +52,7 @@ deploy-staging:
     - MAX_RETRIES=10
     - RETRY_INTERVAL=10  # Initial retry interval in seconds
     - >
+      # Your existing script up to the definition of retry()
       retry() {
         if [ "$MAX_RETRIES" -eq 0 ]; then
           echo "Docker Compose deployment to staging failed after $MAX_RETRIES attempts."
@@ -63,20 +64,26 @@ deploy-staging:
           --command-id "$EXECUTION_ID" \
           --query "Status" \
           --output text)
+        
+        echo "Current execution status: $EXECUTION_STATUS"
 
         if [ "$EXECUTION_STATUS" = "Success" ]; then
           echo "Docker Compose deployment to staging successful."
-        else
-          echo "Retrying in $RETRY_INTERVAL seconds..."
+        elif [ "$EXECUTION_STATUS" = "InProgress" ]; then
+          echo "Deployment is still in progress. Retrying in $RETRY_INTERVAL seconds..."
           sleep "$RETRY_INTERVAL"
           RETRY_INTERVAL=$(expr "$RETRY_INTERVAL" \* 2)  # Exponential backoff
           MAX_RETRIES=$(expr "$MAX_RETRIES" - 1)
           retry
+        else
+          echo "Deployment failed with status: $EXECUTION_STATUS"
+          exit 1
         fi
       }
 
       # Call the retry function
       retry
+
   only:
     - staging
 
