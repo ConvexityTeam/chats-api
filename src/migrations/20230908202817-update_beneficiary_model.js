@@ -10,7 +10,7 @@ module.exports = {
      */
     await queryInterface.addColumn('Beneficiaries', 'status', {
       type: Sequelize.ENUM('pending', 'processing', 'success', 'error'),
-      defaultValue: 'processing'
+      defaultValue: 'pending'
     });
   },
 
