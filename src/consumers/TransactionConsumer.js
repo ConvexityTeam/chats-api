@@ -56,6 +56,7 @@ const {
   Campaign,
   TaskAssignment,
   ProductBeneficiary,
+  Beneficiary,
   Order
 } = require('../models');
 const {
@@ -906,7 +907,11 @@ RabbitMq['default']
           const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
             `user_${wallet.UserId}campaign_${campaign.id}`
           );
-          let share = parseInt(campaign.budget / beneficiaries.length);
+
+          let share = (
+            parseInt(campaign.budget) / parseInt(beneficiaries.length)
+          ).toFixed(2);
+          Logger.info(`Beneficiary share: ${share}`);
           Logger.info(`Campaign Form: ${beneficiary.formAnswer}`);
           if (beneficiary.formAnswer) {
             const sum = beneficiary.formAnswer.questions.map(val => {
@@ -2060,6 +2065,10 @@ RabbitMq['default']
 
         Logger.info(`Message: ${JSON.stringify(msg.getContent())}`);
         const share = amount;
+        const find = await Beneficiary.findOne({
+          UserId: beneficiary.id
+        });
+
         const {Approved} = await BlockchainService.approveToSpend(
           campaignPrivateKey,
           BAddress,
@@ -2076,13 +2085,17 @@ RabbitMq['default']
           'multiple'
         );
         if (!Approved) {
+          await find.update({status: 'error'});
           msg.nack();
           return;
         }
+        await find.update({status: 'processing'});
+        Logger.info(`Approve Spending Processing: ${find.status}`);
         await QueueService.confirmOneBeneficiary(
           Approved,
           wallet_uuid,
-          transactionId
+          transactionId,
+          beneficiary
         );
       })
       .catch(error => {
@@ -2094,7 +2107,7 @@ RabbitMq['default']
       });
     confirmOneBeneficiary
       .activateConsumer(async msg => {
-        const {hash, uuid, transactionId} = msg.getContent();
+        const {hash, uuid, transactionId, beneficiary} = msg.getContent();
         Logger.info(`Message Confirm: ${JSON.stringify(msg.getContent())}`);
         const confirm = await BlockchainService.confirmTransaction(hash);
         if (!confirm) {
@@ -2105,6 +2118,11 @@ RabbitMq['default']
           {is_approved: true, transaction_hash: hash, status: 'success'},
           transactionId
         );
+        const find = await Beneficiary.findOne({
+          UserId: beneficiary.id
+        });
+        const status = await find.update({status: 'success'});
+        Logger.info(`Approve Spending Processing: ${status.status}`);
         await updateWasFunded(uuid);
       })
       .catch(error => {

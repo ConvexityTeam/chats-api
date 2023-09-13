@@ -36,17 +36,10 @@ class OrganisationService {
           as: 'Members'
         },
         {
-          where: {
-            transaction_type: 'transfer',
-            status: 'success',
-            BeneficiaryId: null,
-            VendorId: null
-          },
           model: Transaction,
           as: 'Transactions'
         },
         {
-          where: {is_funded: true},
           model: Campaign,
           as: 'Campaigns'
         }
@@ -225,12 +218,11 @@ class OrganisationService {
         })
         .then(async _store => {
           store = _store;
-          await QueueService.createWallet(account.id, 'user');
           MailerService.verify(
             data.email,
             data.first_name + ' ' + data.last_name,
-            rawPassword,
-            vendor_id
+            vendor_id,
+            rawPassword
           );
           SmsService.sendOtp(
             data.phone,

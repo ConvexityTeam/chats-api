@@ -414,7 +414,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error
+        'Request failed. Please try again' + error
       );
       return Response.send(res);
     }
@@ -472,7 +472,8 @@ class OrganisationController {
     try {
       const transactions =
         await BeneficiaryService.findOrganisationVendorTransactions(
-          req.organisation.id
+          req.organisation.id,
+          req.query
         );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1349,10 +1350,11 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
-      beneficiaries.forEach(beneficiary => {
+      beneficiaries.data.forEach(beneficiary => {
         beneficiary.User.Answers.forEach(answer => {
           if (answer.campaignId == CampaignId) {
             beneficiary.dataValues.User.dataValues.Answers = [answer];
@@ -1404,9 +1406,10 @@ class OrganisationController {
         Jos = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      for (let beneficiary of beneficiaries) {
+      for (let beneficiary of beneficiaries.data) {
         if (beneficiary.User.location.includes('state')) {
           let parsedJson = JSON.parse(beneficiary.User.location);
           if (parsedJson.state === 'Abuja') Abuja++;
@@ -1438,10 +1441,11 @@ class OrganisationController {
       let divorce = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      if (beneficiaries.length > 0) {
-        for (let i = 0; i < beneficiaries.length; i++) {
+      if (beneficiaries.data.length > 0) {
+        for (let i = 0; i < beneficiaries.data.length; i++) {
           if (beneficiaries[i].User.marital_status == 'single') {
             single++;
           } else if (beneficiaries[i].User.marital_status == 'married') {
@@ -1475,10 +1479,11 @@ class OrganisationController {
       let sixty6Up = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
-      for (let i = 0; i < beneficiaries.length; i++) {
+      for (let i = 0; i < beneficiaries.data.length; i++) {
         if (
           parseInt(
             moment().format('YYYY') -
@@ -2368,6 +2373,8 @@ class OrganisationController {
   static async createVendor(req, res) {
     try {
       const {user, organisation} = req;
+      console.log('user', user);
+      console.log('organisation', organisation);
       const data = SanitizeObject(req.body, [
         'first_name',
         'last_name',
@@ -2382,10 +2389,12 @@ class OrganisationController {
         data,
         user
       );
+      await QueueService.createWallet(vendor.id, 'user');
+
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, `Internal server error. Contact support.` + error);
       return Response.send(res);
     }
   }

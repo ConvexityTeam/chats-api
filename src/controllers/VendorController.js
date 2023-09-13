@@ -55,10 +55,8 @@ class VendorController {
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
-        if (validation.fails()) {
-          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
-          return Response.send(res);
-        }
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
       }
 
       const findRequest = await CampaignService.fetchVendorProposalRequest({
@@ -248,8 +246,8 @@ class VendorController {
           name: 'string',
           bizId: 'required|string',
           account_number: 'required|string',
-          bank_code: 'required|string',
-          // vendor_id: 'required|string' 
+          bank_code: 'required|string'
+          // vendor_id: 'required|string'
         };
         const validation = new Validator(fields, rules);
         if (validation.fails()) {
@@ -329,13 +327,12 @@ class VendorController {
           vendorId: vendorDetails.id,
           document
         });
-        const rawPassword = generateRandom(8);
-
+        const vendor_id = GenearteVendorId();
+        await vendor.update({vendor_id});
         MailerService.verify(
           vendorDetails.email,
           vendorDetails.first_name + ' ' + vendorDetails.last_name,
-          rawPassword,
-          vendorDetails.id
+          vendor_id
         );
 
         Response.setSuccess(
@@ -359,8 +356,8 @@ class VendorController {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
         email: 'required|email',
-        phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
-        password: 'required|string'
+        phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/']
+        // password: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -380,7 +377,10 @@ class VendorController {
       req.body.vendor_id = GenearteVendorId();
       const createdUser = await UserService.addUser(req.body);
       createdUser.password = null;
-      const otpData = await AuthService.createPasswordToken(createdUser.id, req.ip);
+      const otpData = await AuthService.createPasswordToken(
+        createdUser.id,
+        req.ip
+      );
       createdUser.dataValues.otpData = otpData;
       await QueueService.createWallet(createdUser.id, 'user');
       Response.setSuccess(
@@ -490,6 +490,7 @@ class VendorController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Store not found');
         return Response.send(res);
       }
+      console.log(store.location.state, 'store');
       if (!store.location) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,

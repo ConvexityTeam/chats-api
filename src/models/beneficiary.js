@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Beneficiary extends Model {
     /**
@@ -20,16 +18,21 @@ module.exports = (sequelize, DataTypes) => {
         as: 'Campaign'
       });
     }
-  };
-  Beneficiary.init({
-    UserId: DataTypes.INTEGER,
-    CampaignId: DataTypes.INTEGER,
-    approved: DataTypes.BOOLEAN,
-    rejected: DataTypes.BOOLEAN,
-    source: DataTypes.ENUM('beneficiary app', 'field app', 'web app')
-  }, {
-    sequelize,
-    modelName: 'Beneficiary',
-  });
+  }
+  Beneficiary.init(
+    {
+      UserId: DataTypes.INTEGER,
+      CampaignId: DataTypes.INTEGER,
+      approved: DataTypes.BOOLEAN,
+      approve_spending: DataTypes.BOOLEAN,
+      status: DataTypes.ENUM('pending', 'processing', 'success', 'error'),
+      rejected: DataTypes.BOOLEAN,
+      source: DataTypes.ENUM('beneficiary app', 'field app', 'web app')
+    },
+    {
+      sequelize,
+      modelName: 'Beneficiary'
+    }
+  );
   return Beneficiary;
 };

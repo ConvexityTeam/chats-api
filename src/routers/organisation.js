@@ -355,6 +355,12 @@ router.post(
   FieldAgentAuth,
   UsersController.groupAccount
 );
+
+router.post(
+  '/upload-profile-pic',
+  FieldAgentAuth,
+  UsersController.FieldUploadImage
+);
 router
   .route('/donations/private_donor/campaigns/all')
   .get(DonorAuth, OrganisationController.getAllPrivateDonorCampaigns);

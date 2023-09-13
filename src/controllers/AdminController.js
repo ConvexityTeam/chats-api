@@ -1,7 +1,7 @@
 require('dotenv').config();
 const db = require('../models');
 const {util, Response, Logger} = require('../libs');
-const {HttpStatusCode} = require('../utils');
+const {HttpStatusCode, GenearteVendorId} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
 const {
@@ -24,6 +24,30 @@ const SmsService = require('../services/SmsService');
 const {AclRoles} = require('../utils');
 
 class AdminController {
+  static async testEmail(req, res) {
+    try {
+      const vendor_id = GenearteVendorId();
+      MailerService.verify(
+        'jibrilmohammed39@gmail.com',
+        'Jibril mohammed',
+        vendor_id,
+        'password'
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Email verified',
+        vendor_id
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
   static async updateStatus(req, res) {
     const data = req.body;
 
@@ -177,7 +201,15 @@ class AdminController {
 
       for (let ngo of allNGOs) {
         const sum = ngo.Transactions.reduce((accumulator, object) => {
-          return accumulator + object.amount;
+          if (
+            object.transaction_type === 'transfer' &&
+            object.status === 'success' &&
+            object.VendorId === null &&
+            object.BeneficiaryId === null
+          ) {
+            return accumulator + object.amount;
+          }
+          return accumulator + 0;
         }, 0);
         let count = 0;
 
@@ -188,9 +220,14 @@ class AdminController {
         ngo.dataValues.UserId = user.id;
         ngo.dataValues.liveness = user.liveness;
         for (let campaign of ngo.Campaigns) {
-          let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
-          count = count + beneficiaries.length;
+          if (campaign.is_funded) {
+            let beneficiaries =
+              await BeneficiaryService.findCampaignBeneficiaries(
+                campaign.id,
+                req.query
+              );
+            count = count + beneficiaries.data.length;
+          }
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
@@ -257,8 +294,11 @@ class AdminController {
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
-          count = count + beneficiaries.length;
+            await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id,
+              req.query
+            );
+          count = count + beneficiaries.data.length;
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
@@ -614,7 +654,7 @@ setInterval(async () => {
   });
   if (process.env.NODE_ENV === 'production') {
     const balance = await BlockchainService.getNativeBalance(
-      '0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63'
+      process.env.BLOCKCHAIN_ADMIN
     );
     if (parseInt(balance) < 2) {
       await MailerService.sendAdminBlockchainCreditMail(user.email, balance);

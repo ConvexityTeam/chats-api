@@ -9,7 +9,8 @@ const {
   HttpStatusCode,
   AclRoles,
   generateRandom,
-  GenearteVendorId
+  GenearteVendorId,
+  GenerateUserId
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -130,8 +131,8 @@ class UsersController {
       await MailerService.verify(
         email,
         first_name + ' ' + last_name,
-        rawPassword,
-        vendor_id
+        vendor_id,
+        rawPassword
       );
       await QueueService.createWallet(createdVendor.id, 'user');
 
@@ -202,6 +203,7 @@ class UsersController {
         }
         representative.RoleId = AclRoles.Beneficiary;
         representative.password = createHash('0000');
+        representative.pin = createHash('0000');
         const parent = await db.User.create(representative, {transaction: t});
         await db.Beneficiary.create(
           {
@@ -243,6 +245,47 @@ class UsersController {
     }
   }
 
+  static async FieldUploadImage(req, res) {
+    try {
+      var form = new formidable.IncomingForm();
+      form.parse(req, async (err, fields, files) => {
+        if (err) {
+          Response.setError(
+            HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+            'Internal Server Error. Contact Support'
+          );
+          return Response.send(res);
+        }
+        if (!files.profile_pic) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Please provide a profile picture'
+          );
+          return Response.send(res);
+        }
+        const extension = files.profile_pic.name.substring(
+          files.profile_pic.name.lastIndexOf('.') + 1
+        );
+        const profile_pic = await uploadFile(
+          files.profile_pic,
+          'u-' + environ + '-' + GenerateUserId() + '-i.' + extension,
+          'convexity-profile-images'
+        );
+        Response.setSuccess(
+          HttpStatusCode.STATUS_CREATED,
+          'Profile picture uploaded',
+          profile_pic
+        );
+        return Response.send(res);
+      });
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async verifyNin(req, res) {
     const data = req.body;
     try {
@@ -446,7 +489,6 @@ class UsersController {
   static async updateProfile(req, res) {
     try {
       const data = req.body;
-      const location = JSON.parse(req.user.location);
       const rules = {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
@@ -492,16 +534,18 @@ class UsersController {
           );
           return Response.send(res);
         }
-        const nin = await UserService.nin_verification(
-          {number: data.nin},
-          location.country
-        );
-        if (!nin.status) {
-          Response.setError(
-            HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-            'Not a Valid NIN'
+        if (!data.country) {
+          const nin = await UserService.nin_verification(
+            {number: data.nin},
+            JSON.parse(req.user.location).country
           );
-          return Response.send(res);
+          if (!nin.status) {
+            Response.setError(
+              HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+              'Not a Valid NIN'
+            );
+            return Response.send(res);
+          }
         }
         data.is_verified = true;
         data.is_nin_verified = true;

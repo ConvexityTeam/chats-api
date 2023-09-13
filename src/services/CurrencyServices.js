@@ -4,14 +4,14 @@ const {exchangeRate} = require('../config');
 const currencySymbolMap = require('currency-symbol-map');
 const currencyCodes = require('currency-codes');
 
-class CurrencyServices {
+class CurrencyServices { 
   httpService;
   appId;
   exchangeData;
   constructor() {
     // this.httpService = 'https://openexchangerates.org/api';
     // this.appId = process.env.OPEN_EXCHANGE_APP;
-    this.exchangeData = this.getExchangeRate();
+    // this.exchangeData = this.getExchangeRate();
   }
 
   async getCurrencySymbol(currencyCode) {

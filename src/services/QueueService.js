@@ -71,6 +71,7 @@ const {
 } = require('../constants/queues.constant');
 const WalletService = require('./WalletService');
 const CampaignService = require('./CampaignService');
+const OrganisationService = require('./OrganisationService');
 
 const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
   durable: true
@@ -536,8 +537,8 @@ class QueueService {
       })
     );
   }
-  static async confirmOneBeneficiary(hash, uuid, transactionId) {
-    const payload = {hash, uuid, transactionId};
+  static async confirmOneBeneficiary(hash, uuid, transactionId, beneficiary) {
+    const payload = {hash, uuid, transactionId, beneficiary};
     confirmOneBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'
@@ -1204,38 +1205,20 @@ class QueueService {
     amount,
     CampaignId
   }) {
-    let wallet = null;
-    if (CampaignId) {
-      wallet = await WalletService.findOrganisationCampaignWallet(
-        OrganisationId,
-        CampaignId
-      );
-
-      if (!wallet) {
-        wallet = await QueueService.createWallet(
-          OrganisationId,
-          'organisation',
-          CampaignId
-        );
-        Logger.info(`Created wallet from QueService`);
-        return;
-      }
-    } else {
-      wallet = await WalletService.findMainOrganisationWallet(OrganisationId);
-      if (!wallet) {
-        wallet = await QueueService.createWallet(
-          OrganisationId,
-          'organisation'
-        );
-        Logger.info(`Created wallet from QueService`);
-        return;
-      }
-    }
+    // let wallet = null;
+    // if (CampaignId) {
+    //   wallet = await CampaignService.getCampaignWallet(
+    //     OrganisationId,
+    //     CampaignId
+    //   );
+    // } else {
+    //   wallet = await OrganisationService.getOrganisationWallet(OrganisationId);
+    // }
 
     const transaction = await Transaction.create({
       log: transactionReference,
       narration: 'Fiat Deposit Transaction',
-      ReceiverWalletId: wallet.uuid,
+      // ReceiverWalletId: wallet.uuid,
       transaction_origin: 'wallet',
       transaction_type: 'deposit',
       status: 'processing',
@@ -1252,8 +1235,7 @@ class QueueService {
       CampaignId,
       approved,
       status,
-      amount,
-      wallet
+      amount
     };
     verifyFaitDepositQueue.send(
       new Message(payload, {

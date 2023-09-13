@@ -540,10 +540,26 @@ class VendorService {
     });
   }
 
-  static async organisationVendorsTransactions(OrganisationId, filter = null) {
-    return Transaction.findAll({
+  static async organisationVendorsTransactions(
+    OrganisationId,
+    extraClause = null
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {...extraClause};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    const transaction = await Transaction.findAndCountAll({
+      distinct: true,
       where: {
-        ...filter,
+        ...options,
         OrganisationId,
         transaction_origin: 'store'
       },
@@ -572,6 +588,8 @@ class VendorService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(transaction, page, limit);
+    return response;
   }
 
   static async vendorsTransactionsAdmin(VendorId) {
