@@ -42,13 +42,11 @@ deploy-staging:
         --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"aws s3 cp s3://chats-docker/docker-compose.prod.yml ./docker-compose.prod.yml\",\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
 
     - >
-      EXECUTION_ID=$(aws ssm create-association \
-        --name "DockerComposeDeploy" \
+      EXECUTION_ID=$(aws ssm send-command \
+        --name "$DOCUMENT_NAME" \
         --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-06f240a3b2e573928\"]}]" \
-        --association-name "DockerComposeDeploy" \
-        --document-version "\$LATEST" \
         --output text \
-        --query "AssociationDescription.AssociationId")
+        --query "Command.CommandId")
 
     # Implement a retry mechanism with exponential backoff
     - MAX_RETRIES=10
