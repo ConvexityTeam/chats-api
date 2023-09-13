@@ -51,8 +51,6 @@ deploy-staging:
     # Implement a retry mechanism with exponential backoff
     - MAX_RETRIES=10
     - RETRY_INTERVAL=10  # Initial retry interval in seconds
-    - echo "Document Name: $DOCUMENT_NAME"
-    - echo "Execution ID: $EXECUTION_ID"
 
     - >
       retry() {
@@ -83,6 +81,8 @@ deploy-staging:
       }
       # Call the retry function
     - echo "Calling the retry function..."
+    - echo "Document Name - $DOCUMENT_NAME"
+    - echo "Execution ID -  $EXECUTION_ID"
     - retry
 
 
