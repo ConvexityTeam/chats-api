@@ -62,18 +62,9 @@ deploy-staging:
         EXECUTION_STATUS=$(aws ssm get-command-invocation \
           --instance-id "i-06f240a3b2e573928" \
           --command-id "$EXECUTION_ID" \
-          # --query "Status" \
+          --query "Status" \
           --output text)
         
-        # if [ "$EXECUTION_STATUS" = "Failed" ]; then
-        #   ERROR_INFO=$(aws ssm get-command-invocation \
-        #     --instance-id "i-06f240a3b2e573928" \
-        #     --command-id "$EXECUTION_ID" \
-        #     --query "StatusDetails" \
-        #     --output text)
-        #   echo "Error details: $ERROR_INFO"
-        # fi
-
         echo "Current execution status: $EXECUTION_STATUS"
 
         if [ "$EXECUTION_STATUS" = "Success" ]; then
@@ -88,7 +79,7 @@ deploy-staging:
           ERROR_INFO=$(aws ssm get-command-invocation \
             --instance-id "i-06f240a3b2e573928" \
             --command-id "$EXECUTION_ID" \
-            --query "StatusDetails" \
+            # --query "StatusDetails" \
             --output text)
           echo "Error details: $ERROR_INFO"
           echo "Deployment failed with status: $EXECUTION_STATUS"
