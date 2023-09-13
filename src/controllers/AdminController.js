@@ -212,7 +212,6 @@ class AdminController {
           return accumulator + 0;
         }, 0);
         let count = 0;
-
         const user = await UserService.findUser(ngo.Members[0].UserId);
         ngo.dataValues.name =
           ngo.name || user.first_name + ' ' + user.last_name;
