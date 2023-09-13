@@ -200,16 +200,21 @@ class AdminController {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
       for (let ngo of allNGOs) {
-        const sum = ngo.Transactions.reduce((accumulator, object) => {
-          if (
-            object.transaction_type === 'transfer' &&
-            object.status === 'success' &&
-            object.VendorId === null &&
-            object.BeneficiaryId === null
-          ) {
-            return accumulator + object.amount;
-          }
-          return accumulator + 0;
+        const [transactions, campaigns] = await Promise.all([
+          TransactionService.findTransactions({
+            OrganisationId: ngo.id,
+            transaction_type: 'transfer',
+            status: 'success',
+            VendorId: null,
+            BeneficiaryId: null
+          }),
+          CampaignService.getCampaigns(ngo.id, {
+            is_funded: true
+          })
+        ]);
+
+        const sum = transactions.reduce((accumulator, object) => {
+          return accumulator + object.amount;
         }, 0);
         let count = 0;
         const user = await UserService.findUser(ngo.Members[0].UserId);
@@ -218,15 +223,14 @@ class AdminController {
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         ngo.dataValues.liveness = user.liveness;
-        for (let campaign of ngo.Campaigns) {
-          if (campaign.is_funded) {
-            let beneficiaries =
-              await BeneficiaryService.findCampaignBeneficiaries(
-                campaign.id,
-                req.query
-              );
-            count = count + beneficiaries.data.length;
-          }
+
+        for (let campaign of campaigns.data) {
+          let beneficiaries =
+            await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id,
+              req.query
+            );
+          count = count + beneficiaries.data.length;
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
