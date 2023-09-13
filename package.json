@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive --exit",
-    "start": "npm run db:migrate && node src/index.js",
+    "start": "npm run db:migrate && node --max-old-space-size=8192 && node src/index.js",
     "start:dev": "nodemon -L src/index.js",
     "start:consumer": "node src/consumer.js",
     "start:consumer:dev": "nodemon -L src/consumer.js",
