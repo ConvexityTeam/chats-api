@@ -32,14 +32,13 @@ deploy-staging:
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
-    - docker pull "$CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG"
     - >
       DOCUMENT_NAME="AppDockerComposeDeploy_$(date +'%Y%m%d%H%M%S')"
       COMMAND_ID=$(aws ssm create-document \
         --name "$DOCUMENT_NAME" \
         --document-type "Command" \
         --document-format "YAML" \
-        --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"aws s3 cp s3://chats-docker/docker-compose.prod.yml ./docker-compose.prod.yml\",\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
+        --content "{\"schemaVersion\":\"2.2\",\"description\":\"Docker Compose Deploy\",\"mainSteps\":[{\"action\":\"aws:runShellScript\",\"name\":\"runShellScript\",\"inputs\":{\"runCommand\":[\"aws s3 cp s3://chats-docker/docker-compose.prod.yml ./docker-compose.prod.yml\",\"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME:$CONTAINER_IMAGE_TAG\",\"docker-compose -f docker-compose.prod.yml up -d\"]}}]}")
 
     - >
       EXECUTION_ID=$(aws ssm send-command \
