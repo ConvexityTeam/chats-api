@@ -77,6 +77,15 @@ class OrderController {
         Logger.error('Approve spending is already processing.');
         return Response.send(res);
       }
+      if (approvedBeneficiary.status === 'in_progress') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Please wait approve spending sent for processing.'
+        );
+        Logger.error('Please wait approve spending sent for processing.');
+        return Response.send(res);
+      }
+
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = (
           parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
@@ -115,6 +124,7 @@ class OrderController {
         Logger.error('Campaign not found');
         return Response.send(res);
       }
+      await approvedBeneficiary.update({status: 'in_progress'});
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Initializing payment',
