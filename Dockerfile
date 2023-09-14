@@ -1,9 +1,5 @@
 FROM node:14.0.0-alpine
 WORKDIR /app/api
-COPY package.json ./
+COPY package.json /app/api/
 RUN npm i
-COPY . .
-
-# EXPOSE 3000
-# ENV NODE_ENV=production
-# CMD [ "npm", "run", "start:dev" ]
+COPY . /app/api/
