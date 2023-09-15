@@ -1,7 +1,7 @@
 FROM node:14.0.0-alpine
-WORKDIR /app/consumer
-COPY package.json /app/consumer
+WORKDIR /home/app
+COPY package.json ./
 RUN npm i
-COPY . /app/consumer
+COPY . .
 ENV NODE_ENV=production
 CMD [ "npm", "run", "start:consumer:dev" ]
