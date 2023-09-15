@@ -57,6 +57,7 @@ deploy-staging:
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2\",
                   \"cd /data/app\",
+                  \"docker-compose down\",
                   \"docker-compose -f docker-compose.prod.yml up -d\",
                   # \"docker image prune -af\"
                 ]
