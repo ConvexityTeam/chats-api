@@ -54,8 +54,8 @@ deploy-staging:
               \"inputs\":{
                 \"runCommand\":[
                   \"aws s3 cp s3://chats-docker/docker-compose.prod.yml /data/app/docker-compose.prod.yml\",
-                  \"if docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1; then echo 'Image 1 pulled successfully'; else echo 'Failed to pull Image 1'; exit 1; fi\",
-                  \"if docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2; then echo 'Image 2 pulled successfully'; else echo 'Failed to pull Image 2'; exit 1; fi\",
+                  \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
+                  \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2\",
                   \"cd /data/app\",
                   \"docker-compose -f docker-compose.prod.yml up -d\"
                 ]
