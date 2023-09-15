@@ -58,8 +58,8 @@ deploy-staging:
                   \"aws s3 cp s3://chats-docker/docker-compose.prod.yml /data/app/docker-compose.prod.yml\",
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2\",
-                  \"docker-compose down\",
-                  \"docker run -d --name backend registry.gitlab.com/convexityteam/chats-api/api:latest\",
+                  # \"docker-compose down\",
+                  \"docker run -d -p 8080:8080 --name backend $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
                   # \"docker image prune -af\"
                 ]
               }
