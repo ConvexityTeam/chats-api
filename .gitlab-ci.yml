@@ -54,7 +54,7 @@ deploy-staging:
               \"inputs\":{
                 \"runCommand\":[
                   \"cd /data/app\",
-                  \"sudo rm docker-compose.prod.yml"
+                  \"sudo rm docker-compose.prod.yml\",
                   \"aws s3 cp s3://chats-docker/docker-compose.prod.yml /data/app/docker-compose.prod.yml\",
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2\",
