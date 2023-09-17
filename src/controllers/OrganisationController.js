@@ -2486,18 +2486,22 @@ class OrganisationController {
         organisation.id
       );
       const Transactions = await VendorService.organisationVendorsTransactions(
-        organisation.id
+        organisation.id,
+        req.query
       );
       Response.setSuccess(200, 'Organisation vendors Summary', {
         organisation,
         vendors_count,
         previous_stat,
         today_stat,
-        Transactions
+        Transactions: Transactions.data
       });
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`
+      );
       return Response.send(res);
     }
   }
