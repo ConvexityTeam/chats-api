@@ -87,7 +87,7 @@ class OrderController {
         Logger.error('Please wait approve spending sent for processing.');
         return Response.send(res);
       }
-
+      //putting logs
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = (
           parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
