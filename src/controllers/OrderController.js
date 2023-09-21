@@ -77,15 +77,17 @@ class OrderController {
         Logger.error('Approve spending is already processing.');
         return Response.send(res);
       }
+      Logger.info(`Approved Beneficiary Status: ${approvedBeneficiary.status}`);
       if (approvedBeneficiary.status === 'in_progress') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Please wait approve spending sent for processing.'
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Please wait approve spending sent for processing.',
+          approvedBeneficiary
         );
         Logger.error('Please wait approve spending sent for processing.');
         return Response.send(res);
       }
-
+      //putting logs
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = (
           parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)

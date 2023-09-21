@@ -2097,6 +2097,7 @@ RabbitMq['default']
           transactionId,
           beneficiary
         );
+        Logger.info(`Approve Spending Processing: ${find.status}`);
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
@@ -2121,9 +2122,11 @@ RabbitMq['default']
         const find = await Beneficiary.findOne({
           UserId: beneficiary.id
         });
+        // updating beneficiary
         const status = await find.update({status: 'success'});
-        Logger.info(`Approve Spending Processing: ${status.status}`);
+        Logger.info(`Approve Spending Success: ${status.status}`);
         await updateWasFunded(uuid);
+        Logger.info(`Approve Spending Success: ${status.status}`);
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
