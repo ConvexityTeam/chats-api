@@ -4,7 +4,7 @@ services:
     image: registry.gitlab.com/convexityteam/chats-api/api:latest
     container_name: backend
     volumes: 
-    - ./:/app
+    - ./:/app/
     environment:
       - PORT=8080
       - NODE_ENV=production
@@ -27,7 +27,7 @@ services:
     image: registry.gitlab.com/convexityteam/chats-api/consumer:latest
     container_name: consumer
     volumes: 
-    - ./:/app
+    - ./:/app/
     environment:
       - PORT=8080
       - NODE_ENV=production

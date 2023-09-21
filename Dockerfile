@@ -1,5 +1,5 @@
 FROM node:14.0.0-alpine
-WORKDIR /app/api
-COPY package.json /app/api/
+WORKDIR /app
+COPY package.json ./
 RUN npm i
-COPY . /app/api/
+COPY . .
