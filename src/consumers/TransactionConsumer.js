@@ -2122,6 +2122,7 @@ RabbitMq['default']
         const find = await Beneficiary.findOne({
           UserId: beneficiary.id
         });
+        // updating beneficiary
         const status = await find.update({status: 'success'});
         Logger.info(`Approve Spending Success: ${status.status}`);
         await updateWasFunded(uuid);
