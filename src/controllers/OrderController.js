@@ -72,7 +72,8 @@ class OrderController {
       if (approvedBeneficiary.status === 'processing') {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
-          'Approve spending is already processing.'
+          'Approve spending is already processing.',
+          approvedBeneficiary
         );
         Logger.info('Approve spending is already processing.');
         return Response.send(res);
