@@ -347,6 +347,9 @@ RabbitMq['default']
 
         if (!createdMintingLimit) {
           msg.nack();
+          await update_campaign(collection.id, {
+            fund_status: 'error'
+          });
           return;
         }
 

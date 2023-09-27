@@ -810,6 +810,9 @@ RabbitMq['default']
 
         if (!confirm) {
           msg.nack();
+          await update_campaign(campaign.id, {
+            fund_status: 'error'
+          });
           return;
         }
         if (campaign.type === 'cash-for-work') {
