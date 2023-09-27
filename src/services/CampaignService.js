@@ -79,7 +79,11 @@ class CampaignService {
   static getCampaignToken(campaignId) {
     return VoucherToken.findAll({where: {campaignId}});
   }
-
+  static async getCampaign(id) {
+    return Campaign.findByPk(id, {
+      attributes: ['total_beneficiaries', 'total_imported', 'fund_status']
+    });
+  }
   static getCampaignById(id) {
     return Campaign.findByPk(id, {
       include: ['Organisation'],
