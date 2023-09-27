@@ -8,6 +8,7 @@ const {User, Campaign, Product, OrganisationMembers} = require('../models');
 const QueueService = require('./QueueService');
 const MailerService = require('./MailerService');
 const bcrypt = require('bcryptjs');
+const Pagination = require('../utils/pagination');
 
 class NgoService {
   static createAdminAccount(organisation, data, role, newPassword) {
@@ -40,8 +41,21 @@ class NgoService {
     });
   }
 
-  static getMembers(OrganisationId) {
-    return OrganisationMembers.findAll({
+  static async getMembers(OrganisationId, extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {...extraClause};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const members = await OrganisationMembers.findAndCountAll({
+      distinct: true,
+      ...options,
       where: {
         OrganisationId,
         role: {
@@ -56,6 +70,8 @@ class NgoService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(members, page, limit);
+    return response;
   }
 
   static viewProductVendorOnCampaign() {

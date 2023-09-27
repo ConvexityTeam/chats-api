@@ -962,7 +962,9 @@ class AuthController {
           // console.log(userExist);
           //update users status to verified
           db.User.update(
-            {status: 'activated', is_email_verified: true},
+            {
+              // status: 'activated', 
+              is_email_verified: true},
             {where: {email: payload.email}}
           )
             .then(() => {
