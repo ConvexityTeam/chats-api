@@ -1801,7 +1801,7 @@ class OrganisationController {
         req.query
       );
       const setObj = new Set();
-      const result = vendors.reduce((acc, item) => {
+      const result = vendors.data.reduce((acc, item) => {
         if (!setObj.has(item.VendorId)) {
           setObj.add(item.VendorId, item);
           acc.push(item);
@@ -1812,7 +1812,7 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Vendors.',
-        result
+        vendors
       );
       return Response.send(res);
     } catch (error) {
