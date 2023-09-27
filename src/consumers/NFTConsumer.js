@@ -349,11 +349,15 @@ RabbitMq['default']
           msg.nack();
           return;
         }
+
         await QueueService.confirmAndSendMintNFT(
           createdMintingLimit.mlimit,
           collection,
           contractIndex
         );
+        await update_campaign(collection.id, {
+          fund_status: 'processing'
+        });
         Logger.info('CONSUMER: CREATED MINTING LIMIT');
         msg.ack();
       })
@@ -471,7 +475,8 @@ RabbitMq['default']
         );
         await update_campaign(collection.id, {
           is_funded: true,
-          is_processing: false
+          is_processing: false,
+          fund_status: 'success'
         });
         await addWalletAmount(collection.minting_limit, campaignWallet.uuid);
         Logger.info('CONSUMER: NFT MINTED');
