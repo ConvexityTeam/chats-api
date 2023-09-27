@@ -440,6 +440,7 @@ class BeneficiariesService {
     const beneficiaries = await Beneficiary.findAndCountAll({
       distinct: true,
       where: {
+        ...extraClause,
         ...options,
         CampaignId
       },
