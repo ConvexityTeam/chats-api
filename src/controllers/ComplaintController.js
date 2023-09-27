@@ -37,6 +37,7 @@ class ComplaintController {
         req.params.campaign_id,
         filter
       );
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Complaints.', {
         ...campaign,
         complaint
