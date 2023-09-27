@@ -33,7 +33,7 @@ class ComplaintService {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
-    const complaint = Complaint.findAndCountAll({
+    const complaint = await Complaint.findAndCountAll({
       order: [['createdAt', 'DESC']],
       distinct: true,
       ...queryOptions,
