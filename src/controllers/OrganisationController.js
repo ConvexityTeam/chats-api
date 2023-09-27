@@ -1797,7 +1797,8 @@ class OrganisationController {
     try {
       Logger.info('Fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(
-        req.params.campaign_id
+        req.params.campaign_id,
+        req.query
       );
       const setObj = new Set();
       const result = vendors.reduce((acc, item) => {
