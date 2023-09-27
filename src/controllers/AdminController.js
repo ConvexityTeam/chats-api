@@ -82,8 +82,11 @@ class AdminController {
         );
         return Response.send(res);
       }
-      userExist.dataValues.is_verified_all = true;
-      const updatesUser = await userExist.update({status: data.status});
+      // userExist.dataValues.is_verified_all = true;
+      const updatesUser = await userExist.update({
+        status: data.status,
+        is_verified_all: true
+      });
 
       const to = userExist.email;
       // const OrgName = userExist.;

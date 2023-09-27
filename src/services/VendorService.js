@@ -558,8 +558,9 @@ class VendorService {
 
     const transaction = await Transaction.findAndCountAll({
       distinct: true,
+      ...options,
       where: {
-        ...options,
+        ...extraClause,
         OrganisationId,
         transaction_origin: 'store'
       },
