@@ -442,7 +442,6 @@ class BeneficiariesService {
       ...options,
       where: {
         ...extraClause,
-        ...options,
         CampaignId
       },
       include: [
