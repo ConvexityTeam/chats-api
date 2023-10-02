@@ -9,8 +9,10 @@ const mailerConfig = require('./mailer');
 const zohoCrmConfig = require('./zohocrm');
 const switchWallet = require('./switchwallet');
 const exchangeRate = require('./openRate');
+const koraPayConfig = require('./korapay');
 
 module.exports = {
+  koraPayConfig,
   switchWallet,
   databaseConfig,
   paystackConfig,

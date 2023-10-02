@@ -1808,6 +1808,7 @@ class OrganisationController {
         }
         return acc;
       }, []);
+
       Logger.info('Fetched campaign vendors');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
