@@ -34,14 +34,6 @@ class OrganisationService {
           where: {role: 'admin'},
           model: OrganisationMembers,
           as: 'Members'
-        },
-        {
-          model: Transaction,
-          as: 'Transactions'
-        },
-        {
-          model: Campaign,
-          as: 'Campaigns'
         }
       ]
     });

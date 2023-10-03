@@ -8,7 +8,17 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.addColumn('Beneficiaries', 'status', {
+    await queryInterface.addColumn('Campaigns', 'total_imported', {
+      type: Sequelize.INTEGER,
+      defaultValue: 0
+    });
+
+    await queryInterface.addColumn('Campaigns', 'total_beneficiaries', {
+      type: Sequelize.INTEGER,
+      defaultValue: 0
+    });
+
+    await queryInterface.addColumn('Campaigns', 'fund_status', {
       type: Sequelize.ENUM(
         'pending',
         'in_progress',
@@ -27,6 +37,8 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.removeColumn('Beneficiaries', 'status');
+    await queryInterface.removeColumn('Campaigns', 'total_imported');
+    await queryInterface.removeColumn('Campaigns', 'total_beneficiaries');
+    await queryInterface.removeColumn('Campaigns', 'fund_status');
   }
 };

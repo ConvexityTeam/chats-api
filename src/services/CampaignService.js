@@ -79,7 +79,11 @@ class CampaignService {
   static getCampaignToken(campaignId) {
     return VoucherToken.findAll({where: {campaignId}});
   }
-
+  static async getCampaign(id) {
+    return Campaign.findByPk(id, {
+      attributes: ['total_beneficiaries', 'total_imported', 'fund_status']
+    });
+  }
   static getCampaignById(id) {
     return Campaign.findByPk(id, {
       include: ['Organisation'],
@@ -210,9 +214,25 @@ class CampaignService {
     return null;
   }
 
-  static campaignVendors(CampaignId) {
-    return CampaignVendor.findAll({
+  static async campaignVendors(CampaignId, extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const vendors = await CampaignVendor.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      distinct: true,
       where: {
+        ...extraClause,
         CampaignId
       },
       include: {
@@ -221,6 +241,7 @@ class CampaignService {
         attributes: userConst.publicAttr
       }
     });
+    return await Pagination.getPagingData(vendors, page, limit);
   }
 
   static async getCampaignVendor(VendorId, CampaignId) {

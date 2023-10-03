@@ -540,6 +540,20 @@ class CampaignController {
 
       const OrgWallet = organisation.Wallet;
 
+      if (campaign.fund_status == 'in_progress') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign fund is already in progress.'
+        );
+        return Response.send(res);
+      }
+      if (campaign.fund_status == 'processing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign fund is already processing.'
+        );
+        return Response.send(res);
+      }
       if (campaign.status == 'completed') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -592,6 +606,7 @@ class CampaignController {
           OrgWallet
         );
       }
+      campaign.update({fund_status: 'in_progress'});
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`
@@ -610,7 +625,24 @@ class CampaignController {
       return Response.send(res);
     }
   }
-
+  static async fundStatus(req, res) {
+    try {
+      const {campaign_id} = req.params;
+      const campaign = await CampaignService.getCampaign(campaign_id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Campaign fund status fetched successfully.`,
+        campaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
   static async getProposalRequests(req, res) {
     const {proposal_id} = req.params;
     try {
@@ -1393,7 +1425,7 @@ class CampaignController {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
       const {source, type} = SanitizeObject(req.body, ['source', 'type']);
-
+      const campaign = await CampaignService.getCampaign(campaign_id);
       const replicaCampaign = await CampaignService.getACampaignWithReplica(
         replicaCampaignId,
         type
@@ -1409,6 +1441,7 @@ class CampaignController {
       //   );
       //   return Response.send(res);
       // }
+      let count = 0;
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
           setTimeout(async () => {
@@ -1417,7 +1450,12 @@ class CampaignController {
               beneficiary.id,
               source
             );
+            count++;
             onboard.push(res);
+            campaign.update({
+              total_imported: count,
+              total_beneficiaries: replicaCampaign.Beneficiaries.length
+            });
           }, index * 5000);
         })
       );
@@ -1430,6 +1468,25 @@ class CampaignController {
             : 'beneficiary'
         } to campaign is processing`,
         onboard
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async importStatus(req, res) {
+    try {
+      const campaign_id = req.params.campaign_id;
+      const campaign = await CampaignService.getCampaign(campaign_id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign Status',
+        campaign
       );
       return Response.send(res);
     } catch (error) {

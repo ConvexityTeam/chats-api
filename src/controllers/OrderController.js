@@ -70,13 +70,25 @@ class OrderController {
         })
       ]);
       if (approvedBeneficiary.status === 'processing') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Approve spending is already processing.'
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Approve spending is already processing.',
+          approvedBeneficiary
         );
-        Logger.error('Approve spending is already processing.');
+        Logger.info('Approve spending is already processing.');
         return Response.send(res);
       }
+      Logger.info(`Approved Beneficiary Status: ${approvedBeneficiary.status}`);
+      if (approvedBeneficiary.status === 'in_progress') {
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Please wait approve spending sent for processing.',
+          approvedBeneficiary
+        );
+        Logger.info('Please wait approve spending sent for processing.');
+        return Response.send(res);
+      }
+      //putting logs
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = (
           parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
@@ -115,6 +127,7 @@ class OrderController {
         Logger.error('Campaign not found');
         return Response.send(res);
       }
+      await approvedBeneficiary.update({status: 'in_progress'});
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Initializing payment',
@@ -321,23 +334,22 @@ class OrderController {
         );
         return Response.send(res);
       }
-      const approvedBeneficiaries =
-        await BeneficiariesService.getApprovedBeneficiaries(
-          data.order.CampaignId
-        );
+      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
+        data.order.CampaignId
+      );
 
-      const [campaignWallet, vendorWallet, beneficiaryWallet] =
-        await Promise.all([
-          WalletService.findSingleWallet({
-            CampaignId: data.order.CampaignId,
-            UserId: null
-          }),
-          WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
-          WalletService.findUserCampaignWallet(
-            req.user.id,
-            data.order.CampaignId
-          )
-        ]);
+      const [
+        campaignWallet,
+        vendorWallet,
+        beneficiaryWallet
+      ] = await Promise.all([
+        WalletService.findSingleWallet({
+          CampaignId: data.order.CampaignId,
+          UserId: null
+        }),
+        WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
+        WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
+      ]);
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );

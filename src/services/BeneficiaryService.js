@@ -439,8 +439,9 @@ class BeneficiariesService {
     }
     const beneficiaries = await Beneficiary.findAndCountAll({
       distinct: true,
+      ...options,
       where: {
-        ...options,
+        ...extraClause,
         CampaignId
       },
       include: [

@@ -124,6 +124,15 @@ router.post(
   ParamValidator.CampaignIdOptional,
   CampaignController.importBeneficiary
 );
+
+router.get(
+  '/:organisation_id/beneficiaries/:campaign_id/import-status',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignController.importStatus
+);
 router.post(
   '/:organisation_id/campaign-funds-withdrawal/:campaign_id',
   NgoSubAdminAuth,
@@ -447,6 +456,15 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.approveAndFundCampaign
   );
+
+router.get(
+  '/:organisation_id/campaigns/:campaign_id/fund-status',
+  NgoAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignController.fundStatus
+);
 
 router
   .route('/:organisation_id/campaigns/:campaign_id/fund-crypto-pay')

@@ -741,7 +741,8 @@ RabbitMq['default']
           return;
         }
         await update_campaign(campaign.id, {
-          is_processing: true
+          is_processing: true,
+          fund_status: 'processing'
         });
 
         await update_transaction(
@@ -809,6 +810,9 @@ RabbitMq['default']
 
         if (!confirm) {
           msg.nack();
+          await update_campaign(campaign.id, {
+            fund_status: 'error'
+          });
           return;
         }
         if (campaign.type === 'cash-for-work') {
@@ -816,12 +820,14 @@ RabbitMq['default']
             status: 'active',
             is_funded: true,
             is_processing: false,
-            amount_disbursed: amount
+            amount_disbursed: amount,
+            fund_status: 'success'
           });
         } else
           await update_campaign(campaign.id, {
             is_funded: true,
-            is_processing: false
+            is_processing: false,
+            fund_status: 'success'
           });
 
         await update_transaction(
@@ -2066,7 +2072,9 @@ RabbitMq['default']
         Logger.info(`Message: ${JSON.stringify(msg.getContent())}`);
         const share = amount;
         const find = await Beneficiary.findOne({
-          UserId: beneficiary.id
+          where: {
+            UserId: beneficiary.id
+          }
         });
 
         const {Approved} = await BlockchainService.approveToSpend(
@@ -2097,6 +2105,7 @@ RabbitMq['default']
           transactionId,
           beneficiary
         );
+        Logger.info(`Approve Spending Processing: ${find.status}`);
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
@@ -2121,9 +2130,11 @@ RabbitMq['default']
         const find = await Beneficiary.findOne({
           UserId: beneficiary.id
         });
+        // updating beneficiary
         const status = await find.update({status: 'success'});
-        Logger.info(`Approve Spending Processing: ${status.status}`);
+        Logger.info(`Approve Spending Success: ${status.status}`);
         await updateWasFunded(uuid);
+        Logger.info(`Approve Spending Success: ${status.status}`);
       })
       .catch(error => {
         Logger.error(`RabbitMq Error: ${error}`);
