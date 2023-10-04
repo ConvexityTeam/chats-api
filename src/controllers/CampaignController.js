@@ -1254,7 +1254,7 @@ class CampaignController {
           }
         });
       }
-      campaign.dataValues.balance = balance;
+      campaign.dataValues.balance = 0; //balance;
       campaign.dataValues.address = 'campaign_token.address;';
       campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length;
       campaign.dataValues.task_count = campaign.Jobs.length;
