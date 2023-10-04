@@ -1367,8 +1367,7 @@ class CampaignController {
       ).toFixed(2);
       campaign.dataValues.Complaints =
         await CampaignService.getCampaignComplaint(campaignId);
-      campaign.dataValues.ck8 =
-        (await AwsService.getMnemonic(campaign.id)) || null;
+      campaign.dataValues.ck8 = ''; //ait AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Details',
