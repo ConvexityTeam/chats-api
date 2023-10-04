@@ -1202,11 +1202,11 @@ class CampaignController {
       let assignmentTask = [];
       const campaignId = req.params.campaign_id;
       const OrganisationId = req.params.organisation_id;
-      const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${campaignId}`
-      );
-      const token = await BlockchainService.balance(campaign_token.address);
-      const balance = Number(token.Balance.split(',').join(''));
+      // const campaign_token = await BlockchainService.setUserKeypair(
+      //   `campaign_${campaignId}`
+      // );
+      // const token = await BlockchainService.balance(campaign_token.address);
+      // const balance = Number(token.Balance.split(',').join(''));
       const campaign = await CampaignService.getCampaignWithBeneficiaries(
         campaignId
       );
@@ -1254,8 +1254,8 @@ class CampaignController {
           }
         });
       }
-      campaign.dataValues.balance = balance;
-      campaign.dataValues.address = campaign_token.address;
+      campaign.dataValues.balance = 0; //balance;
+      campaign.dataValues.address = 'campaign_token.address;';
       campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length;
       campaign.dataValues.task_count = campaign.Jobs.length;
       campaign.dataValues.beneficiary_share =
