@@ -202,7 +202,7 @@ class OrganisationController {
           updatedAt: campaign.updatedAt,
           beneficiaries_count: beneficiaries_count,
           Jobs: campaign.Jobs,
-          ck8: (await AwsUploadService.getMnemonic(campaign.id)) || null
+          ck8: '' //(await AwsUploadService.getMnemonic(campaign.id)) || null
         });
       }
       Response.setSuccess(
