@@ -9,8 +9,10 @@ const mailerConfig = require('./mailer');
 const zohoCrmConfig = require('./zohocrm');
 const switchWallet = require('./switchwallet');
 const exchangeRate = require('./openRate');
+const hashicorpConfig = require('./hashicorp');
 
 module.exports = {
+  hashicorpConfig,
   switchWallet,
   databaseConfig,
   paystackConfig,
