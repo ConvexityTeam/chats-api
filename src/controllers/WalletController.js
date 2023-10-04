@@ -14,6 +14,7 @@ const {Logger, Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const {Op} = require('sequelize');
 const {logger} = require('../libs/Logger');
+const KoraPayService = require('../services/KoraPayService');
 
 class WalletController {
   static async getOrgnaisationTransaction(req, res) {
@@ -251,17 +252,15 @@ class WalletController {
     }
   }
 
-  static async paystackDeposit(req, res) {
+  static async fiatDeposit(req, res) {
     try {
-      const data = SanitizeObject(req.body, ['amount', 'currency']);
+      const data = SanitizeObject(req.body, ['amount', 'currency', 'method']);
       const {organisation_id} = req.params;
       if (!data.currency) data.currency = 'NGN';
       const CampaignId = req.body.CampaignId ? req.body.CampaignId : null;
       const organisation = await OrganisationService.checkExistEmail(
         req.user.email
       );
-      // organisation.dataValues.email = req.user.email;
-
       const wallet = await WalletService.findMainOrganisationWallet(
         organisation_id
       );
@@ -271,13 +270,25 @@ class WalletController {
           'Oganisation wallet not found.'
         );
       }
-      logger.info(`Initiating PayStack Transaction`);
-      const response = await PaystackService.buildDepositData(
-        organisation,
-        data.amount,
-        CampaignId,
-        data.currency
-      );
+      let response = null;
+      if (data.method === 'paystack') {
+        logger.info(`Initiating PayStack Transaction`);
+        response = await PaystackService.buildDepositData(
+          organisation,
+          data.amount,
+          CampaignId,
+          data.currency
+        );
+      }
+      if (data.method === 'korapay') {
+        logger.info(`Initiating Korapay Transaction`);
+        response = await KoraPayService.buildDepositData(
+          organisation,
+          data.amount,
+          CampaignId,
+          data.currency
+        );
+      }
       logger.info(`Initiated PayStack Transaction`);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,

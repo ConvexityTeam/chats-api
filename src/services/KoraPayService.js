@@ -1,21 +1,65 @@
-const {encryptKoraPayData} = require('../utils');
+const {generateKoraPayRef} = require('../utils');
 const {koraPayConfig} = require('../config');
+const {FundAccount} = require('../models');
+const {Logger} = require('../libs');
 const axios = require('axios');
 
 const Axios = axios.create();
 class KoraPayService {
-  static async cardPayment(paymentData) {
+  static async buildDepositData(
+    organisation,
+    _amount,
+    CampaignId,
+    _currency = null
+  ) {
+    const amount = _amount * 100;
+    const currency = _currency || 'NGN';
+    const ref = generateKoraPayRef();
+
     return new Promise(async (resolve, reject) => {
       try {
-        const encryptedData = encryptKoraPayData(
-          paymentData,
-          koraPayConfig.key
+        await Axios.post(
+          `${koraPayConfig.baseUrl}/merchant/api/v1/charges/initialize`,
+          {
+            amount,
+            reference: ref,
+            currency,
+            narration: 'Organisation Deposit',
+            customer: {
+              email: organisation.email,
+              name: organisation.name
+            },
+            metadata: {
+              method: 'korapay',
+              CampaignId,
+              organisation_id: organisation.id
+            }
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${koraPayConfig.secret_key}`
+            }
+          }
         );
-        console.log(encryptedData, 'encryptedData');
-        const {data} = await Axios.post(
-          `${koraPayConfig.baseURL}/merchant/api/v1/charges/card`,
-          encryptedData
-        );
+        await FundAccount.create({
+          channel: 'korapay',
+          service: 'korapay',
+          OrganisationId: organisation.id,
+          CampaignId,
+          amount: _amount,
+          transactionReference: ref
+        });
+        const data = {
+          ref,
+          email: organisation.email,
+          currency,
+          amount,
+          metadata: {
+            CampaignId,
+            organisation_id: 1
+          }
+        };
         resolve(data);
       } catch (error) {
         reject(error);

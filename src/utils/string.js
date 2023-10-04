@@ -80,6 +80,16 @@ exports.generatePaystackRef = () => {
   return 'PAYCHATS' + random;
 };
 
+exports.generateKoraPayRef = () => {
+  const random = randomstring.generate({
+    length: 30,
+    charset: 'alphanumeric',
+    capitalization: 'uppercase'
+  });
+
+  return 'KORACHATS' + random;
+};
+
 exports.generateOrderRef = () => {
   const random = randomstring.generate({
     length: 7,

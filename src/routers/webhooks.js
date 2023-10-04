@@ -1,12 +1,18 @@
 const router = require('express').Router();
 const {WebhookController} = require('../controllers');
-const {PaystackWebhookGuard} = require('../middleware');
+const {PaystackWebhookGuard, koraPayWebhookGuard} = require('../middleware');
 const {ParamValidator} = require('../validators');
 
 router.post(
   '/paystack/deposit',
   PaystackWebhookGuard,
-  WebhookController.verifyPaystackDeposit
+  WebhookController.verifyFiatDeposit
+);
+
+router.post(
+  '/korapay/deposit',
+  koraPayWebhookGuard,
+  WebhookController.verifyFiatDeposit
 );
 
 router.put('/switch-wallet/deposit', WebhookController.verifyWalletDeposit);
