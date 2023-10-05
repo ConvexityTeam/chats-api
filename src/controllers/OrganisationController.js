@@ -392,7 +392,7 @@ class OrganisationController {
         const campaignSecret = await HashiCorp.decryptData(
           `campaignSecret=${data.id}`
         );
-        Logger.info(`Campaign id...JB: ${data.id}`);
+        Logger.info(`Campaign id...JB..t: ${data.id}`);
         // (await AwsService.getMnemonic(campaign.id)) || null;
         data.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
         //(await AwsService.getMnemonic(data.id)) || null;
