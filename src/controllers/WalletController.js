@@ -289,7 +289,7 @@ class WalletController {
           data.currency
         );
       }
-      logger.info(`Initiated PayStack Transaction`);
+      logger.info(`Initiated ${data.method} Transaction`);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Deposit data generated.',

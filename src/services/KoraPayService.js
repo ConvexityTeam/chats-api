@@ -43,7 +43,7 @@ class KoraPayService {
           }
         );
         await FundAccount.create({
-          channel: 'korapay',
+          channel: 'fiat',
           service: 'korapay',
           OrganisationId: organisation.id,
           CampaignId,
@@ -56,8 +56,9 @@ class KoraPayService {
           currency,
           amount,
           metadata: {
+            method: 'korapay',
             CampaignId,
-            organisation_id: 1
+            organisation_id: organisation.id
           }
         };
         resolve(data);
