@@ -1,12 +1,10 @@
 const path = require('path');
-const {Op} = require('sequelize');
 const {
   AclRoles,
   OrgRoles,
   createHash,
   HttpStatusCode,
-  generateOrganisationId,
-  encryptData
+  generateOrganisationId
 } = require('../utils');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
@@ -1097,7 +1095,6 @@ class AuthController {
           }
         }
       });
-
       const data = await AuthService.login(user, req.body.password.trim());
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
