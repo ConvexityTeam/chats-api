@@ -392,10 +392,11 @@ class OrganisationController {
         const campaignSecret = await HashiCorp.decryptData(
           `campaignSecret=${data.id}`
         );
+        Logger.info(`Campaign id...JB: ${data.id}`);
         // (await AwsService.getMnemonic(campaign.id)) || null;
-        campaign.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
+        data.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
         //(await AwsService.getMnemonic(data.id)) || null;
-
+        Logger.info(`${JSON.stringify(campaign)}`);
         data.dataValues.beneficiaries_count = data.Beneficiaries.length;
         data.dataValues.task_count = data.Jobs.length;
         data.dataValues.completed_task = completed_task;
