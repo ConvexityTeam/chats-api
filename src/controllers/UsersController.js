@@ -725,7 +725,19 @@ class UsersController {
       return Response.send(res);
     }
   }
-
+  static async getByEmail(req, res) {
+    try {
+      const user = await UserService.findByEmail(req.params.email);
+      Response.setSuccess(200, 'User Fetched', user);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Please retry.'
+      );
+      return Response.send(res);
+    }
+  }
   static async getAUser(req, res) {
     const {id} = req.params;
 
