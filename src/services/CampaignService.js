@@ -233,6 +233,7 @@ class CampaignService {
       distinct: true,
       where: {
         ...extraClause,
+        //attributes: [[sequelize.fn('DISTINCT', sequelize.col('column_name')), 'column_name']],
         CampaignId
       },
       include: {

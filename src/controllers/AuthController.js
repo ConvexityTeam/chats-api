@@ -783,7 +783,7 @@ class AuthController {
       url: 'Only valid url with https or http allowed'
     });
     if (validation.fails()) {
-      Response.setError(400, validation.errors);
+      Response.setError(422, Object.values(validation.errors.errors)[0][0]);
       return Response.send(res);
     } else {
       const email = data.email;

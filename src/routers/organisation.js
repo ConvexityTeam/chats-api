@@ -205,14 +205,15 @@ router
     WalletController.getOrganisationCampaignWallet
   );
 
-router.route('/:organisation_id/wallets/paystack-deposit').post(
+router.route('/:organisation_id/wallets/fiat-deposit').post(
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   // IsOrgMember,
   WalletValidator.fiatDepositRules(),
   WalletValidator.validate,
-  WalletController.paystackDeposit
+  WalletController.fiatDeposit
 );
+
 router
   .route('/:organisation_id/wallets/:wallet_id?')
   .get(

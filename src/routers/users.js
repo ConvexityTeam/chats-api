@@ -72,6 +72,7 @@ router
 router.get('/', Auth, UsersController.getAllUsers);
 router.post('/', Auth, UsersController.addUser);
 router.get('/:id', Auth, UsersController.getAUser);
+router.get('/user/:email', Auth, UsersController.getByEmail);
 
 router.put('/profile-image', Auth, UsersController.updateProfileImage);
 router.put('/nfc_update', Auth, UsersController.updateNFC);
