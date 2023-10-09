@@ -3,9 +3,10 @@ const QueueService = require('./QueueService');
 const {Logger} = require('../libs');
 const BlockchainService = require('./BlockchainService');
 class WebhookService {
-  static async verifyPaystackDeposit(data) {
+  static async verifyFiatDeposit(data) {
     if (data.event == 'charge.success') {
-      const transactionReference = data.data.reference;
+      const transactionReference =
+        data.data.payment_reference || data.data.reference;
       const record = await FundAccount.findOne({
         where: {
           transactionReference

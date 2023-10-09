@@ -71,7 +71,7 @@ class AwsUploadService {
       });
     } catch (error) {}
   }
-  static async getMnemonic(id) {
+  static async getMnemonic() {
     // const { SecretsManager } = AWS;
     // id  ? awsConfig.campaignSecretName + id
     var secretName = awsConfig.secreteName,

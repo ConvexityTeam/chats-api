@@ -4,7 +4,8 @@ const {
   SanitizeObject,
   generateOrganisationId,
   generateProductRef,
-  GenerateSecrete
+  GenerateSecrete,
+  HashiCorp
 } = require('../utils');
 
 const moment = require('moment');
@@ -183,8 +184,14 @@ class OrganisationController {
         OrganisationId,
         ...query
       );
+
+      // (await AwsService.getMnemonic(campaign.id)) || null;
+
       let campaignsArray = [];
       for (let campaign of campaigns) {
+        const campaignSecret = await HashiCorp.decryptData(
+          `campaignSecret=${campaign.id}`
+        );
         let beneficiaries_count = await campaign.countBeneficiaries();
         campaignsArray.push({
           id: campaign.id,
@@ -202,7 +209,7 @@ class OrganisationController {
           updatedAt: campaign.updatedAt,
           beneficiaries_count: beneficiaries_count,
           Jobs: campaign.Jobs,
-          ck8: '' //(await AwsUploadService.getMnemonic(campaign.id)) || null
+          ck8: campaignSecret?.data?.data?.secretKey || null
         });
       }
       Response.setSuccess(
@@ -382,9 +389,14 @@ class OrganisationController {
           });
           assignmentTask.push(assignment);
         }
+        const campaignSecret = await HashiCorp.decryptData(
+          `campaignSecret=${data.id}`
+        );
+        Logger.info(`Campaign id...JB..t: ${data.id}`);
+        // (await AwsService.getMnemonic(campaign.id)) || null;
+        data.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
         //(await AwsService.getMnemonic(data.id)) || null;
-        data.dataValues.ck8 = GenerateSecrete();
-
+        Logger.info(`${JSON.stringify(campaign)}`);
         data.dataValues.beneficiaries_count = data.Beneficiaries.length;
         data.dataValues.task_count = data.Jobs.length;
         data.dataValues.completed_task = completed_task;
@@ -774,6 +786,9 @@ class OrganisationController {
           campaign.type === 'item'
             ? await QueueService.createCollection(campaign)
             : await QueueService.createEscrow(campaign);
+          await HashiCorp.encryptData(`campaignSecret=${campaign.id}`, {
+            secretKey: GenerateSecrete()
+          });
           // AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
@@ -1808,6 +1823,7 @@ class OrganisationController {
         }
         return acc;
       }, []);
+
       Logger.info('Fetched campaign vendors');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
