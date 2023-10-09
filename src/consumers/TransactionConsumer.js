@@ -372,8 +372,11 @@ const update_order = async (reference, args) => {
 
 const update_transaction = async (args, uuid) => {
   const transaction = await Transaction.findOne({where: {uuid}});
+  Logger.info(`Transaction updating: ${JSON.stringify(transaction)}`);
   if (!transaction) return null;
   await transaction.update(args);
+  Logger.info(`Transaction updated: ${JSON.stringify(transaction)}`);
+
   return transaction;
 };
 const deductWalletAmount = async (balance, uuid) => {
@@ -456,42 +459,71 @@ RabbitMq['default']
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
           const message = msg.getContent();
-          let mint;
           if (CampaignId) {
             const campaignAddress = await BlockchainService.setUserKeypair(
               `campaign_${CampaignId}`
             );
-            mint = await BlockchainService.mintToken(
+            const mint = await BlockchainService.mintToken(
               campaignAddress.address,
               amount,
               message
+            );
+            if (!mint) {
+              msg.nack();
+              return;
+            }
+            Logger.info(`Campaign Funding Minted: ${mint.Minted}`);
+
+            const tran = await update_transaction(
+              {transaction_hash: mint.Minted},
+              transactionId
+            );
+            await QueueService.confirmNGO_FUNDING(
+              mint.Minted,
+              OrganisationId,
+              CampaignId,
+              transactionId,
+              transactionReference,
+              amount
             );
           } else {
             const organisation = await BlockchainService.setUserKeypair(
               `organisation_${OrganisationId}`
             );
-            mint = await BlockchainService.mintToken(
+            const mint = await BlockchainService.mintToken(
               organisation.address,
               amount,
               message
             );
+            Logger.info(`NGO Funding Minted: ${mint.Minted}`);
+
+            if (!mint) {
+              msg.nack();
+              return;
+            }
+            Logger.info(`Organisation ID: ${OrganisationId}`);
+            Logger.info(`Campaign ID: ${CampaignId}`);
+            Logger.info(`Transaction ID: ${transactionId}`);
+            Logger.info(`Transaction Reference: ${transactionReference}`);
+            Logger.info(`Amount: ${amount}`);
+            await update_transaction(
+              {transaction_hash: mint.Minted},
+              transactionId
+            ).catch(error => {
+              Logger.error(`Transaction Error: ${error.message}`);
+            });
+
+            await QueueService.confirmNGO_FUNDING(
+              mint.Minted,
+              OrganisationId,
+              CampaignId,
+              transactionId,
+              transactionReference,
+              amount
+            );
+
+            Logger.info(`NGO Funding Minted...: ${mint.Minted}`);
           }
-          if (!mint) {
-            msg.nack();
-            return;
-          }
-          await update_transaction(
-            {transaction_hash: mint.Minted},
-            transactionId
-          );
-          await QueueService.confirmNGO_FUNDING(
-            mint.Minted,
-            OrganisationId,
-            CampaignId,
-            transactionId,
-            transactionReference,
-            amount
-          );
         }
       })
       .catch(error => {
@@ -535,6 +567,7 @@ RabbitMq['default']
           transactionReference,
           amount
         );
+        // Logger.info(`NGO Funding Gas: ${gasFee.retried}`);
       })
       .catch(error => {
         Logger.error(`Consumer Error: ${error.message}`);
@@ -557,7 +590,7 @@ RabbitMq['default']
         } = msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
-
+        Logger.info(`confirm: ${confirm}`);
         if (!confirm) {
           msg.nack();
           return;
@@ -566,6 +599,7 @@ RabbitMq['default']
           {status: 'success', is_approved: true},
           transactionId
         );
+        Logger.info(`Minted..: ${confirm}`);
         if (CampaignId) {
           const campaignWallet = await WalletService.findSingleWallet({
             CampaignId,
@@ -823,12 +857,13 @@ RabbitMq['default']
             amount_disbursed: amount,
             fund_status: 'success'
           });
-        } else
+        } else {
           await update_campaign(campaign.id, {
             is_funded: true,
             is_processing: false,
             fund_status: 'success'
           });
+        }
 
         await update_transaction(
           {

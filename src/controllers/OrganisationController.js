@@ -783,9 +783,9 @@ class OrganisationController {
             'organisation',
             campaign.id
           );
-          campaign.type === 'item'
-            ? await QueueService.createCollection(campaign)
-            : await QueueService.createEscrow(campaign);
+          campaign.type === 'item' &&
+            (await QueueService.createCollection(campaign));
+          // : await QueueService.createEscrow(campaign);
           await HashiCorp.encryptData(`campaignSecret=${campaign.id}`, {
             secretKey: GenerateSecrete()
           });

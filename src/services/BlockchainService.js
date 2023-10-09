@@ -413,7 +413,7 @@ class BlockchainService {
     }
   }
 
-  static async addUser(arg, bind, message) {
+  static async addUser(arg) {
     return new Promise(async (resolve, reject) => {
       try {
         let keyPair = await this.setUserKeypair(arg);

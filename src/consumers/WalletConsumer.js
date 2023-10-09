@@ -33,18 +33,17 @@ RabbitMq['default']
               : content.CampaignId &&
                 content.wallet_type == 'organisation' &&
                 'campaign_' + content.CampaignId
-          }`,
-          CREATE_WALLET,
-          content
+          }`
         );
 
         if (!token) {
           msg.nack();
           return;
         }
-
+        Logger.info(`${JSON.stringify(content)}, CONTENT 1`);
+        Logger.info(`${JSON.stringify(token)}, TOKEN`);
         await QueueService.confirmAndCreateWallet(content, token);
-        // Logger.info('Address Sent for confirmation');
+        Logger.info('Address Sent for confirmation');
         msg.ack();
       })
       .catch(error => {
@@ -57,24 +56,13 @@ RabbitMq['default']
     confirmAndCreateWalletQueue
       .activateConsumer(async msg => {
         const {content, keyPair} = msg.getContent();
-        // let confirm;
-        // setTimeout(async () => {
-        //   confirm = await BlockchainService.confirmTransaction(
-        //     hash.data.AddedUser,
-        //     CONFIRM_AND_CREATE_WALLET,
-        //     content
-        //   );
-        // }, RERUN_QUEUE_AFTER);
-
-        // if (!confirm) {
-        //   msg.nack();
-        //   return;
-        // }
-
-        await WalletService.updateOrCreate(content, {
+        Logger.info(`${JSON.stringify(content)}, CONTENT`);
+        Logger.info(`${JSON.stringify(keyPair)}, KEYPAIR`);
+        Logger.info('Confirming Wallet Creation: ' + keyPair.address);
+        const wallet = await WalletService.updateOrCreate(content, {
           address: keyPair.address
         });
-        Logger.info('Account Wallet Created');
+        Logger.info('Account Wallet Created: ' + JSON.stringify(wallet));
         msg.ack();
       })
       .catch(error => {

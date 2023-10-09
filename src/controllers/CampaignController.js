@@ -541,6 +541,7 @@ class CampaignController {
 
       const OrgWallet = organisation.Wallet;
 
+      console.log(organisation, 'organisation');
       if (campaign.fund_status == 'in_progress') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -577,13 +578,15 @@ class CampaignController {
         return Response.send(res);
       }
 
+      console.log(campaign.budget, 'budget');
+      console.log(balance, 'balance');
       if (
         (campaign.type !== 'item' && campaign.budget > balance) ||
         (campaign.type !== 'item' && balance == 0)
       ) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance. Please fund organisation wallet.'
+          'Insufficient wallet balance. Please fund organisation wallet...'
         );
         return Response.send(res);
       }
@@ -616,7 +619,7 @@ class CampaignController {
     } catch (error) {
       Logger.error(
         `Error Processing Transfer From NGO Wallet to Campaign Wallet: ${JSON.stringify(
-          error
+          error.message
         )}`
       );
       Response.setError(

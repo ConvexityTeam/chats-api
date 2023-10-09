@@ -1,6 +1,7 @@
 const {Op} = require('sequelize');
 const {walletConst, userConst} = require('../constants');
 const {Wallet, User} = require('../models');
+const {Logger} = require('../libs');
 
 class WalletService {
   static findSingleWallet(where) {
@@ -22,33 +23,42 @@ class WalletService {
     });
   }
 
-  static updateOrCreate({wallet_type, CampaignId, ownerId}, data) {
-    const where = {
-      wallet_type
-    };
-    if (wallet_type == 'user') {
-      where.UserId = ownerId;
-    }
-    if (wallet_type == 'organisation') {
-      where.OrganisationId = ownerId;
-    }
-    if (CampaignId) {
-      where.CampaignId = CampaignId;
-    }
+  static async updateOrCreate({wallet_type, CampaignId, ownerId}, data) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const where = {
+          wallet_type
+        };
+        if (wallet_type == 'user') {
+          where.UserId = ownerId;
+        }
+        if (wallet_type == 'organisation') {
+          where.OrganisationId = ownerId;
+        }
+        if (CampaignId) {
+          where.CampaignId = CampaignId;
+        }
 
-    return Wallet.findOne({
-      where
-    }).then(async wallet => {
-      if (wallet) {
-        await wallet.update(data);
-        return Wallet.findOne({
+        const find = await Wallet.findOne({
           where
         });
+        if (find) {
+          Logger.info(`Updating Wallet`);
+          await find.update(data);
+          resolve(find);
+        }
+        Logger.info(`Creating Wallet`);
+        const wallet = await Wallet.create({
+          ...where,
+          ...data
+        });
+
+        Logger.info(`Wallet Created: ${JSON.stringify(wallet)}`);
+        resolve(wallet);
+      } catch (error) {
+        Logger.error(`Error creating wallet: ${JSON.stringify(error)}`);
+        reject(error);
       }
-      return Wallet.create({
-        ...where,
-        ...data
-      });
     });
   }
 
