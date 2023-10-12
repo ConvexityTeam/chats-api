@@ -1,7 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class VoucherToken extends Model {
     /**
@@ -11,17 +11,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      VoucherToken.belongsTo(models.User,{foreignKey: 'beneficiaryId', as: "UserToken"})
-      VoucherToken.belongsTo(models.Campaign,{foreignKey: 'campaignId', as: "BeneficiaryTokens"})
+      VoucherToken.belongsTo(models.User, { foreignKey: 'beneficiaryId', as: 'UserToken' });
+      VoucherToken.belongsTo(models.Campaign, { foreignKey: 'campaignId', as: 'BeneficiaryTokens' });
     }
-  };
+  }
   VoucherToken.init({
     beneficiaryId: DataTypes.INTEGER,
     campaignId: DataTypes.INTEGER,
     organisationId: DataTypes.INTEGER,
     tokenType: DataTypes.ENUM('smstoken', 'papertoken'),
     token: DataTypes.TEXT,
-    amount: DataTypes.FLOAT
+    amount: DataTypes.FLOAT,
   }, {
     sequelize,
     modelName: 'VoucherToken',

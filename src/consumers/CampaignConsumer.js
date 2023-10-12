@@ -1,61 +1,52 @@
-const {
-  Sequelize,
-  Transaction,
-  Wallet,
-  VoucherToken,
-  Campaign,
-  TaskAssignment,
-  ProductBeneficiary,
-  Order
-} = require('../models');
-const {RabbitMq, Logger} = require('../libs');
+const { RabbitMq, Logger } = require('../libs');
 const {
   FUND_CAMPAIGN_WITH_CRYPTO,
   CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO,
-  INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO
+  INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO,
 } = require('../constants/queues.constant');
-const {BlockchainService, QueueService} = require('../services');
+const { BlockchainService, QueueService } = require('../services');
 
 const consumerFunctions = require('../utils/consumerFunctions');
 
-const fundWithCrypto = RabbitMq['default'].declareQueue(
+const fundWithCrypto = RabbitMq.default.declareQueue(
   FUND_CAMPAIGN_WITH_CRYPTO,
   {
     durable: true,
-    prefetch: 1
-  }
+    prefetch: 1,
+  },
 );
 
-const confirmFundWithCrypto = RabbitMq['default'].declareQueue(
+const confirmFundWithCrypto = RabbitMq.default.declareQueue(
   CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO,
   {
     durable: true,
-    prefetch: 1
-  }
+    prefetch: 1,
+  },
 );
 
-const increaseGasFundWithCrypto = RabbitMq['default'].declareQueue(
+const increaseGasFundWithCrypto = RabbitMq.default.declareQueue(
   INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO,
   {
     durable: true,
-    prefetch: 1
-  }
+    prefetch: 1,
+  },
 );
 
-RabbitMq['default'].completeConfiguration().then(() => {
+RabbitMq.default.completeConfiguration().then(() => {
   fundWithCrypto
-    .activateConsumer(async msg => {
-      const {campaignWallet, campaign, amount, transactionId} =
-        msg.getContent();
+    .activateConsumer(async (msg) => {
+      const {
+        campaignWallet, campaign, amount, transactionId,
+      } = msg.getContent();
       const campaignAddress = await BlockchainService.setUserKeypair(
-        `campaign_${campaign.id}`
+        `campaign_${campaign.id}`,
       );
       const message = msg.getContent();
       const mint = await BlockchainService.mintToken(
         campaignAddress.address,
         amount,
         message,
-        'Campaign'
+        'Campaign',
       );
 
       if (!mint) {
@@ -63,30 +54,32 @@ RabbitMq['default'].completeConfiguration().then(() => {
         return;
       }
       await consumerFunctions.update_transaction(
-        {transaction_hash: mint.Minted},
-        transactionId
+        { transaction_hash: mint.Minted },
+        transactionId,
       );
       await QueueService.confirmFundCampaignWithCrypto(
         mint.Minted,
         transactionId,
         campaignWallet.uuid,
         amount,
-        campaign
+        campaign,
       );
       Logger.info('MINT TOKEN FOR CAMPAIGN SENT FOR CONFIRMATION');
     })
     .then(() => {
       Logger.info('ACTIVATE CONSUMER FOR CAMPAIGN CRYPTO FUNDING');
     })
-    .catch(error => {
+    .catch((error) => {
       Logger.error(
-        'ERROR ACTIVATE CONSUMER FOR CAMPAIGN CRYPTO FUNDING: ' + error
+        `ERROR ACTIVATE CONSUMER FOR CAMPAIGN CRYPTO FUNDING: ${error}`,
       );
     });
 
   confirmFundWithCrypto
-    .activateConsumer(async msg => {
-      const {hash, transactionId, uuid, amount, campaign} = msg.getContent();
+    .activateConsumer(async (msg) => {
+      const {
+        hash, transactionId, uuid, amount, campaign,
+      } = msg.getContent();
 
       const confirm = await BlockchainService.confirmTransaction(hash);
       if (!confirm) {
@@ -96,11 +89,11 @@ RabbitMq['default'].completeConfiguration().then(() => {
       await consumerFunctions.update_campaign(campaign.id, {
         is_funded: true,
         is_processing: false,
-        amount_disbursed: campaign.amount_disbursed + amount
+        amount_disbursed: campaign.amount_disbursed + amount,
       });
       await consumerFunctions.update_transaction(
-        {status: 'success', is_approved: true},
-        transactionId
+        { status: 'success', is_approved: true },
+        transactionId,
       );
 
       await consumerFunctions.addWalletAmount(amount, uuid);
@@ -109,20 +102,22 @@ RabbitMq['default'].completeConfiguration().then(() => {
     .then(() => {
       Logger.info('ACTIVATE CONSUMER FOR CAMPAIGN CONFIRMING CRYPTO FUNDING');
     })
-    .catch(error => {
+    .catch((error) => {
       Logger.error(
-        'ERROR ACTIVATE CONSUMER CAMPAIGN CONFIRMING CRYPTO FUNDING: ' + error
+        `ERROR ACTIVATE CONSUMER CAMPAIGN CONFIRMING CRYPTO FUNDING: ${error}`,
       );
     });
 
   increaseGasFundWithCrypto
-    .activateConsumer(async () => {
-      const {keys, message} = msg.getContent();
-      const {transactionId, campaign, campaignWallet, amount} = message;
+    .activateConsumer(async (msg) => {
+      const { keys, message } = msg.getContent();
+      const {
+        transactionId, campaign, campaignWallet, amount,
+      } = message;
       const gasFee = await BlockchainService.reRunContract(
         'token',
         'mint',
-        keys
+        keys,
       );
       if (!gasFee) {
         msg.nack();
@@ -130,27 +125,27 @@ RabbitMq['default'].completeConfiguration().then(() => {
       }
       await consumerFunctions.update_transaction(
         {
-          transaction_hash: gasFee.retried
+          transaction_hash: gasFee.retried,
         },
-        transactionId
+        transactionId,
       );
       await QueueService.confirmFundCampaignWithCrypto(
         gasFee.retried,
         transactionId,
         campaignWallet.uuid,
         amount,
-        campaign
+        campaign,
       );
     })
     .then(() => {
       Logger.info(
-        'ACTIVATE CONSUMER FOR INCREASING GAS FOR CAMPAIGN CONFIRMING CRYPTO FUNDING'
+        'ACTIVATE CONSUMER FOR INCREASING GAS FOR CAMPAIGN CONFIRMING CRYPTO FUNDING',
       );
     })
-    .catch(error => {
+    .catch((error) => {
       Logger.error(
-        'ERROR ACTIVATE CONSUMER FOR INCREASING GAS FOR CAMPAIGN CONFIRMING CRYPTO FUNDING: ' +
-          error
+        `ERROR ACTIVATE CONSUMER FOR INCREASING GAS FOR CAMPAIGN CONFIRMING CRYPTO FUNDING: ${
+          error}`,
       );
     });
 });

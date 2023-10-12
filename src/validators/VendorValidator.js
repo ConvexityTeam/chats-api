@@ -1,85 +1,86 @@
 const {
-  body
+  body,
 } = require('express-validator');
 const {
-  Response
+  Response,
 } = require('../libs');
 const {
-  HttpStatusCode
-} = require("../utils");
+  HttpStatusCode,
+} = require('../utils');
 const {
   VendorService,
-  ProductService
+  ProductService,
 } = require('../services');
 const BaseValidator = require('./BaseValidator');
-const ProductValidator = require('./ProductValidator');
+// const ProductValidator = require('./ProductValidator');
 const {
   CampaignVendor,
-  OrganisationMembers
+  OrganisationMembers,
 } = require('../models');
 
 class VendorValidator extends BaseValidator {
   static createOrder = [
     body('campaign_id')
-    .notEmpty()
-    .withMessage('Campaign Id is required.')
-    .isNumeric()
-    .withMessage('Campaign Id must be nuemric.'),
+      .notEmpty()
+      .withMessage('Campaign Id is required.')
+      .isNumeric()
+      .withMessage('Campaign Id must be nuemric.'),
     body('products')
-    .isArray({
-      min: 1
-    })
-    .withMessage('Minimum of 1 product is required.'),
+      .isArray({
+        min: 1,
+      })
+      .withMessage('Minimum of 1 product is required.'),
     body('products.*.quantity')
-    .isInt({
-      min: 1,
-      allow_leading_zeroes: false
-    })
-    .withMessage('Product quantity must be numeric and allowed minimum is 1'),
+      .isInt({
+        min: 1,
+        allow_leading_zeroes: false,
+      })
+      .withMessage('Product quantity must be numeric and allowed minimum is 1'),
     body('products.*.product_id')
-    .isInt()
-    .withMessage('Product has invalid ID. ID must be numeric.')
-    .custom(VendorValidator.vendorHasProduct),
-    this.validate
-  ]
+      .isInt()
+      .withMessage('Product has invalid ID. ID must be numeric.')
+      .custom(VendorValidator.vendorHasProduct),
+    this.validate,
+  ];
 
   static createVendorRules() {
     return [
       body('first_name')
-      .not().isEmpty()
-      .withMessage('Vendor first name is required.'),
+        .not().isEmpty()
+        .withMessage('Vendor first name is required.'),
       body('last_name')
-      .not().isEmpty()
-      .withMessage('Vendor last name is required.'),
+        .not().isEmpty()
+        .withMessage('Vendor last name is required.'),
       body('email')
-      .isEmail()
-      .withMessage('Email is not well formed.'),
+        .isEmail()
+        .withMessage('Email is not well formed.'),
       body('store_name')
-      .not().isEmpty()
-      .withMessage('Store name is required.'),
+        .not().isEmpty()
+        .withMessage('Store name is required.'),
       body('location')
-      .not().isEmpty()
-      .withMessage('Location store is required.'),
+        .not().isEmpty()
+        .withMessage('Location store is required.'),
       body('address')
-      .not().isEmpty()
-      .withMessage('Store address is required.'),
+        .not().isEmpty()
+        .withMessage('Store address is required.'),
       body('phone')
-      .not().isEmpty()
-      .withMessage('Phone is required.')
-      .isMobilePhone()
-      .withMessage('Phone number is well formed.')
-    ]
+        .not().isEmpty()
+        .withMessage('Phone is required.')
+        .isMobilePhone()
+        .withMessage('Phone number is well formed.'),
+    ];
   }
 
   static approveCampaignVendor = [
     body('vendor_id')
-    .notEmpty().bail()
-    .withMessage('Vendor Id is required.')
-    .isNumeric()
-    .withMessage('Vendor Id must be numeric.')
-    .custom(VendorValidator.checkOrgVendor),
-    this.validate
+      .notEmpty().bail()
+      .withMessage('Vendor Id is required.')
+      .isNumeric()
+      .withMessage('Vendor Id must be numeric.')
+      .custom(VendorValidator.checkOrgVendor),
+    this.validate,
   ];
+
   static async VendorStoreExists(req, res, next) {
     try {
       if (!req.body.store_name) {
@@ -90,18 +91,21 @@ class VendorValidator extends BaseValidator {
       if (existing) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
-          'Validation Failed!', {
-            store_name: ['Store is registered!']
-          }
+          'Validation Failed!',
+          {
+            store_name: ['Store is registered!'],
+          },
         );
-        return Response.send(res);
+        Response.send(res);
+        return;
       }
       next();
     } catch (error) {
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Contact support.');
-      return Response.send(res);
+      Response.send(res);
     }
   }
+
   static async VendorExists(req, res, next) {
     try {
       const id = req.params.vendor_id || req.body.vendor_id || req.user.id;
@@ -113,7 +117,6 @@ class VendorValidator extends BaseValidator {
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Invalid vendor account or vendor ID.');
       return Response.send(res);
     } catch (error) {
-      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Contact support.');
       return Response.send(res);
     }
@@ -131,8 +134,8 @@ class VendorValidator extends BaseValidator {
         where: {
           VendorId,
           CampaignId,
-          approved: true
-        }
+          approved: true,
+        },
       });
       if (!approval) {
         Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Approval for campaign pending.');
@@ -140,61 +143,58 @@ class VendorValidator extends BaseValidator {
       }
       next();
     } catch (error) {
-      
       Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, 'Error occured. Contact support.');
       return Response.send(res);
     }
+    return null;
   }
 
-  static checkOrgVendor(vendorId, {
-    req
-  }) {
-
-    return new Promise(async (resolve, reject) => {
-      const OrganisationId = req.body.organisation_id || req.params.organisation_id || req.query.organisation_id || req.organisatiion.id || null;
+  static checkOrgVendor(vendorId, { req }) {
+    return new Promise((resolve) => {
+      const OrganisationId = req.body.organisation_id || req.params.organisation_id
+      || req.query.organisation_id || req.organisatiion.id || null;
       if (!vendorId) {
-        reject('vendor Id is required.');
-        return;
+        throw new Error('Vendor Id is required');
       }
+
       if (!OrganisationId) {
-        reject('Invalid Organisation. Provide vendor organisation.');
-        return;
+        throw new Error('Invalid Organisation. Provide vendor organisation.');
       }
 
       OrganisationMembers.findOne({
-          where: {
-            UserId: vendorId,
-            OrganisationId
-          }
-        })
-        .then(record => {
+        where: {
+          UserId: vendorId,
+          OrganisationId,
+        },
+      })
+        .then((record) => {
           if (!record) {
-            reject('Vendor is not organisation member.');
+            throw new Error('Vendor is not organisation member.');
           }
           resolve(true);
         });
-    })
+    });
   }
 
   static vendorHasProduct(id, { req }) {
     const vendorId = req.params.vendor_id || req.body.vendor_id || req.vendor.id;
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve) => {
       try {
         const CampaignId = req.body.campaign_id || req.params.campaign_id || null;
-        const product = await ProductService.findProductByVendorId(id, vendorId, {
-          CampaignId
+        const product = ProductService.findProductByVendorId(id, vendorId, {
+          CampaignId,
         });
         if (!product) {
-          return reject('Product not found in store.');
+          throw new Error('Product not found in store.');
         }
-        const found_products = {
-          ...req.found_products
+        const foundProducts = {
+          ...req.found_products,
         };
-        found_products[id] = product.dataValues;
-        req.found_products = found_products;
+        foundProducts[id] = product.dataValues;
+        req.found_products = foundProducts;
         resolve(true);
       } catch (error) {
-        reject('Product not found in store.');
+        throw new Error('Product not found in store.');
       }
     });
   }

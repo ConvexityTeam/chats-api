@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('VerificationTokens', {
@@ -6,7 +5,7 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       UserId: {
         allowNull: false,
@@ -15,33 +14,33 @@ module.exports = {
           model: {
             tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       type: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       token: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       request_ip: {
         type: Sequelize.STRING,
         allowNull: true,
       },
       expires_at: {
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('VerificationTokens');
-  }
+  },
 };

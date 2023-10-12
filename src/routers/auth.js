@@ -4,22 +4,21 @@ const {
   Auth,
   NgoAdminAuth,
   IsOrgMember,
-  IsRecaptchaVerified
-} = require('../middleware'); //Auhorization middleware
+} = require('../middleware'); // Auhorization middleware
 const excelUploader = require('../middleware/excelUploader');
-const {AuthController, BeneficiaryController} = require('../controllers');
+const { AuthController } = require('../controllers');
 const {
   AuthValidator,
   CampaignValidator,
   ParamValidator,
-  FileValidator
+  FileValidator,
 } = require('../validators');
 
 // router.use(e2e);
 
 router.post(
   '/:campaignId/confirm-campaign-invite/:token',
-  AuthController.confirmInvite
+  AuthController.confirmInvite,
 );
 
 router.post(
@@ -28,14 +27,14 @@ router.post(
   ParamValidator.OrganisationId,
   IsOrgMember,
   CampaignValidator.campaignBelongsToOrganisation,
-  AuthController.sendInvite
+  AuthController.sendInvite,
 );
 router.post('/donor-register', AuthController.createDonorAccount);
 router.post('/register', AuthController.createBeneficiary);
 router.post(
   '/self-registration',
   FileValidator.checkProfilePic(),
-  AuthController.beneficiaryRegisterSelf
+  AuthController.beneficiaryRegisterSelf,
 );
 
 router.post('/ngo-register', AuthController.createNgoAccount);
@@ -43,17 +42,17 @@ router.post('/resend-email-confirmation/', AuthController.resendMail);
 router.post('/verify-email/:confirmationCode', AuthController.confirmEmail);
 
 router.post('/register/special-case', AuthController.sCaseCreateBeneficiary);
-//uploading beneficiaries via spreadsheet
+// uploading beneficiaries via spreadsheet
 router.post(
   '/register/beneficiaries-upload-spreadsheet',
   Auth,
   excelUploader.single('beneficiaries_xls'),
-  AuthController.beneficiariesExcel
+  AuthController.beneficiariesExcel,
 );
 router.post(
   '/register/kobo-tool-box',
   Auth,
-  AuthController.beneficiariesKoboToolBox
+  AuthController.beneficiariesKoboToolBox,
 );
 
 router.post('/nin-verification', AuthController.verifyNin);
@@ -79,13 +78,13 @@ router
     AuthValidator.requestPasswordResetRules(),
     AuthValidator.validate,
     AuthValidator.canResetPassword,
-    AuthController.requestPasswordReset
+    AuthController.requestPasswordReset,
   )
   .put(
     AuthValidator.resetPasswordRules(),
     AuthValidator.validate,
     AuthValidator.checkResetPasswordToken,
-    AuthController.resetPassword
+    AuthController.resetPassword,
   );
 
 module.exports = router;

@@ -1,7 +1,5 @@
-'use strict';
-
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async () => {
     /**
      * Add altering commands here.
      *
@@ -9,11 +7,10 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
 
-    
-    //queryInterface.removeColumn('Products', 'MarketId');
+    // queryInterface.removeColumn('Products', 'MarketId');
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async () => {
     /**
      * Add reverting commands here.
      *
@@ -21,7 +18,7 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     // queryInterface.dr('Tasks', 'isCompleted');
-    //await queryInterface.dropTable('Products');
-    
-  }
+    // await queryInterface.dropTable('Products');
+
+  },
 };

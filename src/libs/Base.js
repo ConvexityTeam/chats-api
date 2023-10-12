@@ -1,17 +1,20 @@
 const request = require('request');
-const https = require('https');
+
 class Base {
   constructor(url = 'http://127.0.0.1/m-pay') {
     this.url = url;
     this.body = null;
   }
+
   /**
    * @param {string} url The called url
    * @param   {object} payload the delivery payload
    */
-  async get(url, payload = {}, header) {
+
+  async gett(header, payload = {}) {
     try {
-      const response = await request.get(url, payload, header);
+      // Reference to 'this' within the get method
+      const response = await request.get(this.url, payload, header);
       return response;
     } catch (error) {
       return error;
@@ -26,11 +29,11 @@ class Base {
   post(url, payload, headers) {
     return new Promise((resolve, reject) => {
       request
-        .post(url, payload, headers)
-        .then(response => {
+        .post(this.url, payload, headers)
+        .then((response) => {
           resolve(response);
         })
-        .catch(error => {
+        .catch((error) => {
           reject(error);
         });
     });

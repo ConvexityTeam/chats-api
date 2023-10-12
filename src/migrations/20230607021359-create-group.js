@@ -1,4 +1,3 @@
-'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -7,42 +6,42 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       group_name: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       group_category: {
         type: Sequelize.ENUM(
           'family',
           'community',
           'interest-group',
-          'associations'
+          'associations',
         ),
-        allowNull: false
+        allowNull: false,
       },
       representative_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Users'
+            tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('Groups');
-  }
+  },
 };

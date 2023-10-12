@@ -21,5 +21,5 @@ module.exports = {
   tokenConfig,
   bantuConfig,
   awsConfig,
-  zohoCrmConfig
+  zohoCrmConfig,
 };

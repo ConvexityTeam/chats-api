@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -14,12 +12,12 @@ module.exports = {
       allowNull: true,
       references: {
         model: 'Organisations',
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -27,5 +25,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.removeColumn('ProductCategories', 'organisation_id');
-  }
+  },
 };

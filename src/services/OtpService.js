@@ -1,46 +1,52 @@
 const moment = require('moment');
-const {VerificationToken} = require('../models');
-const {createHash} = require('../utils');
+const bcrypt = require('bcryptjs');
+const { VerificationToken } = require('../models');
+const { createHash } = require('../utils');
+
 class OtpService {
-  static async generateOtp(UserId, length, type, expiresAfter = 10) {
-    return new Promise(async (resolve, reject) => {
-      const expires_at = moment().add(10, 'm').toDate();
+  static async generateOtp(UserId, length, type) {
+    return new Promise((resolve, reject) => {
+      const expiresAt = moment().add(10, 'm').toDate();
       const token = createHash('123456');
-      VerificationToken.findOne({where: {UserId, type}})
-        .then(async exisiting => {
-          if (exisiting) {
-            const updated = await existing.update({
-              expires_at,
+      VerificationToken.findOne({ where: { UserId, type } })
+        .then((existing) => {
+          if (existing) {
+            const updated = existing.update({
+              expires_at: expiresAt,
               token,
             });
 
             resolve(updated.toObject());
             return;
           }
-          const created = await VerificationToken.create({
+          const created = VerificationToken.create({
             UserId,
             type,
             token,
-            expires_at,
+            expires_at: expiresAt,
           });
 
           resolve(created.toObject());
         })
-        .catch(err => {
+        .catch((err) => {
           reject(err);
         });
     });
   }
 
   static verifyOtp(UserId, type, token) {
-    return new Promise(async (resolve, reject) => {
-      const saved = await VerificationToken.findOne({where: {UserId, type}});
-      if (saved && compareSync(token, saved.token)) {
-        resolve(true);
-        return;
-      }
-
-      reject(new Error('Invalida or wrong token.'));
+    return new Promise((resolve, reject) => {
+      VerificationToken.findOne({ where: { UserId, type } })
+        .then((saved) => {
+          if (saved && bcrypt.compareSync(token, saved.token)) {
+            resolve(true);
+          } else {
+            reject(new Error('Invalid or wrong token.'));
+          }
+        })
+        .catch((error) => {
+          reject(error);
+        });
     });
   }
 }

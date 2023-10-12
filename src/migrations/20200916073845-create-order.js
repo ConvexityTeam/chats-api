@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Orders', {
@@ -6,12 +5,12 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       OrderUniqueId: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true
+        unique: true,
       },
       UserId: {
         allowNull: false,
@@ -20,25 +19,25 @@ module.exports = {
           model: {
             tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       status: {
-        type: Sequelize.ENUM('pending', 'processing', 'confirmed','delivered', 'failed'),
+        type: Sequelize.ENUM('pending', 'processing', 'confirmed', 'delivered', 'failed'),
         allowNull: false,
-        defaultValue: 'pending'
+        defaultValue: 'pending',
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('Orders');
-  }
+  },
 };

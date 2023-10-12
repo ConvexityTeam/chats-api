@@ -1,15 +1,8 @@
 require('dotenv').config();
-const db = require('../models');
-const {util, Response, Logger} = require('../libs');
-const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
-const uploadFile = require('./AmazonController');
-const {ImpactReportService} = require('../services');
-const {SanitizeObject} = require('../utils');
-const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
-const {termiiConfig} = require('../config');
-const {async} = require('regenerator-runtime');
-const {AclRoles} = require('../utils');
+const { Response } = require('../libs');
+const { HttpStatusCode } = require('../utils');
+const { ImpactReportService } = require('../services');
 
 class ImpactReportController {
   static async createReport(req, res) {
@@ -20,7 +13,7 @@ class ImpactReportController {
         title: 'string',
         AgentId: 'integer|required',
         CampaignId: 'integer|required',
-        MediaLink: 'required'
+        MediaLink: 'required',
       };
       const validation = new Validator(data, rules);
 
@@ -32,7 +25,7 @@ class ImpactReportController {
         title: data.title,
         AgentId: data.AgentId,
         CampaignId: data.CampaignId,
-        MediaLink: data.MediaLink
+        MediaLink: data.MediaLink,
       };
       // valiate Campaign
       // const campaignExist = await db.Campaigns.findOne({
@@ -49,42 +42,44 @@ class ImpactReportController {
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Report Generated successfully',
-        report
+        report,
       );
       return Response.send(res);
     } catch (error) {
       console.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support'
+        'Internal Server Error, Contact Support',
       );
       return Response.send(res);
     }
   }
+
   static async getAllReport(req, res) {
     try {
       const reports = await ImpactReportService.getAll();
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Reports fetched successfully',
-        reports
+        reports,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support'
+        'Internal Server Error, Contact Support',
       );
       return Response.send(res);
     }
   }
+
   static async getReportByCampaignId(req, res) {
-    const campaignId = req.params.campaignId;
+    const { campaignId } = req.params;
     try {
       if (!Number(campaignId)) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Please input a valid CampaignId'
+          'Please input a valid CampaignId',
         );
         return Response.send(res);
       }
@@ -98,13 +93,13 @@ class ImpactReportController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Report fetched successfully',
-        report
+        report,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error, Contact Support'
+        'Internal Server Error, Contact Support',
       );
       return Response.send(res);
     }

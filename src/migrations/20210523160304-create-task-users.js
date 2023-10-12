@@ -1,7 +1,6 @@
-"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("TaskUsers", {
+    await queryInterface.createTable('TaskUsers', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -13,9 +12,9 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "Users",
+            tableName: 'Users',
           },
-          key: "id",
+          key: 'id',
         },
       },
       TaskId: {
@@ -23,14 +22,14 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "Tasks",
+            tableName: 'Tasks',
           },
-          key: "id",
+          key: 'id',
         },
       },
       type: {
-        type: Sequelize.ENUM("supervisor", "worker"),
-        defaultValue: "worker",
+        type: Sequelize.ENUM('supervisor', 'worker'),
+        defaultValue: 'worker',
       },
       createdAt: {
         allowNull: false,
@@ -42,7 +41,7 @@ module.exports = {
       },
     });
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("TaskUsers");
+  down: async (queryInterface) => {
+    await queryInterface.dropTable('TaskUsers');
   },
 };

@@ -5,5 +5,5 @@ module.exports = {
   secretKey: process.env.SWITCH_WALLET_SECRETE_KEY || '',
   publicKey: process.env.SWITCH_WALLET_PUBLIC_KEY,
   email: process.env.SWITCH_WALLET_EMAIL,
-  password: process.env.SWITCH_WALLET_PASSWORD
-}
+  password: process.env.SWITCH_WALLET_PASSWORD,
+};

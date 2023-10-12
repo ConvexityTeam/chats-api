@@ -1,11 +1,12 @@
-const {Response} = require('../libs');
-const {body} = require('express-validator');
-const {isEmail} = require('validator');
-const {HttpStatusCode, compareHash} = require('../utils');
-const {UserService, AuthService} = require('../services');
+const { body } = require('express-validator');
+const { isEmail } = require('validator');
+const { Response } = require('../libs');
+const { HttpStatusCode, compareHash } = require('../utils');
+const { UserService, AuthService } = require('../services');
 const BaseValidator = require('./BaseValidator');
-const {SuperAdmin, GodMode, NgoAdmin, Vendor, Beneficiary, Donor, NgoSubAdmin} =
-  require('../utils').AclRoles;
+const {
+  SuperAdmin, GodMode, NgoAdmin, Vendor, Beneficiary, Donor, NgoSubAdmin,
+} = require('../utils').AclRoles;
 
 class AuthValidator extends BaseValidator {
   static selfResetAllowedFor = [
@@ -15,25 +16,25 @@ class AuthValidator extends BaseValidator {
     NgoAdmin,
     NgoSubAdmin,
     Vendor,
-    Beneficiary
+    Beneficiary,
   ];
 
   static requestPasswordResetRules() {
     return [
       body('email')
-        .custom(val => isEmail(val))
-        .withMessage(`Email is not well formed.`)
+        .custom((val) => isEmail(val))
+        .withMessage('Email is not well formed.')
         .optional({
           nullable: true,
-          checkFalsy: true
+          checkFalsy: true,
         }),
       body('phone')
         .isMobilePhone()
-        .withMessage(`Phone number is not well formed.`)
+        .withMessage('Phone number is not well formed.')
         .optional({
           nullable: true,
-          checkFalsy: true
-        })
+          checkFalsy: true,
+        }),
     ];
   }
 
@@ -48,27 +49,31 @@ class AuthValidator extends BaseValidator {
         .not()
         .isEmpty()
         .withMessage('Password confirmation is required.')
-        .custom((val, {req}) => {
-          return val == req.body.password;
-        })
-        .withMessage('Password confirmation does not match.')
+        .custom((val, { req }) => val === req.body.password)
+        .withMessage('Password confirmation does not match.'),
     ];
   }
+
   static confirmOTPRules() {
     return [
-      body('otp').not().isEmpty().withMessage('reset token is required.')
+      body('otp').not().isEmpty().withMessage('reset token is required.'),
     ];
   }
+
   static async canResetPassword(req, res, next) {
     const query = {};
-    const {email, phone} = req.body;
-    email && Object.assign(query, {email});
-    phone && Object.assign(query, {phone});
+    const { email, phone } = req.body;
+    if (email) {
+      Object.assign(query, { email });
+    }
+    if (phone) {
+      Object.assign(query, { phone });
+    }
 
     if (!query.phone && !query.email) {
       Response.setError(
         HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
-        'Email or Phone number is required.'
+        'Email or Phone number is required.',
       );
       return Response.send(res);
     }
@@ -78,7 +83,7 @@ class AuthValidator extends BaseValidator {
     if (!user) {
       Response.setError(
         HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-        'Account not found.'
+        'Account not found.',
       );
       return Response.send(res);
     }
@@ -86,28 +91,27 @@ class AuthValidator extends BaseValidator {
     if (!AuthValidator.selfResetAllowedFor.includes(user.RoleId)) {
       Response.setError(
         HttpStatusCode.STATUS_BAD_REQUEST,
-        'Reset password request not allowed for the user account.'
+        'Reset password request not allowed for the user account.',
       );
       return Response.send(res);
     }
 
     req.user = user;
-    next();
+    return next();
   }
 
   static async checkResetPasswordToken(req, res, next) {
     const reference = req.body.ref;
-    const record =
-      reference && (await AuthService.getPasswordTokenRecord(reference));
+    const record = reference && (await AuthService.getPasswordTokenRecord(reference));
     if (!record) {
       Response.setError(
         HttpStatusCode.STATUS_BAD_REQUEST,
-        'Invalid or expired request. Please try again'
+        'Invalid or expired request. Please try again',
       );
       if (!reference) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Invalid or missing reset password reference.'
+          'Invalid or missing reset password reference.',
         );
       }
       return Response.send(res);
@@ -116,13 +120,13 @@ class AuthValidator extends BaseValidator {
     if (!compareHash(req.body.otp, record.token)) {
       Response.setError(
         HttpStatusCode.STATUS_BAD_REQUEST,
-        'Invalid or wrong OTP.'
+        'Invalid or wrong OTP.',
       );
       return Response.send(res);
     }
     req.record = record;
     req.user = await record.getUser();
-    next();
+    return next();
   }
 }
 

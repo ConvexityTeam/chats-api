@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('Invites', {
@@ -9,25 +8,25 @@ module.exports = {
         defaultValue: Sequelize.UUIDV4,
       },
       email: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       inviterId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       token: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('Invites');
-  }
+  },
 };

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -10,12 +8,12 @@ module.exports = {
      */
     await queryInterface.addColumn('Campaigns', 'total_imported', {
       type: Sequelize.INTEGER,
-      defaultValue: 0
+      defaultValue: 0,
     });
 
     await queryInterface.addColumn('Campaigns', 'total_beneficiaries', {
       type: Sequelize.INTEGER,
-      defaultValue: 0
+      defaultValue: 0,
     });
 
     await queryInterface.addColumn('Campaigns', 'fund_status', {
@@ -24,13 +22,13 @@ module.exports = {
         'in_progress',
         'processing',
         'success',
-        'error'
+        'error',
       ),
-      defaultValue: 'pending'
+      defaultValue: 'pending',
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -40,5 +38,5 @@ module.exports = {
     await queryInterface.removeColumn('Campaigns', 'total_imported');
     await queryInterface.removeColumn('Campaigns', 'total_beneficiaries');
     await queryInterface.removeColumn('Campaigns', 'fund_status');
-  }
+  },
 };

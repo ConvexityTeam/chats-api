@@ -1,8 +1,6 @@
-const {Response, Logger} = require('../libs');
 const moment = require('moment');
-const {HttpStatusCode, compareHash, AclRoles} = require('../utils');
-
-const {ProductBeneficiary} = require('../models');
+const { Response, Logger } = require('../libs');
+const { HttpStatusCode, compareHash, AclRoles } = require('../utils');
 
 const {
   VendorService,
@@ -11,17 +9,15 @@ const {
   OrderService,
   CampaignService,
   BlockchainService,
-  OrganisationService,
-  QueueService
+  QueueService,
 } = require('../services');
-const db = require('../models');
-const Utils = require('../libs/Utils');
 const BeneficiariesService = require('../services/BeneficiaryService');
+
 class OrderController {
   static async getOrderByReference(req, res) {
     try {
-      const reference = req.params.reference;
-      const order = await VendorService.getOrder({reference});
+      const { reference } = req.params;
+      const order = await VendorService.getOrder({ reference });
       if (order) {
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'Order details', order);
         return Response.send(res);
@@ -29,14 +25,14 @@ class OrderController {
 
       Response.setError(
         HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-        'Order not found.'
+        'Order not found.',
       );
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry.',
       );
       return Response.send(res);
     }
@@ -51,29 +47,29 @@ class OrderController {
         approvedBeneficiary,
         campaign_token,
         beneficiaryWallet,
-        user
+        user,
       ] = await Promise.all([
         CampaignService.getCampaignById(data.campaign_id),
         BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
         BeneficiariesService.getApprovedBeneficiary(
           data.campaign_id,
-          data.beneficiary_id
+          data.beneficiary_id,
         ),
         BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
         WalletService.findUserCampaignWallet(
           data.beneficiary_id,
-          data.campaign_id
+          data.campaign_id,
         ),
         UserService.findSingleUser({
           RoleId: AclRoles.Beneficiary,
-          id: data.beneficiary_id
-        })
+          id: data.beneficiary_id,
+        }),
       ]);
       if (approvedBeneficiary.status === 'processing') {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Approve spending is already processing.',
-          approvedBeneficiary
+          approvedBeneficiary,
         );
         Logger.info('Approve spending is already processing.');
         return Response.send(res);
@@ -83,15 +79,15 @@ class OrderController {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Please wait approve spending sent for processing.',
-          approvedBeneficiary
+          approvedBeneficiary,
         );
         Logger.info('Please wait approve spending sent for processing.');
         return Response.send(res);
       }
-      //putting logs
+      // putting logs
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
-        let amount = (
-          parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
+        const amount = (
+          parseInt(campaign.budget, 10) / parseInt(approvedBeneficiaries.length, 10)
         ).toFixed(2);
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
@@ -99,22 +95,26 @@ class OrderController {
           amount,
           beneficiaryWallet.uuid,
           campaign,
-          user
+          user,
         );
       }
 
       if (campaign.type === 'item' && !beneficiaryWallet.was_funded) {
+        const amount = (
+          parseInt(campaign.minting_limit, 10) / parseInt(approvedBeneficiaries.length, 10)
+        );
         await QueueService.approveNFTSpending(
           data.beneficiary_id,
           data.campaign_id,
-          campaign
+          campaign,
+          amount,
         );
       }
 
       if (!user) {
         Response.errors(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Beneficiary not found'
+          'Beneficiary not found',
         );
         Logger.error('Beneficiary not found');
         return Response.send(res);
@@ -122,16 +122,16 @@ class OrderController {
       if (!campaign) {
         Response.errors(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign not found'
+          'Campaign not found',
         );
         Logger.error('Campaign not found');
         return Response.send(res);
       }
-      await approvedBeneficiary.update({status: 'in_progress'});
+      await approvedBeneficiary.update({ status: 'in_progress' });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Initializing payment',
-        approvedBeneficiary
+        approvedBeneficiary,
       );
       Logger.info('Initializing payment');
       return Response.send(res);
@@ -140,22 +140,23 @@ class OrderController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal server error. Please try again later.',
-        error
+        error,
       );
       return Response.send(res);
     }
   }
+
   static async approveStatus(req, res) {
-    const {campaign_id, beneficiary_id} = req.params;
+    const { campaign_id, beneficiary_id } = req.params;
     try {
       const is_approved = await BeneficiariesService.getApprovedBeneficiary(
         campaign_id,
-        beneficiary_id
+        beneficiary_id,
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Checking beneficiary approve status',
-        is_approved
+        is_approved,
       );
       return Response.send(res);
     } catch (error) {
@@ -163,38 +164,39 @@ class OrderController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal server error. Please try again later.',
-        error
+        error,
       );
       return Response.send(res);
     }
   }
+
   static async comfirmsmsTOKEN(req, res) {
-    const pin = req.body.pin;
+    const { pin } = req.body;
     const id = req.body.beneficiaryId;
-    const {reference} = req.params;
+    const { reference } = req.params;
     try {
       Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
-      const data = await VendorService.getOrder({reference});
-      const user = await UserService.findSingleUser({id});
+      const data = await VendorService.getOrder({ reference });
+      const user = await UserService.findSingleUser({ id });
 
       if (!user) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Invalid beneficiary'
+          'Invalid beneficiary',
         );
         Logger.error('Invalid beneficiary');
         return Response.send(res);
       }
-      if (!user.pin && data.order.CampaignId != 188) {
+      if (!user.pin && data.order.CampaignId !== 188) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
         Logger.error('Pin not set');
         return Response.send(res);
       }
 
-      if (!compareHash(pin, user.pin) && data.order.CampaignId != 188) {
+      if (!compareHash(pin, user.pin) && data.order.CampaignId !== 188) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Invalid or wrong PIN.'
+          'Invalid or wrong PIN.',
         );
         Logger.error('Invalid or wrong PIN.');
         return Response.send(res);
@@ -203,7 +205,7 @@ class OrderController {
       if (!data) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Order not found.'
+          'Order not found.',
         );
         Logger.error('Order not found.');
         return Response.send(res);
@@ -212,7 +214,7 @@ class OrderController {
       if (data.order.status !== 'pending') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Order ${data.order.status}`
+          `Order ${data.order.status}`,
         );
         Logger.error(`Order ${data.order.status}`);
         return Response.send(res);
@@ -220,23 +222,23 @@ class OrderController {
 
       const campaignWallet = await WalletService.findSingleWallet({
         CampaignId: data.order.CampaignId,
-        UserId: null
+        UserId: null,
       });
       const vendorWallet = await WalletService.findSingleWallet({
-        UserId: data.order.Vendor.id
+        UserId: data.order.Vendor.id,
       });
 
       const beneficiaryWallet = await WalletService.findUserCampaignWallet(
         id,
-        data.order.CampaignId
+        data.order.CampaignId,
       );
       const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
+        data.order.CampaignId,
       );
 
       const token = await BlockchainService.allowance(
         campaignWallet.address,
-        beneficiaryWallet.address
+        beneficiaryWallet.address,
       );
       Logger.info(`Beneficiary wallet: ${JSON.stringify(beneficiaryWallet)}`);
       const balance = Number(token.Allowed.split(',').join(''));
@@ -246,44 +248,44 @@ class OrderController {
       if (!beneficiaryWallet) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Account not eligible to pay for order'
+          'Account not eligible to pay for order',
         );
-        Logger.error(`Account not eligible to pay for order`);
+        Logger.error('Account not eligible to pay for order');
         return Response.send(res);
       }
       if (!vendorWallet) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Vendor Wallet Not Found..'
+          'Vendor Wallet Not Found..',
         );
-        Logger.error(`Vendor Wallet Not Found..`);
+        Logger.error('Vendor Wallet Not Found..');
         return Response.send(res);
       }
       if (!campaignWallet) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign Wallet Not Found..'
+          'Campaign Wallet Not Found..',
         );
-        Logger.error(`Campaign Wallet Not Found..`);
+        Logger.error('Campaign Wallet Not Found..');
         return Response.send(res);
       }
 
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance.'
+          'Insufficient wallet balance.',
         );
         Logger.error('Insufficient wallet balance.');
         return Response.send(res);
       }
 
       if (
-        campaign.type === 'item' &&
-        beneficiaryWallet.balance < data.total_cost
+        campaign.type === 'item'
+        && beneficiaryWallet.balance < data.total_cost
       ) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance.'
+          'Insufficient wallet balance.',
         );
         Logger.error('Insufficient wallet balance.');
         return Response.send(res);
@@ -295,7 +297,7 @@ class OrderController {
         data.order,
         data.order.Vendor,
         data.total_cost,
-        campaign
+        campaign,
       );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
@@ -304,25 +306,26 @@ class OrderController {
       Logger.error(`Order Error: ${error}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.' + error,
-        error
+        `Internal server error. Please try again later.${error}`,
+        error,
       );
       return Response.send(res);
     }
   }
+
   static async completeOrder(req, res) {
     try {
-      const {reference} = req.params;
+      const { reference } = req.params;
 
-      const data = await VendorService.getOrder({reference});
+      const data = await VendorService.getOrder({ reference });
       const campaign = await CampaignService.getCampaignById(
-        data.order.CampaignId
+        data.order.CampaignId,
       );
 
       if (!data) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Order not found.'
+          'Order not found.',
         );
         return Response.send(res);
       }
@@ -330,47 +333,47 @@ class OrderController {
       if (data.order.status !== 'pending') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Order ${data.order.status}`
+          `Order ${data.order.status}`,
         );
         return Response.send(res);
       }
       const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
-        data.order.CampaignId
+        data.order.CampaignId,
       );
 
       const [
         campaignWallet,
         vendorWallet,
-        beneficiaryWallet
+        beneficiaryWallet,
       ] = await Promise.all([
         WalletService.findSingleWallet({
           CampaignId: data.order.CampaignId,
-          UserId: null
+          UserId: null,
         }),
-        WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
-        WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
+        WalletService.findSingleWallet({ UserId: data.order.Vendor.id }),
+        WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId),
       ]);
       const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${data.order.CampaignId}`
+        `campaign_${data.order.CampaignId}`,
       );
 
       const beneficiary_token = await BlockchainService.setUserKeypair(
-        `user_${req.user.id}campaign_${data.order.CampaignId}`
+        `user_${req.user.id}campaign_${data.order.CampaignId}`,
       );
 
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
-        let amount = campaign.budget / approvedBeneficiaries.length;
+        const amount = campaign.budget / approvedBeneficiaries.length;
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
           beneficiary_token.address,
           amount,
           beneficiaryWallet.uuid,
           campaign,
-          req.user
+          req.user,
         );
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Initializing payment'
+          'Initializing payment',
         );
         Logger.error('Initializing payment');
         return Response.send(res);
@@ -378,7 +381,7 @@ class OrderController {
 
       const token = await BlockchainService.allowance(
         campaign_token.address,
-        beneficiary_token.address
+        beneficiary_token.address,
       );
 
       const balance = Number(token.Allowed.split(',').join(''));
@@ -386,19 +389,19 @@ class OrderController {
       if (campaign.type !== 'item' && balance < data.total_cost) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance.'
+          'Insufficient wallet balance.',
         );
         Logger.error('Insufficient wallet balance.');
         return Response.send(res);
       }
 
       if (
-        campaign.type === 'item' &&
-        beneficiaryWallet.balance < data.total_cost
+        campaign.type === 'item'
+        && beneficiaryWallet.balance < data.total_cost
       ) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance.'
+          'Insufficient wallet balance.',
         );
         Logger.error('Insufficient wallet balance.');
         return Response.send(res);
@@ -411,14 +414,14 @@ class OrderController {
         data.order,
         data.order.Vendor,
         data.total_cost,
-        campaign
+        campaign,
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.' + error
+        `Server error: Please retry.${error}`,
       );
       return Response.send(res);
     }
@@ -428,13 +431,13 @@ class OrderController {
     try {
       const maleCount = {};
       const femaleCount = {};
-      let gender = {male: [], female: []};
-      const {organisation_id} = req.params;
+      const gender = { male: [], female: [] };
+      const { organisation_id } = req.params;
       const filtered_data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
         OrganisationId: organisation_id,
-        ...req.query
+        ...req.query,
       });
       const products = await OrderService.productPurchased(organisation_id);
 
@@ -442,30 +445,29 @@ class OrderController {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased By Gender Recieved',
-          gender
+          gender,
         );
         return Response.send(res);
       }
 
-      campaigns.data &&
-        campaigns?.data?.forEach(campaign => {
-          //CampaignId
-          products.data.forEach(product => {
+      if (campaigns.data && products.data) {
+        campaigns.data.forEach((campaign) => {
+          products.data.forEach((product) => {
             if (campaign.id === product.CampaignId) {
               filtered_data.push(product);
             }
           });
         });
-      filtered_data.forEach(product => {
-        product.Cart.forEach(cart => {
-          cart.Product.ProductBeneficiaries.forEach(beneficiary => {
+      }
+
+      filtered_data.forEach((product) => {
+        product.Cart.forEach((cart) => {
+          cart.Product.ProductBeneficiaries.forEach((beneficiary) => {
             if (beneficiary.gender === 'male') {
-              maleCount[cart.Product.tag] =
-                (maleCount[cart.Product.tag] || 0) + 1;
+              maleCount[cart.Product.tag] = (maleCount[cart.Product.tag] || 0) + 1;
             }
             if (beneficiary.gender === 'female') {
-              femaleCount[cart.Product.tag] =
-                (femaleCount[cart.Product.tag] || 0) + 1;
+              femaleCount[cart.Product.tag] = (femaleCount[cart.Product.tag] || 0) + 1;
             }
           });
         });
@@ -474,14 +476,14 @@ class OrderController {
       gender.female.push(femaleCount);
       gender.male.push(maleCount);
       gender.male = gender.male.reduce((acc, obj) => {
-        Object.keys(obj).forEach(key => {
-          acc.push({[key]: obj[key]});
+        Object.keys(obj).forEach((key) => {
+          acc.push({ [key]: obj[key] });
         });
         return acc;
       }, []);
       gender.female = gender.female.reduce((acc, obj) => {
-        Object.keys(obj).forEach(key => {
-          acc.push({[key]: obj[key]});
+        Object.keys(obj).forEach((key) => {
+          acc.push({ [key]: obj[key] });
         });
         return acc;
       }, []);
@@ -489,13 +491,13 @@ class OrderController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Product Purchased By Gender Received',
-        gender
+        gender,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.' + error
+        `Server error: Please retry.${error}`,
       );
       return Response.send(res);
     }
@@ -503,103 +505,87 @@ class OrderController {
 
   static async productPurchasedByAgeGroup(req, res) {
     try {
-      const {organisation_id} = req.params;
-      let ageRange = ['18-29', '30-41', '42-53', '54-65', '66~'];
-      let data = [];
+      const { organisation_id } = req.params;
+      const ageRange = ['18-29', '30-41', '42-53', '54-65', '66~'];
+      const data = [];
       const filtered_data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation_id,
       });
       const products = await OrderService.productPurchased(organisation_id);
       if (products.length > 0) {
-        campaigns.forEach(campaign => {
-          //CampaignId
-          products.forEach(product => {
+        campaigns.forEach((campaign) => {
+          // CampaignId
+          products.forEach((product) => {
             if (campaign.id === product.CampaignId) {
               filtered_data.push(product);
             }
           });
         });
-        filtered_data.forEach(product => {
-          product.Cart.forEach(cart => {
-            cart.Product.ProductBeneficiaries.forEach(beneficiary => {
+        filtered_data.forEach((product) => {
+          product.Cart.forEach((cart) => {
+            cart.Product.ProductBeneficiaries.forEach((beneficiary) => {
               if (
-                data.length <= 0 ||
-                !data.find(val => val.label === cart.Product['tag'])
+                data.length <= 0
+                || !data.find((val) => val.label === cart.Product.tag)
               ) {
-                data.push({label: cart.Product['tag'], data: [0, 0, 0, 0, 0]});
+                data.push({ label: cart.Product.tag, data: [0, 0, 0, 0, 0] });
               }
-              for (let val of data) {
+
+              data.forEach((val) => {
+                const valCopy = { ...val };
                 if (
-                  cart.Product['tag'] === val.label &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) >= 18 &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) <= 29
+                  cart.Product.tag === val.label
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) >= 18
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) <= 29
                 ) {
-                  val.data[0]++;
+                  valCopy.data[0] += 1;
                 }
                 if (
-                  cart.Product['tag'] === val.label &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) >= 30 &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) <= 41
+                  cart.Product.tag === val.label
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) >= 30
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) <= 41
                 ) {
-                  val.data[1]++;
+                  valCopy.data[1] += 1;
                 }
                 if (
-                  cart.Product['tag'] === val.label &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) >= 42 &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) <= 53
+                  cart.Product.tag === val.label
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) >= 42
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) <= 53
                 ) {
-                  val.data[2]++;
+                  valCopy.data[2] += 1;
                 }
                 if (
-                  cart.Product['tag'] === val.label &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) >= 54 &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) <= 65
+                  cart.Product.tag === val.label
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) >= 54
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) <= 65
                 ) {
-                  val.data[3]++;
+                  valCopy.data[3] += 1;
                 }
                 if (
-                  cart.Product['tag'] === val.label &&
-                  parseInt(
-                    moment().format('YYYY') -
-                      moment(beneficiary.dob).format('YYYY')
-                  ) >= 66
+                  cart.Product.tag === val.label
+                  && parseInt(moment().format('YYYY')
+                      - moment(beneficiary.dob).format('YYYY'), 10) >= 66
                 ) {
-                  val.data[4]++;
+                  valCopy.data[4] += 1;
                 }
-              }
+              });
             });
           });
         });
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Product Purchased By Age Group Retrieved.',
-          {ageRange, data}
+          { ageRange, data },
         );
         return Response.send(res);
       }
@@ -607,57 +593,64 @@ class OrderController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'No Product Purchased By Age Group Retrieved.',
-        {ageRange, data}
+        { ageRange, data },
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.'
+        'Internal server error. Please try again later.',
       );
       return Response.send(res);
     }
   }
 
   static async productPurchased(req, res) {
+    function getMonthDifference(startDate, endDate) {
+      return (
+        endDate.getMonth()
+        - startDate.getMonth()
+        + 12 * (endDate.getFullYear() - startDate.getFullYear())
+      );
+    }
+
     try {
-      const {organisation_id} = req.params;
-      let filtered_data = [];
-      let data = [];
+      const { organisation_id } = req.params;
+      const filtered_data = [];
+      const data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
         OrganisationId: organisation_id,
-        ...req.query
+        ...req.query,
       });
       const products = await OrderService.productPurchased(
         organisation_id,
-        req.query
+        req.query,
       );
 
       if (products.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
-          products
+          products,
         );
         return Response.send(res);
       }
-      campaigns.data.forEach(campaign => {
-        //CampaignId
-        products.data.forEach(product => {
+      campaigns.data.forEach((campaign) => {
+        // CampaignId
+        products.data.forEach((product) => {
           if (campaign.id === product.CampaignId) {
             filtered_data.push(product);
           }
         });
       });
-      filtered_data.forEach(product => {
-        product.Cart.forEach(cart => {
+      filtered_data.forEach((product) => {
+        product.Cart.forEach((cart) => {
           if (
-            data.length <= 0 ||
-            !data.find(
-              val =>
-                val.vendorId == product.Vendor.id &&
-                val.productId == cart.ProductId
+            data.length <= 0
+            || !data.find(
+              (val) => val.vendorId === product.Vendor.id
+                && val.productId === cart.ProductId,
             )
           ) {
             data.push({
@@ -666,61 +659,55 @@ class OrderController {
               vendorId: product.Vendor.id,
               product_category: cart.Product.product_category,
               vendor_name:
-                product.Vendor.first_name + ' ' + product.Vendor.first_name,
+                `${product.Vendor.first_name} ${product.Vendor.first_name}`,
               sales_volume: cart.total_amount,
               product_quantity: cart.quantity,
               product_cost: cart.Product.cost,
               total_revenue: cart.Product.cost * cart.quantity,
-              date_of_purchased: cart.updatedAt
+              date_of_purchased: cart.updatedAt,
             });
           }
-          for (let val of data) {
+          data.forEach((val) => {
+            const valCopy = { ...val };
             if (
-              val.vendorId == product.Vendor.id &&
-              val.productId == cart.ProductId
+              val.vendorId === product.Vendor.id
+              && val.productId === cart.ProductId
             ) {
-              val.sales_volume +=
-                (val.product_quantity + cart.quantity) *
-                getMonthDifference(
+              valCopy.sales_volume
+                += (val.product_quantity + cart.quantity)
+                * getMonthDifference(
                   new Date(val.date_of_purchased),
-                  new Date(cart.updatedAt)
+                  new Date(cart.updatedAt),
                 );
-              val.total_revenue += cart.Product.cost * cart.quantity;
-              val.product_quantity += cart.quantity;
+              valCopy.total_revenue += cart.Product.cost * cart.quantity;
+              valCopy.product_quantity += cart.quantity;
             }
-          }
+          });
         });
       });
-
-      function getMonthDifference(startDate, endDate) {
-        return (
-          endDate.getMonth() -
-          startDate.getMonth() +
-          12 * (endDate.getFullYear() - startDate.getFullYear())
-        );
-      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Product Purchased Received',
-        data
+        data,
       );
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry.',
       );
       return Response.send(res);
     }
   }
+
   static async soldAndValue(req, res) {
     try {
-      const {organisation_id} = req.params;
+      const { organisation_id } = req.params;
       const data = [];
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation_id,
       });
       const products = await OrderService.productPurchased(organisation_id);
 
@@ -728,40 +715,42 @@ class OrderController {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
-          products
+          products,
         );
         return Response.send(res);
       }
-      campaigns.data &&
-        campaigns.data?.forEach(campaign => {
-          //CampaignId
-          products &&
-            products.data?.forEach(product => {
+
+      if (campaigns.data) {
+        campaigns.data.forEach(async (campaign) => {
+          if (products.data) {
+            products.data.forEach((product) => {
               if (campaign.id === product.CampaignId) {
                 data.push(product);
               }
             });
+          }
         });
+      }
 
       let total_product_value = 0;
-      data.forEach(product => {
-        product.Cart.forEach(cart => {
+      data.forEach((product) => {
+        product.Cart.forEach((cart) => {
           total_product_value += cart.total_amount;
         });
       });
-      let total_product_sold = data.length;
+      const total_product_sold = data.length;
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Product Purchased Received',
-        {total_product_sold, total_product_value}
+        { total_product_sold, total_product_value },
       );
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry. me' + error
+        `Server error: Please retry. me${error}`,
       );
       return Response.send(res);
     }

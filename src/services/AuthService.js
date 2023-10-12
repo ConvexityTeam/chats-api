@@ -1,22 +1,19 @@
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
+const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
+const moment = require('moment');
+const jwt = require('jsonwebtoken');
+const { createHash, GenerateOtp } = require('../utils');
+const { User, OneTimePassword, Invites } = require('../models');
 const {
   generate2faSecret,
   verify2faToken,
-  GenerateVendorOtp
+  GenerateVendorOtp,
 } = require('../utils');
-const {User, OneTimePassword, Invites} = require('../models');
-const {v4: uuidv4} = require('uuid');
-const {createHash, GenerateOtp} = require('../utils');
-const bcrypt = require('bcryptjs');
-const moment = require('moment');
-const redis = require('redis');
-const jwt = require('jsonwebtoken');
-const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
 const CurrencyServices = require('./CurrencyServices');
-const {user} = require('../config/mailer');
 
 // const Vault = require('hashi-vault-js');
 
@@ -39,19 +36,19 @@ const {user} = require('../config/mailer');
 class AuthService {
   static async login(data, _password, roleId = null) {
     const error = new Error();
-    return new Promise(async function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       if (data) {
-        const {password, tfa_secret, ...user} = data.toJSON();
+        const { password, tfa_secret: tfaSecret, ...user } = data.toJSON();
 
         if (bcrypt.compareSync(_password, password)) {
-          if (user.status == 'suspended') {
+          if (user.status === 'suspended') {
             error.status = 401;
             error.message = 'Account Suspended. Contact Support.';
             reject(error);
             return;
           }
 
-          if (roleId && user.RoleId != roleId) {
+          if (roleId && user.RoleId !== roleId) {
             error.status = 401;
             error.message = 'Unathorized access.';
             reject(error);
@@ -59,17 +56,17 @@ class AuthService {
           }
           const uid = user.id;
           const oids = user.AssociatedOrganisations.map(
-            assoc => assoc.OrganisationId
+            (assoc) => assoc.OrganisationId,
           );
           const token = jwt.sign(
             {
               uid,
-              oids
+              oids,
             },
             process.env.SECRET_KEY,
             {
-              expiresIn: '48hr'
-            }
+              expiresIn: '48hr',
+            },
           );
 
           // for (const key in currencyData) {
@@ -80,7 +77,7 @@ class AuthService {
 
           resolve({
             user,
-            token
+            token,
           });
         }
         error.status = 401;
@@ -94,33 +91,32 @@ class AuthService {
     });
   }
 
-  static async add2faSecret(user, tfa_method) {
-    return new Promise(async (resolve, reject) => {
+  static async add2faSecret(user, tfaMethod) {
+    return new Promise((resolve, reject) => {
       let qrcodeData;
-
       generate2faSecret()
-        .then(_data => {
+        .then((_data) => {
           qrcodeData = _data;
           return User.update(
-            {tfa_secret: _data.secret},
-            {where: {id: user.id}}
+            { tfa_secret: _data.secret },
+            { where: { id: user.id } },
           );
         })
         .then(() => {
-          if (tfa_method == 'sms') {
+          if (tfaMethod === 'sms') {
             SmsService.send(
               user.phone,
-              `2AF Verification Code: ${qrcodeData.code}`
+              `2AF Verification Code: ${qrcodeData.code}`,
             );
             delete qrcodeData.qrcode_url;
             delete qrcodeData.code;
             return resolve(qrcodeData);
           }
-          if (tfa_method == 'email') {
-            MailerService._sendMail(
+          if (tfaMethod === 'email') {
+            MailerService.sendMail(
               user.email,
               `2AF Verification Code: ${qrcodeData.code}`,
-              '<h1>2AF Verification Code: ' + qrcodeData.code + '</h1>'
+              `<h1>2AF Verification Code: ${qrcodeData.code}</h1>`,
             );
             delete qrcodeData.qrcode_url;
             delete qrcodeData.code;
@@ -129,23 +125,22 @@ class AuthService {
           delete qrcodeData.code;
           return resolve(qrcodeData);
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
-          reject(new Error(`Error updating secret. Please retry.`));
+          reject(new Error('Error updating secret. Please retry.'));
         });
-      return;
     });
   }
 
   static async verify2FASecret(user, secrete) {
     return new Promise((resolve, reject) => {
-      User.findByPk(user.id).then(_user => {
+      User.findByPk(user.id).then((_user) => {
         if (!_user) {
-          reject(new Error(`User not found.`));
+          reject(new Error('User not found.'));
           return;
         }
         if (!_user.tfa_secret) {
-          reject(new Error(`2AF Secret not set.`));
+          reject(new Error('2AF Secret not set.'));
           return;
         }
         const verified = verify2faToken(user.tfa_secret, secrete);
@@ -153,16 +148,18 @@ class AuthService {
           reject(new Error('Invalid or wrong token.'));
           return;
         }
-        return resolve(verified);
+        resolve(verified);
       });
     });
   }
-  static async enable2afCheck(user, token, tfa_method) {
+
+  static async enable2afCheck(user, token, tfaMethod) {
+    const userCopy = { ...user };
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
-        .then(_user => {
+        .then((_user) => {
           if (!_user.tfa_secret) {
-            reject(new Error(`2FA Secret not set.`));
+            reject(new Error('2FA Secret not set.'));
             return;
           }
 
@@ -172,70 +169,70 @@ class AuthService {
           }
 
           User.update(
-            {is_tfa_enabled: true, tfa_method, tfa_binded_date: new Date()},
-            {where: {id: user.id}}
+            { is_tfa_enabled: true, tfa_method: tfaMethod, tfa_binded_date: new Date() },
+            { where: { id: user.id } },
           )
             .then(async () => {
-              user.is_tfa_enabled = true;
+              userCopy.is_tfa_enabled = true;
               const uid = user.id;
               const oids = user?.AssociatedOrganisations.map(
-                assoc => assoc.OrganisationId
+                (assoc) => assoc.OrganisationId,
               );
-              const token = jwt.sign(
+              const jwtToken = jwt.sign(
                 {
                   uid,
-                  oids
+                  oids,
                 },
                 process.env.SECRET_KEY,
                 {
-                  expiresIn: '48hr'
-                }
+                  expiresIn: '48hr',
+                },
               );
 
-              const currencyData =
-                await CurrencyServices.getSpecificCurrencyExchangeRate(
-                  user.currency
-                );
+              const currencyData = await CurrencyServices.getSpecificCurrencyExchangeRate(
+                user.currency,
+              );
 
-              user.dataValues.currencyData = currencyData;
+              userCopy.dataValues.currencyData = currencyData;
 
               resolve({
                 user,
-                token
+                jwtToken,
               });
             })
-            .catch(err => {
+            .catch((err) => {
               console.log(err);
               reject(new Error('Update failed. Please retry.'));
             });
         })
         .catch(() => {
-          reject(new Error(`User not found.`));
+          reject(new Error('User not found.'));
         });
     });
   }
 
   static async disable2afCheck(user) {
+    const userCopy = { ...user };
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
-        .then(_user => {
+        .then((_user) => {
           if (!_user) {
-            reject(new Error(`User not found`));
+            reject(new Error('User not found'));
             return;
           }
 
-          User.update({is_tfa_enabled: false}, {where: {id: user.id}})
+          User.update({ is_tfa_enabled: false }, { where: { id: user.id } })
             .then(() => {
-              user.is_tfa_enabled = false;
+              userCopy.is_tfa_enabled = false;
               resolve(user.toObject());
             })
-            .catch(err => {
+            .catch((err) => {
               console.log(err);
               reject(new Error('Update failed. Please retry.'));
             });
         })
         .catch(() => {
-          reject(new Error(`User not found.`));
+          reject(new Error('User not found.'));
         });
     });
   }
@@ -243,57 +240,58 @@ class AuthService {
   static async state2fa(user) {
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
-        .then(_user => {
+        .then((_user) => {
           if (!_user) {
-            reject(new Error(`User not found`));
+            reject(new Error('User not found'));
             return;
           }
           resolve(_user.toObject());
         })
         .catch(() => {
-          reject(new Error(`User not found.`));
+          reject(new Error('User not found.'));
         });
     });
   }
 
   static async toggle2afCheck(user) {
+    const userCopy = { ...user };
     return new Promise((resolve, reject) => {
       User.findByPk(user.id)
-        .then(_user => {
+        .then((_user) => {
           if (!_user) {
-            reject(new Error(`User not found`));
+            reject(new Error('User not found'));
             return;
           }
           User.update(
-            {is_tfa_enabled: !_user.is_tfa_enabled},
-            {where: {id: user.id}}
+            { is_tfa_enabled: !_user.is_tfa_enabled },
+            { where: { id: user.id } },
           )
             .then(() => {
-              user.is_tfa_enabled = false;
+              userCopy.is_tfa_enabled = false;
               resolve(user.toObject());
             })
-            .catch(err => {
+            .catch((err) => {
               console.log(err);
               reject(new Error('Update failed. Please retry.'));
             });
         })
         .catch(() => {
-          reject(new Error(`User not found.`));
+          reject(new Error('User not found.'));
         });
     });
   }
 
-  static async createPasswordToken(UserId, request_ip, expiresAfter = 10) {
+  static async createPasswordToken(UserId, requestIp, expiresAfter = 10) {
     const otp = GenerateVendorOtp();
     const token = createHash(otp);
-    const expires_at = moment().add(expiresAfter, 'm').toDate();
+    const expiresAt = moment().add(expiresAfter, 'm').toDate();
     const user = await UserService.findUser(UserId);
-    const name = user.first_name + ' ' + user.last_name;
+    const name = `${user.first_name} ${user.last_name}`;
     const create = await OneTimePassword.create({
       UserId,
       token,
-      expires_at,
-      request_ip
+      expires_at: expiresAt,
+      request_ip: requestIp,
     });
 
     // await SmsService.sendOtp(
@@ -306,38 +304,33 @@ class AuthService {
   }
 
   static async resendPasswordToken(UserId, passwordToken) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const user = await UserService.findUser(UserId);
-        const name = user.first_name + ' ' + user.last_name;
-        const otp = GenerateVendorOtp();
-        const token = createHash(otp);
-        const expires_at = moment().add(10, 'm').toDate();
-        const create = await passwordToken.update({
-          token,
-          expires_at
-        });
-        await SmsService.sendOtp(
-          user.phone,
-          `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${create.ref}`
-        );
-        resolve(create);
-      } catch (error) {
-        reject(error);
-      }
+    const user = await UserService.findUser(UserId);
+    const name = `${user.first_name} ${user.last_name}`;
+    const otp = GenerateVendorOtp();
+    const token = createHash(otp);
+    const expiresAt = moment().add(10, 'm').toDate();
+    const updatedToken = await passwordToken.update({
+      token,
+      expires_at: expiresAt,
     });
+    await SmsService.sendOtp(
+      user.phone,
+      `Hi ${name}, your CHATS verification OTP is: ${otp} and ref is: ${updatedToken.ref}`,
+    );
+    return updatedToken;
   }
-  static async createResetPassword(UserId, request_ip, expiresAfter = 20) {
+
+  static async createResetPassword(UserId, requestIp, expiresAfter = 20) {
     const otp = GenerateOtp();
     const token = createHash(otp);
-    const expires_at = moment().add(expiresAfter, 'm').toDate();
+    const expiresAt = moment().add(expiresAfter, 'm').toDate();
     const user = await UserService.findUser(UserId);
     const name = user.first_name ? user.first_name : '';
     const reset = await OneTimePassword.create({
       UserId,
       token,
-      expires_at,
-      request_ip
+      expires_at: expiresAt,
+      request_ip: requestIp,
     });
     await MailerService.sendOTP(otp, reset.ref, user.email, name);
     // await SmsService.sendOtp(
@@ -349,7 +342,7 @@ class AuthService {
 
   static async updatedPassord(user, rawPassword) {
     const password = createHash(rawPassword);
-    return user.update({password});
+    return user.update({ password });
   }
 
   static getPasswordTokenRecord(ref) {
@@ -357,22 +350,25 @@ class AuthService {
       where: {
         ref,
         expires_at: {
-          [Op.gte]: new Date()
-        }
-      }
+          [Op.gte]: new Date(),
+        },
+      },
     });
   }
+
   static async inviteDonor(email, inviterId, CampaignId) {
     const token = jwt.sign(
       {
-        email
+        email,
       },
       process.env.SECRET_KEY,
       {
-        expiresIn: '24hr'
-      }
+        expiresIn: '24hr',
+      },
     );
-    await Invites.create({id: uuidv4(), email, inviterId, token, CampaignId});
+    await Invites.create({
+      id: uuidv4(), email, inviterId, token, CampaignId,
+    });
     return token;
   }
 }

@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('VoucherTokens', {
@@ -6,16 +5,16 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       beneficiaryId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: "Users",
+            tableName: 'Users',
           },
-          key: "id",
+          key: 'id',
         },
       },
       campaignId: {
@@ -23,9 +22,9 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "Campaigns",
+            tableName: 'Campaigns',
           },
-          key: "id",
+          key: 'id',
         },
       },
       organisationId: {
@@ -33,9 +32,9 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "Organisations",
+            tableName: 'Organisations',
           },
-          key: "id",
+          key: 'id',
         },
       },
       tokenType: {
@@ -44,7 +43,7 @@ module.exports = {
         defaultValue: 'papertoken',
       },
       token: {
-        type: Sequelize.TEXT
+        type: Sequelize.TEXT,
       },
       amount: {
         type: Sequelize.FLOAT,
@@ -52,16 +51,16 @@ module.exports = {
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('VoucherTokens');
-  }
-  
+  },
+
 };

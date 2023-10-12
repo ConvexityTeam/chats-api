@@ -1,16 +1,16 @@
 const {
-  Response
-} = require("../libs");
+  body,
+} = require('express-validator');
 const {
-  HttpStatusCode
-} = require("../utils");
+  Response,
+} = require('../libs');
 const {
-  OrganisationService
-} = require("../services");
-const BaseValidator = require("./BaseValidator");
+  HttpStatusCode,
+} = require('../utils');
 const {
-  body
-} = require("express-validator");
+  OrganisationService,
+} = require('../services');
+const BaseValidator = require('./BaseValidator');
 
 class OrganisationValidator extends BaseValidator {
   // Delcare Rules here
@@ -18,23 +18,23 @@ class OrganisationValidator extends BaseValidator {
   static profileUpdateRules() {
     return [
       body('country')
-      .notEmpty()
-      .withMessage('Organisation country is required.'),
+        .notEmpty()
+        .withMessage('Organisation country is required.'),
       body('state')
-      .notEmpty()
-      .withMessage('Organisation state is required.'),
+        .notEmpty()
+        .withMessage('Organisation state is required.'),
       body('address')
-      .notEmpty()
-      .withMessage('Organisation address is required.'),
+        .notEmpty()
+        .withMessage('Organisation address is required.'),
       body('year_of_inception')
-      .notEmpty()
-      .withMessage('Year founded is required.'),
+        .notEmpty()
+        .withMessage('Year founded is required.'),
       body('website_url')
-      .notEmpty()
-      .withMessage('Organisation website is required.')
-      .isURL()
-      .withMessage('Website URL is invalid.')
-    ]
+        .notEmpty()
+        .withMessage('Organisation website is required.')
+        .isURL()
+        .withMessage('Website URL is invalid.'),
+    ];
   }
 
   static async organisationExists(req, res, next) {
@@ -47,6 +47,7 @@ class OrganisationValidator extends BaseValidator {
     }
 
     next();
+    return null;
   }
 }
 module.exports = OrganisationValidator;

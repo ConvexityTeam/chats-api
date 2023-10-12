@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class SwitchToken extends Model {
     /**
@@ -7,19 +7,19 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
+    static associate() {
       // define association here
     }
   }
   SwitchToken.init(
     {
       accessToken: DataTypes.TEXT,
-      expires: DataTypes.DATE
+      expires: DataTypes.DATE,
     },
     {
       sequelize,
-      modelName: 'SwitchToken'
-    }
+      modelName: 'SwitchToken',
+    },
   );
   return SwitchToken;
 };

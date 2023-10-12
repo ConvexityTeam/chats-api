@@ -1,7 +1,7 @@
-const {Response} = require('../libs');
+const { Response } = require('../libs');
 const db = require('../models');
-const {TaskService} = require('../services');
-const {SanitizeObject, HttpStatusCode} = require('../utils');
+const { TaskService } = require('../services');
+const { SanitizeObject, HttpStatusCode } = require('../utils');
 
 class TaskController {
   static async createCashForWorkTask(req, res) {
@@ -30,8 +30,7 @@ class TaskController {
 
   static async getCashForWorkTasks(req, res) {
     try {
-      let completed_tasks = 0;
-      let task_count = 0;
+      let completedTasks = 0;
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
 
@@ -43,10 +42,11 @@ class TaskController {
         return Response.send(res);
       }
 
-      CashForWorkTasks.forEach(data => {
-        data.dataValues.completed_tasks = data.completed_tasks
-          ? completed_tasks++
-          : completed_tasks;
+      CashForWorkTasks.forEach((data) => {
+        const taskData = { ...data };
+        taskData.dataValues.completedtasks = data.completedtasks
+          ? completedTasks += 1
+          : completedTasks;
       });
 
       Response.setSuccess(
@@ -66,7 +66,7 @@ class TaskController {
 
   static async getTaskBeneficiaies(req, res) {
     try {
-      let completed_task = 0;
+      let completedTask = 0;
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
         params,
@@ -78,19 +78,22 @@ class TaskController {
         );
         return Response.send(res);
       }
-      //console.log(CashForWorkTasks)
+      // console.log(CashForWorkTasks)
 
-      CashForWorkTasks.AssignedWorkers.forEach(data => {
-        data.TaskAssignment.status === 'completed'
-          ? completed_task++
-          : completed_task;
-        data.dataValues.Assigned_UpdatedAt = data.TaskAssignment.updatedAt;
-        data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
-        data.dataValues.Assigned_Status = data.TaskAssignment.status;
+      // let completedTask: number = 0; // Initialize completedTask to zero
+
+      CashForWorkTasks.AssignedWorkers.forEach((data) => {
+        const taskData = { ...data };
+        if (taskData.TaskAssignment.status === 'completed') {
+          completedTask += 1;
+        }
+        taskData.dataValues.Assigned_UpdatedAt = taskData.TaskAssignment.updatedAt;
+        taskData.dataValues.Assigned_CreatedAt = taskData.TaskAssignment.createdAt;
+        taskData.dataValues.Assigned_Status = taskData.TaskAssignment.status;
       });
-      CashForWorkTasks.dataValues.campleted_task = completed_task;
-      CashForWorkTasks.dataValues.total_task_allowed =
-        CashForWorkTasks.assignment_count;
+
+      CashForWorkTasks.dataValues.campleted_task = completedTask;
+      CashForWorkTasks.dataValues.total_task_allowed = CashForWorkTasks.assignment_count;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
@@ -129,7 +132,7 @@ class TaskController {
 
   static async amendTask(req, res) {
     try {
-      const taskId = req.params.taskId;
+      const { taskId } = req.params;
       const task = await db.Task.findByPk(taskId);
       if (!task) {
         Response.setSuccess(
@@ -139,8 +142,8 @@ class TaskController {
         return Response.send(res);
       }
       const updated = await db.Task.update(
-        {isCompleted: true},
-        {where: {id: taskId}},
+        { isCompleted: true },
+        { where: { id: taskId } },
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Task updated', updated);
       return Response.send(res);
@@ -154,7 +157,7 @@ class TaskController {
   }
 
   static async uploadEvidence(req, res) {
-    const {taskProgressId} = req.params;
+    const { taskProgressId } = req.params;
     const imageUrl = req.file.path;
 
     console.log(req.file, taskProgressId);
@@ -171,13 +174,12 @@ class TaskController {
           evidence,
         );
         return Response.send(res);
-      } else {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Something went wrong while uploading evidence',
-        );
-        return Response.send(res);
       }
+      Response.setError(
+        HttpStatusCode.STATUS_BAD_REQUEST,
+        'Something went wrong while uploading evidence',
+      );
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,

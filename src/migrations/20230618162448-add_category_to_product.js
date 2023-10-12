@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -11,11 +9,11 @@ module.exports = {
     await queryInterface.addColumn('Products', 'product_category', {
       allowNull: true,
       type: Sequelize.STRING,
-      after: 'tag'
+      after: 'tag',
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -23,5 +21,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.dropColumn('Products', 'product_category');
-  }
+  },
 };

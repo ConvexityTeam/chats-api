@@ -1,17 +1,14 @@
-const db = require('../models');
-var bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Message } = require('@droidsolutions-oss/amqp-ts');
+const Validator = require('validatorjs');
+const db = require('../models');
 const util = require('../libs/Utils');
-const VendorServices = require('../services/VendorService');
-const {data} = require('../libs/Utils');
-const {Message} = require('@droidsolutions-oss/amqp-ts');
-var amqp_1 = require('./../libs/RabbitMQ/Connection');
+const amqp1 = require('../libs/RabbitMQ/Connection');
 
-var queue = amqp_1['default'].declareQueue('createWallet', {
+const queue = amqp1.default.declareQueue('createWallet', {
   durable: true,
 });
-
-const Validator = require('validatorjs');
 
 class VendorsAuthController {
   constructor() {
@@ -57,21 +54,21 @@ class VendorsAuthController {
   //     }
   // }
 
-  static async createUser(req, res, next) {
+  static async createUser(req, res) {
     try {
       const {
-        first_name,
-        last_name,
+        first_name: firstName,
+        last_name: lastName,
         email,
         phone,
         password,
         address,
-        store_name,
+        store_name: storeName,
         country,
         state,
         coordinates,
       } = req.body;
-      //check if email already exist
+      // check if email already exist
 
       const rules = {
         first_name: 'required',
@@ -95,59 +92,58 @@ class VendorsAuthController {
           email,
         },
       })
-        .then(user => {
-          if (!!user) {
+        .then((user) => {
+          if (user) {
             util.setError(400, 'Email Already Exists, Recover Your Account');
             return util.send(res);
           }
           bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(password, salt).then(encryptedPassword => {
-              return db.User.create({
-                RoleId: 4,
-                OrganisationId: 2,
-                first_name: first_name,
-                last_name: last_name,
-                phone: phone,
-                email: email,
-                password: encryptedPassword,
-                location: JSON.stringify({country, state, coordinates}),
-                address: address,
-                last_login: new Date(),
-              })
-                .then(async account => {
-                  await account.createStore({
-                    store_name: store_name,
-                    address: address,
-                    location: JSON.stringify({country, state, coordinates}),
-                  });
-                  queue.send(
-                    new Message(
-                      {
-                        id: account.id,
-                        type: 'user',
-                      },
-                      {
-                        contentType: 'application/json',
-                      },
-                    ),
-                  );
-                  util.setSuccess(
-                    201,
-                    'Account Successfully Created',
-                    account.id,
-                  );
-                  return util.send(res);
-                })
-                .catch(error => {
-                  console.log('Could not save to db');
-                  console.log(error);
-                  util.setError(500, error);
-                  return util.send(res);
+            bcrypt.hash(password, salt).then((encryptedPassword) => db.User.create({
+              RoleId: 4,
+              OrganisationId: 2,
+              first_name: firstName,
+              last_name: lastName,
+              phone,
+              email,
+              password: encryptedPassword,
+              location: JSON.stringify({ country, state, coordinates }),
+              address,
+              last_login: new Date(),
+            })
+              .then(async (account) => {
+                await account.createStore({
+                  store_name: storeName,
+                  address,
+                  location: JSON.stringify({ country, state, coordinates }),
                 });
-            });
+                queue.send(
+                  new Message(
+                    {
+                      id: account.id,
+                      type: 'user',
+                    },
+                    {
+                      contentType: 'application/json',
+                    },
+                  ),
+                );
+                util.setSuccess(
+                  201,
+                  'Account Successfully Created',
+                  account.id,
+                );
+                return util.send(res);
+              })
+              .catch((error) => {
+                console.log('Could not save to db');
+                console.log(error);
+                util.setError(500, error);
+                return util.send(res);
+              }));
           });
+          return null;
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
           util.setError(500, err);
           return util.send(res);
@@ -189,7 +185,8 @@ class VendorsAuthController {
     //                     pin: '',
     //                     last_login: (new Date())
     //                 }).then(user => {
-    //                     util.setSuccess(201, "Vendors' Account Created Successfully Created", user);
+    //                     util.setSuccess(201, "Vendors' Account
+    //                  Created Successfully Created", user);
     //                     return util.send(res);
     //                 }).catch(err => {
     //                     util.setError(500, err);
@@ -210,24 +207,25 @@ class VendorsAuthController {
     //     util.setError(500, error);
     //     return util.send(res);
     // }
+    return null;
   }
 
-  static async signIn(req, res, next) {
+  static async signIn(req, res) {
     try {
-      const {email, password} = req.body;
+      const { email, password } = req.body;
       db.User.findOne({
         where: {
-          email: email,
+          email,
           RoleId: 4,
         },
       })
-        .then(user => {
+        .then((user) => {
           bcrypt
             .compare(password, user.password)
-            .then(valid => {
-              //compare password of the retrieved value
+            .then((valid) => {
+              // compare password of the retrieved value
               if (!valid) {
-                //if not valid throw this error
+                // if not valid throw this error
                 const error = new Error('Invalid Login Credentials');
                 util.setError(401, error);
                 return util.send(res);
@@ -243,17 +241,17 @@ class VendorsAuthController {
               );
               const resp = {
                 userId: user.id,
-                token: token,
+                token,
               };
               util.setSuccess(200, 'Login Successful', resp);
               return util.send(res);
             })
-            .catch(error => {
+            .catch((error) => {
               util.setError(500, error);
               return util.send(res);
             });
         })
-        .catch(err => {
+        .catch(() => {
           util.setError(401, 'Invalid Login Credentials');
           return util.send(res);
         });
@@ -261,20 +259,22 @@ class VendorsAuthController {
       util.setError(400, error);
       return util.send(res);
     }
+    return null;
   }
-  static async userDetails(req, res, next) {
-    const id = req.params.id;
+
+  static async userDetails(req, res) {
+    const { id } = req.params;
     try {
       db.User.findOne({
         where: {
-          id: id,
+          id,
         },
       })
-        .then(user => {
+        .then((user) => {
           util.setSuccess(200, 'Got Users Details', user);
           return util.send(res);
         })
-        .catch(err => {
+        .catch((err) => {
           util.setError(404, 'Users Record Not Found', err);
           return util.send(res);
         });
@@ -282,24 +282,26 @@ class VendorsAuthController {
       util.setError(404, 'Users Record Not Found', error);
       return util.send(res);
     }
+    return null;
   }
-  static async resetPassword(req, res, next) {
-    const email = req.body.email;
-    //check if users exist in the db with email address
+
+  static async resetPassword(req, res) {
+    const { email } = req.body;
+    // check if users exist in the db with email address
     db.User.findOne({
       where: {
-        email: email,
+        email,
       },
     })
-      .then(user => {
-        //reset users email password
+      .then((user) => {
+        // reset users email password
         if (user !== null) {
-          //if there is a user
-          //generate new password
+          // if there is a user
+          // generate new password
           const newPassword = util.generatePassword();
-          //update new password in the db
+          // update new password in the db
           bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(newPassword, salt).then(hash => {
+            bcrypt.hash(newPassword, salt).then((hash) => {
               const encryptedPassword = hash;
               return db.User.update(
                 {
@@ -307,12 +309,12 @@ class VendorsAuthController {
                 },
                 {
                   where: {
-                    email: email,
+                    email,
                   },
                 },
-              ).then(updatedRecord => {
-                //mail user a new password
-                //respond with a success message
+              ).then(() => {
+                // mail user a new password
+                // respond with a success message
                 res.status(201).json({
                   status: 'success',
                   message:
@@ -323,93 +325,95 @@ class VendorsAuthController {
           });
         }
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(404).json({
           status: 'error',
           error: err,
         });
       });
+    return null;
   }
-  static async updateProfile(req, res, next) {
-    const {firstName, lastName, phone} = req.body;
-    const userId = req.body.userId;
+
+  static async updateProfile(req, res) {
+    const { firstName, lastName, phone } = req.body;
+    const { userId } = req.body;
     db.User.findOne({
       where: {
         id: userId,
       },
     })
-      .then(user => {
+      .then((user) => {
         if (user !== null) {
-          //if there is a user
+          // if there is a user
           return db.User.update(
             {
-              firstName: firstName,
-              lastName: lastName,
-              phone: phone,
+              firstName,
+              lastName,
+              phone,
             },
             {
               where: {
                 id: userId,
               },
             },
-          ).then(updatedRecord => {
-            //respond with a success message
+          ).then(() => {
+            // respond with a success message
             res.status(201).json({
               status: 'success',
               message: 'Profile Updated Successfully!',
             });
           });
         }
+        return null;
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(404).json({
           status: 'error',
           error: err,
         });
       });
   }
-  static async updatePassword() {
-    const {oldPassword, newPassword, confirmedPassword} = req.body;
+
+  static async updatePassword(req, res) {
+    const { oldPassword, newPassword, confirmedPassword } = req.body;
     if (newPassword !== confirmedPassword) {
       return res.status(419).json({
-        status: error,
+        status: 'error',
         error: new Error('New Password Does not Match with Confirmed Password'),
       });
     }
-    const userId = req.body.userId;
+    const { userId } = req.body;
     db.User.findOne({
       where: {
         id: userId,
       },
     })
-      .then(user => {
+      .then((user) => {
         bcrypt
           .compare(oldPassword, user.password)
-          .then(valid => {
+          .then((valid) => {
             if (!valid) {
               return res.status(419).json({
-                status: error,
+                status: 'error',
                 error: new Error('Existing Password Error'),
               });
             }
-            //update new password in the db
-            bcrypt.genSalt(10, (err, salt) => {
-              bcrypt.hash(newPassword, salt).then(hash => {
-                const role_id = 2;
+            // update new password in the db
+            bcrypt.genSalt(10, (salt) => {
+              bcrypt.hash(newPassword, salt).then((hash) => {
                 const encryptedPassword = hash;
-                const balance = 0.0;
                 return db.User.update(
                   {
                     password: encryptedPassword,
                   },
                   {
                     where: {
-                      email: email,
+                      email: user.email,
                     },
                   },
-                ).then(updatedRecord => {
-                  //mail user a new password
-                  //respond with a success message
+                ).then(() => {
+                  // mail user a new password
+                  // respond with a success message
                   res.status(201).json({
                     status: 'success',
                     message:
@@ -418,21 +422,20 @@ class VendorsAuthController {
                 });
               });
             });
-          })
-          .catch(err => {
-            //the two password does not match
-            return res.status(419).json({
-              status: error,
-              error: new Error('Existing Password Error'),
-            });
-          });
+            return null;
+          }) // the two password does not match
+          .catch(() => res.status(419).json({
+            status: 'error',
+            error: new Error('Existing Password Error'),
+          }));
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(404).json({
           status: 'error',
           error: err,
         });
       });
+    return null;
   }
 }
 

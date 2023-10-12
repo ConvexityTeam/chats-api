@@ -31,5 +31,5 @@ module.exports = {
   TaskValidator,
   ParamValidator,
   OrderValidator,
-  UtilValidator
-}
+  UtilValidator,
+};

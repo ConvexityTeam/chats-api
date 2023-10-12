@@ -1,13 +1,14 @@
-const {body} = require('express-validator');
-const {isAfter} = require('validator');
-const {Response} = require('../libs');
+const { body } = require('express-validator');
+const { Response } = require('../libs');
 const CampaignService = require('../services/CampaignService');
-const {HttpStatusCode, formInputToDate} = require('../utils');
+const { HttpStatusCode, formInputToDate } = require('../utils');
 const BaseValidator = require('./BaseValidator');
 
 class CampaignValidator extends BaseValidator {
   static campaignTypes = ['campaign', 'cash-for-work', 'item'];
+
   static campaignStatuses = ['pending', 'active', 'paused', 'completed'];
+
   static requestStatuses = ['approved', 'rejected'];
 
   static approveOrRejectRequest() {
@@ -15,94 +16,97 @@ class CampaignValidator extends BaseValidator {
       body('type')
         .not()
         .isEmpty()
-        .withMessage(`Request type is required.`)
+        .withMessage('Request type is required.')
         .isIn(this.requestStatuses)
         .withMessage(
-          `Campaign type should be one of: [${this.requestStatuses.join(', ')}]`
-        )
+          `Campaign type should be one of: [${this.requestStatuses.join(', ')}]`,
+        ),
     ];
   }
+
   static extendCampaign() {
     return [
       body('end_date')
         .isDate({
           format: 'DD-MM-YYYY',
-          strictMode: true
+          strictMode: true,
         })
-        .withMessage(`Campaign start date should be a valid date.`)
+        .withMessage('Campaign start date should be a valid date.')
         .customSanitizer(formInputToDate)
         .isAfter()
-        .withMessage('Campaign start date should be after today.')
+        .withMessage('Campaign start date should be after today.'),
     ];
   }
+
   static requestFund() {
     return [
       body('donor_organisation_id')
         .notEmpty()
         .withMessage('Donor organisation ID must not be empty')
         .isInt()
-        .withMessage(`Donor organisation ID must be an integer`),
+        .withMessage('Donor organisation ID must be an integer'),
       body('reason')
         .notEmpty()
         .withMessage('Reason for withdrawal is required.')
         .isLength({
           min: 5,
-          max: 200
+          max: 200,
         })
         .withMessage(
-          'Reason for withdrawal should be between 5 and 200 characters.'
-        )
+          'Reason for withdrawal should be between 5 and 200 characters.',
+        ),
     ];
   }
+
   static createCampaignRules() {
     return [
-      body('title').not().isEmpty().withMessage(`Campaign title is required.`),
+      body('title').not().isEmpty().withMessage('Campaign title is required.'),
       body('type')
         .not()
         .isEmpty()
-        .withMessage(`Campaign type is required.`)
+        .withMessage('Campaign type is required.')
         .isIn(this.campaignTypes)
         .withMessage(
-          `Campaign type should be one of: [${this.campaignTypes.join(', ')}]`
+          `Campaign type should be one of: [${this.campaignTypes.join(', ')}]`,
         ),
       body('description')
         .not()
         .isEmpty()
-        .withMessage(`Campaign description is required.`),
+        .withMessage('Campaign description is required.'),
       body('budget')
         .optional({
           nullable: true,
-          checkFalsy: true
+          checkFalsy: true,
         })
         .isDecimal()
-        .withMessage(`Campaign budget must be a valid decimal`),
+        .withMessage('Campaign budget must be a valid decimal'),
       body('minting_limit')
         .optional({
           nullable: true,
-          checkFalsy: true
+          checkFalsy: true,
         })
         .isNumeric()
-        .withMessage(`Campaign budget must be a valid number`),
+        .withMessage('Campaign budget must be a valid number'),
       body('location').optional({
         nullable: true,
-        checkFalsy: true
+        checkFalsy: true,
       }),
       body('start_date')
         .isDate({
           format: 'DD-MM-YYYY',
-          strictMode: true
+          strictMode: true,
         })
-        .withMessage(`Campaign start date should be a valid date.`)
+        .withMessage('Campaign start date should be a valid date.')
         .customSanitizer(formInputToDate)
         .isAfter()
         .withMessage('Campaign start date should be after today.'),
       body('end_date')
         .isDate({
           format: 'DD-MM-YYYY',
-          strictMode: true
+          strictMode: true,
         })
-        .withMessage(`Campaign end date should be a valid date.`)
-        .customSanitizer(formInputToDate)
+        .withMessage('Campaign end date should be a valid date.')
+        .customSanitizer(formInputToDate),
       // .custom(
       //   (val, { req }) => isAfter(val, req.body.start_date)
       // )
@@ -117,16 +121,14 @@ class CampaignValidator extends BaseValidator {
         .isIn(this.campaignStatuses)
         .withMessage(
           `Campaign status should be one of: [${this.campaignStatuses.join(
-            ', '
-          )}]`
-        )
+            ', ',
+          )}]`,
+        ),
     );
-    return rules.map(rule =>
-      rule.optional({
-        nullable: true,
-        checkFalsy: true
-      })
-    );
+    return rules.map((rule) => rule.optional({
+      nullable: true,
+      checkFalsy: true,
+    }));
   }
 
   static async campaignTitleExists(req, res, next) {
@@ -136,22 +138,22 @@ class CampaignValidator extends BaseValidator {
         return;
       }
       const existing = await CampaignService.searchCampaignTitle(
-        req.body.title
+        req.body.title,
       );
       if (existing) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
-          'Campaign with similar title exists.'
+          'Campaign with similar title exists.',
         );
-        return Response.send(res);
+        Response.send(res);
       }
       next();
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Error occured. Contact support.' + error
+        `Error occured. Contact support.${error}`,
       );
-      return Response.send(res);
+      Response.send(res);
     }
   }
 
@@ -161,7 +163,7 @@ class CampaignValidator extends BaseValidator {
       if (!id) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
-          'Campaign ID is required'
+          'Campaign ID is required',
         );
         return Response.send(res);
       }
@@ -169,7 +171,7 @@ class CampaignValidator extends BaseValidator {
       if (!campaign) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Campaign does not exist.'
+          'Campaign does not exist.',
         );
         return Response.send(res);
       }
@@ -179,28 +181,27 @@ class CampaignValidator extends BaseValidator {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Error occured. Please contact support.'
+        'Error occured. Please contact support.',
       );
       return Response.send(res);
     }
+    return null;
   }
 
   static async campaignBelongsToOrganisation(req, res, next) {
     try {
       const id = req.body.campaign_id || req.params.campaign_id;
-      console.log(req.params.campaign_id, 'req.params.campaign_id');
-      const organisationId =
-        req.body.organisation_id ||
-        req.params.organisation_id ||
-        req.query.organisation_id ||
-        req.organisation.id;
+      const organisationId = req.body.organisation_id
+        || req.params.organisation_id
+        || req.query.organisation_id
+        || req.organisation.id;
       if (!id) {
         Response.setError(
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
           'Input Validation Error.',
           {
-            campaign_id: ['Valid Campaign ID is required']
-          }
+            campaign_id: ['Valid Campaign ID is required'],
+          },
         );
         return Response.send(res);
       }
@@ -209,7 +210,7 @@ class CampaignValidator extends BaseValidator {
       if (!campaign) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Campaign does not exist.'
+          'Campaign does not exist.',
         );
         return Response.send(res);
       }
@@ -219,29 +220,30 @@ class CampaignValidator extends BaseValidator {
           HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
           'Input Validation Error',
           {
-            organisation_id: ['Organisation ID is required']
-          }
+            organisation_id: ['Organisation ID is required'],
+          },
         );
         return Response.send(res);
       }
 
-      if (organisationId != campaign.OrganisationId) {
+      if (organisationId !== campaign.OrganisationId) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign does not belong to Organisation.'
+          'Campaign does not belong to Organisation.',
         );
         return Response.send(res);
       }
       req.campaign = campaign;
-      req.organisationId =  organisationId;
+      req.organisationId = organisationId;
       next();
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Error occured. Please contact support.'
+        'Error occured. Please contact support.',
       );
       return Response.send(res);
     }
+    return null;
   }
 }
 

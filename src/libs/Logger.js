@@ -4,16 +4,16 @@ const winston = require('winston');
 class Logger {
   constructor(_context) {
     this.context = _context;
-    this._loadConfiguration();
+    this.loadConfiguration();
     this.logger = winston.createLogger(this.loggerConfiguration);
   }
 
-  setContext(contextName) {}
+  static setContext() {}
 
   log(message) {
     this.logger.log({
       // Message to be logged
-      message: message,
+      message,
       // Level of the message logging
       level: 'info',
     });
@@ -35,7 +35,7 @@ class Logger {
     this.logger.error(message);
   }
 
-  _loadConfiguration() {
+  loadConfiguration() {
     this.loggerConfiguration = {
       transports: [
         new winston.transports.Console({
@@ -57,10 +57,9 @@ class Logger {
           format: 'MMM-DD-YYYY HH:mm:ss',
         }),
         winston.format.printf(
-          info =>
-            `${info.label}:${info.level.toUpperCase()} [${[info.timestamp]}] ${
-              info.message
-            }`,
+          (info) => `${info.label}:${info.level.toUpperCase()} [${[info.timestamp]}] ${
+            info.message
+          }`,
         ),
       ),
     };

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -11,12 +9,12 @@ module.exports = {
     await queryInterface.removeColumn('Campaigns', 'type');
     await queryInterface.addColumn('Campaigns', 'type', {
       type: Sequelize.ENUM('campaign', 'cash-for-work', 'item'),
-      defaultValue: 'campaign'
+      defaultValue: 'campaign',
     });
     await queryInterface.addColumn('Campaigns', 'minting_limit', {
       type: Sequelize.INTEGER,
       allowNull: true,
-      defaultValue: 0
+      defaultValue: 0,
     });
   },
 
@@ -30,8 +28,8 @@ module.exports = {
     // await queryInterface.removeColumn('Campaigns', 'type');
     await queryInterface.addColumn('Campaigns', 'type', {
       type: Sequelize.STRING,
-      defaultValue: 'campaign'
+      defaultValue: 'campaign',
     });
     await queryInterface.removeColumn('Campaigns', 'minting_limit');
-  }
+  },
 };

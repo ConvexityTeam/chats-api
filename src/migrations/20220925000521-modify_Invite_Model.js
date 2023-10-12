@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -12,27 +10,27 @@ module.exports = {
       'Invites',
       'CampaignId',
       {
-        type: Sequelize.INTEGER
-      }
-    )
+        type: Sequelize.INTEGER,
+      },
+    );
     await queryInterface.addColumn(
       'Invites',
       'isAdded',
       {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
-      }
-    )
+        defaultValue: false,
+      },
+    );
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Invites', 'CampaignId');
-     await queryInterface.removeColumn('Invites', 'isAdded');
-  }
+    await queryInterface.removeColumn('Invites', 'CampaignId');
+    await queryInterface.removeColumn('Invites', 'isAdded');
+  },
 };

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -8,7 +6,7 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.changeColumn('OrganisationMembers', 'role', { 
+    await queryInterface.changeColumn('OrganisationMembers', 'role', {
       type: Sequelize.STRING,
       defaultValue: 'member',
     });
@@ -22,9 +20,9 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
 
-     await queryInterface.changeColumn('OrganisationMembers', 'role', {
-      type: Sequelize.ENUM("admin", "member"),
-      defaultValue: "member",
+    await queryInterface.changeColumn('OrganisationMembers', 'role', {
+      type: Sequelize.ENUM('admin', 'member'),
+      defaultValue: 'member',
     });
-  }
+  },
 };

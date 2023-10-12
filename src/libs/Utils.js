@@ -1,5 +1,4 @@
-const EncryptController = require("./Encryption");
-require("dotenv").config();
+require('dotenv').config();
 
 class Utils {
   constructor() {
@@ -9,22 +8,22 @@ class Utils {
     this.message = null;
   }
 
-  setSuccess(statusCode, message, data = "") {
+  setSuccess(statusCode, message, data = '') {
     this.statusCode = statusCode;
     this.message = message;
     this.data = data;
-    this.type = "success";
+    this.type = 'success';
   }
 
   setError(statusCode, message) {
     this.statusCode = statusCode;
     this.message = message;
-    this.type = "error";
+    this.type = 'error';
   }
 
   send(res) {
     let result;
-    if (this.type === "success") {
+    if (this.type === 'success') {
       result = {
         code: this.statusCode,
         status: this.type,
@@ -42,23 +41,22 @@ class Utils {
     return res.status(result.code).json(result);
   }
 
-  generatePassword(passLength = 8) {
-    var pass = "";
-    var str =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvwxyz0123456789@#$";
-    for (let i = 1; i <= passLength; i++) {
-      var char = Math.floor(Math.random() * str.length + 1);
+  static generatePassword(passLength = 8) {
+    let pass = '';
+    const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz0123456789@#$';
+    for (let i = 1; i <= passLength; i += 1) {
+      const char = Math.floor(Math.random() * str.length + 1);
       pass += str.charAt(char);
     }
     return pass;
   }
 
-  generateOTP(otpLength = 6) {
-    const digits = "0123456789";
-    let otp = "";
-    for (let i = 1; i <= otpLength; i++) {
-      let index = Math.floor(Math.random() * digits.length);
-      otp = otp + digits[index];
+  static generateOTP(otpLength = 6) {
+    const digits = '0123456789';
+    let otp = '';
+    for (let i = 1; i <= otpLength; i += 1) {
+      const index = Math.floor(Math.random() * digits.length);
+      otp += digits[index];
     }
     return otp;
   }

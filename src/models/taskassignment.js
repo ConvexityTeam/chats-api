@@ -1,7 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class TaskAssignment extends Model {
     /**
@@ -13,28 +13,28 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       TaskAssignment.belongsTo(models.Task, {
         as: 'Task',
-        foreignKey: 'TaskId'
+        foreignKey: 'TaskId',
       });
       TaskAssignment.belongsTo(models.User, {
         as: 'Worker',
-        foreignKey: 'UserId'
+        foreignKey: 'UserId',
       });
       TaskAssignment.hasMany(models.TaskAssignmentEvidence, {
         as: 'SubmittedEvidences',
-        foreignKey: 'id'
+        foreignKey: 'id',
       });
       TaskAssignment.hasOne(models.User, {
         as: 'Approver',
         foreignKey: 'id',
         targetKey: 'approved_by',
-        constraints: false
-      })
+        constraints: false,
+      });
     }
-  };
+  }
   TaskAssignment.init({
     id: {
       type: DataTypes.INTEGER,
-      primaryKey: true
+      primaryKey: true,
     },
     TaskId: DataTypes.INTEGER,
     UserId: DataTypes.INTEGER,
@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
     approved: DataTypes.BOOLEAN,
     approved_by: DataTypes.INTEGER,
     approved_at: DataTypes.DATE,
-    status: DataTypes.ENUM('pending','in progress', 'rejected', 'disbursed', 'approved', 'completed'), //approved -> recieved approval from NGO admin | completed -> paid
+    status: DataTypes.ENUM('pending', 'in progress', 'rejected', 'disbursed', 'approved', 'completed'), // approved -> recieved approval from NGO admin | completed -> paid
   }, {
     sequelize,
     modelName: 'TaskAssignment',

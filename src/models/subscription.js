@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Subscription extends Model {
     /**
@@ -11,11 +11,11 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Subscription.belongsTo(models.Plan, {
         foreignKey: 'PlanId',
-        as: 'Plan'
+        as: 'Plan',
       });
       Subscription.belongsTo(models.Organisation, {
         foreignKey: 'OrganisationId',
-        as: 'Organisation'
+        as: 'Organisation',
       });
     }
   }
@@ -27,12 +27,12 @@ module.exports = (sequelize, DataTypes) => {
       status: DataTypes.STRING,
       amount: DataTypes.FLOAT,
       startDate: DataTypes.DATE,
-      endDate: DataTypes.DATE
+      endDate: DataTypes.DATE,
     },
     {
       sequelize,
-      modelName: 'Subscription'
-    }
+      modelName: 'Subscription',
+    },
   );
   return Subscription;
 };

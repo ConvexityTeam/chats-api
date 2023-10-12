@@ -1,15 +1,18 @@
-const {userConst} = require('../constants');
-const {Transaction, Sequelize, Campaign, Wallet, User} = require('../models');
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
+const { userConst } = require('../constants');
+const {
+  Transaction, Sequelize, Wallet, User,
+} = require('../models');
 const Pagination = require('../utils/pagination');
 
 class TransactionService {
   static async findOrgnaisationTransactions(OrganisationId, extraClause = {}) {
-    const page = extraClause.page;
-    const size = extraClause.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
-    delete extraClause.page;
-    delete extraClause.size;
+    const modifiedClause = { ...extraClause };
+    const { page } = modifiedClause;
+    const { size } = modifiedClause;
+    const { limit, offset } = await Pagination.getPagination(page, size);
+    delete modifiedClause.page;
+    delete modifiedClause.size;
     const queryOptions = {};
     if (page && size) {
       queryOptions.offset = offset;
@@ -17,7 +20,7 @@ class TransactionService {
     }
     const transaction = await Transaction.findAndCountAll({
       distinct: true,
-      where: {OrganisationId},
+      where: { OrganisationId },
       ...queryOptions,
       attributes: [
         'OrganisationId',
@@ -29,7 +32,7 @@ class TransactionService {
         'transaction_type',
         'narration',
         'createdAt',
-        'updatedAt'
+        'updatedAt',
       ],
       include: [
         {
@@ -42,9 +45,9 @@ class TransactionService {
               model: User,
               as: 'User',
               attributes: userConst.publicAttr,
-              attributes: []
-            }
-          ]
+              attribute: [],
+            },
+          ],
         },
         {
           model: Wallet,
@@ -55,12 +58,12 @@ class TransactionService {
               model: User,
               as: 'User',
               attributes: userConst.publicAttr,
-              attributes: []
-            }
-          ]
-        }
+              attribute: [],
+            },
+          ],
+        },
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
     });
     const response = await Pagination.getPagingData(transaction, page, limit);
     return response;
@@ -78,9 +81,9 @@ class TransactionService {
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
+              attributes: userConst.publicAttr,
+            },
+          ],
         },
         {
           model: Wallet,
@@ -90,11 +93,11 @@ class TransactionService {
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
-        }
-      ]
+              attributes: userConst.publicAttr,
+            },
+          ],
+        },
+      ],
     });
   }
 
@@ -110,9 +113,9 @@ class TransactionService {
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
+              attributes: userConst.publicAttr,
+            },
+          ],
         },
         {
           model: Wallet,
@@ -122,11 +125,11 @@ class TransactionService {
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
-        }
-      ]
+              attributes: userConst.publicAttr,
+            },
+          ],
+        },
+      ],
     });
   }
 
@@ -134,7 +137,7 @@ class TransactionService {
     return Transaction.findAll({
       where,
       attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
-      raw: true
+      raw: true,
     });
   }
 
@@ -142,8 +145,8 @@ class TransactionService {
     return Transaction.findAll({
       where: {
         OrganisationId,
-        transaction_type: 'transfer'
-      }
+        transaction_type: 'transfer',
+      },
     });
   }
 
@@ -151,8 +154,8 @@ class TransactionService {
     return Transaction.findAll({
       where: {
         BeneficiaryId,
-        transaction_type: 'spent'
-      }
+        transaction_type: 'spent',
+      },
     });
   }
 
@@ -161,106 +164,86 @@ class TransactionService {
       where: {
         VendorId,
         BeneficiaryId: {
-          [Op.ne]: null
+          [Op.ne]: null,
         },
-        transaction_type: 'spent'
-      }
+        transaction_type: 'spent',
+      },
     });
   }
 
   static async getAllTransactions() {
-    try {
-      return await Transaction.findAll();
-    } catch (error) {
-      throw error;
-    }
+    const res = await Transaction.findAll();
+    return res;
   }
 
   static async addTransaction(newTransaction) {
-    try {
-      // return Transfer.processTransfer(userId, element.UserId, element.amount);
-      return await Transaction.create(newTransaction);
-    } catch (error) {
-      throw error;
-    }
+    // return Transfer.processTransfer(userId, element.UserId, element.amount);
+    const res = await Transaction.create(newTransaction);
+    return res;
   }
 
   static async updateTransaction(id, updateTransaction) {
-    try {
-      const TransactionToUpdate = await Transaction.findOne({
+    const TransactionToUpdate = await Transaction.findOne({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (TransactionToUpdate) {
+      await Transaction.update(updateTransaction, {
         where: {
-          id: Number(id)
-        }
+          id: Number(id),
+        },
       });
 
-      if (TransactionToUpdate) {
-        await Transaction.update(updateTransaction, {
-          where: {
-            id: Number(id)
-          }
-        });
-
-        return updateTransaction;
-      }
-      return null;
-    } catch (error) {
-      throw error;
+      return updateTransaction;
     }
+    return null;
   }
+
   transaction_type;
 
   static async getATransaction(id) {
-    try {
-      const theTransaction = await Transaction.findOne({
-        where: {
-          id: Number(id)
-        }
-      });
+    const theTransaction = await Transaction.findOne({
+      where: {
+        id: Number(id),
+      },
+    });
 
-      return theTransaction;
-    } catch (error) {
-      throw error;
-    }
+    return theTransaction;
   }
 
   static async getUserATransaction(id) {
-    try {
-      const theTransaction = await Transaction.findOne({
-        where: {
-          [Op.or]: [
-            {
-              BeneficiaryId: id,
-              VendorId: id
-            }
-          ]
-        }
-      });
+    const theTransaction = await Transaction.findOne({
+      where: {
+        [Op.or]: [
+          {
+            BeneficiaryId: id,
+            VendorId: id,
+          },
+        ],
+      },
+    });
 
-      return theTransaction;
-    } catch (error) {
-      throw error;
-    }
+    return theTransaction;
   }
-  static async deleteTransaction(id) {
-    try {
-      const TransactionToDelete = await Transaction.findOne({
-        where: {
-          id: Number(id)
-        }
-      });
 
-      if (TransactionToDelete) {
-        const deletedTransaction = await Transaction.destroy({
-          where: {
-            id: Number(id)
-          }
-        });
-        return deletedTransaction;
-      }
-      return null;
-    } catch (error) {
-      throw error;
+  static async deleteTransaction(id) {
+    const TransactionToDelete = await Transaction.findOne({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (TransactionToDelete) {
+      const deletedTransaction = await Transaction.destroy({
+        where: {
+          id: Number(id),
+        },
+      });
+      return deletedTransaction;
     }
+    return null;
   }
 }
 

@@ -1,7 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class OrderProduct extends Model {
     /**
@@ -11,10 +11,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      OrderProduct.belongsTo(models.Product, { as: 'Product', foreignKey: 'ProductId' })
-      OrderProduct.belongsTo(models.Order, { as: 'Order', foreignKey: 'OrderId' })
+      OrderProduct.belongsTo(models.Product, { as: 'Product', foreignKey: 'ProductId' });
+      OrderProduct.belongsTo(models.Order, { as: 'Order', foreignKey: 'OrderId' });
     }
-  };
+  }
   OrderProduct.init({
     OrderId: DataTypes.INTEGER,
     ProductId: DataTypes.INTEGER,

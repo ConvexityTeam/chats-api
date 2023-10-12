@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('TaskAssignments', {
@@ -6,7 +5,7 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       TaskId: {
         allowNull: false,
@@ -15,8 +14,8 @@ module.exports = {
           model: {
             tableName: 'Tasks',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       UserId: {
         allowNull: false,
@@ -25,48 +24,48 @@ module.exports = {
           model: {
             tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       uploaded_evidence: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       approved_by_agent: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       approved_by_vendor: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       approved: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       approved_by: {
         type: Sequelize.INTEGER,
-        defaultValue: null
+        defaultValue: null,
       },
       approved_at: {
         type: Sequelize.DATE,
-        defaultValue: null
+        defaultValue: null,
       },
       status: {
-        type: Sequelize.ENUM('pending','in progress', 'rejected', 'disbursed', 'approved', 'completed'), //approved -> recieved approval from NGO admin | completed -> paid
-        default: 'pending'
+        type: Sequelize.ENUM('pending', 'in progress', 'rejected', 'disbursed', 'approved', 'completed'), // approved -> recieved approval from NGO admin | completed -> paid
+        default: 'pending',
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('TaskAssignments');
-  }
+  },
 };

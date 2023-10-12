@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const {
   Product,
   ProductCategory,
@@ -5,16 +6,13 @@ const {
   CampaignVendor,
   Campaign,
   VendorProposal,
-  Sequelize
+  Sequelize,
 } = require('../models');
 
-const {AclRoles} = require('../utils');
-
-const {userConst} = require('../constants');
+const { userConst } = require('../constants');
 
 const VendorService = require('./VendorService');
 const CampaignService = require('./CampaignService');
-const {Op} = require('sequelize');
 
 class ProductService {
   static addCategoryType(categoryType) {
@@ -28,8 +26,8 @@ class ProductService {
         vendor_proposal_id: Sequelize.where(
           Sequelize.col('proposal_products.vendor_proposal_id'),
           Op.ne,
-          null
-        )
+          null,
+        ),
       },
       include: [
         {
@@ -42,23 +40,24 @@ class ProductService {
             'description',
             'budget',
             'end_date',
-            'category_id'
-          ]
+            'category_id',
+          ],
         },
-        {model: Product, as: 'proposal_products'}
-      ]
+        { model: Product, as: 'proposal_products' },
+      ],
     });
   }
-  static fetchMyProposals(vendor_id, extraClause = {}) {
+
+  static fetchMyProposals(vendorId, extraClause = {}) {
     return VendorProposal.findAll({
       where: {
-        vendor_id,
+        vendor_id: vendorId,
         ...extraClause,
         vendor_proposal_id: Sequelize.where(
           Sequelize.col('proposal_products.vendor_proposal_id'),
           Op.ne,
-          null
-        )
+          null,
+        ),
       },
       include: [
         {
@@ -71,159 +70,165 @@ class ProductService {
             'description',
             'budget',
             'end_date',
-            'category_id'
-          ]
+            'category_id',
+          ],
         },
-        {model: Product, as: 'proposal_products'}
-      ]
+        { model: Product, as: 'proposal_products' },
+      ],
     });
   }
 
-  static async addDefaultCategory(organisation_id = null) {
-    return await ProductCategory.bulkCreate([
+  static async addDefaultCategory(organisationId = null) {
+    const response = await ProductCategory.bulkCreate([
       {
         name: 'Education',
         description: 'Education',
-        organisation_id
+        organisation_id: organisationId,
       },
       {
         name: 'Fresh Food Items',
         description: 'Fresh Food Items',
-        organisation_id
+        organisation_id: organisationId,
       },
       {
         name: 'Processed Food Items',
         description: 'Processed Food Items',
-        organisation_id
+        organisation_id: organisationId,
       },
       {
         name: 'Clothing',
         description: 'Clothing',
-        organisation_id
+        organisation_id: organisationId,
       },
       {
         name: 'Medicine',
         description: 'Medicine',
-        organisation_id
+        organisation_id: organisationId,
       },
       {
         name: 'Cash',
         description: 'Cash',
-        organisation_id
+        organisation_id: organisationId,
       },
       {
         name: 'Hygiene Items',
         description: 'Hygiene Items',
-        organisation_id
+        organisation_id: organisationId,
       },
       {
         name: 'Humanitarian Overhead',
         description: 'Humanitarian Overhead',
-        organisation_id
-      }
+        organisation_id: organisationId,
+      },
     ]);
+    return response;
   }
 
-  static fetchCategoryTypes(organisation_id = null) {
+  static fetchCategoryTypes(organisationId = null) {
     return ProductCategory.findAll({
-      where: {organisation_id},
-      order: [['createdAt', 'DESC']]
+      where: { organisation_id: organisationId },
+      order: [['createdAt', 'DESC']],
     });
   }
 
   static findCategoryById(id) {
     return ProductCategory.findByPk(id);
   }
+
   static findCategoryType(where = {}) {
     return ProductCategory.findOne({
-      where
+      where,
     });
   }
 
   static addSingleProduct(product) {
     return Product.create(product);
   }
+
   static addProduct(product, vendors, CampaignId) {
     return Promise.all(
-      vendors.map(async UserId => {
+      vendors.map(async (UserId) => {
         await CampaignService.approveVendorForCampaign(CampaignId, UserId);
         return (await VendorService.findVendorStore(UserId)).createProduct({
           ...product,
-          CampaignId
+          CampaignId,
         });
-      })
+      }),
     );
   }
 
   static async findProduct(where) {
     return Product.findAll({
       where: {
-        ...where
-      }
+        ...where,
+      },
     });
   }
-  static vendorProposal(user_id, proposal_id) {
+
+  static vendorProposal(userId, proposalId) {
     return User.findOne({
       where: {
-        id: user_id,
+        id: userId,
         proposal_id: Sequelize.where(
           Sequelize.col('proposalOwner.proposal_id'),
-          proposal_id
-        )
+          proposalId,
+        ),
       },
       attributes: userConst.publicAttr,
       include: [
         {
           model: VendorProposal,
           as: 'proposalOwner',
-          include: ['proposal_products']
-        }
-      ]
-    });
-  }
-  //vendor proposals
-  static vendorProposals(proposal_id) {
-    return VendorProposal.findAll({
-      where: {
-        proposal_id
-      }
+          include: ['proposal_products'],
+        },
+      ],
     });
   }
 
-  static findOneProposal(id, vendor_id) {
+  // vendor proposals
+  static vendorProposals(proposalId) {
+    return VendorProposal.findAll({
+      where: {
+        proposal_id: proposalId,
+      },
+    });
+  }
+
+  static findOneProposal(id, vendorId) {
     return VendorProposal.findOne({
       where: {
         id,
-        vendor_id
-      }
+        vendor_id: vendorId,
+      },
     });
   }
+
   static findCampaignProducts(CampaignId) {
     return Product.findAll({
-      where: {CampaignId},
+      where: { CampaignId },
       order: [['updatedAt', 'DESC']],
       include: [
         {
           model: User,
           attributes: {
-            include: userConst.publicAttr
+            include: userConst.publicAttr,
           },
-          as: 'ProductVendors'
-        }
-      ]
+          as: 'ProductVendors',
+        },
+      ],
     });
   }
 
   static ProductVendors(CampaignId) {
     return CampaignVendor.findAll({
-      where: {CampaignId}
+      where: { CampaignId },
     });
   }
 
   static findCampaignProduct(CampaignId, productId) {
     return Product.findOne({
-      where: {CampaignId, id: productId},
-      include: [{model: User, as: 'ProductVendors'}]
+      where: { CampaignId, id: productId },
+      include: [{ model: User, as: 'ProductVendors' }],
     });
   }
 
@@ -231,7 +236,7 @@ class ProductService {
     return Product.findOne({
       where: {
         id,
-        ...extraClause
+        ...extraClause,
       },
       include: [
         {
@@ -239,10 +244,10 @@ class ProductService {
           as: 'ProductVendors',
           attribute: [],
           where: {
-            id: vendorId
-          }
-        }
-      ]
+            id: vendorId,
+          },
+        },
+      ],
     });
   }
 }

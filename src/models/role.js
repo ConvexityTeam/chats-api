@@ -1,5 +1,5 @@
-'use strict';
 const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Role extends Model {
     /**
@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Role.hasMany(models.User, { as: 'Users' });
     }
-  };
+  }
   Role.init({
     // id: {
     //   type: DataTypes.INTEGER,
@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     //   primaryKey: true
     // },
     name: DataTypes.STRING,
-    description: DataTypes.STRING
+    description: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Role',

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -11,7 +9,8 @@ module.exports = {
     await queryInterface.removeColumn('Complaints', 'BeneficiaryId');
     await queryInterface.addColumn(
       'Complaints',
-      'CampaignId', {
+      'CampaignId',
+      {
         after: 'status',
         allowNull: false,
         type: Sequelize.INTEGER,
@@ -19,13 +18,14 @@ module.exports = {
           model: {
             tableName: 'Campaigns',
           },
-          key: 'id'
-        }
-      }
+          key: 'id',
+        },
+      },
     );
     await queryInterface.addColumn(
       'Complaints',
-      'UserId', {
+      'UserId',
+      {
         after: 'CampaignId',
         allowNull: false,
         type: Sequelize.INTEGER,
@@ -33,11 +33,10 @@ module.exports = {
           model: {
             tableName: 'Users',
           },
-          key: 'id'
-        }
-      }
+          key: 'id',
+        },
+      },
     );
-
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -47,20 +46,21 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.addColumn(
+    await queryInterface.addColumn(
       'Complaints',
-      'BeneficiaryId', {
+      'BeneficiaryId',
+      {
         allowNull: false,
         type: Sequelize.INTEGER,
         references: {
           model: {
             tableName: 'Beneficiaries',
           },
-          key: 'id'
-        }
-      }
+          key: 'id',
+        },
+      },
     );
     await queryInterface.removeColumn('Complaints', 'CampaignId');
     await queryInterface.removeColumn('Complaints', 'UserId');
-  }
+  },
 };

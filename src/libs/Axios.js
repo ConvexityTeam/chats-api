@@ -5,24 +5,22 @@ const INTERVAL_MS = 10;
 let PENDING_REQUESTS = 0;
 
 const api = axios.create({});
-api.interceptors.request.use(function (config) {
-  return new Promise((resolve, reject) => {
-    let interval = setInterval(() => {
-      if (PENDING_REQUESTS < MAX_REQUESTS_COUNT) {
-        PENDING_REQUESTS++;
-        clearInterval(interval);
-        resolve(config);
-      }
-    }, INTERVAL_MS);
-  });
-});
+api.interceptors.request.use((config) => new Promise((resolve) => {
+  const interval = setInterval(() => {
+    if (PENDING_REQUESTS < MAX_REQUESTS_COUNT) {
+      PENDING_REQUESTS += 1;
+      clearInterval(interval);
+      resolve(config);
+    }
+  }, INTERVAL_MS);
+}));
 
 api.interceptors.response.use(
-  function (response) {
+  (response) => {
     PENDING_REQUESTS = Math.max(0, PENDING_REQUESTS - 1);
     return Promise.resolve(response);
   },
-  function (error) {
+  (error) => {
     PENDING_REQUESTS = Math.max(0, PENDING_REQUESTS - 1);
     return Promise.reject(error);
   },

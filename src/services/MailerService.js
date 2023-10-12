@@ -1,10 +1,12 @@
 const nodemailer = require('nodemailer');
-var hbs = require('nodemailer-express-handlebars');
-const {mailerConfig} = require('../config');
+const hbs = require('nodemailer-express-handlebars');
+const { mailerConfig } = require('../config');
 
 class MailerService {
   config = {};
+
   transporter;
+
   constructor() {
     this.config = mailerConfig;
     this.transporter = nodemailer.createTransport({
@@ -12,37 +14,37 @@ class MailerService {
       port: this.config.port,
       auth: {
         user: this.config.user,
-        pass: this.config.pass
+        pass: this.config.pass,
       },
       secure: true,
       tls: {
         // do not fail on invalid certs
-        rejectUnauthorized: false
-      }
+        rejectUnauthorized: false,
+      },
     });
 
     this.transporter.use(
-      "compile",
+      'compile',
       hbs({
         viewEngine: {
-          extname: ".handlebars",
-          layoutsDir: "src/utils/emailTemplate/views/layouts/",
-          partialsDir: "src/utils/emailTemplate/views/layouts/",
-          defaultLayout: "main.handlebars", 
+          extname: '.handlebars',
+          layoutsDir: 'src/utils/emailTemplate/views/layouts/',
+          partialsDir: 'src/utils/emailTemplate/views/layouts/',
+          defaultLayout: 'main.handlebars',
         },
-        viewPath: "src/utils/emailTemplate/views/",
-        extName: ".handlebars",
-        cache: false, 
-      })
+        viewPath: 'src/utils/emailTemplate/views/',
+        extName: '.handlebars',
+        cache: false,
+      }),
     );
   }
 
-  _sendMail(to, subject, html) {
+  sendMail(to, subject, html) {
     const options = {
       from: this.config.from,
       to,
       subject,
-      html
+      html,
     };
     return new Promise((resolve, reject) => {
       this.transporter.sendMail(options, (err, data) => {
@@ -54,12 +56,13 @@ class MailerService {
       });
     });
   }
-  async verify(to, name, vendor_id, password) {
+
+  async verify(to, name, vendorId, password) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
         if (!err) {
           console.log('Server is ready to take our messages');
-          this.sendPassword(to, name, vendor_id, password);
+          this.sendPassword(to, name, vendorId, password);
           resolve(success);
         } else {
           console.log('Not verified', err);
@@ -68,6 +71,7 @@ class MailerService {
       });
     });
   }
+
   verifyToken(smsToken, to, name) {
     return new Promise((resolve, reject) => {
       this.transporter.verify((err, success) => {
@@ -100,13 +104,13 @@ class MailerService {
       subject: 'Your Field Agent Account Credentials',
       // html: body
       isHtml: false,
-        template: "fieldDetails",
-        context: 
+      template: 'fieldDetails',
+      context:
         {
           name,
-          password
-        }, 
-        layout: false,
+          password,
+        },
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -121,7 +125,7 @@ class MailerService {
     });
   }
 
-  sendPassword(to, name, vendor_id, password) {
+  sendPassword(to, name, vendorId, password) {
     // const body = `
     // <div>
     //   <p>Hi, ${name}\nYour CHATS account ${
@@ -138,14 +142,14 @@ class MailerService {
       subject: 'Your Vendor Account Credentials',
       // html: body
       isHtml: false,
-        template: "vendorDetails",
-        context: 
+      template: 'vendorDetails',
+      context:
         {
           name,
-          vendor_id,
-          password
-        }, 
-        layout: false,
+          vendor_id: vendorId,
+          password,
+        },
+      layout: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -159,6 +163,7 @@ class MailerService {
       });
     });
   }
+
   sendSMSToken(smsToken, to, name) {
     // const body = `
     // <div>
@@ -173,12 +178,12 @@ class MailerService {
       subject: 'SMS Token',
       // html: body
       isHtml: false,
-      template: "sendSMSToken",
-      context: 
+      template: 'sendSMSToken',
+      context:
       {
         name,
-        smsToken
-      }, 
+        smsToken,
+      },
       layout: false,
     };
 
@@ -208,13 +213,13 @@ class MailerService {
       subject: 'Vendor Registration OTP',
       // html: body
       isHtml: false,
-      template: "vendorRegistration",
-      context: 
+      template: 'vendorRegistration',
+      context:
       {
         name,
         otp,
-        ref
-      }, 
+        ref,
+      },
       layout: false,
     };
 
@@ -243,13 +248,13 @@ class MailerService {
       subject: 'Reset password',
       // html: body
       isHtml: false,
-      template: "resetPasswordOTP",
-      context: 
+      template: 'resetPasswordOTP',
+      context:
       {
         name,
         otp,
-        ref
-      }, 
+        ref,
+      },
       layout: false,
     };
 
@@ -263,19 +268,23 @@ class MailerService {
       });
     });
   }
+
   sendInvite(to, token, campaign, ngo, exist, message, link) {
-    const {id, title } = campaign;
+    const { id, title } = campaign;
 
     // const body = `
     // <div>
     //   <p>Hi ${to.match(/^([^@]*)@/)[1]} !</p>
     //   <p>We’ve given you access to campaign titled: ${
     //     campaign.title
-    //   } so that you can manage your journey with us and get to know all the possibilities offered by CHATS.</p>
+    //   } so that you can manage your journey with us and get to know all
+    // the possibilities offered by CHATS.</p>
     //   <p>${
     //     exist
-    //       ? `If you want to login to confirm access, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
-    //       : `If you want to create an account, please click on the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
+    //       ? `If you want to login to confirm access, please click on
+    // the following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
+    //       : `If you want to create an account, please click on the
+    // following link: ${link}/?token=${token}&campaign_id=${campaign.id}`
     //   }</p>
     //   <p>${message}</p>
     //   <p>Enjoy!</p>
@@ -289,18 +298,18 @@ class MailerService {
       subject: 'Donor Invitation',
       // html: body
       isHtml: false,
-      template: "sendDonorInvite",
-      context: 
+      template: 'sendDonorInvite',
+      context:
       {
         to,
         token,
         id,
         title,
-        ngo, 
+        ngo,
         exist,
         message,
-        link
-      }, 
+        link,
+      },
       layout: false,
     };
 
@@ -320,7 +329,8 @@ class MailerService {
     // const body = `
     // <div>
     //   <p>Hello Admin,</p>
-    //   <p>This is to inform you that your SMS service balance is running low. Current balance is ${amount}. Please recharge your account.</p>
+    //   <p>This is to inform you that your SMS service balance is running low.
+    // Current balance is ${amount}. Please recharge your account.</p>
     //   <p>CHATS - Convexity</p>
     // </div>
     // `;
@@ -330,11 +340,11 @@ class MailerService {
       subject: 'Recharge Your Wallet Balance',
       // html: body
       isHtml: false,
-      template: "sendAdminSMSCreditMail",
-      context: 
+      template: 'sendAdminSMSCreditMail',
+      context:
       {
-        amount
-      }, 
+        amount,
+      },
       layout: false,
     };
 
@@ -354,7 +364,8 @@ class MailerService {
     // const body = `
     // <div>
     //   <p>Hello Admin,</p>
-    //   <p>This is to inform you that your NIN service balance is running low. Current balance is ${amount}. Please recharge your account</p>
+    //   <p>This is to inform you that your NIN service balance is running low.
+    // Current balance is ${amount}. Please recharge your account</p>
     //   <p>CHATS - Convexity</p>
     // </div>
     // `;
@@ -364,11 +375,11 @@ class MailerService {
       subject: 'Recharge Your Wallet Balance',
       // html: body
       isHtml: false,
-      template: "sendAdminNINCreditMail",
-      context: 
+      template: 'sendAdminNINCreditMail',
+      context:
       {
-        amount
-      }, 
+        amount,
+      },
       layout: false,
     };
 
@@ -388,7 +399,8 @@ class MailerService {
     // const body = `
     // <div>
     //   <p>Hello Admin,</p>
-    //   <p>This is to inform you that your Blockchain service balance that covers for gas is running low. Current balance is ${amount}. Please recharge your account</p>
+    //   <p>This is to inform you that your Blockchain service balance that
+    // covers for gas is running low. Current balance is ${amount}. Please recharge your account</p>
     //   <p>CHATS - Convexity</p>
     // </div>
     // `;
@@ -398,11 +410,11 @@ class MailerService {
       subject: 'Recharge Your Wallet Balance',
       // html: body
       isHtml: false,
-      template: "sendAdminBlockchainCreditMail",
-      context: 
+      template: 'sendAdminBlockchainCreditMail',
+      context:
       {
-        amount
-      }, 
+        amount,
+      },
       layout: false,
     };
 
@@ -417,11 +429,12 @@ class MailerService {
       });
     });
   }
+
   sendEmailVerification(to, orgName, url) {
     // const body = `
     // <div>
     // <h2>Hello, ${orgName}</h2>
-    // <p>Thank you for  creating an account on CHATS platform. 
+    // <p>Thank you for  creating an account on CHATS platform.
     // Please confirm your email by clicking on the following link</p>
     // <a href="${url}"> Click here</a>
     //   <p>Best,\n CHATS - Convexity</p>
@@ -429,16 +442,16 @@ class MailerService {
     // `;
     const options = {
       from: this.config.from,
-      to: to,
+      to,
       subject: 'Please confirm your account',
       // html: body
       isHtml: false,
-      template: "sendEmailVerification",
-      context: 
+      template: 'sendEmailVerification',
+      context:
       {
         orgName,
-        url
-      }, 
+        url,
+      },
       layout: false,
     };
 
@@ -453,27 +466,29 @@ class MailerService {
       });
     });
   }
+
   ngoApprovedMail(to, orgname) {
-//     const body = `
-//     <div>
-//     <h2>Congratulations, ${orgname}</h2>
-//     <p>Your Account has been approved be CHATS Admin, This means you can start creating Campaigns.<br/>
-// If you have any questions, please contact us via the contact form on your dashboard.</p>
-//     <a href="https://chats.cash/"> Click here To Get Started</a>
-//       <p>Regards,\n CHATS - Convexity</p>
-//     </div>
-//     `;
+    //     const body = `
+    //     <div>
+    //     <h2>Congratulations, ${orgname}</h2>
+    //     <p>Your Account has been approved be CHATS Admin, This means you
+    // can start creating Campaigns.<br/>
+    // If you have any questions, please contact us via the contact form on your dashboard.</p>
+    //     <a href="https://chats.cash/"> Click here To Get Started</a>
+    //       <p>Regards,\n CHATS - Convexity</p>
+    //     </div>
+    //     `;
     const options = {
       from: this.config.from,
-      to: to,
+      to,
       subject: 'Congratulations Account Approved!',
       // html: body
       isHtml: false,
-      template: "ngoApprovedMail",
-      context: 
+      template: 'ngoApprovedMail',
+      context:
       {
-        orgname
-      }, 
+        orgname,
+      },
       layout: false,
     };
 

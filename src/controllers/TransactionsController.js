@@ -1,36 +1,40 @@
 const TransactionService = require('../services/TransactionService');
 const util = require('../libs/Utils');
-const {HttpStatusCode} = require('../utils');
-const {Response} = require('../libs');
-const BeneficiariesService = require('../services/BeneficiaryService');
-const {UserService, BlockchainService} = require('../services');
+const { HttpStatusCode } = require('../utils');
+const { Response } = require('../libs');
+const { UserService, BlockchainService } = require('../services');
+// const transaction = require('paystack-api/resources/transaction');
 
 class TransactionsController {
   static async vendorTransaction(req, res) {
     try {
       const transactions = await TransactionService.getVendorTransaction(
-        req.params.vendor_id
+        req.params.vendor_id,
       );
-      for (let transaction of transactions) {
+
+      await Promise.all(transactions.map(async (transac) => {
+        const transactionCopy = { ...transac };
         const beneficiary = await UserService.findBeneficiary(
-          transaction.BeneficiaryId
+          transactionCopy.BeneficiaryId,
         );
-        transaction.dataValues.beneficiary = beneficiary;
-      }
+        transactionCopy.dataValues.beneficiary = beneficiary;
+      }));
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `vendor transactions retrieved`,
-        transactions
+        'vendor transactions retrieved',
+        transactions,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async getAllTransactions(req, res) {
     try {
       const allTransaction = await TransactionService.getAllTransactions();
@@ -54,7 +58,7 @@ class TransactionsController {
     const newTransaction = req.body;
     try {
       const createdTransaction = await TransactionService.addTransaction(
-        newTransaction
+        newTransaction,
       );
       util.setSuccess(201, 'Transaction Added!', createdTransaction);
       return util.send(res);
@@ -63,20 +67,17 @@ class TransactionsController {
       return util.send(res);
     }
   }
+
   /**
    * Generating an invoice to be paid by another person
    * @param {req} object The request heaer of the payload
    * @param {res} object The response to be sent back to the requestor
    * @returns
    */
-  static async newInvoice(req, res) {
-    try {
-    } catch (error) {}
-  }
 
   static async updatedTransaction(req, res) {
     const alteredTransaction = req.body;
-    const {id} = req.params;
+    const { id } = req.params;
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
       return util.send(res);
@@ -84,7 +85,7 @@ class TransactionsController {
     try {
       const updateTransaction = await TransactionService.updateTransaction(
         id,
-        alteredTransaction
+        alteredTransaction,
       );
       if (!updateTransaction) {
         util.setError(404, `Cannot find Transaction with the id: ${id}`);
@@ -100,7 +101,7 @@ class TransactionsController {
 
   static async updateTransaction(req, res) {
     const alteredTransaction = req.body;
-    const {id} = req.params;
+    const { id } = req.params;
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
       return util.send(res);
@@ -108,7 +109,7 @@ class TransactionsController {
     try {
       const updateTransaction = await TransactionService.updateTransaction(
         id,
-        alteredTransaction
+        alteredTransaction,
       );
       if (!updateTransaction) {
         util.setError(404, `Cannot find Transaction with the id: ${id}`);
@@ -123,7 +124,7 @@ class TransactionsController {
   }
 
   static async getATransaction(req, res) {
-    const {id} = req.params;
+    const { id } = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
@@ -146,7 +147,7 @@ class TransactionsController {
   }
 
   static async getUserATransaction(req, res) {
-    const {id} = req.params;
+    const { id } = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
@@ -168,7 +169,7 @@ class TransactionsController {
   }
 
   static async deleteTransaction(req, res) {
-    const {id} = req.params;
+    const { id } = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please provide a numeric value');
@@ -177,7 +178,7 @@ class TransactionsController {
 
     try {
       const TransactionToDelete = await TransactionService.deleteTransaction(
-        id
+        id,
       );
 
       if (TransactionToDelete) {
@@ -191,9 +192,10 @@ class TransactionsController {
       return util.send(res);
     }
   }
+
   static async confirmOtp(req, res) {
     try {
-      const code = req.body.code;
+      const { code } = req.body;
       util.setSuccess(200, 'Code Confirmed', code);
       return util.send(res);
     } catch (error) {
@@ -201,12 +203,13 @@ class TransactionsController {
       return util.send(res);
     }
   }
+
   static async getBlockChainTransactionDetails(req, res) {
-    const trans_hash = req.params.transaction_hash;
+    const transHash = req.params.transaction_hash;
     try {
       // console.log(`Transaction Hash: ${trans_hash}`);
-      let blockChains = await BlockchainService.getTransactionDetails(
-        trans_hash
+      const blockChains = await BlockchainService.getTransactionDetails(
+        transHash,
       );
       if (!blockChains) {
         util.setSuccess(200, 'Transaction yet to be Mined ', blockChains);

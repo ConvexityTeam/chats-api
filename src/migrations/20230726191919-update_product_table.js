@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -18,24 +16,24 @@ module.exports = {
       allowNull: true,
       references: {
         model: {
-          tableName: 'Campaigns'
+          tableName: 'Campaigns',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
     await queryInterface.addColumn('Products', 'vendor_proposal_id', {
       type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: {
-          tableName: 'VendorProposals'
+          tableName: 'VendorProposals',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -44,5 +42,5 @@ module.exports = {
      */
     await queryInterface.removeColumn('Products', 'CampaignId');
     await queryInterface.removeColumn('Products', 'vendor_proposal_id');
-  }
+  },
 };

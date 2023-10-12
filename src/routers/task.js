@@ -4,8 +4,9 @@ const {
   FileValidator,
   TaskValidator,
 } = require('../validators');
-const {NgoSubAdminAuth, IsOrgMember} = require('../middleware');
+const { NgoSubAdminAuth, IsOrgMember } = require('../middleware');
 const TaskController = require('../controllers/TaskController');
+
 router.post(
   '/amend-cash-for-work/task/:taskId',
   NgoSubAdminAuth,

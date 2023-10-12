@@ -4,7 +4,7 @@
  * @param {Object} obj
  * @return {Object}
  */
- module.exports = (obj, keeps = []) => {
+module.exports = (obj, keeps = []) => {
   const result = Object.create(null);
 
   Object.keys(obj).forEach((key) => {

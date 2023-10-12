@@ -1,8 +1,9 @@
-const {Response} = require('../libs');
-const {HttpStatusCode} = require('../utils');
+const { Response } = require('../libs');
+const { HttpStatusCode } = require('../utils');
+
 const IsUserVerified = async (req, res, next) => {
   try {
-    const user = req.user;
+    const { user } = req;
     if (!user) {
       Response.setError(
         HttpStatusCode.STATUS_FORBIDDEN,
@@ -10,8 +11,8 @@ const IsUserVerified = async (req, res, next) => {
       );
       return Response.send(res);
     }
-//!user.is_bvn_verified && 
-    if(!user.is_nin_verified) {
+    //! user.is_bvn_verified &&
+    if (!user.is_nin_verified) {
       Response.setError(HttpStatusCode.STATUS_FORBIDDEN, 'Unathorised request. Indentity verification pending.');
       return Response.send(res);
     }
@@ -24,6 +25,7 @@ const IsUserVerified = async (req, res, next) => {
     );
     return Response.send(res);
   }
+  return null;
 };
 
 module.exports = {

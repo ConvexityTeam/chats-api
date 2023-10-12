@@ -1,14 +1,12 @@
-'use strict';
-
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async () => {
     /**
      * Add altering commands here.
      *
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    //await queryInterface.removeColumn('Campaigns', 'type');
+    // await queryInterface.removeColumn('Campaigns', 'type');
     // await queryInterface.addColumn('Campaigns', 'type', {
     //   type: Sequelize.ENUM('campaign', 'cash-for-work', 'item'),
     //   defaultValue: 'campaign'
@@ -20,7 +18,7 @@ module.exports = {
     // });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -29,5 +27,5 @@ module.exports = {
      */
     // await queryInterface.removeColumn('Campaigns', 'type');
     await queryInterface.removeColumn('Campaigns', 'type');
-  }
+  },
 };

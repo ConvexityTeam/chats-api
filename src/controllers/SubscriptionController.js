@@ -1,12 +1,5 @@
 require('dotenv').config();
-const db = require('../models');
-const {util, Response, Logger} = require('../libs');
-const {HttpStatusCode} = require('../utils');
-const Validator = require('validatorjs');
-const {UserService, PlanService, SubscriptionService} = require('../services');
-const {SanitizeObject} = require('../utils');
-const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
-const axios = require('axios');
+const { Subscriptions } = require('../models');
 
 class SubscriptionController {
   static async createSubscriptions(req, res) {
@@ -17,28 +10,16 @@ class SubscriptionController {
       res.status(400).json(err);
     }
   }
+
   static async getAllSubscriptions(req, res) {
     try {
-      const Subscriptions = await Subscriptions.getAllSubscriptions();
+      const subscriptions = await Subscriptions.getAllSubscriptions();
+      res.status(200).json(subscriptions);
     } catch (error) {
       console.log(error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   }
-  static async getSubscriptions(req, res) {
-    try {
-    } catch (error) {}
-  }
-  static async getSubscriptions(req, res) {
-    try {
-    } catch (error) {}
-  }
-  static async updateSubscriptions(req, res) {
-    try {
-    } catch (error) {}
-  }
-  static async deleteSubscriptions(req, res) {
-    try {
-    } catch (error) {}
-  }
 }
+
 module.exports = SubscriptionController;

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -12,9 +10,8 @@ module.exports = {
     await queryInterface.changeColumn('BankAccounts', 'account_number', {
       type: Sequelize.STRING,
       length: 20,
-      allowNull: false
+      allowNull: false,
     });
-
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -26,7 +23,7 @@ module.exports = {
      */
     await queryInterface.renameTable('BankAccounts', 'Accounts');
     await queryInterface.changeColumn('BankAccounts', 'account_number', {
-      type: Sequelize.INTEGER
+      type: Sequelize.INTEGER,
     });
-  }
+  },
 };

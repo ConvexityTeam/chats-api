@@ -1,22 +1,22 @@
+const router = require('express').Router();
 const {
   AuthController,
   NgoController,
-  OrganisationController
+  OrganisationController,
 } = require('../controllers');
 const {
   FieldAgentAuth,
   NgoAdminAuth,
   NgoSubAdminAuth,
   SuperAdminAuth,
-  IsOrgMember
+  IsOrgMember,
 } = require('../middleware');
 const {
   NgoValidator,
   CommonValidator,
   VendorValidator,
-  ParamValidator
+  ParamValidator,
 } = require('../validators');
-const router = require('express').Router();
 
 router.get('/', NgoController.getAllNGO);
 router.get('/:id', SuperAdminAuth, NgoController.getOneNGO);
@@ -26,12 +26,12 @@ router.post('/auth/onboard', AuthController.createNgoAccount);
 
 // admin/create - email
 router
-  .route(`/:organisation_id/members`)
+  .route('/:organisation_id/members')
   .get(
     NgoSubAdminAuth,
     ParamValidator.OrganisationId,
     IsOrgMember,
-    NgoController.members
+    NgoController.members,
   )
   .post(
     NgoAdminAuth,
@@ -40,7 +40,7 @@ router
     NgoValidator.validate,
     CommonValidator.checkEmailNotTaken,
     CommonValidator.checkPhoneNotTaken,
-    NgoController.createAdminMember
+    NgoController.createAdminMember,
   );
 
 // sub-admin/reset-password
@@ -54,12 +54,12 @@ router.post(
   VendorValidator.createVendorRules(),
   VendorValidator.validate,
   VendorValidator.VendorStoreExists,
-  OrganisationController.createVendor
+  OrganisationController.createVendor,
 );
 
 router.get(
   '/campaign/vendor/product',
-  NgoController.viewProductVendorOnCampaign
+  NgoController.viewProductVendorOnCampaign,
 );
 
 // vendors/deactivate'
@@ -69,14 +69,14 @@ router.post(
   FieldAgentAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
-  AuthController.createBeneficiary
+  AuthController.createBeneficiary,
 );
 router.post(
   '/:organisation_id/beneficiaries/special-case',
   FieldAgentAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
-  AuthController.sCaseCreateBeneficiary
+  AuthController.sCaseCreateBeneficiary,
 );
 
 module.exports = router;

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -12,20 +10,17 @@ module.exports = {
     await queryInterface.addColumn('Beneficiaries', 'source', {
       allowNull: true,
       type: Sequelize.ENUM('beneficiary app', 'field app', 'web app'),
-      after: 'approved'
+      after: 'approved',
     });
 
     await queryInterface.addColumn('Beneficiaries', 'rejected', {
       type: Sequelize.BOOLEAN,
       defaultValue: false,
-      after: 'source'
+      after: 'source',
     });
-
-
-    
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -34,5 +29,5 @@ module.exports = {
      */
     await queryInterface.removeColumn('Beneficiaries', 'source');
     await queryInterface.removeColumn('Beneficiaries', 'rejected');
-  }
+  },
 };

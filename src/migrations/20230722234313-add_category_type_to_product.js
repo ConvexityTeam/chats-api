@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -15,14 +13,14 @@ module.exports = {
       after: 'tag',
       reference: {
         model: 'ProductCategories',
-        key: 'id'
+        key: 'id',
       },
       onUpdate: 'CASCADE',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -30,5 +28,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.dropColumn('Products', 'category_id');
-  }
+  },
 };

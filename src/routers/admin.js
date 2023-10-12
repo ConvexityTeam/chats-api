@@ -1,20 +1,18 @@
 const router = require('express').Router();
 
-const {SuperAdminAuth, IsOrgMember, AdminVendor} = require('../middleware');
+const { SuperAdminAuth, AdminVendor } = require('../middleware');
 
 const {
-  OrganisationValidator,
   ParamValidator,
   FileValidator,
-  CampaignValidator
+  CampaignValidator,
 } = require('../validators');
 const AdminController = require('../controllers/AdminController');
 const {
   AuthController,
-  NgoController,
   VendorController,
   OrganisationController,
-  CampaignController
+  CampaignController,
 } = require('../controllers');
 const TransactionsController = require('../controllers/TransactionsController');
 const BeneficiariesController = require('../controllers/BeneficiariesController');
@@ -25,7 +23,7 @@ router.post('/update-status', SuperAdminAuth, AdminController.updateStatus);
 router.post(
   '/register-beneficiary',
   SuperAdminAuth,
-  BeneficiariesController.adminRegisterBeneficiary
+  BeneficiariesController.adminRegisterBeneficiary,
 );
 
 // router.get('/email', AdminController.testEmail);
@@ -39,30 +37,30 @@ router.get('/user-detail/:id', AuthController.userDetails);
 router.put('/update/campaign/status', AdminController.updateCampaignStatus);
 router.post(
   '/nin-verification/:userprofile_id',
-  //ParamValidator.OrganisationId,
-  //IsOrgMember,
+  // ParamValidator.OrganisationId,
+  // IsOrgMember,
   FileValidator.checkProfileSelfie(),
-  AdminController.verifyAccount
+  AdminController.verifyAccount,
 );
 
 router.get(
   '/withdrawal-requests',
   SuperAdminAuth,
-  OrganisationController.withdrawalRequest
+  OrganisationController.withdrawalRequest,
 );
 router.post(
   '/approve-reject-request/:organisation_id',
   SuperAdminAuth,
   ParamValidator.OrganisationId,
   CampaignValidator.campaignBelongsToOrganisation,
-  OrganisationController.approveOrReject
+  OrganisationController.approveOrReject,
 );
 
 // router.get('/liveness', AdminController.fetchLiveness);
 router.get(
   '/ngos/liveness/:user_id',
   SuperAdminAuth,
-  AdminController.findLiveness
+  AdminController.findLiveness,
 );
 router.post('/auth/login', AuthController.signInAdmin);
 router.get('/ngos', AdminController.getAllNGO);
@@ -70,23 +68,23 @@ router.get('/ngos', AdminController.getAllNGO);
 router.get(
   '/ngos/:organisation_id/',
   SuperAdminAuth,
-  AdminController.getNGODisbursedAndBeneficiaryTotal
+  AdminController.getNGODisbursedAndBeneficiaryTotal,
 );
 router.get('/vendors', SuperAdminAuth, AdminController.getAllVendors);
 router.get(
   '/vendors/:vendor_id/',
   SuperAdminAuth,
-  AdminController.getVendorCampaignAndAmountTotal
+  AdminController.getVendorCampaignAndAmountTotal,
 );
 router.get(
   '/beneficiaries',
   SuperAdminAuth,
-  AdminController.getAllBeneficiaries
+  AdminController.getAllBeneficiaries,
 );
 router.get(
   '/beneficiaries/:beneficiary_id',
   SuperAdminAuth,
-  AdminController.getBeneficiaryAmountAndCampaignsTotal
+  AdminController.getBeneficiaryAmountAndCampaignsTotal,
 );
 router.post('/product-category', VendorController.addDefaultCategory);
 router.get('/campaigns', SuperAdminAuth, AdminController.getAllCampaigns);
@@ -94,12 +92,12 @@ router.get('/donors', SuperAdminAuth, AdminController.getAllDonors);
 router.get(
   '/vendor-transactions/:vendor_id',
   SuperAdminAuth,
-  TransactionsController.vendorTransaction
+  TransactionsController.vendorTransaction,
 );
 router.get(
   '/donors/:donor_id/campaigns',
   SuperAdminAuth,
-  AdminController.getDonorCampaignCount
+  AdminController.getDonorCampaignCount,
 );
 
 module.exports = router;

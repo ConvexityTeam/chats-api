@@ -1,4 +1,3 @@
-'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -7,58 +6,58 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       donor_organisation_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Organisations'
+            tableName: 'Organisations',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       campaign_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Campaigns'
+            tableName: 'Campaigns',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       admin_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: {
-            tableName: 'Users'
+            tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       reason: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       status: {
         allowNull: false,
         type: Sequelize.ENUM('Pending', 'Approved', 'Rejected'),
-        defaultValue: 'Pending'
+        defaultValue: 'Pending',
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('RequestFunds');
-  }
+  },
 };

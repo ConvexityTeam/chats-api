@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -12,7 +10,7 @@ module.exports = {
     await queryInterface.addColumn('Campaigns', 'is_processing', {
       type: Sequelize.BOOLEAN,
       allowNull: true,
-      defaultValue: true
+      defaultValue: true,
     });
     await queryInterface.addColumn('Campaigns', 'status', {
       type: Sequelize.ENUM(
@@ -21,17 +19,17 @@ module.exports = {
         'active',
         'paused',
         'completed',
-        'ended'
+        'ended',
       ),
-      defaultValue: 'pending'
+      defaultValue: 'pending',
     });
     await queryInterface.addColumn('Campaigns', 'paused_date', {
       type: Sequelize.DATE,
-      allowNull: true
+      allowNull: true,
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -41,5 +39,5 @@ module.exports = {
     await queryInterface.removeColumn('Campaigns', 'status');
     await queryInterface.removeColumn('Campaigns', 'is_processing');
     await queryInterface.removeColumn('Campaigns', 'paused_date');
-  }
+  },
 };

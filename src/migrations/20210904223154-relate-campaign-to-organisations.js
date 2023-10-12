@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -11,16 +9,17 @@ module.exports = {
     await queryInterface.removeColumn('Campaigns', 'OrganisationMemberId');
     await queryInterface.addColumn(
       'Campaigns',
-      'OrganisationId', {
+      'OrganisationId',
+      {
         allowNull: true,
         type: Sequelize.INTEGER,
         references: {
           model: {
-            tableName: "Organisations",
+            tableName: 'Organisations',
           },
-          key: "id",
+          key: 'id',
         },
-      }
+      },
     );
   },
 
@@ -31,19 +30,20 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Campaigns', 'OrganisationId');
-     await queryInterface.addColumn(
+    await queryInterface.removeColumn('Campaigns', 'OrganisationId');
+    await queryInterface.addColumn(
       'Campaigns',
-      'OrganisationMemberId', {
+      'OrganisationMemberId',
+      {
         allowNull: true,
         type: Sequelize.INTEGER,
         references: {
           model: {
-            tableName: "OrganisationMembers",
+            tableName: 'OrganisationMembers',
           },
-          key: "id",
+          key: 'id',
         },
-      }
+      },
     );
-  }
+  },
 };

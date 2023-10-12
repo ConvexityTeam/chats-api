@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -14,26 +12,25 @@ module.exports = {
     queryInterface.addColumn('Tasks', 'assignment_count', {
       type: Sequelize.INTEGER,
       comments: 'Number of task to be assigned',
-      defaultValue: 1
+      defaultValue: 1,
     });
     queryInterface.addColumn('Tasks', 'assigned', {
       type: Sequelize.INTEGER,
       comments: 'Number of same task assigned to beneficiaries assigned',
-      defaultValue: 0
+      defaultValue: 0,
     });
     queryInterface.addColumn('Tasks', 'require_vendor_approval', {
       type: Sequelize.BOOLEAN,
-      defaultValue: true
+      defaultValue: true,
     });
     queryInterface.addColumn('Tasks', 'require_agent_approval', {
       type: Sequelize.BOOLEAN,
-      defaultValue: true
+      defaultValue: true,
     });
     queryInterface.addColumn('Tasks', 'require_evidence', {
       type: Sequelize.BOOLEAN,
-      defaultValue: true
+      defaultValue: true,
     });
-
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -48,12 +45,12 @@ module.exports = {
     queryInterface.removeColumn('Tasks', 'require_vendor_approval');
     queryInterface.removeColumn('Tasks', 'require_agent_approval');
     queryInterface.addColumn('Tasks', 'status', {
-      type: Sequelize.ENUM("fulfilled", "pending"),
-      defaultValue: "pending",
+      type: Sequelize.ENUM('fulfilled', 'pending'),
+      defaultValue: 'pending',
     });
     queryInterface.addColumn('Tasks', 'approval', {
       type: Sequelize.STRING,
-      defaultValue: "both",
+      defaultValue: 'both',
     });
-  }
+  },
 };

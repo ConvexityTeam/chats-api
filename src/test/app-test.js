@@ -1,21 +1,18 @@
-const chai = require("chai");
-const chaiHttp = chai.use(require("chai-http"));
-const expect = require("chai").expect;
-const app = require('../app');
+// const chai = require('chai');
+// const chaiHttp = chai.use(require('chai-http'));
+// const { expect } = require('chai');
+// const app = require('../app');
 
-var articleId, userId;
+// describe('CHATS Endpoint Testing', () => {
+//   before(() => {
 
-describe('CHATS Endpoint Testing', () => {
+//   });
 
-    before(() => {
+//   after(() => {
 
-    });
-
-    after(() => {
-
-    });
-    /** 
-     * 
+//   });
+/**
+     *
         describe('createUser', () => {
             it('should test /api/v1/auth/create-user', (done) => {
                 chai.request(app).post('/api/v1/auth/create-user').send({
@@ -34,7 +31,7 @@ describe('CHATS Endpoint Testing', () => {
                 });
             });
         });
-    
+
         describe('SignIn', () => {
             it('should test employee login /api/v1/auth/signin', (done) => {
                 chai.request(app).post('/api/v1/auth/signin').send({
@@ -136,4 +133,4 @@ describe('CHATS Endpoint Testing', () => {
         });
         //Comments Test
        */
-});
+// });

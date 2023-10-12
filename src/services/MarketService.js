@@ -1,20 +1,13 @@
-const {AclRoles} = require('../utils');
 const {
   Market,
   Product,
   OrderProduct,
-  Beneficiary,
   Organisation,
-  Campaign,
-  Order,
   User,
-  sequelize
 } = require('../models');
-const {Op, Sequelize} = require('sequelize');
-const {userConst} = require('../constants');
 
 class MarketService {
-  static findPurchasedProductByGender(gender) {
+  static findPurchasedProductByGender() {
     return Organisation.findAll({
       include: [
         {
@@ -34,15 +27,15 @@ class MarketService {
                   include: [
                     {
                       model: OrderProduct,
-                      as: 'Product'
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                      as: 'Product',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
   }
 }

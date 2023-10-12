@@ -1,7 +1,6 @@
-"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("Wallets", {
+    await queryInterface.createTable('Wallets', {
       uuid: {
         allowNull: false,
         primaryKey: true,
@@ -28,9 +27,9 @@ module.exports = {
         type: Sequelize.INTEGER,
         references: {
           model: {
-            tableName: "Campaigns",
+            tableName: 'Campaigns',
           },
-          key: "id",
+          key: 'id',
         },
       },
       AccountUserId: {
@@ -55,7 +54,7 @@ module.exports = {
       },
     });
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("Wallets");
+  down: async (queryInterface) => {
+    await queryInterface.dropTable('Wallets');
   },
 };

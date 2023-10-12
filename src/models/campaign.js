@@ -1,7 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
-const {userConst} = require('../constants');
-const {INTEGER} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     /**
@@ -16,36 +14,36 @@ module.exports = (sequelize, DataTypes) => {
         as: 'Beneficiaries',
         foreignKey: 'CampaignId',
         through: models.Beneficiary,
-        constraints: false
+        constraints: false,
       });
       Campaign.hasMany(models.Wallet, {
         as: 'BeneficiariesWallets',
         foreignKey: 'CampaignId',
         scope: {
-          wallet_type: 'user'
-        }
+          wallet_type: 'user',
+        },
       });
       Campaign.hasMany(models.CampaignHistory, {
         as: 'history',
-        foreignKey: 'campaign_id'
+        foreignKey: 'campaign_id',
       });
       Campaign.hasOne(models.Wallet, {
         as: 'Wallet',
         foreignKey: 'CampaignId',
         scope: {
-          wallet_type: 'organisation'
-        }
+          wallet_type: 'organisation',
+        },
       });
       Campaign.hasMany(models.Task, {
-        as: 'Jobs'
+        as: 'Jobs',
       });
       Campaign.hasMany(models.Complaint, {
         as: 'Complaints',
-        foreignKey: 'CampaignId'
+        foreignKey: 'CampaignId',
       });
       Campaign.belongsTo(models.Organisation, {
         foreignKey: 'OrganisationId',
-        as: 'Organisation'
+        as: 'Organisation',
       });
       // Campaign.belongsTo(models.Transaction, {
       //   foreignKey: 'CampaignId',
@@ -54,30 +52,30 @@ module.exports = (sequelize, DataTypes) => {
 
       Campaign.belongsTo(models.CampaignForm, {
         foreignKey: 'formId',
-        as: 'campaign_form'
+        as: 'campaign_form',
       });
 
       Campaign.hasMany(models.Product, {
-        as: 'CampaignProducts'
+        as: 'CampaignProducts',
       });
 
       Campaign.hasMany(models.Product, {
         foreignKey: 'CampaignId',
-        as: 'ProjectProducts'
+        as: 'ProjectProducts',
       });
       Campaign.hasMany(models.User, {
         as: 'CampaignVendors',
-        foreignKey: 'vendor_id'
+        foreignKey: 'vendor_id',
       });
 
       Campaign.hasMany(models.VoucherToken, {
         foreignKey: 'beneficiaryId',
-        as: 'CampaignTokens'
+        as: 'CampaignTokens',
       });
 
       Campaign.hasMany(models.ProposalRequest, {
         foreignKey: 'campaign_id',
-        as: 'proposal_requests'
+        as: 'proposal_requests',
       });
       // Campaign.belongsTo(models.VendorProposal, {
       //   foreignKey: 'CampaignId',
@@ -105,7 +103,7 @@ module.exports = (sequelize, DataTypes) => {
         'active',
         'paused',
         'completed',
-        'ended'
+        'ended',
       ),
       is_funded: DataTypes.BOOLEAN,
       is_public: DataTypes.BOOLEAN,
@@ -116,12 +114,12 @@ module.exports = (sequelize, DataTypes) => {
       location: DataTypes.JSON,
       start_date: DataTypes.DATE,
       paused_date: DataTypes.DATE,
-      end_date: DataTypes.DATE
+      end_date: DataTypes.DATE,
     },
     {
       sequelize,
-      modelName: 'Campaign'
-    }
+      modelName: 'Campaign',
+    },
   );
   return Campaign;
 };

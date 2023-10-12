@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -21,7 +19,7 @@ module.exports = {
 
     await queryInterface.addColumn('Transactions', 'transaction_type', {
       allowNull: true,
-      type: Sequelize.ENUM('deposit', 'withdrawal', 'transfer', 'approval', 'spent')
+      type: Sequelize.ENUM('deposit', 'withdrawal', 'transfer', 'approval', 'spent'),
     });
 
     await queryInterface.addColumn('Transactions', 'SenderWalletId', {
@@ -31,8 +29,8 @@ module.exports = {
         model: {
           tableName: 'Wallets',
         },
-        key: 'uuid'
-      }
+        key: 'uuid',
+      },
     });
 
     await queryInterface.addColumn('Transactions', 'ReceiverWalletId', {
@@ -42,8 +40,8 @@ module.exports = {
         model: {
           tableName: 'Wallets',
         },
-        key: 'uuid'
-      }
+        key: 'uuid',
+      },
     });
 
     await queryInterface.addColumn('Transactions', 'OrderId', {
@@ -53,8 +51,8 @@ module.exports = {
         model: {
           tableName: 'Orders',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
 
     await queryInterface.addColumn('Transactions', 'VendorId', {
@@ -64,8 +62,8 @@ module.exports = {
         model: {
           tableName: 'Users',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
 
     await queryInterface.addColumn('Transactions', 'BeneficiaryId', {
@@ -75,8 +73,8 @@ module.exports = {
         model: {
           tableName: 'Users',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
 
     await queryInterface.addColumn('Transactions', 'OrganisationId', {
@@ -86,8 +84,8 @@ module.exports = {
         model: {
           tableName: 'Organisations',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
 
     await queryInterface.removeColumn('Transactions', 'walletSenderId');
@@ -95,7 +93,6 @@ module.exports = {
     await queryInterface.removeColumn('Transactions', 'TransactionalId');
     await queryInterface.removeColumn('Transactions', 'TransactionalType');
     await queryInterface.removeColumn('Transactions', 'transactionHash');
-
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -114,7 +111,6 @@ module.exports = {
     await queryInterface.removeColumn('Transactions', 'BeneficiaryId');
     await queryInterface.removeColumn('Transactions', 'OrganisationId');
 
-
     await queryInterface.addColumn('Transactions', 'walletSenderId', {
       type: Sequelize.UUID,
       allowNull: false,
@@ -130,11 +126,11 @@ module.exports = {
     });
 
     await queryInterface.addColumn('Transactions', 'TransactionalType', {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
     });
 
     await queryInterface.addColumn('Transactions', 'transactionHash', {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
     });
-  }
+  },
 };

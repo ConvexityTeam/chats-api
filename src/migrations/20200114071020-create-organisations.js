@@ -1,7 +1,6 @@
-"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("Organisations", {
+    await queryInterface.createTable('Organisations', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -49,8 +48,8 @@ module.exports = {
         defaultValue: false,
       },
       verificationMode: {
-        type: Sequelize.ENUM("1", "2"),
-        defaultValue: "1",
+        type: Sequelize.ENUM('1', '2'),
+        defaultValue: '1',
       },
       createdAt: {
         allowNull: false,
@@ -62,7 +61,7 @@ module.exports = {
       },
     });
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("Organisations");
+  down: async (queryInterface) => {
+    await queryInterface.dropTable('Organisations');
   },
 };

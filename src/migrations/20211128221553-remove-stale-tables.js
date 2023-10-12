@@ -1,16 +1,14 @@
-'use strict';
-
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     /**
      * Add altering commands here.
      *
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-     await queryInterface.dropTable("TaskProgressEvidences");
-     await queryInterface.dropTable("TaskProgresses");
-     await queryInterface.dropTable("TaskUsers");
+    await queryInterface.dropTable('TaskProgressEvidences');
+    await queryInterface.dropTable('TaskProgresses');
+    await queryInterface.dropTable('TaskUsers');
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -20,7 +18,7 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.createTable("TaskUsers", {
+    await queryInterface.createTable('TaskUsers', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -32,9 +30,9 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "Users",
+            tableName: 'Users',
           },
-          key: "id",
+          key: 'id',
         },
       },
       TaskId: {
@@ -42,14 +40,14 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "Tasks",
+            tableName: 'Tasks',
           },
-          key: "id",
+          key: 'id',
         },
       },
       type: {
-        type: Sequelize.ENUM("supervisor", "worker"),
-        defaultValue: "worker",
+        type: Sequelize.ENUM('supervisor', 'worker'),
+        defaultValue: 'worker',
       },
       createdAt: {
         allowNull: false,
@@ -61,7 +59,7 @@ module.exports = {
       },
     });
 
-    await queryInterface.createTable("TaskProgresses", {
+    await queryInterface.createTable('TaskProgresses', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -73,9 +71,9 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "TaskUsers",
+            tableName: 'TaskUsers',
           },
-          key: "id",
+          key: 'id',
         },
       },
       description: {
@@ -91,7 +89,7 @@ module.exports = {
       },
     });
 
-    await queryInterface.createTable("TaskProgressEvidences", {
+    await queryInterface.createTable('TaskProgressEvidences', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -103,9 +101,9 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "TaskProgresses",
+            tableName: 'TaskProgresses',
           },
-          key: "id",
+          key: 'id',
         },
       },
       imageUrl: {
@@ -120,6 +118,5 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
-
-  }
+  },
 };

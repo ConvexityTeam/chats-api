@@ -1,21 +1,24 @@
-const {OrgAdminRolesToAcl} = require('../utils').Types;
-const {Op} = require('sequelize');
-
-const {userConst} = require('../constants');
-
-const {User, Ngo, Plan, Subscription} = require('../models');
-
-const QueueService = require('./QueueService');
-const MailerService = require('./MailerService');
-const bcrypt = require('bcryptjs');
+const {
+  Subscription,
+} = require('../models');
 
 class SubscriptionService {
   static async create(subscription) {
-    return await Subscription.create(subscription);
+    const response = await Subscription.create(subscription);
+    return response;
   }
-  static async get(subscription) {}
-  static async delete(subscription) {}
-  static async update(subscription) {}
+
+  static async get(subscription) {
+    return subscription;
+  }
+
+  static async delete(subscription) {
+    return `${subscription} deleted`;
+  }
+
+  static async update(subscription) {
+    return subscription;
+  }
 }
 
 module.exports = SubscriptionService;

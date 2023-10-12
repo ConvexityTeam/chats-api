@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class ProposalRequest extends Model {
     /**
@@ -15,11 +15,11 @@ module.exports = (sequelize, DataTypes) => {
       // });
       ProposalRequest.belongsTo(models.Campaign, {
         foreignKey: 'campaign_id',
-        as: 'campaign_requests'
+        as: 'campaign_requests',
       });
       ProposalRequest.hasMany(models.VendorProposal, {
         foreignKey: 'vendor_id',
-        as: 'requests'
+        as: 'requests',
       });
       // ProposalRequest.hasOne(models.ProductCategory, {
       //   foreignKey: 'category_id',
@@ -31,12 +31,12 @@ module.exports = (sequelize, DataTypes) => {
     {
       category_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
-      organisation_id: DataTypes.INTEGER
+      organisation_id: DataTypes.INTEGER,
     },
     {
       sequelize,
-      modelName: 'ProposalRequest'
-    }
+      modelName: 'ProposalRequest',
+    },
   );
   return ProposalRequest;
 };

@@ -1,5 +1,5 @@
-const {userConst} = require('../constants');
-const {User, Complaint} = require('../models');
+const { userConst } = require('../constants');
+const { User, Complaint } = require('../models');
 const Pagination = require('../utils/pagination');
 
 class ComplaintService {
@@ -9,26 +9,27 @@ class ComplaintService {
 
   static getComplaint(id) {
     return Complaint.findOne({
-      where: {id},
+      where: { id },
       include: [
         'Campaign',
         {
           model: User,
           as: 'Beneficiary',
-          attributes: userConst.publicAttr
-        }
-      ]
+          attributes: userConst.publicAttr,
+        },
+      ],
     });
   }
 
   static async getCampaignComplaints(CampaignId, extraClause = null) {
-    const page = extraClause.page;
-    const size = extraClause.size;
+    const modifiedExtraClause = { ...extraClause };
+    const { page } = modifiedExtraClause;
+    const { size } = modifiedExtraClause;
 
-    const {limit, offset} = await Pagination.getPagination(page, size);
-    delete extraClause.page;
-    delete extraClause.size;
-    let queryOptions = {};
+    const { limit, offset } = await Pagination.getPagination(page, size);
+    delete modifiedExtraClause.page;
+    delete modifiedExtraClause.size;
+    const queryOptions = {};
     if (page && size) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
@@ -37,27 +38,28 @@ class ComplaintService {
       order: [['createdAt', 'DESC']],
       distinct: true,
       ...queryOptions,
-      where: {...extraClause, CampaignId},
+      where: { ...extraClause, CampaignId },
       include: [
         {
           model: User,
           as: 'Beneficiary',
-          attributes: userConst.publicAttr
-        }
-      ]
+          attributes: userConst.publicAttr,
+        },
+      ],
     });
-    return await Pagination.getPagingData(complaint, page, limit);
+    const res = await Pagination.getPagingData(complaint, page, limit);
+    return res;
   }
 
   static getBeneficiaryComplaints(UserId, extraClause = null, include = []) {
     return Complaint.findAndCountAll({
-      where: {...extraClause, UserId},
-      include
+      where: { ...extraClause, UserId },
+      include,
     });
   }
 
   static updateComplaint(id, update) {
-    return Complaint.update(update, {where: {id}});
+    return Complaint.update(update, { where: { id } });
   }
 }
 

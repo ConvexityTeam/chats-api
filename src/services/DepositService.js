@@ -1,4 +1,4 @@
-const {FundAccount} = require('../models');
+const { FundAccount } = require('../models');
 
 class DepositService {
   static findOrgDeposits(OrganisationId, extraClause = null) {
@@ -20,7 +20,7 @@ class DepositService {
   }
 
   static async updateFiatDeposit(transactionReference, updateData) {
-    const deposit = await FundAccount.findOne({where: {transactionReference}});
+    const deposit = await FundAccount.findOne({ where: { transactionReference } });
     if (!deposit) return null;
     deposit.update(updateData);
     return deposit;

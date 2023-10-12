@@ -1,7 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class CampaignVendor extends Model {
     /**
@@ -15,11 +15,11 @@ module.exports = (sequelize, DataTypes) => {
       CampaignVendor.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' });
       CampaignVendor.hasMany(models.Product, { foreignKey: 'CampaignId', as: 'CampaignVendors' });
     }
-  };
+  }
   CampaignVendor.init({
     VendorId: DataTypes.NUMERIC,
     CampaignId: DataTypes.NUMERIC,
-    approved: DataTypes.BOOLEAN
+    approved: DataTypes.BOOLEAN,
   }, {
     sequelize,
     modelName: 'CampaignVendor',

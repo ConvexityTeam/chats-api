@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('PasswordResetTokens', {
@@ -15,30 +14,30 @@ module.exports = {
           model: {
             tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       token: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       request_ip: {
         type: Sequelize.STRING,
         allowNull: true,
       },
       expires_at: {
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('PasswordResetTokens');
-  }
+  },
 };

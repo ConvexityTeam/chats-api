@@ -1,13 +1,13 @@
-const db = require('../models');
-var bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const db = require('../models');
 const util = require('../libs/Utils');
-const {sequelize} = require('../models');
 // const sequelize = require('sequelize');
 class NgoAuthController {
   constructor() {
     this.emails = [];
   }
+
   static async dummyData() {
     return {
       transactions: [
@@ -302,31 +302,9 @@ class NgoAuthController {
       ],
     };
   }
+
   static async dashboard(req, res) {
     try {
-      /*
-                const OrganisationId = (req.body.OrganisationId) + "";
-                const transactions = await db.Transaction.findAll({ where: { UserId: OrganisationId } });
-                const beneficiaries = await db.User.findAll({ where: { OrganisationId: OrganisationId, RoleId: 5 } });
-                const campaings = await db.Campaign.findAll({ where: { OrganisationId: OrganisationId } });
-                const balance = 0;
-                const disbursed = await db.Transaction.sum('amount', { where: { senderId: OrganisationId, type: 'DR' } });
-                const beneficiariesCount = await db.User.count({ where: { OrganisationId: OrganisationId, RoleId: 5 } });
-                const genderStat = await db.User.findAll({
-                    attributes: ['gender', [sequelize.fn('count', sequelize.col('gender')), 'cnt']], group: ['gender'],
-                });
-    
-                const complaint = await NgoAuthController.dummyData();
-                const data = {
-                    balance: balance,
-                    disbursed: disbursed,
-                    beneficiariesCount: beneficiariesCount,
-                    transactions: transactions,
-                    beneficiaries: beneficiaries,
-                    campaings: campaings,
-                    complaint: complaint
-                };
-                */
       const data = await NgoAuthController.dummyData();
       util.setSuccess(200, 'Data Retrieved Successfully', data);
       return util.send(res);
@@ -335,46 +313,46 @@ class NgoAuthController {
       return util.send(res);
     }
   }
-  static async getAllNgos(req, res) {}
 
-  static async createUser(req, res, next) {
+  // static async getAllNgos(req, res) {}
+
+  static async createUser(req, res) {
     try {
       const {
         name,
         email,
         phone,
-        password,
         contact_address,
         contact_name,
         contact_phone,
         location,
         logo_link,
       } = req.body;
-      //check if email already exist
+      // check if email already exist
       db.User.findOne({
         where: {
           email: req.body.email,
         },
       })
-        .then(user => {
+        .then((user) => {
           if (user !== null) {
             util.setError(400, 'Email Already Exists, Recover Your Account');
             return util.send(res);
           }
           db.Organisations.create({
-            name: name,
-            email: email,
-            phone: phone,
-            contact_address: contact_address,
-            contact_name: contact_name,
-            contact_phone: contact_phone,
-            location: location,
+            name,
+            email,
+            phone,
+            contact_address,
+            contact_name,
+            contact_phone,
+            location,
             is_individual: false,
-            logo_link: logo_link,
+            logo_link,
           })
-            .then(organisation => {
+            .then((organisation) => {
               bcrypt.genSalt(10, (err, salt) => {
-                bcrypt.hash(req.body.password, salt).then(hash => {
+                bcrypt.hash(req.body.password, salt).then((hash) => {
                   const encryptedPassword = hash;
                   const balance = 0.0;
                   return db.User.create({
@@ -382,44 +360,45 @@ class NgoAuthController {
                     OrganisationId: organisation.id,
                     first_name: name,
                     last_name: name,
-                    phone: phone,
-                    email: email,
+                    phone,
+                    email,
                     password: encryptedPassword,
                     gender: '',
                     marital_status: '',
-                    balance: balance,
+                    balance,
                     bvn: '',
                     status: 1,
-                    location: location,
+                    location,
                     address: contact_address,
                     referal_id: '',
                     pin: '',
                     last_login: new Date(),
                   })
-                    .then(user => {
+                    .then((the_user) => {
                       util.setSuccess(
                         201,
                         'Account Successfully Created',
-                        user.id,
+                        the_user.id,
                       );
                       return util.send(res);
                     })
-                    .catch(err => {
-                      console.log(err);
+                    .catch((error) => {
+                      console.log(error);
                       util.setError(500, err);
                       return util.send(res);
                     });
                 });
               });
             })
-            .catch(err => {
+            .catch((err) => {
               console.log('NGO not created');
               console.log(err);
               util.setError(500, err);
               return util.send(res);
             });
+          return null;
         })
-        .catch(err => {
+        .catch((err) => {
           util.setError(500, err);
           return util.send(res);
         });
@@ -427,23 +406,25 @@ class NgoAuthController {
       util.setError(500, error);
       return util.send(res);
     }
+    return null;
   }
-  static async signIn(req, res, next) {
+
+  static async signIn(req, res) {
     try {
-      const {email, password} = req.body;
+      const { email, password } = req.body;
       db.User.findOne({
         where: {
-          email: email,
+          email,
           RoleId: 3,
         },
       })
-        .then(user => {
+        .then((user) => {
           bcrypt
             .compare(password, user.password)
-            .then(valid => {
-              //compare password of the retrieved value
+            .then((valid) => {
+              // compare password of the retrieved value
               if (!valid) {
-                //if not valid throw this error
+                // if not valid throw this error
                 const error = new Error('Invalid Login Credentials');
                 util.setError(401, error);
                 return util.send(res);
@@ -462,17 +443,17 @@ class NgoAuthController {
               );
               const resp = {
                 userId: user.id,
-                token: token,
+                token,
               };
               util.setSuccess(200, 'Login Successful', resp);
               return util.send(res);
             })
-            .catch(error => {
+            .catch((error) => {
               util.setError(500, error);
               return util.send(res);
             });
         })
-        .catch(err => {
+        .catch(() => {
           util.setError(404, 'Invalid Login Credentials');
           return util.send(res);
         });
@@ -480,20 +461,22 @@ class NgoAuthController {
       util.setError(400, error);
       return util.send(res);
     }
+    return null;
   }
-  static async userDetails(req, res, next) {
-    const id = req.params.id;
+
+  static async userDetails(req, res) {
+    const { id } = req.params;
     try {
       db.User.findOne({
         where: {
-          id: id,
+          id,
         },
       })
-        .then(user => {
+        .then((user) => {
           util.setSuccess(200, 'Got Users Details', user);
           return util.send(res);
         })
-        .catch(err => {
+        .catch((err) => {
           util.setError(404, 'Users Record Not Found', err);
           return util.send(res);
         });
@@ -501,39 +484,39 @@ class NgoAuthController {
       util.setError(404, 'Users Record Not Found', error);
       return util.send(res);
     }
+    return null;
   }
-  static async resetPassword(req, res, next) {
-    const email = req.body.email;
-    //check if users exist in the db with email address
+
+  static async resetPassword(req, res) {
+    const { email } = req.body;
+    // check if users exist in the db with email address
     db.User.findOne({
       where: {
-        email: email,
+        email,
       },
     })
-      .then(user => {
-        //reset users email password
+      .then((user) => {
+        // reset users email password
         if (user !== null) {
-          //if there is a user
-          //generate new password
+          // if there is a user
+          // generate new password
           const newPassword = 'H@b552baba';
-          //update new password in the db
+          // update new password in the db
           bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(newPassword, salt).then(hash => {
-              const role_id = 2;
+            bcrypt.hash(newPassword, salt).then((hash) => {
               const encryptedPassword = hash;
-              const balance = 0.0;
               return db.User.update(
                 {
                   password: encryptedPassword,
                 },
                 {
                   where: {
-                    email: email,
+                    email,
                   },
                 },
-              ).then(updatedRecord => {
-                //mail user a new password
-                //respond with a success message
+              ).then(() => {
+                // mail user a new password
+                // respond with a success message
                 res.status(201).json({
                   status: 'success',
                   message:
@@ -544,93 +527,96 @@ class NgoAuthController {
           });
         }
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(404).json({
           status: 'error',
           error: err,
         });
       });
   }
-  static async updateProfile(req, res, next) {
-    const {firstName, lastName, email, phone} = req.body;
-    const userId = req.body.userId;
+
+  static async updateProfile(req, res) {
+    const {
+      firstName, lastName, phone,
+    } = req.body;
+    const { userId } = req.body;
     db.User.findOne({
       where: {
         id: userId,
       },
     })
-      .then(user => {
+      .then((user) => {
         if (user !== null) {
-          //if there is a user
+          // if there is a user
           return db.User.update(
             {
-              firstName: firstName,
-              lastName: lastName,
-              phone: phone,
+              firstName,
+              lastName,
+              phone,
             },
             {
               where: {
                 id: userId,
               },
             },
-          ).then(updatedRecord => {
-            //respond with a success message
+          ).then(() => {
+            // respond with a success message
             res.status(201).json({
               status: 'success',
               message: 'Profile Updated Successfully!',
             });
           });
         }
+        return null;
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(404).json({
           status: 'error',
           error: err,
         });
       });
   }
-  static async updatePassword() {
-    const {oldPassword, newPassword, confirmedPassword} = req.body;
+
+  static async updatePassword(req, res) {
+    const { oldPassword, newPassword, confirmedPassword } = req.body;
     if (newPassword !== confirmedPassword) {
       return res.status(419).json({
-        status: error,
+        status: 'error',
         error: new Error('New Password Does not Match with Confirmed Password'),
       });
     }
-    const userId = req.body.userId;
+    const { userId } = req.body;
     db.User.findOne({
       where: {
         id: userId,
       },
     })
-      .then(user => {
+      .then((user) => {
         bcrypt
           .compare(oldPassword, user.password)
-          .then(valid => {
+          .then((valid) => {
             if (!valid) {
               return res.status(419).json({
-                status: error,
+                status: 'error',
                 error: new Error('Existing Password Error'),
               });
             }
-            //update new password in the db
+            // update new password in the db
             bcrypt.genSalt(10, (err, salt) => {
-              bcrypt.hash(newPassword, salt).then(hash => {
-                const role_id = 2;
+              bcrypt.hash(newPassword, salt).then((hash) => {
                 const encryptedPassword = hash;
-                const balance = 0.0;
                 return db.User.update(
                   {
                     password: encryptedPassword,
                   },
                   {
                     where: {
-                      email: email,
+                      email: user.email,
                     },
                   },
-                ).then(updatedRecord => {
-                  //mail user a new password
-                  //respond with a success message
+                ).then(() => {
+                  // mail user a new password
+                  // respond with a success message
                   res.status(201).json({
                     status: 'success',
                     message:
@@ -639,21 +625,20 @@ class NgoAuthController {
                 });
               });
             });
+            return null;
           })
-          .catch(err => {
-            //the two password does not match
-            return res.status(419).json({
-              status: error,
-              error: new Error('Existing Password Error'),
-            });
-          });
+          .catch(() => res.status(419).json({
+            status: 'error',
+            error: new Error('Existing Password Error'),
+          }));
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(404).json({
           status: 'error',
           error: err,
         });
       });
+    return null;
   }
 }
 

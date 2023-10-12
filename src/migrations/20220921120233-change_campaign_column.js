@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -13,18 +11,18 @@ module.exports = {
       'location',
       {
         type: Sequelize.STRING,
-        after: 'status'
-      }
-    )
+        after: 'status',
+      },
+    );
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Campaigns', 'location');
-  }
+    await queryInterface.removeColumn('Campaigns', 'location');
+  },
 };

@@ -1,23 +1,22 @@
-const {createClient} = require('redis');
-
-
+const { createClient } = require('redis');
+const { Logger } = require('../libs');
 
 const RedisClient = createClient({
   socket: {
-    port: process.env.REDIS_PORT,
+    port: process.env.REDISport,
     tls: true,
   },
 });
 
 class RedisService {
-    static async connectRedis() {
+  static async connectRedis() {
     try {
       await RedisClient.connect();
-      client.on('error', err => console.log('Redis Client Error'));
+      RedisClient.on('error', (err) => console.log('Redis Client Error', err));
     } catch (error) {
-      Logger.error('Redis ' + error);
+      Logger.error(`Redis ${error}`);
     }
   }
 }
 
-module.exports = {RedisService, RedisClient};
+module.exports = { RedisService, RedisClient };

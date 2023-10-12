@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Plan extends Model {
     /**
@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Plan.hasMany(models.Subscription, {
         as: 'Subscriptions',
-        foreignKey: 'SubscriptionId'
+        foreignKey: 'SubscriptionId',
       });
     }
   }
@@ -29,15 +29,15 @@ module.exports = (sequelize, DataTypes) => {
       is_unlimited_unconditional_voucher: DataTypes.BOOLEAN,
       beneficiaries_onboarding: DataTypes.ENUM(
         'FIELD AGENTS',
-        'SELF ONBOARDING'
+        'SELF ONBOARDING',
       ),
       features: DataTypes.JSON,
-      isActive: DataTypes.BOOLEAN
+      isActive: DataTypes.BOOLEAN,
     },
     {
       sequelize,
-      modelName: 'Plan'
-    }
+      modelName: 'Plan',
+    },
   );
   return Plan;
 };

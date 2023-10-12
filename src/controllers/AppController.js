@@ -1,6 +1,7 @@
-const {Response} = require('../libs');
-const {SmsService} = require('../services');
-const {HttpStatusCode} = require('../utils');
+const { Response } = require('../libs');
+const { SmsService } = require('../services');
+const { HttpStatusCode } = require('../utils');
+
 class AppController {
   static async testSms(req, res) {
     try {

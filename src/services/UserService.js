@@ -1,33 +1,38 @@
-const {User, BankAccount, OrganisationMembers, Liveness} = require('../models');
 const axios = require('axios');
+const {
+  User, BankAccount, OrganisationMembers, Liveness,
+} = require('../models');
+
 const Axios = axios.create();
-const {AclRoles} = require('../utils');
-const {Logger} = require('../libs');
-const {userConst} = require('../constants');
+const { AclRoles } = require('../utils');
+const { Logger } = require('../libs');
+const { userConst } = require('../constants');
 
 class UserService {
   static async createUser(data) {
-    return await User.create(data);
+    const response = await User.create(data);
+    return response;
   }
+
   static async createLiveness(data) {
-    return await Liveness.create(data);
+    const response = await Liveness.create(data);
+    return response;
   }
+
   static async findLiveness(id) {
-    return await Liveness.findOne({
+    const response = await Liveness.findOne({
       where: {
-        id: id
-      }
+        id,
+      },
     });
+    return response;
   }
 
   static async getAllUsers() {
-    try {
-      return await User.findAll({
-        attributes: userConst.publicAttr
-      });
-    } catch (error) {
-      throw error;
-    }
+    const response = await User.findAll({
+      attributes: userConst.publicAttr,
+    });
+    return response;
   }
 
   static async addUser(newUser) {
@@ -35,62 +40,51 @@ class UserService {
   }
 
   static async updateUser(id, updateUser) {
-    try {
-      const UserToUpdate = await User.findOne({
-        where: {
-          id: id
-        }
-      });
+    const UserToUpdate = await User.findOne({
+      where: {
+        id,
+      },
+    });
 
-      if (UserToUpdate) {
-        await User.update(updateUser, {
-          where: {
-            id: id
-          }
-        });
-
-        return updateUser;
-      }
-      return null;
-    } catch (error) {
-      throw error;
-    }
-  }
-  static async getAUser(id) {
-    try {
-      const theUser = await User.findOne({
+    if (UserToUpdate) {
+      await User.update(updateUser, {
         where: {
-          id: id
+          id,
         },
-        attributes: userConst.publicAttr
       });
 
-      return theUser;
-    } catch (error) {
-      throw error;
+      return updateUser;
     }
+    return null;
+  }
+
+  static async getAUser(id) {
+    const theUser = await User.findOne({
+      where: {
+        id,
+      },
+      attributes: userConst.publicAttr,
+    });
+
+    return theUser;
   }
 
   static async deleteUser(id) {
-    try {
-      const UserToDelete = await User.findOne({
-        where: {
-          id: id
-        }
-      });
+    const UserToDelete = await User.findOne({
+      where: {
+        id,
+      },
+    });
 
-      if (UserToDelete) {
-        const deletedUser = await User.destroy({
-          where: {
-            id: id
-          }
-        });
-        return deletedUser;
-      }
-      return null;
-    } catch (error) {
-      throw error;
+    if (UserToDelete) {
+      const deletedUser = await User.destroy({
+        where: {
+          id,
+        },
+      });
+      return deletedUser;
     }
+    return null;
   }
 
   // Refactored ==============
@@ -99,43 +93,47 @@ class UserService {
     return User.findOne({
       where: {
         id,
-        ...extraClause
+        ...extraClause,
       },
       include: ['liveness'],
-      include: [
+      includes: [
         'Store',
         {
           model: OrganisationMembers,
           as: 'AssociatedOrganisations',
-          include: ['Organisation']
-        }
-      ]
+          include: ['Organisation'],
+        },
+      ],
     });
   }
 
   static async fetchLiveness() {
-    return await Liveness.findAll();
+    const response = await Liveness.findAll();
+    return response;
   }
-  static findLivenessByUserId(authorized_by) {
+
+  static findLivenessByUserId(authorizedBy) {
     return Liveness.findOne({
-      where: {authorized_by}
+      where: { authorized_by: authorizedBy },
     });
   }
+
   static findByEmail(email, extraClause = null) {
     return User.findOne({
       where: {
         email,
-        ...extraClause
+        ...extraClause,
       },
-      include: ['liveness']
+      include: ['liveness'],
     });
   }
+
   static findByUsername(username, extraClause = null) {
     return User.findOne({
       where: {
         username,
-        ...extraClause
-      }
+        ...extraClause,
+      },
     });
   }
 
@@ -143,8 +141,8 @@ class UserService {
     return User.findOne({
       where: {
         phone,
-        ...extraClause
-      }
+        ...extraClause,
+      },
     });
   }
 
@@ -152,30 +150,31 @@ class UserService {
     return User.findOne({
       where,
       attributes: userConst.publicAttr,
-      include: ['liveness']
+      include: ['liveness'],
     });
   }
 
-  static findBeneficiary(id, OrganisationId = null) {
+  static findBeneficiary(id = null) {
     return User.findOne({
       where: {
         id,
-        RoleId: AclRoles.Beneficiary
+        RoleId: AclRoles.Beneficiary,
 
         // ...(OrganisationId && {
-        //     OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'), OrganisationId)
+        //     OrganisationId: Sequelize.where(Sequelize.col('Campaigns.OrganisationId'),
+        // OrganisationId)
         // }
         // )
       },
-      attributes: userConst.publicAttr
+      attributes: userConst.publicAttr,
     });
   }
 
   static update(id, data) {
     return User.update(data, {
       where: {
-        id
-      }
+        id,
+      },
     });
   }
 
@@ -183,54 +182,54 @@ class UserService {
     return BankAccount.create(
       {
         ...data,
-        UserId
+        UserId,
       },
       {
-        include: ['AccountHolder']
-      }
+        include: ['AccountHolder'],
+      },
     );
   }
 
   static findUserAccounts(UserId) {
     return BankAccount.findAll({
       where: {
-        UserId
+        UserId,
       },
       include: {
         model: User,
         as: 'AccountHolder',
-        attributes: ['first_name', 'last_name', 'phone', 'dob']
-      }
+        attributes: ['first_name', 'last_name', 'phone', 'dob'],
+      },
     });
   }
 
   static async nin_verification(number, country) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        Logger.info('Verifying NIN');
-        const NG = 'nin_wo_face';
-        const KE = 'ke/national_id';
-        const {data} = await Axios.post(
-          `https://api.myidentitypay.com/api/v2/biometrics/merchant/data/verification/${
-            country === 'Nigeria' ? NG : KE
-          }`,
-          number,
-          {
-            headers: {
-              'x-api-key': ` ${process.env.IDENTITY_API_KEY}`,
-              'app-id': process.env.IDENTITY_APP_ID
-            }
-          }
-        );
-        data.status
-          ? Logger.info('NIN verified')
-          : Logger.info(`${data.message}`);
-        resolve(data);
-      } catch (error) {
-        Logger.error(`Error Verifying NIN: ${error}`);
-        reject(error);
+    try {
+      Logger.info('Verifying NIN');
+      const NG = 'nin_wo_face';
+      const KE = 'ke/national_id';
+      const { data } = await Axios.post(
+        `https://api.myidentitypay.com/api/v2/biometrics/merchant/data/verification/${
+          country === 'Nigeria' ? NG : KE
+        }`,
+        number,
+        {
+          headers: {
+            'x-api-key': ` ${process.env.IDENTITY_API_KEY}`,
+            'app-id': process.env.IDENTITY_APP_ID,
+          },
+        },
+      );
+      if (data.status) {
+        Logger.info('NIN verified');
+      } else {
+        Logger.info(`${data.message}`);
       }
-    });
+      return data;
+    } catch (error) {
+      Logger.error(`Error Verifying NIN: ${error}`);
+      throw error;
+    }
   }
 }
 

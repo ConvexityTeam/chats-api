@@ -1,7 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class VerificationToken extends Model {
     /**
@@ -12,29 +12,29 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       VerificationToken.belongsTo(models.User, {
-        foreignKey: "UserId",
-        as: "User"
+        foreignKey: 'UserId',
+        as: 'User',
       });
     }
-  };
+  }
   VerificationToken.init({
     UserId: DataTypes.INTEGER,
     type: DataTypes.STRING,
     token: DataTypes.STRING,
     request_ip: DataTypes.STRING,
-    expires_at: DataTypes.DATE
+    expires_at: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'VerificationToken',
-    tableName: 'VerificationTokens'
+    tableName: 'VerificationTokens',
   });
 
-  VerificationToken.prototype.toObject = function() {
+  VerificationToken.prototype.toObject = function () {
     const data = this.toJSON();
     delete data.token;
     delete data.UserId;
     return data;
-  }
+  };
 
   return VerificationToken;
 };

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -13,9 +11,9 @@ module.exports = {
       type: Sequelize.INTEGER,
       references: {
         model: {
-          tableName: "Users",
+          tableName: 'Users',
         },
-        key: "id",
+        key: 'id',
       },
     });
 
@@ -23,15 +21,15 @@ module.exports = {
       type: Sequelize.INTEGER,
       references: {
         model: {
-          tableName: "Organisations",
+          tableName: 'Organisations',
         },
-        key: "id",
+        key: 'id',
       },
     });
 
     await queryInterface.addColumn('Wallets', 'wallet_type', {
       type: Sequelize.ENUM('user', 'organisation'),
-      defaultValue: 'user'
+      defaultValue: 'user',
     });
 
     await queryInterface.addColumn('Wallets', 'crypto_balance', {
@@ -46,12 +44,11 @@ module.exports = {
 
     await queryInterface.addColumn('Wallets', 'local_currency', {
       type: Sequelize.STRING,
-      defaultValue: 'NGN'
+      defaultValue: 'NGN',
     });
 
     await queryInterface.removeColumn('Wallets', 'AccountUserId');
     await queryInterface.removeColumn('Wallets', 'AccountUserType');
-
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -74,5 +71,5 @@ module.exports = {
     await queryInterface.addColumn('Wallets', 'AccountUserType', {
       type: Sequelize.STRING,
     });
-  }
+  },
 };

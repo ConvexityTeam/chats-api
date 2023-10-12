@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Transaction extends Model {
     /**
@@ -11,36 +11,36 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Transaction.belongsTo(models.Wallet, {
         foreignKey: 'SenderWalletId',
-        as: 'SenderWallet'
+        as: 'SenderWallet',
       });
 
       Transaction.belongsTo(models.Wallet, {
         foreignKey: 'ReceiverWalletId',
-        as: 'ReceiverWallet'
+        as: 'ReceiverWallet',
       });
 
       Transaction.belongsTo(models.User, {
         foreignKey: 'OrganisationId',
-        as: 'Organisations'
+        as: 'Organisations',
       });
 
       Transaction.belongsTo(models.Order, {
         foreignKey: 'OrderId',
-        as: 'Order'
+        as: 'Order',
       });
 
       Transaction.belongsTo(models.User, {
         foreignKey: 'BeneficiaryId',
-        as: 'Beneficiary'
+        as: 'Beneficiary',
       });
 
       Transaction.belongsTo(models.User, {
         foreignKey: 'VendorId',
-        as: 'Vendor'
+        as: 'Vendor',
       });
       Transaction.belongsTo(models.BankAccount, {
         foreignKey: 'BankId',
-        as: 'Bank'
+        as: 'Bank',
       });
     }
   }
@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
       uuid: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
       },
       reference: DataTypes.STRING,
       SenderWalletId: DataTypes.UUID,
@@ -65,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
         'withdrawal',
         'transfer',
         'approval',
-        'spent'
+        'spent',
       ),
       transaction_origin: DataTypes.ENUM('store', 'wallet'),
       transaction_hash: DataTypes.STRING,
@@ -73,12 +73,12 @@ module.exports = (sequelize, DataTypes) => {
       status: DataTypes.ENUM('success', 'processing', 'declined', 'failed'),
       is_approved: DataTypes.BOOLEAN,
       narration: DataTypes.STRING,
-      log: DataTypes.TEXT
+      log: DataTypes.TEXT,
     },
     {
       sequelize,
-      modelName: 'Transaction'
-    }
+      modelName: 'Transaction',
+    },
   );
   return Transaction;
 };

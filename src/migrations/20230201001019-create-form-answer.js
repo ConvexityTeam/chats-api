@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('FormAnswers', {
@@ -6,42 +5,42 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       formId: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: {
-            tableName: 'CampaignForms'
+            tableName: 'CampaignForms',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       beneficiaryId: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: {
-            tableName: 'Users'
+            tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       questions: {
-        type: Sequelize.JSON
+        type: Sequelize.JSON,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('FormAnswers');
-  }
+  },
 };

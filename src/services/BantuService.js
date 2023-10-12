@@ -3,7 +3,6 @@ const StellarSdk = require('stellar-sdk');
 const {
   baseURL,
   adminAddress,
-  adminSecret,
   networkPassphrase,
 } = require('../config').bantuConfig;
 
@@ -35,21 +34,20 @@ class BantuService {
     }
   }
 
-  static async getXbnBalance(publicKey) {
-    return new Promise(async (resolve, reject) => {
+  static getXbnBalance(publicKey) {
+    return new Promise((resolve, reject) => {
       let xbnBalance = 0;
-      return await server
+      server
         .loadAccount(publicKey)
-        .then(account => {
-          account.balances.forEach(function (balance) {
-            if (balance.asset_type == 'native') {
-              xbnBalance = balance.balance;
-              return;
+        .then((account) => {
+          account.balances.forEach((balance) => {
+            if (balance.asset_type === 'native') {
+              xbnBalance = balance.balance; // Use = for assignment
             }
           });
           resolve(xbnBalance);
         })
-        .catch(error => {
+        .catch((error) => {
           reject(error.message);
         });
     });
@@ -57,18 +55,16 @@ class BantuService {
 
   static async transferToken(senderSecret, amount) {
     return new Promise((resolve, reject) => {
-      var sourceKeys = StellarSdk.Keypair.fromSecret(senderSecret);
-      var destinationId = adminAddress;
-      var transaction;
+      const sourceKeys = StellarSdk.Keypair.fromSecret(senderSecret);
+      const destinationId = adminAddress;
+      let transaction;
       server
         .loadAccount(destinationId)
-        .then(async function () {
-          return server.loadAccount(sourceKeys.publicKey());
-        })
-        .then(function (sourceAccount) {
+        .then(async () => server.loadAccount(sourceKeys.publicKey()))
+        .then((sourceAccount) => {
           transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
             fee: StellarSdk.BASE_FEE,
-            networkPassphrase: networkPassphrase,
+            networkPassphrase,
           })
             .addOperation(
               StellarSdk.Operation.payment({
@@ -83,15 +79,14 @@ class BantuService {
           transaction.sign(sourceKeys);
           return server.submitTransaction(transaction);
         })
-        .then(function (result) {
+        .then((result) => {
           resolve(result);
         })
-        .catch(function (error) {
+        .catch((error) => {
           if (error instanceof StellarSdk.NotFoundError) {
-            return reject('The destination account does not exist!');
-          } else {
-            return reject(error);
+            throw new Error('The destination account does not exist!');
           }
+          return reject(error);
         });
     });
   }

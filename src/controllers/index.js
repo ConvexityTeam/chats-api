@@ -33,5 +33,5 @@ module.exports = {
   UtilController,
   PlanController,
   SubscriptionController,
-  ImpactReportController
+  ImpactReportController,
 };

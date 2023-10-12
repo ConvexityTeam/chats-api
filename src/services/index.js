@@ -26,6 +26,7 @@ const ZohoService = require('./ZohoService');
 const RedisService = require('./RedisService');
 const ImpactReportService = require('./ImpactReportService');
 const CurrencyServices = require('./CurrencyServices');
+
 module.exports = {
   RedisService,
   SmsService,
@@ -54,5 +55,5 @@ module.exports = {
   UtilService,
   TransactionService,
   ImpactReportService,
-  CurrencyServices
+  CurrencyServices,
 };

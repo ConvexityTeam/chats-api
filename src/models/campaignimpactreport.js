@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class CampaignImpactReport extends Model {
     /**
@@ -11,11 +11,11 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       CampaignImpactReport.belongsTo(models.User, {
         foreignKey: 'AgentId',
-        as: 'User'
+        as: 'User',
       });
       CampaignImpactReport.belongsTo(models.Campaign, {
         foreignKey: 'CampaignId',
-        as: 'Campaign'
+        as: 'Campaign',
       });
     }
   }
@@ -24,12 +24,12 @@ module.exports = (sequelize, DataTypes) => {
       title: DataTypes.STRING,
       CampaignId: DataTypes.INTEGER,
       AgentId: DataTypes.INTEGER,
-      MediaLink: DataTypes.STRING
+      MediaLink: DataTypes.STRING,
     },
     {
       sequelize,
-      modelName: 'CampaignImpactReport'
-    }
+      modelName: 'CampaignImpactReport',
+    },
   );
   return CampaignImpactReport;
 };

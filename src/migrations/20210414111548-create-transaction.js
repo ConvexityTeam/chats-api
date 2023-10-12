@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Transactions', {
@@ -6,7 +5,7 @@ module.exports = {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4
+        defaultValue: Sequelize.UUIDV4,
       },
       walletSenderId: {
         type: Sequelize.UUID,
@@ -20,24 +19,24 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       TransactionalType: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       transactionHash: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       amount: {
         type: Sequelize.FLOAT,
-        allowNull: false
+        allowNull: false,
       },
       status: {
         allowNull: false,
         type: Sequelize.ENUM('success', 'processing', 'declined', 'failed'),
-        defaultValue: 'processing'
+        defaultValue: 'processing',
       },
       is_approved: {
         allowNull: false,
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       narration: {
         allowNull: false,
@@ -48,15 +47,15 @@ module.exports = {
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('Transactions');
-  }
+  },
 };

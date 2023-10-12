@@ -1,4 +1,3 @@
-'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -7,54 +6,54 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
 
       quantity: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       cost: {
-        type: Sequelize.FLOAT
+        type: Sequelize.FLOAT,
       },
       vendor_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Users',
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       product_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Products',
-          key: 'id'
+          key: 'id',
         },
         OnDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
+        onUpdate: 'CASCADE',
       },
       proposal_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'ProposalRequests',
-          key: 'id'
+          key: 'id',
         },
         OnDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
+        onUpdate: 'CASCADE',
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('VendorProposals');
-  }
+  },
 };

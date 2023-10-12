@@ -35,7 +35,7 @@ class RolesController {
 
   static async updatedRole(req, res) {
     const alteredRole = req.body;
-    const {id} = req.params;
+    const { id } = req.params;
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
       return util.send(res);
@@ -53,6 +53,7 @@ class RolesController {
       return util.send(res);
     }
   }
+
   /**
    *          *
    * @param {*} req
@@ -60,7 +61,7 @@ class RolesController {
    * @description
    */
   static async getARole(req, res) {
-    const {id} = req.params;
+    const { id } = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
@@ -83,7 +84,7 @@ class RolesController {
   }
 
   static async deleteRole(req, res) {
-    const {id} = req.params;
+    const { id } = req.params;
 
     if (!Number(id)) {
       util.setError(400, 'Please provide a numeric value');

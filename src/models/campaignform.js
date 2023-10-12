@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class CampaignForm extends Model {
     /**
@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       CampaignForm.hasMany(models.Campaign, {
         foreignKey: 'formId',
-        as: 'campaigns'
+        as: 'campaigns',
       });
     }
   }
@@ -20,12 +20,12 @@ module.exports = (sequelize, DataTypes) => {
       beneficiaryId: DataTypes.INTEGER,
       organisationId: DataTypes.INTEGER,
       title: DataTypes.STRING,
-      questions: DataTypes.JSON
+      questions: DataTypes.JSON,
     },
     {
       sequelize,
-      modelName: 'CampaignForm'
-    }
+      modelName: 'CampaignForm',
+    },
   );
   return CampaignForm;
 };

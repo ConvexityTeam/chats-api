@@ -1,15 +1,14 @@
 const path = require('path');
 const multer = require('multer');
-const __basedir = path.join(__dirname, '..')
 
-
+const basedir = path.join(__dirname, '..');
 
 const excelFilter = (req, file, cb) => {
   if (
-    file.mimetype.includes('excel') ||
-    file.mimetype.includes('spreadsheetml') ||
-    file.mimetype.includes('text/csv') ||
-    file.mimetype.includes('vnd.ms-excel')
+    file.mimetype.includes('excel')
+    || file.mimetype.includes('spreadsheetml')
+    || file.mimetype.includes('text/csv')
+    || file.mimetype.includes('vnd.ms-excel')
   ) {
     cb(null, true);
   } else {
@@ -17,15 +16,14 @@ const excelFilter = (req, file, cb) => {
   }
 };
 
-
-var storage = multer.diskStorage({
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, __basedir + '/beneficiaries/upload/');
+    cb(null, `${basedir}/beneficiaries/upload/`);
   },
-  filename: (req, file, cb) => { 
+  filename: (req, file, cb) => {
     cb(null, `${Date.now()}-chats-beneficiaries-${file.originalname}`);
-  }
+  },
 });
 
-var uploadBeneficiaries = multer({storage: storage, fileFilter: excelFilter});
+const uploadBeneficiaries = multer({ storage, fileFilter: excelFilter });
 module.exports = uploadBeneficiaries;

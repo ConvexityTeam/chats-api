@@ -1,27 +1,27 @@
 require('dotenv').config();
 const AWS = require('aws-sdk');
 const fileSystem = require('fs');
-const {Logger} = require('../libs');
+const { Logger } = require('../libs');
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
-async function uploadFile(fileName, fileKey, bucket) {
-  return new Promise(async function (resolve, reject) {
+function uploadFile(fileName, fileKey, bucket) {
+  return new Promise((resolve, reject) => {
     const params = {
       Bucket: bucket,
       Key: fileKey,
       ACL: 'public-read',
-      Body: fileName.path
-        ? fileSystem.createReadStream(fileName.path)
-        : fileName,
-      ContentType: fileName.type
+      Body: fileName.path ? fileSystem.createReadStream(fileName.path) : fileName,
+      ContentType: fileName.type,
     };
-    await s3.upload(params, function (s3Err, data) {
+
+    s3.upload(params, (s3Err, data) => {
       Logger.info(`secrete ID: ${process.env.AWS_ACCESS_KEY_ID}`);
       Logger.info(`secrete key: ${process.env.AWS_SECRET_ACCESS_KEY}`);
+
       if (s3Err) {
         console.log(s3Err, 'err');
         reject(s3Err);

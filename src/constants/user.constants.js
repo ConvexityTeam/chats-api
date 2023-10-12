@@ -12,5 +12,5 @@ exports.publicAttr = [
   'profile_pic',
   'iris',
   'status',
-  'dob'
+  'dob',
 ];

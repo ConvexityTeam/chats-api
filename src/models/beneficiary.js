@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Beneficiary extends Model {
     /**
@@ -11,11 +11,11 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Beneficiary.belongsTo(models.User, {
         foreignKey: 'UserId',
-        as: 'User'
+        as: 'User',
       });
       Beneficiary.belongsTo(models.Campaign, {
         foreignKey: 'CampaignId',
-        as: 'Campaign'
+        as: 'Campaign',
       });
     }
   }
@@ -30,15 +30,15 @@ module.exports = (sequelize, DataTypes) => {
         'in_progress',
         'processing',
         'success',
-        'error'
+        'error',
       ),
       rejected: DataTypes.BOOLEAN,
-      source: DataTypes.ENUM('beneficiary app', 'field app', 'web app')
+      source: DataTypes.ENUM('beneficiary app', 'field app', 'web app'),
     },
     {
       sequelize,
-      modelName: 'Beneficiary'
-    }
+      modelName: 'Beneficiary',
+    },
   );
   return Beneficiary;
 };

@@ -11,5 +11,5 @@ module.exports = {
   ...PaystackMiddleware,
   ...UserVerifiedMiddleware,
   ...PinVerificationMiddleware,
-  ...Recaptcha
+  ...Recaptcha,
 };

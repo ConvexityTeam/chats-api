@@ -1,6 +1,6 @@
 const router = require('express').Router();
-const {CampaignController} = require('../controllers');
-const {Auth} = require('../middleware');
+const { CampaignController } = require('../controllers');
+const { Auth } = require('../middleware');
 
 router.route('/').get(Auth, CampaignController.getAllCampaigns);
 
@@ -11,7 +11,7 @@ router.post('/:id', Auth, CampaignController.deleteCampaign);
 router.post(
   '/onboard-beneficiaries/:campaignId',
   Auth,
-  CampaignController.beneficiariesToCampaign
+  CampaignController.beneficiariesToCampaign,
 );
 router.get('/complaints/:campaignId', Auth, CampaignController.complaints);
 

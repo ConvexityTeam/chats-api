@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('StoreTransactions', {
@@ -6,15 +5,15 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       reference: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true
+        unique: true,
       },
       amount: {
-        type: Sequelize.FLOAT
+        type: Sequelize.FLOAT,
       },
       WalletTxId: {
         allowNull: true,
@@ -23,8 +22,8 @@ module.exports = {
           model: {
             tableName: 'Transactions',
           },
-          key: 'uuid'
-        }
+          key: 'uuid',
+        },
       },
       OrderId: {
         allowNull: false,
@@ -33,8 +32,8 @@ module.exports = {
           model: {
             tableName: 'Orders',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       VendorId: {
         allowNull: false,
@@ -43,8 +42,8 @@ module.exports = {
           model: {
             tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       BeneficiaryId: {
         allowNull: false,
@@ -53,20 +52,20 @@ module.exports = {
           model: {
             tableName: 'Users',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('StoreTransactions');
-  }
+  },
 };

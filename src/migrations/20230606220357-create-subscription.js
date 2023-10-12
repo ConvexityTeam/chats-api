@@ -1,4 +1,3 @@
-'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -7,61 +6,61 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
 
       isActive: {
-        type: Sequelize.BOOLEAN
+        type: Sequelize.BOOLEAN,
       },
       planId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Plans'
+            tableName: 'Plans',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       organisationId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Organisations'
+            tableName: 'Organisations',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       status: {
         type: Sequelize.STRING,
         allowNull: false,
-        defaultValue: 'active'
+        defaultValue: 'active',
       },
       amount: {
         type: Sequelize.FLOAT,
         defaultValue: 0.0,
-        allowNull: false
+        allowNull: false,
       },
       startDate: {
         type: Sequelize.DATE,
-        allowNull: false
+        allowNull: false,
       },
       endDate: {
         type: Sequelize.DATE,
-        allowNull: false
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('Subscriptions');
-  }
+  },
 };

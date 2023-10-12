@@ -1,12 +1,11 @@
-const {Sequelize, Op} = require('sequelize');
+const { Sequelize, Op } = require('sequelize');
 
 const moment = require('moment');
 
-const {userConst, walletConst} = require('../constants');
+const { userConst, walletConst } = require('../constants');
 
 const {
   User,
-  Store,
   BankAccount,
   Order,
   Market,
@@ -16,14 +15,13 @@ const {
   OrderProduct,
   Organisation,
   Transaction,
-  OrganisationMembers
+  OrganisationMembers,
 } = require('../models');
 
 const {
   OrgRoles,
   AclRoles,
   generateQrcodeURL,
-  GenearteVendorId
 } = require('../utils');
 const Pagination = require('../utils/pagination');
 
@@ -31,51 +29,52 @@ class VendorService {
   static submitProposal(proposal) {
     return VendorProposal.create(proposal);
   }
-  static searchVendorStore(store_name, extraClause = null) {
+
+  static searchVendorStore(storeName, extraClause = null) {
     const where = {
       ...extraClause,
       store_name: Sequelize.where(
         Sequelize.fn('LOWER', Sequelize.col('store_name')),
         'LIKE',
-        `%${store_name.toLowerCase()}%`
-      )
+        `%${storeName.toLowerCase()}%`,
+      ),
     };
 
     return Market.findOne({
-      where
+      where,
     });
   }
 
   static async getAllVendors() {
     return User.findAll({
       where: {
-        RoleId: 4
-      }
+        RoleId: 4,
+      },
     });
   }
 
   static async getAllVendorsAdmin() {
     return User.findAll({
       where: {
-        RoleId: AclRoles.Vendor
+        RoleId: AclRoles.Vendor,
       },
       attributes: userConst.publicAttr,
       include: [
         {
           model: Organisation,
-          as: 'Organisations'
+          as: 'Organisations',
         },
         {
           where: {
             transaction_origin: 'store',
             transaction_type: 'spent',
             is_approved: true,
-            status: 'success'
+            status: 'success',
           },
           model: Transaction,
-          as: 'StoreTransactions'
-        }
-      ]
+          as: 'StoreTransactions',
+        },
+      ],
     });
   }
 
@@ -84,26 +83,22 @@ class VendorService {
   }
 
   static async updateUser(id, updateUser) {
-    try {
-      const UserToUpdate = await User.findOne({
+    const UserToUpdate = await User.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (UserToUpdate) {
+      await User.update(updateUser, {
         where: {
-          id: id
-        }
+          id,
+        },
       });
 
-      if (UserToUpdate) {
-        await User.update(updateUser, {
-          where: {
-            id: id
-          }
-        });
-
-        return updateUser;
-      }
-      return null;
-    } catch (error) {
-      throw error;
+      return updateUser;
     }
+    return null;
   }
 
   static async getVendorData(id) {
@@ -111,9 +106,9 @@ class VendorService {
     return User.findOne({
       where: {
         id,
-        RoleId
+        RoleId,
       },
-      include: ['Store', 'Wallets', 'Organisations', 'BankAccounts']
+      include: ['Store', 'Wallets', 'Organisations', 'BankAccounts'],
     });
   }
 
@@ -122,8 +117,8 @@ class VendorService {
       where: {
         ...extraClause,
         id,
-        RoleId: AclRoles.Vendor
-      }
+        RoleId: AclRoles.Vendor,
+      },
     });
   }
 
@@ -131,7 +126,7 @@ class VendorService {
     return User.findOne({
       where: {
         id,
-        RoleId: AclRoles.Vendor
+        RoleId: AclRoles.Vendor,
       },
       attributes: userConst.publicAttr,
       include: [
@@ -139,33 +134,29 @@ class VendorService {
           model: Organisation,
           as: 'Organisations',
           where: {
-            id: OrganisationId
-          }
-        }
-      ]
+            id: OrganisationId,
+          },
+        },
+      ],
     });
   }
 
   static async deleteUser(id) {
-    try {
-      const UserToDelete = await User.findOne({
-        where: {
-          id: id
-        }
-      });
+    const UserToDelete = await User.findOne({
+      where: {
+        id,
+      },
+    });
 
-      if (UserToDelete) {
-        const deletedUser = await User.destroy({
-          where: {
-            id: id
-          }
-        });
-        return deletedUser;
-      }
-      return null;
-    } catch (error) {
-      throw error;
+    if (UserToDelete) {
+      const deletedUser = await User.destroy({
+        where: {
+          id,
+        },
+      });
+      return deletedUser;
     }
+    return null;
   }
   // Refactor
 
@@ -174,8 +165,8 @@ class VendorService {
       where: {
         ...where,
         vendor_proposal_id: {
-          [Op.eq]: null
-        }
+          [Op.eq]: null,
+        },
       },
       include: [
         {
@@ -183,10 +174,10 @@ class VendorService {
           as: 'ProductVendors',
           attributes: [],
           where: {
-            id: vendorId
-          }
-        }
-      ]
+            id: vendorId,
+          },
+        },
+      ],
     });
   }
 
@@ -195,25 +186,26 @@ class VendorService {
       where: {
         CampaignId,
         vendor_proposal_id: {
-          [Op.eq]: null
-        }
-      }
+          [Op.eq]: null,
+        },
+      },
     });
   }
+
   static async createOrder(order, Cart) {
     return Order.create(
       {
         ...order,
-        Cart
+        Cart,
       },
       {
         include: [
           {
             model: OrderProduct,
-            as: 'Cart'
-          }
-        ]
-      }
+            as: 'Cart',
+          },
+        ],
+      },
     );
   }
 
@@ -225,52 +217,55 @@ class VendorService {
           model: User,
           as: 'Vendor',
           attributes: userConst.publicAttr,
-          include: ['Store']
+          include: ['Store'],
         },
         {
           model: OrderProduct,
           as: 'Cart',
-          include: ['Product']
-        }
-      ]
+          include: ['Product'],
+        },
+      ],
     });
 
     if (order) {
       const data = order.toJSON();
-      const cart_items = order.Cart.length;
-      const total_quantity = order.Cart.map(c => c.quantity).reduce(
+      const cartItems = order.Cart.length;
+      const totalQuantity = order.Cart.map((c) => c.quantity).reduce(
         (a, b) => a + b,
-        0
+        0,
       );
-      const total_cost = order.Cart.map(c => c.total_amount).reduce(
+      const totalCost = order.Cart.map((c) => c.total_amount).reduce(
         (a, b) => a + b,
-        0
+        0,
       );
       const QrCode = await generateQrcodeURL({
         CampaignId: data.CampaignId,
         reference: data.reference,
-        cart_items,
-        total_quantity,
-        total_cost,
+        cart_items: cartItems,
+        total_quantity: totalQuantity,
+        total_cost: totalCost,
         vendor: `${data.Vendor.first_name || ''} ${
           data.Vendor.last_name || ''
         }`,
-        store: data.Vendor.Store.store_name
+        store: data.Vendor.Store.store_name,
       });
 
-      return {order, cart_items, total_quantity, total_cost, QrCode};
+      return {
+        order, cart_items: cartItems, total_quantity: totalQuantity, total_cost: totalCost, QrCode,
+      };
     }
 
     return null;
   }
 
   static async stores(UserId) {
-    return Market.findAll({UserId});
+    return Market.findAll({ UserId });
   }
 
   static async vendorStore(id, UserId) {
-    return Market.findOne({id, UserId});
+    return Market.findOne({ id, UserId });
   }
+
   static async findVendorStore(UserId) {
     return Market.findOne({
       include: [
@@ -279,10 +274,10 @@ class VendorService {
           as: 'StoreOwner',
           attributes: [],
           where: {
-            id: UserId
-          }
-        }
-      ]
+            id: UserId,
+          },
+        },
+      ],
     });
   }
 
@@ -290,62 +285,62 @@ class VendorService {
     return Order.findAll({
       where: {
         ...extraClause,
-        VendorId
+        VendorId,
       },
       include: [
         {
           model: User,
           as: 'Vendor',
           attributes: userConst.publicAttr,
-          include: ['Store']
+          include: ['Store'],
         },
         {
           model: OrderProduct,
           as: 'Cart',
-          include: ['Product']
-        }
+          include: ['Product'],
+        },
       ],
-      order: [['id', 'DESC']]
+      order: [['id', 'DESC']],
     });
   }
 
   static async vendorPublicDetails(id, extraClause = null) {
-    const {OrganisationId, ...filter} = extraClause;
+    const { OrganisationId, ...filter } = extraClause;
     return User.findOne({
       where: {
         id,
         ...filter,
-        RoleId: AclRoles.Vendor
+        RoleId: AclRoles.Vendor,
       },
       attributes: userConst.publicAttr,
 
       //     model: Market,
       //     as: 'Store',
-      //include: [{model: Product, as: 'ProductVendors'}]
+      // include: [{model: Product, as: 'ProductVendors'}]
 
       include: [
         {
           model: Organisation,
           as: 'Organisations',
           through: {
-            attributes: []
+            attributes: [],
           },
           where: {
             ...(OrganisationId && {
-              id: OrganisationId
-            })
-          }
+              id: OrganisationId,
+            }),
+          },
         },
 
         {
           model: Wallet,
           as: 'Wallets',
           attributes: {
-            exclude: walletConst.walletExcludes
+            exclude: walletConst.walletExcludes,
           },
-          include: ['ReceivedTransactions', 'SentTransactions']
-        }
-      ]
+          include: ['ReceivedTransactions', 'SentTransactions'],
+        },
+      ],
     });
   }
 
@@ -356,15 +351,17 @@ class VendorService {
     return User.findOne({
       where: {
         id: VendorId,
-        RoleId: AclRoles.Vendor
+        RoleId: AclRoles.Vendor,
       },
       attributes: {
         exclude: Object.keys(User.rawAttributes),
         include: [
-          // [Sequelize.fn('SUM', Sequelize.col('StoreTransactions.Order.Cart.total_amount')), 'transactions_value'],
+          // [Sequelize.fn('SUM', Sequelize.col('StoreTransactions.Order.Cart.total_amount')),
+          // 'transactions_value'],
           // [Sequelize.fn('COUNT', Sequelize.col("StoreTransactions.id")), "transactions_count"],
-          // [Sequelize.fn('COUNT', Sequelize.col("StoreTransactions.Order.Products.id")), "products_count"],
-        ]
+          // [Sequelize.fn('COUNT', Sequelize.col("StoreTransactions.Order.Products.id")),
+          // "products_count"],
+        ],
       },
       include: [
         {
@@ -374,8 +371,8 @@ class VendorService {
           where: {
             createdAt: {
               [Op.gt]: START,
-              [Op.lt]: END
-            }
+              [Op.lt]: END,
+            },
           },
           include: [
             {
@@ -384,8 +381,8 @@ class VendorService {
               attributes: [],
               where: {
                 status: {
-                  [Op.in]: ['confirmed', 'delivered']
-                }
+                  [Op.in]: ['confirmed', 'delivered'],
+                },
               },
               include: [
                 {
@@ -393,38 +390,38 @@ class VendorService {
                   model: Product,
                   as: 'Products',
                   through: {
-                    attributes: []
-                  }
+                    attributes: [],
+                  },
                 },
                 {
                   model: OrderProduct,
                   as: 'Cart',
-                  attributes: []
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  attributes: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
   }
 
-  static async organisationVendors({id: OrganisationId}) {
+  static async organisationVendors({ id: OrganisationId }) {
     const vendorIds = (
       await OrganisationMembers.findAll({
         where: {
           OrganisationId,
-          role: OrgRoles.Vendor
-        }
+          role: OrgRoles.Vendor,
+        },
       })
-    ).map(m => m.UserId);
+    ).map((m) => m.UserId);
     return User.findAll({
       where: {
         id: {
-          [Op.in]: [...vendorIds]
-        }
+          [Op.in]: [...vendorIds],
+        },
       },
-      include: ['Wallet', 'Store']
+      include: ['Wallet', 'Store'],
     });
   }
 
@@ -433,25 +430,26 @@ class VendorService {
       await OrganisationMembers.findAll({
         where: {
           OrganisationId,
-          role: OrgRoles.Vendor
-        }
+          role: OrgRoles.Vendor,
+        },
       })
-    ).map(m => m.UserId);
+    ).map((m) => m.UserId);
     return User.findAll({
       where: {
         id: {
-          [Op.in]: [...vendorIds]
-        }
+          [Op.in]: [...vendorIds],
+        },
       },
-      include: ['Wallet', 'Store']
+      include: ['Wallet', 'Store'],
     });
   }
+
   static async organisationDailyVendorStat(OrganisationId, date = new Date()) {
     const START = date.setHours(0, 0, 0, 0);
     const END = date.setHours(23, 59, 59);
     return Organisation.findOne({
       where: {
-        id: OrganisationId
+        id: OrganisationId,
       },
       attributes: {
         exclude: Object.keys(Organisation.rawAttributes),
@@ -460,27 +458,27 @@ class VendorService {
             Sequelize.fn(
               'SUM',
               Sequelize.col(
-                'Vendors->StoreTransactions->Order->Products->OrderProduct.total_amount'
-              )
+                'Vendors->StoreTransactions->Order->Products->OrderProduct.total_amount',
+              ),
             ),
-            'transactions_value'
+            'transactions_value',
           ],
           [
             Sequelize.fn(
               'COUNT',
-              Sequelize.col('Vendors.StoreTransactions.uuid')
+              Sequelize.col('Vendors.StoreTransactions.uuid'),
             ),
-            'transactions_count'
+            'transactions_count',
           ],
           [
             Sequelize.fn(
               'COUNT',
-              Sequelize.col('Vendors.StoreTransactions.Order.Products.id')
+              Sequelize.col('Vendors.StoreTransactions.Order.Products.id'),
             ),
-            'products_count'
+            'products_count',
           ],
-          [Sequelize.fn('COUNT', Sequelize.col('Vendors.id')), 'vendors_count']
-        ]
+          [Sequelize.fn('COUNT', Sequelize.col('Vendors.id')), 'vendors_count'],
+        ],
       },
       include: [
         {
@@ -495,8 +493,8 @@ class VendorService {
               where: {
                 createdAt: {
                   [Op.gt]: START,
-                  [Op.lt]: END
-                }
+                  [Op.lt]: END,
+                },
               },
               include: [
                 {
@@ -505,8 +503,8 @@ class VendorService {
                   attributes: [],
                   where: {
                     status: {
-                      [Op.in]: ['confirmed', 'delivered']
-                    }
+                      [Op.in]: ['confirmed', 'delivered'],
+                    },
                   },
                   include: [
                     {
@@ -514,20 +512,20 @@ class VendorService {
                       model: Product,
                       as: 'Products',
                       through: {
-                        attributes: []
-                      }
+                        attributes: [],
+                      },
                     },
                     {
                       model: OrderProduct,
                       as: 'Cart',
-                      attributes: []
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+                      attributes: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       ],
       group: [
         'Organisation.id',
@@ -535,22 +533,23 @@ class VendorService {
         'Vendors.OrganisationMembers.OrganisationId',
         'Vendors.OrganisationMembers.role',
         'Vendors.OrganisationMembers.createdAt',
-        'Vendors.OrganisationMembers.updatedAt'
-      ]
+        'Vendors.OrganisationMembers.updatedAt',
+      ],
     });
   }
 
   static async organisationVendorsTransactions(
     OrganisationId,
-    extraClause = null
+    extraClause = null,
   ) {
-    const page = extraClause.page;
-    const size = extraClause.size;
-    delete extraClause?.page;
-    delete extraClause?.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
+    const modifiedClause = { ...extraClause };
+    const { page } = modifiedClause;
+    const { size } = modifiedClause;
+    delete modifiedClause?.page;
+    delete modifiedClause?.size;
+    const { limit, offset } = await Pagination.getPagination(page, size);
 
-    let options = {...extraClause};
+    const options = { ...extraClause };
     if (page && size) {
       options.limit = limit;
       options.offset = offset;
@@ -562,7 +561,7 @@ class VendorService {
       where: {
         ...extraClause,
         OrganisationId,
-        transaction_origin: 'store'
+        transaction_origin: 'store',
       },
       attributes: ['reference', 'amount', 'createdAt', 'updatedAt'],
       include: [
@@ -577,17 +576,17 @@ class VendorService {
               as: 'Organisations',
               attributes: [],
               through: {
-                attributes: []
-              }
-            }
-          ]
+                attributes: [],
+              },
+            },
+          ],
         },
         {
           model: User,
           as: 'Beneficiary',
-          attributes: userConst.publicAttr
-        }
-      ]
+          attributes: userConst.publicAttr,
+        },
+      ],
     });
     const response = await Pagination.getPagingData(transaction, page, limit);
     return response;
@@ -597,7 +596,7 @@ class VendorService {
     return Transaction.findAll({
       where: {
         // transaction_origin: 'wallet',
-        transaction_type: 'withdrawal'
+        transaction_type: 'withdrawal',
       },
       attributes: ['reference', 'amount', 'createdAt', 'updatedAt'],
       include: [
@@ -606,10 +605,10 @@ class VendorService {
           as: 'Vendor',
           attributes: ['first_name', 'last_name'],
           where: {
-            vendor_id: VendorId
-          }
-        }
-      ]
+            vendor_id: VendorId,
+          },
+        },
+      ],
     });
   }
 
@@ -618,59 +617,105 @@ class VendorService {
     const exist = User.findAll({
       where: {
         id: vendorId,
-        RoleId
-      }
+        RoleId,
+      },
     });
 
     if (!exist) {
       throw new Error('Vendor Not Found');
     } else {
-      return;
+      return null;
     }
   }
+
   static async vendorChart(VendorId, period) {
+    let createdAt = null;
+
+    if (period === 'daily') {
+      createdAt = moment().subtract(1, 'days').toDate();
+    } else if (period === 'weekly') {
+      createdAt = moment().subtract(7, 'days').toDate();
+    } else if (period === 'monthly') {
+      createdAt = moment().subtract(1, 'months').toDate();
+    } else if (period === 'yearly') {
+      createdAt = moment().subtract(1, 'years').toDate();
+    }
+
     return Transaction.findAndCountAll({
       order: [['updatedAt', 'ASC']],
       where: {
         VendorId,
         createdAt: {
-          [Op.gte]:
-            period === 'daily'
-              ? moment().subtract(1, 'days').toDate()
-              : period === 'weekly'
-              ? moment().subtract(7, 'days').toDate()
-              : period === 'monthly'
-              ? moment().subtract(1, 'months').toDate()
-              : period === 'yearly'
-              ? moment().subtract(1, 'years').toDate()
-              : null
-        }
+          [Op.gte]: createdAt,
+        },
       },
       include: [
         {
           model: Wallet,
           as: 'SenderWallet',
           attributes: {
-            exclude: walletConst.walletExcludes
+            exclude: walletConst.walletExcludes,
           },
-          include: ['Campaign']
+          include: ['Campaign'],
         },
-        {model: BankAccount, as: 'Bank'},
+        { model: BankAccount, as: 'Bank' },
         {
           model: Wallet,
           as: 'ReceiverWallet',
           attributes: {
-            exclude: walletConst.walletExcludes
-          }
+            exclude: walletConst.walletExcludes,
+          },
         },
         {
           model: User,
           as: 'Vendor',
-          attributes: userConst.publicAttr
-        }
-      ]
+          attributes: userConst.publicAttr,
+        },
+      ],
     });
   }
+
+  // static async vendorChart(VendorId, period) {
+  //   return Transaction.findAndCountAll({
+  //     order: [['updatedAt', 'ASC']],
+  //     where: {
+  //       VendorId,
+  //       createdAt: {
+  //         [Op.gte]:
+  //           period === 'daily' ? moment().subtract(1, 'days').toDate()
+  //             : period === 'weekly' ? moment().subtract(7,
+  //            'days').toDate() : period === 'monthly'
+  //               ? moment().subtract(1, 'months').toDate()
+  //               : period === 'yearly'
+  //                 ? moment().subtract(1, 'years').toDate()
+  //                 : null,
+  //       },
+  //     },
+  //     include: [
+  //       {
+  //         model: Wallet,
+  //         as: 'SenderWallet',
+  //         attributes: {
+  //           exclude: walletConst.walletExcludes,
+  //         },
+  //         include: ['Campaign'],
+  //       },
+  //       { model: BankAccount, as: 'Bank' },
+  //       {
+  //         model: Wallet,
+  //         as: 'ReceiverWallet',
+  //         attributes: {
+  //           exclude: walletConst.walletExcludes,
+  //         },
+  //       },
+  //       {
+  //         model: User,
+  //         as: 'Vendor',
+  //         attributes: userConst.publicAttr,
+  //       },
+  //     ],
+  //   });
+  // }
 }
 
 module.exports = VendorService;

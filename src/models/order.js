@@ -1,8 +1,7 @@
-'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
-const db = require("./index")
+
 module.exports = (sequelize, DataTypes) => {
   class Order extends Model {
     /**
@@ -17,18 +16,18 @@ module.exports = (sequelize, DataTypes) => {
       });
       Order.hasMany(models.OrderProduct, {
         as: 'Cart',
-        foreignKey: 'OrderId'
-      })
+        foreignKey: 'OrderId',
+      });
       Order.belongsToMany(models.Product, {
         as: 'Products',
-        through: models.OrderProduct
-      })
+        through: models.OrderProduct,
+      });
       Order.belongsTo(models.User, {
         as: 'Vendor',
-        foreignKey: 'VendorId'
-      })
+        foreignKey: 'VendorId',
+      });
     }
-  };
+  }
   Order.init({
     reference: DataTypes.STRING,
     VendorId: DataTypes.INTEGER,

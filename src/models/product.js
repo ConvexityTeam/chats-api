@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Product extends Model {
     /**
@@ -9,26 +9,26 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      //Product.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Store' });
+      // Product.belongsTo(models.Market, { foreignKey: 'MarketId', as: 'Store' });
       Product.belongsTo(models.Campaign, {
         foreignKey: 'CampaignId',
-        as: 'Campaign'
+        as: 'Campaign',
       });
       Product.belongsToMany(models.User, {
         foreignKey: 'productId',
         as: 'ProductVendors',
-        through: 'VendorProduct'
+        through: 'VendorProduct',
       });
       Product.belongsToMany(models.User, {
         foreignKey: 'productId',
         as: 'ProductBeneficiaries',
-        through: 'ProductBeneficiary'
+        through: 'ProductBeneficiary',
       });
       // Product.belongsTo(models.VendorProposal, {
       //   foreignKey: 'proposal_id',
       //   as: 'proposal_product'
       // });
-      //Product.hasMany(models.OrderProduct, { foreignKey: 'ProductId', as: 'Product' });
+      // Product.hasMany(models.OrderProduct, { foreignKey: 'ProductId', as: 'Product' });
     }
   }
   Product.init(
@@ -41,13 +41,13 @@ module.exports = (sequelize, DataTypes) => {
       cost: DataTypes.FLOAT,
       product_ref: DataTypes.STRING,
       quantity: DataTypes.INTEGER,
-      //MarketId: DataTypes.INTEGER,
-      CampaignId: DataTypes.INTEGER
+      // MarketId: DataTypes.INTEGER,
+      CampaignId: DataTypes.INTEGER,
     },
     {
       sequelize,
-      modelName: 'Product'
-    }
+      modelName: 'Product',
+    },
   );
   return Product;
 };

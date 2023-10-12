@@ -1,12 +1,10 @@
 const router = require('express').Router();
 
-const {MarketController} = require('../controllers');
-const {FieldAgentAuth, NgoAdminAuth, IsOrgMember} = require('../middleware');
-const {
-  NgoValidator,
-  CommonValidator,
-  VendorValidator,
-} = require('../validators');
+const { MarketController } = require('../controllers');
+// const { } = require('../middleware');
+// const {
+
+// } = require('../validators');
 
 router.get('/', MarketController.getAllProductPurchasedByGender);
 

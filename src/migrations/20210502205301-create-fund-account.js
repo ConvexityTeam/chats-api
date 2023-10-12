@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('FundAccounts', {
@@ -6,10 +5,10 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       channel: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       OrganisationId: {
         type: Sequelize.INTEGER,
@@ -18,30 +17,30 @@ module.exports = {
           model: {
             tableName: 'Organisations',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       amount: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       transactionReference: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       status: {
         type: Sequelize.ENUM('processing', 'successful', 'declined'),
-        defaultValue: 'processing'
+        defaultValue: 'processing',
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('FundAccounts');
-  }
+  },
 };

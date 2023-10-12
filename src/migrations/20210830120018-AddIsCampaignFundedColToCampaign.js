@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -14,18 +12,18 @@ module.exports = {
       {
         type: Sequelize.BOOLEAN,
         after: 'status',
-        defaultValue: false
-      }
-    )
+        defaultValue: false,
+      },
+    );
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Campaigns', 'is_funded');
-  }
+    await queryInterface.removeColumn('Campaigns', 'is_funded');
+  },
 };

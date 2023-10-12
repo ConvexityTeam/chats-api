@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+const { Op, Sequelize } = require('sequelize');
 const {
   User,
   Market,
@@ -5,25 +7,22 @@ const {
   Organisation,
   Transaction,
   Campaign,
-  OrganisationMembers
+  OrganisationMembers,
 } = require('../models');
 const {
   OrgRoles,
   AclRoles,
   GenearteVendorId,
-  generateRandom
+  generateRandom,
 } = require('../utils');
-const QueueService = require('./QueueService');
-const bcrypt = require('bcryptjs');
-const {Op, Sequelize} = require('sequelize');
-const {userConst} = require('../constants');
+const { userConst } = require('../constants');
 const SmsService = require('./SmsService');
 const MailerService = require('./MailerService');
 
 class OrganisationService {
   static findOneById(id) {
     return User.findByPk(id, {
-      include: {model: Organisation, as: 'Organisations'}
+      include: { model: Organisation, as: 'Organisations' },
     });
   }
 
@@ -31,31 +30,31 @@ class OrganisationService {
     return Organisation.findAll({
       include: [
         {
-          where: {role: 'admin'},
+          where: { role: 'admin' },
           model: OrganisationMembers,
-          as: 'Members'
-        }
-      ]
+          as: 'Members',
+        },
+      ],
     });
   }
 
   static async getOrganisationWallet(id) {
     return Organisation.findOne({
       where: {
-        id: Number(id)
+        id: Number(id),
       },
       include: {
         model: Wallet,
-        as: 'Wallet'
-      }
+        as: 'Wallet',
+      },
     });
   }
 
   static async getOrganisation(id) {
     return Organisation.findOne({
       where: {
-        id: Number(id)
-      }
+        id: Number(id),
+      },
     });
   }
 
@@ -63,26 +62,26 @@ class OrganisationService {
     return Organisation.findAll({
       include: {
         model: Wallet,
-        as: 'Wallet'
-      }
+        as: 'Wallet',
+      },
     });
   }
 
   static async addOrganisation(data, user) {
-    return Organisation.create(data).then(organisation => {
+    return Organisation.create(data).then((organisation) => {
       organisation.createMember({
         UserId: user.id,
-        role: OrgRoles.Admin
+        role: OrgRoles.Admin,
       });
     });
   }
 
   static async addDonor(data, user, inviteeId) {
-    return Organisation.create(data).then(organisation => {
+    return Organisation.create(data).then((organisation) => {
       organisation.createMember({
         UserId: user.id,
         OrganisationId: inviteeId,
-        role: 'donor'
+        role: 'donor',
       });
     });
   }
@@ -90,8 +89,8 @@ class OrganisationService {
   static async updateOrganisationProfile(id, data = {}) {
     return Organisation.update(data, {
       where: {
-        id
-      }
+        id,
+      },
     });
   }
 
@@ -99,8 +98,8 @@ class OrganisationService {
     const exisiting = await OrganisationMembers.findOne({
       where: {
         UserId,
-        OrganisationId
-      }
+        OrganisationId,
+      },
     });
 
     if (exisiting) {
@@ -110,7 +109,7 @@ class OrganisationService {
     return OrganisationMembers.create({
       UserId,
       OrganisationId,
-      role
+      role,
     });
   }
 
@@ -121,8 +120,8 @@ class OrganisationService {
   static async checkExistEmail(email) {
     return Organisation.findOne({
       where: {
-        email: email
-      }
+        email,
+      },
     });
   }
 
@@ -130,29 +129,30 @@ class OrganisationService {
     return OrganisationMembers.findOne({
       where: {
         OrganisationId: organisation,
-        UserId: user
-      }
+        UserId: user,
+      },
     });
   }
+
   static async getAllDonorMember(UserId) {
     return OrganisationMembers.findAll({
-      where: {UserId}
+      where: { UserId },
     });
   }
 
   static async getAssociatedCampaigns(id) {
     return Organisation.findAll({
       where: {
-        id
+        id,
       },
       order: [['createdAt', 'DESC']],
       include: {
         model: Campaign,
         where: {
-          is_public: false
+          is_public: false,
         },
-        as: 'associatedCampaigns'
-      }
+        as: 'associatedCampaigns',
+      },
     });
   }
 
@@ -164,88 +164,90 @@ class OrganisationService {
         {
           model: Campaign,
           where: {
-            is_public: false
+            is_public: false,
           },
-          as: 'associatedCampaigns'
-        }
-      ]
+          as: 'associatedCampaigns',
+        },
+      ],
     });
   }
 
   static async isMemberUser(user) {
     return OrganisationMembers.findOne({
       where: {
-        UserId: user
-      }
+        UserId: user,
+      },
     });
   }
 
-  static createVendorAccount(organisation, data, creator) {
+  static createVendorAccount(organisation, data) {
     return new Promise((resolve, reject) => {
       let account = null;
       let store = null;
 
-      const {address, store_name, location} = data;
+      const { address, store_name: storeName, location } = data;
       const rawPassword = generateRandom(8);
       const RoleId = AclRoles.Vendor;
       const OrganisationId = organisation.id;
       const password = bcrypt.hashSync(rawPassword, 10);
-      const vendor_id = GenearteVendorId();
+      const vendorId = GenearteVendorId();
       User.create({
         ...data,
-        vendor_id,
+        vendor_id: vendorId,
         RoleId,
         OrganisationId,
-        password
+        password,
       })
-        .then(async _account => {
+        .then(async (_account) => {
           account = _account;
           this.createMember(account.id, OrganisationId, OrgRoles.Vendor);
           return Market.create({
-            store_name,
+            store_name: storeName,
             address,
             location,
-            UserId: account.id
+            UserId: account.id,
           });
         })
-        .then(async _store => {
+        .then(async (_store) => {
           store = _store;
           MailerService.verify(
             data.email,
-            data.first_name + ' ' + data.last_name,
-            vendor_id,
-            rawPassword
+            `${data.first_name} ${data.last_name}`,
+            vendorId,
+            rawPassword,
           );
           SmsService.sendOtp(
             data.phone,
-            `Hi, ${data.first_name}  ${data.last_name} your CHATS account ID is: ${vendor_id} , password is: ${rawPassword}`
+            `Hi, ${data.first_name}  ${data.last_name} your CHATS account ID is: ${vendorId} , password is: ${rawPassword}`,
           );
           account = account.toObject();
           account.Store = store.toJSON();
           resolve(account);
         })
-        .catch(error => {
+        .catch((error) => {
           if (account && !store) {
             User.destroy({
               where: {
-                id: account.id
-              }
+                id: account.id,
+              },
             });
           }
           reject(error);
         });
     });
   }
+
   static async getAllNGOs() {
     return Organisation.findAll();
   }
+
   static async beneficiariesTransactions(OrganisationId) {
     return Transaction.findAll({
       where: {
         SenderWalletId: Sequelize.where(
           Sequelize.col('SenderWallet.UserId'),
-          OrganisationId
-        )
+          OrganisationId,
+        ),
       },
       include: [
         {
@@ -255,26 +257,26 @@ class OrganisationService {
           where: {
             AccountUserType: 'organisation',
             CampaignId: {
-              [Op.ne]: null
-            }
-          }
+              [Op.ne]: null,
+            },
+          },
         },
 
         {
           model: Wallet,
           as: 'RecievingWallet',
           attributes: {
-            exclude: ['privateKey', 'bantuPrivateKey']
+            exclude: ['privateKey', 'bantuPrivateKey'],
           },
           include: [
             {
               model: User,
               as: 'User',
-              attributes: userConst.publicAttr
-            }
-          ]
-        }
-      ]
+              attributes: userConst.publicAttr,
+            },
+          ],
+        },
+      ],
     });
   }
 }

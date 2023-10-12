@@ -4,10 +4,10 @@ const BlockchainTrx = async (_result, _from, _pswd) => {
   const nonce = await connect.web3.eth.getTransactionCount(_from);
   const data = _result.encodeABI();
   const tx = {
-    nonce: nonce,
+    nonce,
     from: _from,
     to: connect.address,
-    data: data,
+    data,
     gas: 400000,
     gasPrice: 0,
   };
@@ -19,7 +19,7 @@ const BlockchainTrx = async (_result, _from, _pswd) => {
   return sendtx;
 };
 
-//Users' Management by Admin
+// Users' Management by Admin
 
 /**
  * @name CreateAccount
@@ -27,23 +27,19 @@ const BlockchainTrx = async (_result, _from, _pswd) => {
  * @param {string} _passwrd: generated encrypted password for user
  * @returns {object[]} object with transaction status; true or throws
  */
-exports.CreateAccount = async _passwrd => {
+exports.CreateAccount = async (_passwrd) => {
   try {
     await connect.web3.eth.personal.unlockAccount(
       connect.account,
       connect.account_pass,
       0,
     );
-    let addr = await connect.web3.eth.personal.newAccount(_passwrd);
+    const addr = await connect.web3.eth.personal.newAccount(_passwrd);
     const result = await connect.contract.methods.SetWhiteList(addr);
     await BlockchainTrx(result, connect.account, connect.account_pass);
 
     return addr;
   } catch (error) {
-    err = {
-      name: 'Web3-CreateAccount',
-      error: error.message,
-    };
-    throw err;
+    throw new Error('Web3-CreateAccount', error.message);
   }
 };

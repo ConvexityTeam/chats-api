@@ -1,7 +1,6 @@
-'use strict';
-const {Model} = require('sequelize');
-const {async} = require('regenerator-runtime');
-const {AclRoles, OrgRoles} = require('../utils');
+const { Model } = require('sequelize');
+const { OrgRoles } = require('../utils');
+
 module.exports = (sequelize, DataTypes) => {
   class Organisation extends Model {
     /**
@@ -15,39 +14,39 @@ module.exports = (sequelize, DataTypes) => {
         through: {
           model: models.OrganisationMembers,
           scope: {
-            role: OrgRoles.Vendor
-          }
-        }
+            role: OrgRoles.Vendor,
+          },
+        },
       });
 
       Organisation.hasMany(models.OrganisationMembers, {
-        as: 'Members'
+        as: 'Members',
       });
       Organisation.hasMany(models.Transaction, {
         as: 'Transactions',
-        foreignKey: 'OrganisationId'
+        foreignKey: 'OrganisationId',
       });
       Organisation.hasMany(models.FundAccount, {
-        as: 'FundingHistories'
+        as: 'FundingHistories',
       });
       Organisation.hasMany(models.Campaign, {
         as: 'Campaigns',
-        foreignKey: 'OrganisationId'
+        foreignKey: 'OrganisationId',
       });
       Organisation.hasMany(models.Wallet, {
         as: 'CampaignWallets',
         foreignKey: 'OrganisationId',
         scope: {
-          wallet_type: 'organisation'
-        }
+          wallet_type: 'organisation',
+        },
       });
 
       Organisation.belongsToMany(models.Campaign, {
         through: {
-          model: models.AssociatedCampaign
+          model: models.AssociatedCampaign,
         },
         as: 'associatedCampaigns',
-        foreignKey: 'DonorId'
+        foreignKey: 'DonorId',
       });
 
       Organisation.hasOne(models.Wallet, {
@@ -55,8 +54,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'OrganisationId',
         scope: {
           wallet_type: 'organisation',
-          CampaignId: null
-        }
+          CampaignId: null,
+        },
       });
     }
   }
@@ -67,7 +66,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         set(value) {
           this.setDataValue('email', value.toLowerCase());
-        }
+        },
       },
       phone: DataTypes.STRING,
       address: DataTypes.STRING,
@@ -79,12 +78,12 @@ module.exports = (sequelize, DataTypes) => {
       year_of_inception: DataTypes.STRING,
       profile_completed: DataTypes.BOOLEAN,
       is_verified: DataTypes.BOOLEAN,
-      about: DataTypes.STRING
+      about: DataTypes.STRING,
     },
     {
       sequelize,
-      modelName: 'Organisation'
-    }
+      modelName: 'Organisation',
+    },
   );
   return Organisation;
 };

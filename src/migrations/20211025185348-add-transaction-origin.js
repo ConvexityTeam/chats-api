@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -10,11 +8,11 @@ module.exports = {
      */
     await queryInterface.addColumn('Transactions', 'transaction_origin', {
       type: Sequelize.ENUM('store', 'wallet'),
-      allowNull: false
+      allowNull: false,
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -22,5 +20,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.removeColumn('Transactions', 'transaction_origin');
-  }
+  },
 };

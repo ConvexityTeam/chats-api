@@ -1,5 +1,5 @@
-const {Response} = require('../libs');
-const {compareHash, HttpStatusCode} = require('../utils');
+const { Response } = require('../libs');
+const { compareHash, HttpStatusCode } = require('../utils');
 
 const IsRequestWithValidPin = async (req, res, next) => {
   try {
@@ -44,6 +44,7 @@ const IsRequestWithValidPin = async (req, res, next) => {
     );
     return Response.send(res);
   }
+  return null;
 };
 
 exports.IsRequestWithValidPin = IsRequestWithValidPin;

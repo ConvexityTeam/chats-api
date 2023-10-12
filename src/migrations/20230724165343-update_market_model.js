@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -8,27 +6,27 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    //update market order
+    // update market order
     await queryInterface.removeColumn('Markets', 'location');
     await queryInterface.addColumn('Markets', 'location', {
       allowNull: true,
-      type: Sequelize.JSON
+      type: Sequelize.JSON,
     });
     await queryInterface.addColumn('Markets', 'category_id', {
       allowNull: true,
       type: Sequelize.INTEGER,
       references: {
         model: 'ProductCategories',
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
     await queryInterface.addColumn('Markets', 'website_url', {
       allowNull: true,
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -36,5 +34,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.removeColumn('Markets', 'category');
-  }
+  },
 };

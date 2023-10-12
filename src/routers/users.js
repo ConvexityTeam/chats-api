@@ -4,23 +4,23 @@ const {
   Auth,
   VendorAuth,
   VendorBeneficiaryAuth,
-  BeneficiaryAuth
+  BeneficiaryAuth,
 } = require('../middleware/auth');
 const UsersController = require('../controllers/UsersController');
-const {UserValidator} = require('../validators');
-const {IsUserVerified} = require('../middleware');
+const { UserValidator } = require('../validators');
+const { IsUserVerified } = require('../middleware');
 
 // Refactored
 
 router.post(
   '/account/:amount/withdraw/:accountno/:campaignId',
   BeneficiaryAuth,
-  UsersController.beneficiaryWithdrawFromBankAccount
+  UsersController.beneficiaryWithdrawFromBankAccount,
 );
 router.post(
   '/account/:amount/withdraw/:accountno',
   VendorAuth,
-  UsersController.vendorWithdrawFromBankAccount
+  UsersController.vendorWithdrawFromBankAccount,
 );
 
 router.post('/liveness', Auth, UsersController.liveness);
@@ -32,13 +32,13 @@ router
     Auth,
     UserValidator.updatePinRules(),
     UserValidator.validate,
-    UsersController.updateAccountPin
+    UsersController.updateAccountPin,
   )
   .post(
     Auth,
     UserValidator.setPinRules(),
     UserValidator.validate,
-    UsersController.setAccountPin
+    UsersController.setAccountPin,
   );
 
 router
@@ -47,7 +47,7 @@ router
     Auth,
     UserValidator.updatePasswordRules(),
     UserValidator.validate,
-    UsersController.changePassword
+    UsersController.changePassword,
   );
 
 router
@@ -57,7 +57,7 @@ router
     VendorBeneficiaryAuth,
     IsUserVerified,
     UserValidator.addAccountValidation,
-    UsersController.addBankAccount
+    UsersController.addBankAccount,
   );
 router.post('/verify-nin', UsersController.verifyNin);
 router
@@ -66,7 +66,7 @@ router
   .put(
     Auth,
     UserValidator.updateProfileValidation,
-    UsersController.updateProfile
+    UsersController.updateProfile,
   );
 
 router.get('/', Auth, UsersController.getAllUsers);
@@ -79,18 +79,18 @@ router.delete('/:id', UsersController.deleteUser);
 router.get(
   '/transactions/:beneficiary',
   Auth,
-  UsersController.getBeneficiaryTransactions
+  UsersController.getBeneficiaryTransactions,
 );
 router.get(
   '/recent_transactions/:beneficiary',
   Auth,
-  UsersController.getRecentTransactions
+  UsersController.getRecentTransactions,
 );
 router.get('/transaction/:uuid', Auth, UsersController.getTransaction);
 router.get(
   '/transactions/recieved/:id',
   Auth,
-  UsersController.getTotalAmountRecieved
+  UsersController.getTotalAmountRecieved,
 );
 router.post('/transact', Auth, UsersController.transact);
 router.get('/info/statistics', Auth, UsersController.getStats);

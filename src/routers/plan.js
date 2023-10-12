@@ -1,15 +1,11 @@
 const router = require('express').Router();
 
-const {SuperAdminAuth, IsOrgMember} = require('../middleware');
+const { SuperAdminAuth } = require('../middleware');
 
-const {
-  OrganisationValidator,
-  ParamValidator,
-  FileValidator,
-  CampaignValidator
-} = require('../validators');
+// const {
+// } = require('../validators');
 
-const {PlanController} = require('../controllers');
+const { PlanController } = require('../controllers');
 
 router.post('/create-plan', SuperAdminAuth, PlanController.createPlan);
 router.put('/update-plan:id', SuperAdminAuth, PlanController.updatePlan);

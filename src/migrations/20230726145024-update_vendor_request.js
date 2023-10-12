@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -11,11 +9,11 @@ module.exports = {
     await queryInterface.addColumn('VendorProposals', 'status', {
       type: Sequelize.ENUM('pending', 'approved', 'rejected'),
       allowNull: true,
-      defaultValue: 'pending'
+      defaultValue: 'pending',
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -23,5 +21,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.removeColumn('VendorProposals', 'status');
-  }
+  },
 };

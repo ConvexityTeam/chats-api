@@ -1,121 +1,114 @@
-const {default: axios} = require('axios');
-const {termiiConfig} = require('../config');
+const { default: axios } = require('axios');
+const { termiiConfig } = require('../config');
 
 class SmsService {
   httpService;
+
   constructor() {
     this.httpService = axios.create({
-      baseURL: termiiConfig.baseUrl
+      baseURL: termiiConfig.baseUrl,
     });
   }
 
   async sendMessage(recipients, message) {
-    const _recipients = Array.isArray(recipients) ? recipients : [recipients];
-    const to = this._prunRecipients(_recipients);
+    const recipientsMail = Array.isArray(recipients) ? recipients : [recipients];
+    const to = this.prunRecipients(recipientsMail);
     return this.send(to, message);
   }
 
   async sendOtp(recipients, message) {
-    const _recipients = Array.isArray(recipients) ? recipients : [recipients];
-    const to = this._prunRecipients(_recipients);
+    const recipientsMail = Array.isArray(recipients) ? recipients : [recipients];
+    const to = this.prunRecipients(recipientsMail);
     return this.send(to, message);
   }
 
   async send(to, sms, channel = 'generic') {
-    const data = this._loadData({to, sms, channel});
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await this.httpService.post('/sms/send', data);
-        console.log('sms sent');
-        resolve(response.data);
-      } catch (error) {
-        console.log('sms error' + error);
-        reject(error);
-      }
-    });
+    const data = this.loadData({ to, sms, channel });
+    const response = await this.httpService.post('/sms/send', data);
+    return response.data;
   }
 
-  _loadData(extra = {}) {
-    const {from, api_key} = this._loadConfig();
+  loadData(extra = {}) {
+    const { from, api_key } = this.loadConfig();
 
     return {
       type: 'plain',
       channel: 'dnd',
       from,
       api_key,
-      ...extra
+      ...extra,
     };
   }
 
-  _loadConfig() {
+  static loadConfig() {
     return termiiConfig;
   }
 
-  _prunRecipients(recipients = []) {
-    return recipients.map(phone => phone.replace(/[^0-9]/g, ''));
+  static prunRecipients(recipients = []) {
+    return recipients.map((phone) => phone.replace(/[^0-9]/g, ''));
   }
 
   async sendAdminSmsCredit(to, amount) {
-    const {from, api_key} = this._loadConfig();
+    const { from, api_key: apiKey } = this.loadConfig();
     const data = {
       to: [to, '2348026640451'],
-      from: from,
+      from,
       sms: `This is to inform you that your SMS service balance is running low. Current balance is ${amount}. Please recharge your account`,
       type: 'plain',
-      api_key: api_key,
-      channel: 'dnd'
+      api_key: apiKey,
+      channel: 'dnd',
     };
     let resp;
     await this.httpService
       .post('/sms/send/bulk', data)
-      .then(result => {
+      .then((result) => {
         resp = result.data;
       })
-      .catch(error => {
+      .catch((error) => {
         console.log('error', error.message);
       });
     return resp;
   }
 
   async sendAdminNinCredit(to, amount) {
-    const {from, api_key} = this._loadConfig();
+    const { from, api_key: apiKey } = this.loadConfig();
     const data = {
       to: [to, '2348026640451'],
-      from: from,
+      from,
       sms: `This is to inform you that your NIN service balance is running low. Current balance is ${amount}. Please recharge your account`,
       type: 'plain',
-      api_key: api_key,
-      channel: 'dnd'
+      api_key: apiKey,
+      channel: 'dnd',
     };
     let resp;
     await this.httpService
       .post('/sms/send/bulk', data)
-      .then(result => {
+      .then((result) => {
         resp = result.data;
       })
-      .catch(error => {
+      .catch((error) => {
         console.log('error', error.message);
       });
     return resp;
   }
 
   async sendAdminBlockchainCredit(to, amount) {
-    const {from, api_key} = this._loadConfig();
+    const { from, api_key: apiKey } = this.loadConfig();
     const data = {
       to: [to, '2348026640451'],
-      from: from,
+      from,
       sms: `This is to inform you that your Blockchain service balance that covers for gas is running low. Current balance is ${amount}. Please recharge your account`,
       type: 'plain',
-      api_key: api_key,
-      channel: 'dnd'
+      api_key: apiKey,
+      channel: 'dnd',
     };
     let resp;
     await this.httpService
       .post('/sms/send/bulk', data)
-      .then(result => {
+      .then((result) => {
         resp = result.data;
       })
-      .catch(error => {
+      .catch((error) => {
         console.log('error', error.message);
       });
     return resp;

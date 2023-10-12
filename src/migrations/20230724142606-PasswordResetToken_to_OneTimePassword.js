@@ -1,8 +1,6 @@
-'use strict';
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
     /**
      * Add altering commands here.
      *
@@ -12,7 +10,7 @@ module.exports = {
     await queryInterface.renameTable('PasswordResetTokens', 'OneTimePasswords');
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     /**
      * Add reverting commands here.
      *
@@ -20,5 +18,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.renameTable('OneTimePasswords', 'PasswordResetTokens');
-  }
+  },
 };

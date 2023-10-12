@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class OneTimePassword extends Model {
     /**
@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       OneTimePassword.belongsTo(models.User, {
         foreignKey: 'UserId',
-        as: 'User'
+        as: 'User',
       });
     }
   }
@@ -20,18 +20,18 @@ module.exports = (sequelize, DataTypes) => {
       ref: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
       },
       UserId: DataTypes.INTEGER,
       token: DataTypes.STRING,
       request_ip: DataTypes.STRING,
-      expires_at: DataTypes.DATE
+      expires_at: DataTypes.DATE,
     },
     {
       sequelize,
       modelName: 'OneTimePassword',
-      tableName: 'OneTimePasswords'
-    }
+      tableName: 'OneTimePasswords',
+    },
   );
 
   OneTimePassword.prototype.toObject = function () {

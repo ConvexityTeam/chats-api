@@ -1,3 +1,3 @@
 exports.getFileExtension = (fileName) => fileName.substring(
-  fileName.lastIndexOf(".") + 1
+  fileName.lastIndexOf('.') + 1,
 );

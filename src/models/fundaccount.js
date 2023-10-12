@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class FundAccount extends Model {
     /**
@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       FundAccount.belongsTo(models.Organisation, {
         foreignKey: 'OrganisationId',
-        as: 'Minter'
+        as: 'Minter',
       });
     }
   }
@@ -25,12 +25,12 @@ module.exports = (sequelize, DataTypes) => {
       amount: DataTypes.STRING,
       transactionReference: DataTypes.STRING,
       status: DataTypes.ENUM('processing', 'successful', 'declined'),
-      approved: DataTypes.BOOLEAN
+      approved: DataTypes.BOOLEAN,
     },
     {
       sequelize,
-      modelName: 'FundAccount'
-    }
+      modelName: 'FundAccount',
+    },
   );
   return FundAccount;
 };

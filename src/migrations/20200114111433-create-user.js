@@ -1,4 +1,3 @@
-'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Users', {
@@ -7,7 +6,7 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       referal_id: {
         type: Sequelize.STRING,
@@ -19,101 +18,101 @@ module.exports = {
           model: {
             tableName: 'Roles',
           },
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       first_name: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       last_name: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       email: {
         type: Sequelize.STRING,
-        unique: true
+        unique: true,
       },
       phone: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       password: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       status: {
         type: Sequelize.ENUM('suspended', 'activated', 'pending'),
-        defaultValue: 'pending'
+        defaultValue: 'pending',
       },
       marital_status: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       gender: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       location: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       bvn: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       nin: {
         type: Sequelize.STRING,
-        unique: true
+        unique: true,
       },
       pin: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       address: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       is_email_verified: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       is_phone_verified: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       is_bvn_verified: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       is_self_signup: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       is_public: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       is_tfa_enabled: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       tfa_secret: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       last_login: {
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       profile_pic: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       dob: {
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       nfc: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('Users');
-  }
+  },
 };

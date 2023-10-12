@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -8,23 +6,23 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-     await queryInterface.addColumn(
+    await queryInterface.addColumn(
       'Campaigns',
       'funded_with',
       {
         type: Sequelize.STRING,
-        after: 'is_funded'
-      }
-    )
+        after: 'is_funded',
+      },
+    );
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Campaigns', 'funded_with');
-  }
+    await queryInterface.removeColumn('Campaigns', 'funded_with');
+  },
 };

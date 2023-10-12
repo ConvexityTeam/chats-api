@@ -1,7 +1,6 @@
-"use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("TaskProgresses", {
+    await queryInterface.createTable('TaskProgresses', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -13,9 +12,9 @@ module.exports = {
         allowNull: false,
         references: {
           model: {
-            tableName: "TaskUsers",
+            tableName: 'TaskUsers',
           },
-          key: "id",
+          key: 'id',
         },
       },
       description: {
@@ -31,7 +30,7 @@ module.exports = {
       },
     });
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("TaskProgresses");
+  down: async (queryInterface) => {
+    await queryInterface.dropTable('TaskProgresses');
   },
 };

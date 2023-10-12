@@ -1,25 +1,25 @@
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
+const moment = require('moment');
+const Validator = require('validatorjs');
+const formidable = require('formidable');
+const fs = require('fs');
+const { Message } = require('@droidsolutions-oss/amqp-ts');
 const {
   HttpStatusCode,
   SanitizeObject,
   generateOrganisationId,
   generateProductRef,
-  GenerateSecrete
+  GenerateSecrete,
 } = require('../utils');
 
-const moment = require('moment');
 const UserService = require('../services/UserService');
-const {Response, Logger} = require('../libs');
+const { Response, Logger } = require('../libs');
 const db = require('../models');
 
-const Validator = require('validatorjs');
-const formidable = require('formidable');
-const fs = require('fs');
 const uploadFile = require('./AmazonController');
 
-const amqp = require('./../libs/RabbitMQ/Connection');
+const amqp = require('../libs/RabbitMQ/Connection');
 
-const {Message} = require('@droidsolutions-oss/amqp-ts');
 const BantuService = require('../services');
 const api = require('../libs/Axios');
 const {
@@ -30,26 +30,24 @@ const {
   VendorService,
   BlockchainService,
   ProductService,
+  ProvidusService,
   WalletService,
   ZohoService,
-  AwsService,
-  TransactionService
+  TransactionService,
 } = require('../services');
 const AwsUploadService = require('../services/AwsUploadService');
 const campaign = require('../models/campaign');
 
-const createWalletQueue = amqp['default'].declareQueue('createWallet', {
-  durable: true
+const transferToQueue = amqp.default.declareQueue('transferTo', {
+  durable: true,
 });
-const transferToQueue = amqp['default'].declareQueue('transferTo', {
-  durable: true
-});
-const mintTokenQueue = amqp['default'].declareQueue('mintToken', {
-  durable: true
+const mintTokenQueue = amqp.default.declareQueue('mintToken', {
+  durable: true,
 });
 
 class OrganisationController {
   static logger = Logger;
+
   static async register(req, res) {
     const data = req.body;
     const rules = {
@@ -58,74 +56,71 @@ class OrganisationController {
       phone: 'required|string',
       address: 'required|string',
       location: 'required|string',
-      logo_link: 'url'
+      logo_link: 'url',
     };
 
     const validation = new Validator(data, rules);
     if (validation.fails()) {
       Response.setError(422, validation.errors);
       return Response.send(res);
-    } else {
-      const organisation = await OrganisationService.checkExistEmail(
-        data.email
-      );
-
-      if (organisation) {
-        Response.setError(422, 'Email already taken');
-        return Response.send(res);
-      } else {
-      }
     }
+    const organisation = await OrganisationService.checkExistEmail(
+      data.email,
+    );
+
+    if (organisation) {
+      Response.setError(422, 'Email already taken');
+      return Response.send(res);
+    }
+    return null;
   }
 
   static async changeOrganisationLogo(req, res) {
     try {
-      const file = req.file;
+      const { file } = req;
       const ext = req.file.mimetype.split('/').pop();
       const key = `${Date.now()}.${ext}`;
       const buket = 'convexity-ngo-logo';
-      const logo_link = await AwsUploadService.uploadFile(file, key, buket);
+      const logoLink = await AwsUploadService.uploadFile(file, key, buket);
       await OrganisationService.updateOrganisationProfile(req.organisation.id, {
-        logo_link
+        logo_link: logoLink,
       });
       const updated = await OrganisationService.findOneById(
-        req.organisation.id
+        req.organisation.id,
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation logo updated.',
-        updated
+        updated,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
   }
 
-  static async verifyImage(req, res) {
-    try {
-    } catch (error) {
-      Response.setError(
-        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
-      );
-      return Response.send(res);
-    }
+  static async verifyImage(res) {
+    Response.setError(
+      HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+      'Request failed. Please try again.',
+    );
+    return Response.send(res);
   }
+
   static async completeProfile(req, res) {
     try {
-      const organisation = req.organisation;
+      const { organisation } = req;
       const data = SanitizeObject(req.body, [
         'country',
         'state',
         'address',
         'year_of_inception',
         'website_url',
-        'about'
+        'about',
       ]);
       data.profile_completed = true;
 
@@ -134,19 +129,19 @@ class OrganisationController {
       }
       await OrganisationService.updateOrganisationProfile(
         organisation.id,
-        data
+        data,
       );
       const updated = await OrganisationService.findOneById(organisation.id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation profile updated.',
-        updated
+        updated,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
@@ -155,70 +150,75 @@ class OrganisationController {
   static async getProfile(req, res) {
     try {
       const profile = await OrganisationService.findOneById(
-        req.organisation.id
+        req.organisation.id,
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation profile.',
-        profile
+        profile,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
   }
+
   static async getAvailableOrgCampaigns(req, res) {
     try {
       const OrganisationId = req.params.organisation_id;
-      const _query = SanitizeObject(req.query, ['type']);
+      const queries = SanitizeObject(req.query, ['type']);
       const query = {
-        ..._query,
-        status: 'active'
+        ...queries,
+        status: 'active',
       };
       const campaigns = await CampaignService.getCampaigns(
         OrganisationId,
-        ...query
+        ...query,
       );
-      let campaignsArray = [];
-      for (let campaign of campaigns) {
-        let beneficiaries_count = await campaign.countBeneficiaries();
+      const campaignsArray = [];
+      await Promise.all(campaigns.map(async (theCampaign) => {
+        const beneficiariesCount = await theCampaign.countBeneficiaries();
         campaignsArray.push({
-          id: campaign.id,
-          title: campaign.title,
-          type: campaign.type,
-          description: campaign.description,
-          status: campaign.status,
-          amount_disbursed: campaign.amount_disbursed,
-          budget: campaign.budget,
-          funded_with: campaign.funded_with,
-          location: campaign.location,
-          start_date: campaign.start_date,
-          end_date: campaign.end_date,
-          createdAt: campaign.createdAt,
-          updatedAt: campaign.updatedAt,
-          beneficiaries_count: beneficiaries_count,
+          id: theCampaign.id,
+          title: theCampaign.title,
+          type: theCampaign.type,
+          description: theCampaign.description,
+          status: theCampaign.status,
+          amountDisbursed: theCampaign.amount_disbursed,
+          budget: theCampaign.budget,
+          funded_with: theCampaign.funded_with,
+          location: theCampaign.location,
+          start_date: theCampaign.start_date,
+          end_date: theCampaign.end_date,
+          createdAt: theCampaign.createdAt,
+          updatedAt: theCampaign.updatedAt,
+          beneficiaries_count: beneficiariesCount,
           Jobs: campaign.Jobs,
-          ck8: '' //(await AwsUploadService.getMnemonic(campaign.id)) || null
+          ck8: '', // (await AwsUploadService.getMnemonic(campaign.id)) || null
         });
-      }
+      }));
+
+      // campaignsArray now contains the processed campaign objects
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaigns.',
-        campaignsArray
+        campaignsArray,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
   }
+
   static async getAllNGOs(req, res) {
     try {
       const ngos = await OrganisationService.getAllNGOs();
@@ -227,194 +227,198 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error
+        `Request failed. Please try again.${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async getAllPublicDonorCampaigns(req, res) {
     try {
-      let completed_task = 0;
-      const assignmentTask = [];
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getPublicCampaigns({
         ...query,
-        is_public: true
+        is_public: true,
       });
+      const campaignPromises = campaigns.map(async (eachCampaign) => {
+        const campaignCopy = { ...eachCampaign };
+        if (new Date(campaignCopy.end_date) < new Date()) {
+          await eachCampaign.update({ status: 'completed' });
+        }
 
-      for (let campaign of campaigns) {
-        if (new Date(campaign.end_date) < new Date())
-          campaign.update({status: 'completed'});
         const organisation = await OrganisationService.checkExist(
-          campaign.OrganisationId
+          campaignCopy.OrganisationId,
         );
-        campaign.dataValues.Organisation = organisation;
-        for (let task of campaign.Jobs) {
+        campaignCopy.dataValues.Organisation = organisation;
+
+        const taskPromises = eachCampaign.Jobs.map(async (task) => {
           const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'}
+            where: { TaskId: task.id, status: 'completed' },
           });
-          assignmentTask.push(assignment);
-        }
-
-        (campaign.dataValues.beneficiaries_count =
-          campaign.Beneficiaries.length),
-          (campaign.dataValues.task_count = campaign.Jobs.length);
-        campaign.dataValues.completed_task = completed_task;
-      }
-
-      function isExist(id) {
-        let find = assignmentTask.find(a => a && a.TaskId === id);
-        if (find) {
-          return true;
-        }
-        return false;
-      }
-
-      campaigns.forEach(data => {
-        data.Jobs.forEach(task => {
-          if (isExist(task.id)) {
-            data.dataValues.completed_task++;
-          }
+          return assignment;
         });
+        const completedTask = await Promise.all(taskPromises);
+        campaign.dataValues.beneficiaries_count = campaign.Beneficiaries.length;
+        campaign.dataValues.task_count = campaign.Jobs.length;
+        campaign.dataValues.completed_task = completedTask.filter(
+          (assignment) => assignment !== null,
+        ).length;
+        return campaign;
       });
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
+      const processedCampaigns = await Promise.all(campaignPromises);
+      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', processedCampaigns);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
   }
-  static async getAllPrivateDonorCampaigns(req, res) {
-    try {
-      let completed_task = 0;
-      const assignmentTask = [];
 
+  static async getAllPrivateDonorCampaigns(req, res) {
+    const assignmentTask = [];
+    function isExist(id) {
+      const find = assignmentTask.find((a) => a && a.TaskId === id);
+      if (find) {
+        return true;
+      }
+      return false;
+    }
+    try {
+      let completedTask = 0;
       const organisation = await OrganisationService.checkExistEmail(
-        req.user.email
+        req.user.email,
       );
       Logger.info(`Organisation...: ${JSON.stringify(organisation)}`);
       const query = SanitizeObject(req.query);
-      const [campaigns, organisationW, transaction] = await Promise.all([
+      const [campaigns, transaction] = await Promise.all([
         CampaignService.getPrivateCampaigns(query, organisation.id),
         OrganisationService.getOrganisationWallet(organisation.id),
-        TransactionService.findOrgnaisationTransactions(organisation.id)
+        TransactionService.findOrgnaisationTransactions(organisation.id),
       ]);
       Logger.info(`Transaction...: ${JSON.stringify(transaction)}`);
+
       if (campaigns.associatedCampaigns) {
-        for (let campaign of campaigns.associatedCampaigns) {
-          if (new Date(campaign.end_date) < new Date())
-            campaign.update({status: 'completed'});
-          for (let task of campaign.Jobs) {
-            const assignment = await db.TaskAssignment.findOne({
-              where: {TaskId: task.id, status: 'completed'}
-            });
-            assignmentTask.push(assignment);
+        campaigns.associatedCampaigns.forEach(async (the_campaign) => {
+          const campaignCopy = { ...the_campaign };
+          if (new Date(the_campaign.end_date) < new Date()) {
+            await the_campaign.update({ status: 'completed' });
           }
-
-          (campaign.dataValues.beneficiaries_count =
-            campaign.Beneficiaries.length),
-            (campaign.dataValues.task_count = campaign.Jobs.length);
-          campaign.dataValues.completed_task = completed_task;
-
-          campaign.dataValues.iDonate = false;
-          campaign.dataValues.amount_donated = 0;
-
-          for (let tran of transaction.data) {
-            Logger.info(`Campaign id...: ${campaign.id}`);
-            if (
-              tran.OrganisationId &&
-              tran.OrganisationId === organisation.id &&
-              tran.CampaignId &&
-              tran.CampaignId === campaign.id
-            ) {
-              campaign.dataValues.iDonate = true;
-              campaign.dataValues.amount_donated = tran.amount;
-              campaign.dataValues.donation_date = tran.createdAt;
+          const assignmentPromises = the_campaign.Jobs.map(async (task) => {
+            if (isExist(task.id)) {
+              completedTask += 1;
             }
-          }
-        }
+            return db.TaskAssignment.findOne({
+              where: { TaskId: task.id, status: 'completed' },
+            });
+          });
+          await Promise.all(assignmentPromises);
+          campaignCopy.dataValues.beneficiaries_count = the_campaign.Beneficiaries.length;
+          campaignCopy.dataValues.task_count = the_campaign.Jobs.length;
+          campaignCopy.dataValues.completed_task = completedTask;
+          campaignCopy.dataValues.iDonate = false;
+          campaignCopy.dataValues.amount_donated = 0;
+
+          transaction.data.forEach((tran) => {
+            Logger.info(`Campaign id...: ${the_campaign.id}`);
+            if (
+              tran.OrganisationId
+              && tran.OrganisationId === organisation.id
+              && tran.CampaignId
+              && tran.CampaignId === the_campaign.id
+            ) {
+              campaignCopy.dataValues.iDonate = true;
+              campaignCopy.dataValues.amount_donated = tran.amount;
+              campaignCopy.dataValues.donation_date = tran.createdAt;
+            }
+          });
+        });
       }
-      function isExist(id) {
-        let find = assignmentTask.find(a => a && a.TaskId === id);
-        if (find) {
-          return true;
-        }
-        return false;
-      }
-      campaigns?.associatedCampaigns.forEach(data => {
-        data.Jobs.forEach(task => {
+
+      campaigns?.associatedCampaigns.forEach((data) => {
+        const dataCopy = { ...data };
+        data.Jobs.forEach((task) => {
           if (isExist(task.id)) {
-            data.dataValues.completed_task++;
+            dataCopy.dataValues.completed_task += 1;
           }
         });
       });
-
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', campaigns);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error
+        `Request failed. Please try again.${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async getAllOrgCampaigns(req, res) {
+    const assignmentTask = [];
+    function isExist(id) {
+      const find = assignmentTask.find((a) => a && a.TaskId === id);
+      if (find) {
+        return true;
+      }
+      return false;
+    }
+
     try {
-      let completed_task = 0;
-      const assignmentTask = [];
       const OrganisationId = req.params.organisation_id;
       const query = SanitizeObject(req.query);
       const campaigns = await CampaignService.getCampaigns(
         OrganisationId,
-        query
+        query,
       );
 
-      for (let data of campaigns?.data) {
-        if (new Date(data.end_date) < new Date())
-          data.update({status: 'ended'});
-        for (let task of data.Jobs) {
-          const assignment = await db.TaskAssignment.findOne({
-            where: {TaskId: task.id, status: 'completed'}
-          });
-          assignmentTask.push(assignment);
-        }
-        //(await AwsService.getMnemonic(data.id)) || null;
-        data.dataValues.ck8 = GenerateSecrete();
+      if (campaigns?.data) {
+        await Promise.all(
+          campaigns.data.map(async (data) => {
+            const dataCopy = { ...data };
+            if (new Date(data.end_date) < new Date()) {
+              await data.update({ status: 'ended' });
+            }
 
-        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
-        data.dataValues.task_count = data.Jobs.length;
-        data.dataValues.completed_task = completed_task;
+            await Promise.all(
+              data.Jobs.map(async (task) => {
+                const assignment = await db.TaskAssignment.findOne({
+                  where: { TaskId: task.id, status: 'completed' },
+                });
+                assignmentTask.push(assignment);
+              }),
+            );
+
+            dataCopy.dataValues.ck8 = GenerateSecrete();
+            dataCopy.dataValues.beneficiaries_count = data.Beneficiaries.length;
+            dataCopy.dataValues.task_count = data.Jobs.length;
+            dataCopy.dataValues.completed_task = assignmentTask.length;
+          }),
+        );
       }
-      function isExist(id) {
-        let find = assignmentTask.find(a => a && a.TaskId === id);
-        if (find) {
-          return true;
-        }
-        return false;
-      }
-      campaigns &&
-        campaigns?.data.forEach(data => {
-          data.Jobs.forEach(task => {
+      if (campaigns && campaigns.data) {
+        campaigns.data.forEach((data) => {
+          const dataCopy = { ...data };
+          data.Jobs.forEach((task) => {
             if (isExist(task.id)) {
-              data.dataValues.completed_task++;
+              dataCopy.dataValues.completed_task += 1;
             }
           });
         });
+      }
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'All Campaigns.',
-        campaigns
+        campaigns,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again' + error
+        `Request failed. Please try again${error}`,
       );
       return Response.send(res);
     }
@@ -422,36 +426,37 @@ class OrganisationController {
 
   static async getAllOrgCash4W(req, res) {
     try {
-      let task_completed = 0,
-        task_uncompleted = 0,
-        total_tasks = 0;
+      let taskCompleted = 0;
+      let taskUncompleted = 0;
+      let totalTasks = 0;
       const OrganisationId = req.params.organisation_id;
       const cashforworks = await CampaignService.getCash4W(OrganisationId);
 
-      const campaignJobs = cashforworks.map(campaign => campaign.Jobs);
-      const merge = [].concat.apply([], campaignJobs);
+      const campaignJobs = cashforworks.map((each_campaign) => each_campaign.Jobs);
+      const merge = [...campaignJobs];
 
-      const Jobs = merge.map(jobs => {
-        if (jobs.isCompleted == true) {
-          task_completed++;
+      const Jobs = merge.map((jobs) => {
+        if (jobs.isCompleted === true) {
+          taskCompleted += 1;
         }
-        if (jobs.isCompleted == false) {
-          task_uncompleted++;
+        if (jobs.isCompleted === false) {
+          taskUncompleted += 1;
         }
+        return null;
       });
-      total_tasks = Jobs.length;
+      totalTasks = Jobs.length;
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'All Cash-For-Work.', {
-        task_completed,
-        task_uncompleted,
-        total_tasks,
-        cashforworks
+        task_completed: taskCompleted,
+        task_uncompleted: taskUncompleted,
+        total_tasks: totalTasks,
+        cashforworks,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
@@ -459,32 +464,33 @@ class OrganisationController {
 
   static async totalCashItem(req, res) {
     try {
-      const campaign = await CampaignService.getAllCampaigns();
+      await CampaignService.getAllCampaigns();
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
+    return null;
   }
+
   static async getBeneficiariesTransactions(req, res) {
     try {
-      const transactions =
-        await BeneficiaryService.findOrganisationVendorTransactions(
-          req.organisation.id,
-          req.query
-        );
+      const transactions = await BeneficiaryService.findOrganisationVendorTransactions(
+        req.organisation.id,
+        req.query,
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiaries transactions.',
-        transactions
+        transactions,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.',
       );
       return Response.send(res);
     }
@@ -494,19 +500,19 @@ class OrganisationController {
     try {
       const transactions = await VendorService.organisationVendorsTransactions(
         req.organisation.id,
-        req.query
+        req.query,
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Vendors transactions.',
-        transactions
+        transactions,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please try again.'
+        'Server Error. Please try again.',
       );
       return Response.send(res);
     }
@@ -517,53 +523,52 @@ class OrganisationController {
     const rules = {
       user_id: 'required|numeric',
       organisation_id: 'required|numeric',
-      role: 'required|string|in:admin,member'
+      role: 'required|string|in:admin,member',
     };
     const validation = new Validator(data, rules);
     if (validation.fails()) {
       Response.setError(422, validation.errors);
       return Response.send(res);
-    } else {
-      const organisation = await OrganisationService.checkExist(
-        data.organisation_id
-      );
-      const user = await UserService.getAUser(data.user_id);
-      var errors = [];
-      if (!organisation) {
-        errors.push('Organisation is Invalid');
-      }
-      if (!user) {
-        errors.push('User is Invalid');
-      }
-      if (errors.length) {
-        Response.setError(422, errors);
-        return Response.send(res);
-      } else {
-        const is_member = await OrganisationService.isMember(
-          organisation.id,
-          user.id
-        );
-        if (!is_member) {
-          await organisation
-            .createMember({
-              UserId: data.user_id,
-              role: 'member'
-            })
-            .then(() => {
-              Response.setSuccess(201, 'User Added to NGO successfully.');
-              return Response.send(res);
-            });
-        } else {
-          Response.setError(422, 'User is already a member');
-          return Response.send(res);
-        }
-      }
     }
+    const organisation = await OrganisationService.checkExist(
+      data.organisation_id,
+    );
+    const user = await UserService.getAUser(data.user_id);
+    const errors = [];
+    if (!organisation) {
+      errors.push('Organisation is Invalid');
+    }
+    if (!user) {
+      errors.push('User is Invalid');
+    }
+    if (errors.length) {
+      Response.setError(422, errors);
+      return Response.send(res);
+    }
+    const isMember = await OrganisationService.isMember(
+      organisation.id,
+      user.id,
+    );
+    if (!isMember) {
+      await organisation
+        .createMember({
+          UserId: data.user_id,
+          role: 'member',
+        })
+        .then(() => {
+          Response.setSuccess(201, 'User Added to NGO successfully.');
+          return Response.send(res);
+        });
+    } else {
+      Response.setError(422, 'User is already a member');
+      return Response.send(res);
+    }
+    return null;
   }
 
   static async updateOrgCampaign(req, res) {
     try {
-      let id = req.params.campaign_id;
+      const id = req.params.campaign_id;
 
       const data = SanitizeObject(req.body, [
         'title',
@@ -572,28 +577,28 @@ class OrganisationController {
         'location',
         'start_date',
         'end_date',
-        'status'
+        'status',
       ]);
 
       // TODO: Check title conflict
 
       // Handle update here
       await CampaignService.updateSingleCampaign(id, data);
-      const campaign = await CampaignService.getCampaignById(id);
+      const campaignService = await CampaignService.getCampaignById(id);
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign updated.',
-        campaign
+        campaignService,
       );
       return Response.send(res);
     } catch (error) {
       console.log({
-        error
+        error,
       });
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Campaign update failed. Please retry.'
+        'Campaign update failed. Please retry.',
       );
       return Response.send(res);
     }
@@ -607,7 +612,7 @@ class OrganisationController {
       description: 'required|string',
       spending: 'in:vendor,all',
       status: 'in:pending,in-progress,deleted,paused',
-      organisation_id: 'required|numeric'
+      organisation_id: 'required|numeric',
     };
 
     const validation = new Validator(data, rules);
@@ -615,59 +620,58 @@ class OrganisationController {
     if (validation.fails()) {
       Response.setError(422, validation.errors);
       return Response.send(res);
-    } else {
-      const campaignExist = await db.Campaign.findOne({
-        where: {
-          id: data.campaignId
-        }
-      });
+    }
+    const campaignExist = await db.Campaign.findOne({
+      where: {
+        id: data.campaignId,
+      },
+    });
 
-      if (!campaignExist) {
-        Response.setError(400, 'Invalid Campaign Id');
-        return Response.send(res);
-      }
-
-      const campaignData = {
-        budget: data.budget,
-        description: data.description
-      };
-
-      if (data.status) {
-        campaignData['status'] = data.status;
-      }
-
-      if (data.spending) {
-        campaignData['spending'] = data.spending;
-      }
-
-      Response.setSuccess(201, 'Campaign Data updated');
+    if (!campaignExist) {
+      Response.setError(400, 'Invalid Campaign Id');
       return Response.send(res);
     }
+
+    const campaignData = {
+      budget: data.budget,
+      description: data.description,
+    };
+
+    if (data.status) {
+      campaignData.status = data.status;
+    }
+
+    if (data.spending) {
+      campaignData.spending = data.spending;
+    }
+
+    Response.setSuccess(201, 'Campaign Data updated');
+    return Response.send(res);
   }
 
   static async fetchTransactions(req, res) {
     try {
-      const organisationId = req.params.organisationId;
+      const { organisationId } = req.params;
 
       const organisationExist = await db.Organisations.findOne({
         where: {
-          id: organisationId
+          id: organisationId,
         },
         include: {
           as: 'Transaction',
-          model: db.Transaction
-        }
+          model: db.Transaction,
+        },
       });
 
       const mintTransactions = await db.FundAccount.findAll({
         where: {
-          OrganisationId: organisationId
-        }
+          OrganisationId: organisationId,
+        },
       });
 
       Response.setSuccess(201, 'Transactions', {
         transaction: organisationExist.Transaction,
-        mintTransaction: mintTransactions
+        mintTransaction: mintTransactions,
       });
 
       return Response.send(res);
@@ -678,16 +682,16 @@ class OrganisationController {
     }
   }
 
-  static async createWallet(req, res) {
-    try {
-      QueueService.createWallet(OrganisationId, 'organisation', campaign.id);
-    } catch (error) {}
-  }
+  // static async createWallet(req, res) {
+  //   try {
+  //     QueueService.createWallet(OrganisationId, 'organisation', campaign.id);
+  //   } catch (error) {}
+  // }
 
-  static createItemCampaign(req, res) {
-    try {
-    } catch (error) {}
-  }
+  // static createItemCampaign(req, res) {
+  //   try {
+  //   } catch (error) {}
+  // }
 
   static async createCampaign(req, res) {
     try {
@@ -695,7 +699,7 @@ class OrganisationController {
         'location.country': 'required|string',
         'location.state': 'required|array',
         formId: 'numeric',
-        category_id: 'numeric'
+        category_id: 'numeric',
       };
 
       const validation = new Validator(req.body, rules);
@@ -705,25 +709,25 @@ class OrganisationController {
         return Response.send(res);
       }
       const data = SanitizeObject(req.body);
-      const spending = data.type == 'campaign' ? 'vendor' : 'all';
+      const spending = data.type === 'campaign' ? 'vendor' : 'all';
       const OrganisationId = req.organisation.id;
 
       const OrgWallet = await OrganisationService.getOrganisationWallet(
-        OrganisationId
+        OrganisationId,
       );
-      const is_verified_all = req.user.is_verified_all;
-      const is_verified = req.user.is_verified;
-      if (!is_verified_all) {
+      const { is_verified_all: isVerifiedAll } = req.user;
+      const { is_verified: isVerified } = req.user;
+      if (!isVerifiedAll) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Your account has not been activated yet'
+          'Your account has not been activated yet',
         );
         return Response.send(res);
       }
-      if (!is_verified) {
+      if (!isVerified) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Your profile is not verified yet, please update your profile'
+          'Your profile is not verified yet, please update your profile',
         );
         return Response.send(res);
       }
@@ -731,30 +735,31 @@ class OrganisationController {
         const form = await CampaignService.findCampaignFormById(data.formId);
 
         let total = 0;
-        form.questions.map(val => {
+        form.questions.map((val) => {
           const reward = val.question.options.reduce(
             (accumulator, currentValue) => {
-              if (isNaN(accumulator + currentValue.reward)) {
+              if (Number.isNaN(accumulator + currentValue.reward)) {
                 return 0;
-              } else return accumulator + currentValue.reward;
+              } return accumulator + currentValue.reward;
             },
-            0
+            0,
           );
           total += reward;
+          return null;
         });
         if (total > data.budget) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            'Beneficiary reward greater than budget'
+            'Beneficiary reward greater than budget',
           );
           return Response.send(res);
         }
       }
 
-      if (data.budget > OrgWallet.balance || OrgWallet.balance == 0) {
+      if (data.budget > OrgWallet.balance || OrgWallet.balance === 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient Org wallet balance. Try reducing Budget'
+          'Insufficient Org wallet balance. Try reducing Budget',
         );
         return Response.send(res);
       }
@@ -763,205 +768,215 @@ class OrganisationController {
         ...data,
         spending,
         OrganisationId,
-        status: 'pending'
+        status: 'pending',
       })
-        .then(async campaign => {
+        .then(async (eachCampaign) => {
           await QueueService.createWallet(
             OrganisationId,
             'organisation',
-            campaign.id
+            eachCampaign.id,
           );
-          campaign.type === 'item'
-            ? await QueueService.createCollection(campaign)
-            : await QueueService.createEscrow(campaign);
+          if (eachCampaign.type === 'item') {
+            await QueueService.createCollection(eachCampaign);
+          } else {
+            await QueueService.createEscrow(eachCampaign);
           // AwsUploadService.createSecret(campaign.id);
+          }
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',
-            campaign
+            campaign,
           );
           return Response.send(res);
         })
-        .catch(err => {
+        .catch((err) => {
           Logger.error(err);
           throw err;
         });
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Campaign creation failed. Please retry.' + error
+        `Campaign creation failed. Please retry.${error}`,
       );
       return Response.send(res);
     }
+    return null;
   }
 
   static async addCampaignProduct(req, res) {
     try {
-      const {body, campaign} = req;
+      const { body, eachCampaign } = req;
 
-      const product = await ProductService.findCampaignProducts(campaign.id);
-      const isExist = product.filter(a => body.find(b => a.tag === b.tag));
+      const product = await ProductService.findCampaignProducts(eachCampaign.id);
+      const isExist = product.filter((a) => body.find((b) => a.tag === b.tag));
       if (isExist.length > 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Product With Tag: ${isExist[0].tag} Already Exist`
+          `Product With Tag: ${isExist[0].tag} Already Exist`,
         );
         return Response.send(res);
       }
 
       const products = await Promise.all(
-        body.map(async _body => {
+        body.map(async (_body) => {
           const data = SanitizeObject(
             _body,
-            ['type', 'tag', 'cost'] || ['type', 'tag']
+            ['type', 'tag', 'cost'] || ['type', 'tag'],
           );
           data.product_ref = generateProductRef();
           data.cost = data.type === 'item' ? 1 : data.cost;
           const createdProduct = await db.Product.create({
             ...data,
-            CampaignId: campaign.id
+            CampaignId: eachCampaign.id,
           });
-          //console.log(createdProduct)
+          // console.log(createdProduct)
           if (createdProduct) {
-            _body.vendors.forEach(async VendorId => {
+            _body.vendors.forEach(async (VendorId) => {
               await db.VendorProduct.create({
                 vendorId: VendorId,
-                productId: createdProduct.id
+                productId: createdProduct.id,
               });
               await CampaignService.approveVendorForCampaign(
-                campaign.id,
-                VendorId
+                eachCampaign.id,
+                VendorId,
               );
             });
           }
 
           return createdProduct;
-          //return ProductService.addProduct(data, _body.vendors, campaign.id);
-        })
+          // return ProductService.addProduct(data, _body.vendors, campaign.id);
+        }),
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Product added to stores',
-        products
+        products,
       );
       Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        'Internal server error. Contact support.',
       );
       return Response.send(res);
     }
+    return null;
   }
+
   static async DeleteCampaignProduct(req, res) {
-    const {ProductId} = req.body;
+    const { ProductId } = req.body;
     try {
       const iSProduct = await db.Product.findByPk(ProductId);
       if (!iSProduct) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          `Product with this ID  ${ProductId} Not Approved`
+          `Product with this ID  ${ProductId} Not Approved`,
         );
         return Response.send(res);
-      } else {
-        const isVendorDeleted = await db.VendorProduct.destroy({
-          where: {
-            productId: ProductId
-          }
-        });
-        if (isVendorDeleted)
-          await db.Product.destroy({
-            where: {
-              id: ProductId
-            }
-          });
-        Response.setSuccess(
-          HttpStatusCode.STATUS_CREATED,
-          'Product Deleted in stores'
-        );
-        Response.send(res);
       }
+      const isVendorDeleted = await db.VendorProduct.destroy({
+        where: {
+          productId: ProductId,
+        },
+      });
+      if (isVendorDeleted) {
+        await db.Product.destroy({
+          where: {
+            id: ProductId,
+          },
+        });
+      }
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Product Deleted in stores',
+      );
+      Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
+    return null;
   }
 
   static async withdrawalRequest(req, res) {
     try {
       const requests = await db.RequestFund.findAll();
-      for (let request of requests) {
-        const campaign = await CampaignService.getCampaignById(
-          request.campaign_id
+      await Promise.all(requests.map(async (request) => {
+        const eachCampaign = await CampaignService.getCampaignById(
+          request.campaign_id,
         );
-        request.dataValues.campaign = campaign;
-      }
+        request.dataValues.campaign = eachCampaign;
+      }));
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Donor withdrawal requests`,
-        requests
+        'Donor withdrawal requests',
+        requests,
       );
       return Response.send(res);
     } catch (error) {
       Logger.error(JSON.stringify(error));
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async requestFund(req, res) {
     try {
-      const campaign = await CampaignService.getCampaignById(
-        req.body.campaign_id
+      const eachCampaign = await CampaignService.getCampaignById(
+        req.body.campaign_id,
       );
-      if (campaign.is_funded) {
+      if (eachCampaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign Already Funded`
+          'Campaign Already Funded',
         );
         return Response.send(res);
       }
-      if (campaign.budget === 0) {
+      if (eachCampaign.budget === 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Insufficient Fund`
+          'Insufficient Fund',
         );
         return Response.send(res);
       }
       const bodyAllowedList = new Set([
         'reason',
         'donor_organisation_id',
-        'campaign_id'
+        'campaign_id',
       ]);
-      for (let prop in req.body) {
-        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+
+      await Promise.all(req.body.map(async (prop) => {
+        if (!(prop in req.body) && !bodyAllowedList.has(prop)) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            'unexpected parameter in POST body'
+            'unexpected parameter in POST body',
           );
           return Response.send(res);
         }
-      }
+        return null;
+      }));
 
       const request = await db.RequestFund.create(req.body);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
-        `Request sent`,
-        request
+        'Request sent',
+        request,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.: ${error}`
+        `Internal server error. Contact support.: ${error}`,
       );
       return Response.send(res);
     }
@@ -972,7 +987,7 @@ class OrganisationController {
       const rules = {
         campaign_id: 'required|numeric',
         type: 'required|string|in:reject,approve',
-        request_id: 'required|numeric'
+        request_id: 'required|numeric',
       };
 
       const validation = new Validator(req.body, rules);
@@ -980,75 +995,77 @@ class OrganisationController {
         Response.setError(400, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const campaign = await CampaignService.getCampaignById(
-        req.body.campaign_id
+      const eachCampaign = await CampaignService.getCampaignById(
+        req.body.campaign_id,
       );
-      if (campaign.is_funded) {
+      if (eachCampaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign Already Funded`
+          'Campaign Already Funded',
         );
         return Response.send(res);
       }
-      if (campaign.budget === 0) {
+      if (eachCampaign.budget === 0) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Insufficient Fund`
+          'Insufficient Fund',
         );
         return Response.send(res);
       }
       const bodyAllowedList = new Set(['request_id', 'campaign_id', 'type']);
-      for (let prop in req.body) {
-        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+      await Promise.all(req.body.map(async (prop) => {
+        if (!(prop in req.body) && !bodyAllowedList.has(prop)) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            'unexpected parameter in POST body'
+            'unexpected parameter in POST body',
           );
           return Response.send(res);
         }
-      }
+        return null;
+      }));
 
       const request = await db.RequestFund.findOne({
         where: {
           id: req.body.request_id,
-          campaign_id: req.body.campaign_id
-        }
+          campaign_id: req.body.campaign_id,
+        },
       });
       if (!request) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Request not found'
+          'Request not found',
         );
         return Response.send(res);
       }
       await request.update({
-        status: req.body.type === 'reject' ? 'Rejected' : 'Approved'
+        status: req.body.type === 'reject' ? 'Rejected' : 'Approved',
       });
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         `Request ${req.body.type === 'reject' ? 'Rejected' : 'Approved'}`,
-        request
+        request,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.: ${error}`
+        `Internal server error. Contact support.: ${error}`,
       );
       return Response.send(res);
     }
   }
 
   static async extendCampaign(req, res) {
-    const {end_date, description, location, campaign_id, additional_budget} =
-      req.body;
+    const {
+      end_date, campaign_id: campaignId, additional_budget: additionalBudget,
+    } = req.body;
     const today = moment();
     const endDate = moment(end_date);
     try {
       const rules = {
-        end_date: `required|date`,
+        end_date: 'required|date',
         campaign_id: 'required|numeric',
-        additional_budget: 'numeric'
+        additional_budget: 'numeric',
       };
 
       const validation = new Validator(req.body, rules);
@@ -1067,17 +1084,19 @@ class OrganisationController {
         'description',
         'location',
         'campaign_id',
-        'additional_budget'
+        'additional_budget',
       ]);
-      for (let prop in req.body) {
-        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+      await Promise.all(req.body.map(async (prop) => {
+        if (!(prop in req.body) && !bodyAllowedList.has(prop)) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            'unexpected parameter in POST body'
+            'unexpected parameter in POST body',
           );
           return Response.send(res);
         }
-      }
+        return null;
+      }));
+
       // if (req.campaign.is_funded) {
       //   Response.setError(
       //     HttpStatusCode.STATUS_BAD_REQUEST,
@@ -1088,161 +1107,168 @@ class OrganisationController {
       const dateB = moment(req.campaign.updatedAt);
       const dateC = moment(end_date);
 
-      const extension_period = dateC.diff(dateB, 'days');
+      const extensionPeriod = dateC.diff(dateB, 'days');
 
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        req.organisationId
+      const campaign_service = await CampaignService.getCampaignWallet(
+        campaignId,
+        req.organisationId,
       );
-      const campaignWallet = campaign.Wallet;
+      const campaignWallet = campaign_service.Wallet;
       const organisation = await OrganisationService.getOrganisationWallet(
-        req.organisationId
+        req.organisationId,
       );
 
       const OrgWallet = organisation.Wallet;
 
-      req.campaign.budget = additional_budget
-        ? Number(additional_budget) + req.campaign.budget
+      req.campaign.budget = additionalBudget
+        ? Number(additionalBudget) + req.campaign.budget
         : req.campaign.budget;
-      req.body.status =
-        req.campaign.type === 'cash-for-work' ? 'active' : 'ongoing';
+      req.body.status = req.campaign.type === 'cash-for-work' ? 'active' : 'ongoing';
       const newCampaign = await req.campaign.update(req.body);
       const history = await db.CampaignHistory.create({
-        extension_period,
+        extension_period: extensionPeriod,
         new_end_date: end_date,
-        additional_budget,
-        campaign_id
+        additional_budget: additionalBudget,
+        campaign_id: campaignId,
       });
       newCampaign.dataValues.history = history;
       await QueueService.CampaignExtensionFund(
         campaign,
         campaignWallet,
         OrgWallet,
-        Number(additional_budget)
+        Number(additionalBudget),
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'campaign extended',
-        newCampaign
+        newCampaign,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        'Internal server error. Contact support.',
       );
       return Response.send(res);
     }
   }
+
   static async campaignHistory(req, res) {
     try {
-      const campaign = await CampaignService.campaignHistory(req.campaign.id);
-      for (let history of campaign.history) {
-        const date = moment(campaign.end_date).isSame(
+      const eachCampaign = await CampaignService.campaignHistory(req.campaign.id);
+      await Promise.all(eachCampaign.history.map(async (history) => {
+        const historyCopy = { ...history };
+        const date = moment(eachCampaign.end_date).isSame(
           history.new_end_date,
-          'day'
+          'day',
         );
         if (date) {
-          history.dataValues.currentCampaign = true;
+          historyCopy.dataValues.currentCampaign = true;
         } else {
-          history.dataValues.currentCampaign = false;
+          historyCopy.dataValues.currentCampaign = false;
         }
-      }
+      }));
+
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'campaign history retrieved',
-        campaign
+        eachCampaign,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.: ${error}`
+        `Internal server error. Contact support.: ${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async UpdateCampaignProduct(req, res) {
-    const {ProductId} = req.body;
+    const { ProductId } = req.body;
     try {
       const iSProduct = await db.Product.findByPk(ProductId);
       if (!iSProduct) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          `Product with this ID  ${ProductId} Not Approved`
+          `Product with this ID  ${ProductId} Not Approved`,
         );
         return Response.send(res);
-      } else {
-        await db.Product.update(
-          {
-            ...req.body
-          },
-          {
-            where: {
-              id: ProductId
-            }
-          }
-        );
-        Response.setSuccess(
-          HttpStatusCode.STATUS_CREATED,
-          'Product Updated in stores'
-        );
-        Response.send(res);
       }
+      await db.Product.update(
+        {
+          ...req.body,
+        },
+        {
+          where: {
+            id: ProductId,
+          },
+        },
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Product Updated in stores',
+      );
+      Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        'Internal server error. Contact support.',
       );
       return Response.send(res);
     }
+    return null;
   }
+
   static async ProductVendors(req, res) {
     try {
       const productvendors = await db.VendorProduct.findAll();
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Product's Vendors.`,
-        productvendors
+        'Product\'s Vendors.',
+        productvendors,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.${error}`
+        `Internal server error. Contact support.${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async getCampaignProducts(req, res) {
     try {
       const campaignId = req.params.campaign_id;
       const products = await ProductService.findCampaignProducts(campaignId);
-      const campaign = await db.Campaign.findOne({where: {id: campaignId}});
+      const eachCampaign = await db.Campaign.findOne({ where: { id: campaignId } });
 
-      products.forEach(product => {
-        product.dataValues.campaign_status = campaign.status;
-        product.ProductVendors.forEach(vendor => {
-          vendor.dataValues.VendorName =
-            vendor.first_name + ' ' + vendor.last_name;
+      products.forEach((product) => {
+        const productCopy = { ...product };
+        productCopy.dataValues.campaign_status = eachCampaign.status;
+        productCopy.ProductVendors.forEach((vendor) => {
+          const vendorCopy = { ...vendor };
+          vendorCopy.dataValues.VendorName = `${vendorCopy.first_name} ${vendorCopy.last_name}`;
         });
       });
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Campaign Products.`,
-        products
+        'Campaign Products.',
+        products,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.',
       );
       return Response.send(res);
     }
   }
+
   static async getProductVendors(req, res) {
     try {
       const VendorId = req.params.vendor_id;
@@ -1250,13 +1276,13 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
-        vendor
+        vendor,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1264,83 +1290,55 @@ class OrganisationController {
 
   static async getCampaignBeneficiariesBalance(req, res) {
     try {
-      let zeroTo9099 = 0,
-        tenTo14999 = 0,
-        twentyTo24999 = 0,
-        twenty5To29999 = 0,
-        fourtyTo44999 = 0,
-        fourty5up = 0;
+      const zeroTo9099 = 0;
+      const tenTo14999 = 0;
+      const twentyTo24999 = 0;
+      const twenty5To29999 = 0;
+      const fourtyTo44999 = 0;
+      const fourty5up = 0;
       const CampaignId = req.params.campaign_id;
       const wallet = await BeneficiaryService.getApprovedBeneficiaries(
-        CampaignId
+        CampaignId,
       );
+      const balanceRanges = [
+        { min: 0, max: 9099, count: 0 },
+        { min: 10000, max: 14999, count: 0 },
+        { min: 15000, max: 19999, count: 0 },
+        { min: 20000, max: 24999, count: 0 },
+        { min: 25000, max: 29999, count: 0 },
+        { min: 30000, max: 34999, count: 0 },
+        { min: 35000, max: 39999, count: 0 },
+        { min: 40000, max: 44999, count: 0 },
+        { min: 45000, max: Infinity, count: 0 },
+      ];
 
-      for (let user of wallet) {
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 0 &&
-          parseInt(user.User.Wallets[0].balance) <= 9099
-        ) {
-          zeroTo9099++;
-        }
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 10000 &&
-          parseInt(user.User.Wallets[0].balance) <= 14999
-        ) {
-          tenTo14999++;
-        }
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 15000 &&
-          parseInt(user.User.Wallets[0].balance) <= 19999
-        ) {
-          fifteenTo19999++;
-        }
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 20000 &&
-          parseInt(user.User.Wallets[0].balance) <= 24999
-        ) {
-          twentyTo24999++;
-        }
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 25000 &&
-          parseInt(user.User.Wallets[0].balance) <= 29999
-        ) {
-          twenty5To29999++;
-        }
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 30000 &&
-          parseInt(user.User.Wallets[0].balance) <= 34999
-        ) {
-          thirtyTo3499++;
-        }
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 35000 &&
-          parseInt(user.User.Wallets[0].balance) <= 39999
-        ) {
-          thirty5To3999++;
-        }
-        if (
-          parseInt(user.User.Wallets[0].balance) >= 40000 &&
-          parseInt(user.User.Wallets[0].balance) <= 44999
-        ) {
-          fourtyTo44999++;
-        }
-        if (parseInt(user.User.Wallets[0].balance) >= 45000) {
-          fourty5up++;
-        }
-      }
+      balanceRanges.map((range) => {
+        let count = 0;
+
+        wallet.forEach((user) => {
+          const balance = parseInt(user.User.Wallets[0].balance, 10);
+
+          if (balance >= range.min && balance <= range.max) {
+            count += 1;
+          }
+        });
+
+        return count;
+      });
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
         zeroTo9099,
         tenTo14999,
         twentyTo24999,
         twenty5To29999,
         fourtyTo44999,
-        fourty5up
+        fourty5up,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1351,13 +1349,14 @@ class OrganisationController {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId,
-        req.query
+        req.query,
       );
 
-      beneficiaries.data.forEach(beneficiary => {
-        beneficiary.User.Answers.forEach(answer => {
-          if (answer.campaignId == CampaignId) {
-            beneficiary.dataValues.User.dataValues.Answers = [answer];
+      beneficiaries.data.forEach((beneficiary) => {
+        const beneficiaryCopy = { ...beneficiary };
+        beneficiary.User.Answers.forEach((answer) => {
+          if (answer.campaignId === CampaignId) {
+            beneficiaryCopy.dataValues.User.dataValues.Answers = [answer];
           }
         });
       });
@@ -1365,34 +1364,34 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
-        beneficiaries
+        beneficiaries,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.' + error
+        `Server Error. Unexpected error. Please retry.${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async getVendorTransactionPerBene(req, res) {
     try {
       const CampaignId = req.params.campaign_id;
-      //const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
-      const transactions =
-        await BeneficiaryService.findVendorTransactionsPerBene(CampaignId);
+      // const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(CampaignId);
+      const transactions = await BeneficiaryService.findVendorTransactionsPerBene(CampaignId);
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Beneficiaries',
-        transactions
+        transactions,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1400,35 +1399,37 @@ class OrganisationController {
 
   static async getCampaignBeneficiariesLocation(req, res) {
     try {
-      let Lagos = 0,
-        Abuja = 0,
-        Kaduna = 0,
-        Jos = 0;
+      let Lagos = 0;
+      let Abuja = 0;
+      let Kaduna = 0;
+      let Jos = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId,
-        req.query
+        req.query,
       );
-      for (let beneficiary of beneficiaries.data) {
+
+      await Promise.all(beneficiaries.map(async (beneficiary) => {
         if (beneficiary.User.location.includes('state')) {
-          let parsedJson = JSON.parse(beneficiary.User.location);
-          if (parsedJson.state === 'Abuja') Abuja++;
-          if (parsedJson.state === 'Lagos') Lagos++;
-          if (parsedJson.state === 'Kaduna') Kaduna++;
-          if (parsedJson.state === 'Jos') Jos++;
+          const parsedJson = JSON.parse(beneficiary.User.location);
+          if (parsedJson.state === 'Abuja') Abuja += 1;
+          if (parsedJson.state === 'Lagos') Lagos += 1;
+          if (parsedJson.state === 'Kaduna') Kaduna += 1;
+          if (parsedJson.state === 'Jos') Jos += 1;
         }
-      }
+      }));
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
         Abuja,
         Lagos,
         Kaduna,
-        Jos
+        Jos,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1442,29 +1443,29 @@ class OrganisationController {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId,
-        req.query
+        req.query,
       );
       if (beneficiaries.data.length > 0) {
-        for (let i = 0; i < beneficiaries.data.length; i++) {
-          if (beneficiaries[i].User.marital_status == 'single') {
-            single++;
-          } else if (beneficiaries[i].User.marital_status == 'married') {
-            married++;
-          } else if (beneficiaries[i].User.marital_status == 'divorce') {
-            divorce++;
+        for (let i = 0; i < beneficiaries.data.length; i += 1) {
+          if (beneficiaries[i].User.marital_status === 'single') {
+            single += 1;
+          } else if (beneficiaries[i].User.marital_status === 'married') {
+            married += 1;
+          } else if (beneficiaries[i].User.marital_status === 'divorce') {
+            divorce += 1;
           }
         }
       }
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
         single,
         married,
-        divorce
+        divorce,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1480,65 +1481,47 @@ class OrganisationController {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
         CampaignId,
-        req.query
+        req.query,
       );
 
-      for (let i = 0; i < beneficiaries.data.length; i++) {
+      for (let i = 0; i < beneficiaries.data.length; i += 1) {
         if (
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) >= 18 &&
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) <= 29
+          parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) >= 18
+          && parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) <= 29
         ) {
-          eighteenTo29++;
+          eighteenTo29 += 1;
         }
         if (
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) >= 30 &&
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) <= 41
+          parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) >= 30
+          && parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) <= 41
         ) {
-          thirtyTo41++;
+          thirtyTo41 += 1;
         }
         if (
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) >= 42 &&
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) <= 53
+          parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) >= 42
+          && parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) <= 53
         ) {
-          forty2To53++;
+          forty2To53 += 1;
         }
         if (
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) >= 54 &&
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) <= 65
+          parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) >= 54
+          && parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) <= 65
         ) {
-          fifty4To65++;
+          fifty4To65 += 1;
         }
         if (
-          parseInt(
-            moment().format('YYYY') -
-              moment(beneficiaries[i].User.dob).format('YYYY')
-          ) >= 66
+          parseInt(moment().format('YYYY')
+              - moment(beneficiaries[i].User.dob).format('YYYY'), 10) >= 66
         ) {
-          sixty6Up++;
+          sixty6Up += 1;
         }
       }
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Beneficiaries', {
@@ -1546,13 +1529,13 @@ class OrganisationController {
         thirtyTo41,
         forty2To53,
         fifty4To65,
-        sixty6Up
+        sixty6Up,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error. Please retry.'
+        'Server Error. Unexpected error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1560,7 +1543,7 @@ class OrganisationController {
 
   static async updaeCampaignBeneficiary(req, res) {
     try {
-      const campaign = req.campaign;
+      const { eachCampaign } = req;
 
       const data = SanitizeObject(req.body, ['approved', 'rejected']);
 
@@ -1569,34 +1552,34 @@ class OrganisationController {
       }
 
       if (
-        data.rejected &&
-        (typeof data.approved == 'undefined' || !!data.approved)
+        data.rejected
+        && (typeof data.approved === 'undefined' || !!data.approved)
       ) {
         data.approved = false;
       }
 
-      if (campaign.is_funded) {
+      if (eachCampaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campagin Fund Already Disbursed.'
+          'Campagin Fund Already Disbursed.',
         );
         return Response.send(res);
       }
       const approval = await BeneficiaryService.updateCampaignBeneficiary(
-        campaign.id,
+        eachCampaign.id,
         req.beneficiary_id,
-        data
+        data,
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiary Approval Updated!',
-        approval
+        approval,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.'
+        'Server Error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1604,22 +1587,21 @@ class OrganisationController {
 
   static async getOrganisationBeneficiaries(req, res) {
     try {
-      const organisation = req.organisation;
-      const beneficiaries =
-        await BeneficiaryService.findOrgnaisationBeneficiaries(
-          organisation.id,
-          req.query
-        );
+      const { organisation } = req;
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
+        organisation.id,
+        req.query,
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Organisation beneficiaries',
-        beneficiaries
+        beneficiaries,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.'
+        'Internal server error. Please try again later.',
       );
       return Response.send(res);
     }
@@ -1628,65 +1610,63 @@ class OrganisationController {
   static async getOrganisationBeneficiaryDetails(req, res) {
     try {
       const id = req.params.beneficiary_id;
-      let total_wallet_spent = 0;
-      let total_wallet_balance = 0;
-      let total_wallet_received = 0;
-
       const [beneficiary, transaction] = await Promise.all([
-        BeneficiaryService.organisationBeneficiaryDetails(
-          id,
-          req.organisation.id
-        ),
+        BeneficiaryService.organisationBeneficiaryDetails(id, req.organisation.id),
         TransactionService.findTransactions({
           BeneficiaryId: id,
-          is_approved: true
-        })
+          is_approved: true,
+        }),
       ]);
-      console.log(beneficiary, 'opop');
-      for (let tran of transaction) {
-        if (
-          tran.narration === 'Vendor Order' ||
-          tran.transaction_type === 'withdrawal'
-        ) {
-          total_wallet_spent += tran.amount;
-        }
-        if (
-          tran.BeneficiaryId == id &&
-          tran.OrganisationId == req.organisation.id
-        ) {
-          total_wallet_received += tran.amount;
-        }
-      }
-      for (let campaign of beneficiary.Campaigns) {
-        for (let wallet of campaign.BeneficiariesWallets) {
-          if (wallet.CampaignId && wallet.address) {
-            const campaignWallet = await WalletService.findUserCampaignWallet(
-              wallet.UserId,
-              wallet.CampaignId
-            );
-            const token = await BlockchainService.allowance(
-              campaignWallet.address,
-              wallet.address
-            );
-            const balance = Number(token.Allowed.split(',').join(''));
-            total_wallet_balance += balance;
-          }
-        }
-      }
-      beneficiary.dataValues.total_wallet_spent = total_wallet_spent;
-      beneficiary.dataValues.total_wallet_balance = total_wallet_balance;
-      beneficiary.dataValues.total_wallet_received = total_wallet_received;
 
+      console.log(beneficiary, 'opop');
+
+      // Calculate total wallet spent
+      const totalWalletSpent = transaction
+        .filter(
+          (tran) => (tran.narration === 'Vendor Order'
+          || tran.transaction_type === 'withdrawal'),
+        ).reduce((total, tran) => total + tran.amount, 0);
+
+      // Calculate total wallet received
+      const totalWalletReceived = transaction
+        .filter(
+          (tran) => tran.BeneficiaryId === id && tran.OrganisationId === req.organisation.id,
+        )
+        .reduce((total, tran) => total + tran.amount, 0);
+
+      // Calculate total wallet balance
+      const totalWalletBalance = await Promise.all(
+        beneficiary.Campaigns.flatMap(
+          (eachCampaign) => eachCampaign.BeneficiariesWallets.map(async (wallet) => {
+            if (wallet.CampaignId && wallet.address) {
+              const campaignWallet = await WalletService.findUserCampaignWallet(
+                wallet.UserId,
+                wallet.CampaignId,
+              );
+              const token = await BlockchainService.allowance(
+                campaignWallet.address,
+                wallet.address,
+              );
+              const balance = Number(token.Allowed.split(',').join(''));
+              return balance;
+            }
+            return 0;
+          }),
+        ),
+      ).reduce((total, balance) => total + balance, 0);
+      beneficiary.dataValues.total_wallet_spent = totalWalletSpent;
+      beneficiary.dataValues.total_wallet_balance = totalWalletBalance;
+      beneficiary.dataValues.total_wallet_received = totalWalletReceived;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Beneficiary Details.',
-        beneficiary
+        beneficiary,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.' + error
+        `Server Error: Unexpected error occurred.${error}`,
       );
       return Response.send(res);
     }
@@ -1694,58 +1674,57 @@ class OrganisationController {
 
   static async approvedAllbeneficiaries(req, res) {
     try {
-      const campaign = req.campaign;
-      const ids = req.body.ids;
+      const { eachCampaign } = req;
+      const { ids } = req.body;
 
-      if (campaign.is_funded) {
+      if (eachCampaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign Fund Already Disbursed.'
+          'Campaign Fund Already Disbursed.',
         );
         return Response.send(res);
       }
-      const [approvals] =
-        await BeneficiaryService.approveAllCampaignBeneficiaries(
-          campaign.id,
-          ids
-        );
+      const [approvals] = await BeneficiaryService.approveAllCampaignBeneficiaries(
+        eachCampaign.id,
+        ids,
+      );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries approved!', {
-        approvals
+        approvals,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.' + error
+        `Server Error. Please retry.${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async rejectAllbeneficiaries(req, res) {
     try {
-      const campaign = req.campaign;
-      const ids = req.body.ids;
+      const { eachCampaign } = req;
+      const { ids } = req.body;
 
-      if (campaign.is_funded) {
+      if (eachCampaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign Fund Already Disbursed.'
+          'Campaign Fund Already Disbursed.',
         );
         return Response.send(res);
       }
-      const [approvals] =
-        await BeneficiaryService.rejectAllCampaignBeneficiaries(
-          campaign.id,
-          ids
-        );
+      const [approvals] = await BeneficiaryService.rejectAllCampaignBeneficiaries(
+        eachCampaign.id,
+        ids,
+      );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiaries rejected!', {
-        approvals
+        approvals,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.'
+        'Server Error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1755,18 +1734,18 @@ class OrganisationController {
     try {
       const approved = await CampaignService.approveVendorForCampaign(
         req.campaign.id,
-        req.body.vendor_id
+        req.body.vendor_id,
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Vendor approved.',
-        approved
+        approved,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.'
+        'Server Error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1776,18 +1755,18 @@ class OrganisationController {
     try {
       const removed = await CampaignService.removeVendorForCampaign(
         req.campaign.id,
-        req.body.vendor_id
+        req.body.vendor_id,
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Vendor removed.',
-        removed
+        removed,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Please retry.'
+        'Server Error. Please retry.',
       );
       return Response.send(res);
     }
@@ -1798,10 +1777,10 @@ class OrganisationController {
       Logger.info('Fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(
         req.params.campaign_id,
-        req.query
+        req.query,
       );
       const setObj = new Set();
-      const result = vendors.data.reduce((acc, item) => {
+      vendors.data.reduce((acc, item) => {
         if (!setObj.has(item.VendorId)) {
           setObj.add(item.VendorId, item);
           acc.push(item);
@@ -1812,22 +1791,41 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Vendors.',
-        vendors
+        vendors,
       );
       return Response.send(res);
     } catch (error) {
       Logger.error('Error fetching campaign vendors');
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error. Unexpected error occurred.'
+        'Server Error. Unexpected error occurred.',
       );
       return Response.send(res);
     }
   }
 
   static async updateProfile(req, res) {
+    function extractDomain(url) {
+      let domain;
+      // find & remove protocol (http, ftp, etc.) and get domain
+      if (url.indexOf('://') > -1) {
+        [, domain] = url.split('/');
+      } else {
+        [domain] = url.split('/');
+      }
+
+      if (domain.indexOf('www.') > -1) {
+        [, domain] = domain.split('www.');
+      }
+
+      [domain] = domain.split(':'); // find & remove port number
+      [domain] = domain.split('?'); // find & remove URL params
+
+      return domain;
+    }
+    let org;
     try {
-      var form = new formidable.IncomingForm();
+      const form = new formidable.IncomingForm();
       form.parse(req, async (err, fields, files) => {
         const rules = {
           organisation_id: 'required|numeric',
@@ -1840,146 +1838,143 @@ class OrganisationController {
           country: 'required|string',
           registration_id: 'required|string',
           year: 'required',
-          website_url: 'url'
+          website_url: 'url',
         };
         const validation = new Validator(fields, rules, {
-          url: 'Only valid url with https or http allowed'
+          url: 'Only valid url with https or http allowed',
         });
         if (validation.fails()) {
           Response.setError(400, validation.errors);
           return Response.send(res);
-        } else {
-          const url_string = fields.website_url;
-          const domain = extractDomain(url_string);
-          const email = fields.email;
-          const re = '(\\W|^)[\\w.\\-]{0,25}@' + domain + '(\\W|$)';
-          if (!email.match(new RegExp(re))) {
-            Response.setError(400, 'Email must end in @' + domain);
-            return Response.send(res);
-          }
+        }
+        const urlString = fields.website_url;
+        const domain = extractDomain(urlString);
+        const { email } = fields;
+        const re = `(\\W|^)[\\w.\\-]{0,25}@${domain}(\\W|$)`;
+        if (!email.match(new RegExp(re))) {
+          Response.setError(400, `Email must end in @${domain}`);
+          return Response.send(res);
+        }
 
-          if (files.logo) {
-            const allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
-            if (!allowed_types.includes(files.logo.type)) {
-              Response.setError(
-                400,
-                'Invalid File type. Only jpg, png and jpeg files allowed for Profile picture'
-              );
-              return Response.send(res);
-            }
-          }
-          const organisation_exist = await db.Organisations.findOne({
-            where: {
-              email: fields.email
-            }
-          });
-          if (
-            !organisation_exist ||
-            organisation_exist |
-              (organisation_exist.id == fields.organisation_id)
-          ) {
-            if (!organisation_exist) {
-              var org = await db.Organisations.findByPk(fields.organisation_id);
-            } else {
-              var org = organisation_exist;
-            }
-            org
-              .update({
-                email: fields.email,
-                phone: fields.phone,
-                address: fields.address,
-                state: fields.state,
-                country: fields.country,
-                registration_id: fields.registration_id,
-                year_of_inception: fields.year,
-                website_url: fields.website_url
-              })
-              .then(async () => {
-                if (files.logo) {
-                  await uploadFile(
-                    files.logo,
-                    'ngo-l-' + org.id,
-                    'convexity-ngo-logo'
-                  ).then(url => {
-                    org.update({
-                      logo_link: url
-                    });
-                  });
-                }
-                await db.User.findByPk(req.user.id).then(user => {
-                  user
-                    .update({
-                      first_name: fields.first_name,
-                      last_name: fields.last_name
-                    })
-                    .then(() => {
-                      Response.setSuccess(
-                        201,
-                        'NGO profile updated successfully',
-                        {
-                          org
-                        }
-                      );
-                      return Response.send(res);
-                    });
-                });
-              });
-          } else {
+        if (files.logo) {
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+          if (!allowedTypes.includes(files.logo.type)) {
             Response.setError(
               400,
-              'Email has been taken by another organisation'
+              'Invalid File type. Only jpg, png and jpeg files allowed for Profile picture',
             );
             return Response.send(res);
           }
         }
+        const organisationExist = await db.Organisations.findOne({
+          where: {
+            email: fields.email,
+          },
+        });
+        if (!organisationExist || organisationExist.id === fields.organisation_id) {
+          if (!organisationExist) {
+            org = await db.Organisations.findByPk(fields.organisation_id);
+          } else {
+            org = organisationExist;
+          }
+          org
+            .update({
+              email: fields.email,
+              phone: fields.phone,
+              address: fields.address,
+              state: fields.state,
+              country: fields.country,
+              registration_id: fields.registration_id,
+              year_of_inception: fields.year,
+              website_url: fields.website_url,
+            })
+            .then(async () => {
+              if (files.logo) {
+                await uploadFile(
+                  files.logo,
+                  `ngo-l-${org.id}`,
+                  'convexity-ngo-logo',
+                ).then((url) => {
+                  org.update({
+                    logo_link: url,
+                  });
+                });
+              }
+              await db.User.findByPk(req.user.id).then((user) => {
+                user
+                  .update({
+                    first_name: fields.first_name,
+                    last_name: fields.last_name,
+                  })
+                  .then(() => {
+                    Response.setSuccess(
+                      201,
+                      'NGO profile updated successfully',
+                      {
+                        org,
+                      },
+                    );
+                    return Response.send(res);
+                  });
+              });
+            });
+        } else {
+          Response.setError(
+            400,
+            'Email has been taken by another organisation',
+          );
+          return Response.send(res);
+        }
+        return null;
       });
     } catch (error) {
       Response.setError(500, 'An error Occured');
       return Response.send(res);
     }
+    return null;
   }
 
   static async mintToken2(req, res) {
     const data = req.body;
 
-    fs.writeFile('sample.txt', JSON.stringify(data), function (err) {
+    fs.writeFile('sample.txt', JSON.stringify(data), (err) => {
       if (err) {
         return res.json({
-          status: 'Error'
+          status: 'Error',
         });
       }
       return res.json({
-        status: 'DOne'
+        status: 'DOne',
       });
     });
   }
 
   static async getFinancials(req, res) {
     try {
-      const id = req.params.id;
-      let ngo = await db.Organisations.findOne({
+      const { id } = req.params;
+      const ngo = await db.Organisations.findOne({
         where: {
-          id
+          id,
         },
         include: {
           model: db.Wallet,
-          as: 'Wallet'
-        }
+          as: 'Wallet',
+        },
       });
       const recieved = await db.Transaction.sum('amount', {
         where: {
-          walletRecieverId: ngo.Wallet.uuid
-        }
+          walletRecieverId: ngo.Wallet.uuid,
+        },
       });
       const sent = await db.Transaction.sum('amount', {
         where: {
-          walletSenderId: ngo.Wallet.uuid
-        }
+          walletSenderId: ngo.Wallet.uuid,
+        },
       });
       Response.setSuccess(200, 'Organisation Financials Retrieved', {
         balance: ngo.Wallet.balance,
         recieved,
-        disbursed: sent
+        disbursed: sent,
       });
       return Response.send(res);
     } catch (error) {
@@ -1988,75 +1983,75 @@ class OrganisationController {
     }
   }
 
-  static async getMetric(req) {
-    const id = req.params.id;
-  }
+  // static async getMetric(req) {
+  //   const { id } = req.params;
+  // }
 
   static async bantuTransfer(req, res) {
     const data = req.body;
     const rules = {
       organisation_id: 'required|numeric',
-      xbnAmount: 'required|numeric'
+      xbnAmount: 'required|numeric',
     };
 
     const validation = new Validator(data, rules);
     if (validation.fails()) {
       Response.setError(400, validation.errors);
       return Response.send(res);
-    } else {
-      const organisation = await db.Organisations.findOne({
-        where: {
-          id: data.organisation_id
-        },
-        include: {
-          model: db.Wallet,
-          as: 'Wallet',
-          where: {
-            bantuAddress: {
-              [Op.ne]: null
-            }
-          }
-        }
-      });
-
-      if (organisation) {
-        await BantuService.transferToken(
-          organisation.Wallet[0].bantuPrivateKey,
-          data.xbnAmount
-        )
-          .then(async response => {
-            await organisation
-              .createMintTransaction({
-                amount: data.xbnAmount,
-                transactionReference: response.hash,
-                channel: 'bantu'
-              })
-              .then(fundTransaction => {
-                const messageBody = {
-                  id: organisation.id,
-                  fund: fundTransaction.id,
-                  address: organisation.Wallet[0].address,
-                  walletId: organisation.Wallet[0].uuid,
-                  amount: data.xbnAmount
-                };
-                mintTokenQueue.send(
-                  new Message(messageBody, {
-                    contentType: 'application/json'
-                  })
-                );
-                Response.setSuccess(200, 'Token Minting Initiated');
-                return Response.send(res);
-              });
-          })
-          .catch(error => {
-            Response.setError(400, error);
-            return Response.send(res);
-          });
-      } else {
-        Response.setError(400, 'Invalid Organisation / Campaign');
-        return Response.send(res);
-      }
     }
+    const organisation = await db.Organisations.findOne({
+      where: {
+        id: data.organisation_id,
+      },
+      include: {
+        model: db.Wallet,
+        as: 'Wallet',
+        where: {
+          bantuAddress: {
+            [Op.ne]: null,
+          },
+        },
+      },
+    });
+
+    if (organisation) {
+      await BantuService.transferToken(
+        organisation.Wallet[0].bantuPrivateKey,
+        data.xbnAmount,
+      )
+        .then(async (response) => {
+          await organisation
+            .createMintTransaction({
+              amount: data.xbnAmount,
+              transactionReference: response.hash,
+              channel: 'bantu',
+            })
+            .then((fundTransaction) => {
+              const messageBody = {
+                id: organisation.id,
+                fund: fundTransaction.id,
+                address: organisation.Wallet[0].address,
+                walletId: organisation.Wallet[0].uuid,
+                amount: data.xbnAmount,
+              };
+              mintTokenQueue.send(
+                new Message(messageBody, {
+                  contentType: 'application/json',
+                }),
+              );
+              Response.setSuccess(200, 'Token Minting Initiated');
+              return Response.send(res);
+            });
+        })
+        .catch((error) => {
+          Response.setError(400, error);
+          return Response.send(res);
+        });
+    } else {
+      Response.setError(400, 'Invalid Organisation / Campaign');
+      return Response.send(res);
+    }
+    return null;
   }
 
   static async mintToken(req, res) {
@@ -2070,33 +2065,33 @@ class OrganisationController {
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${secretKey}`
-        }
-      }
+          Authorization: `Bearer ${secretKey}`,
+        },
+      },
     );
 
     const organisationId = response.data.data.meta.orgId;
-    const amount = response.data.data.amount;
+    const { amount } = response.data.data;
 
     const organisation = await db.Organisations.findOne({
       where: {
-        id: organisationId
+        id: organisationId,
       },
       include: {
         model: db.Wallet,
         as: 'Wallet',
         where: {
           bantuAddress: {
-            [Op.ne]: null
-          }
-        }
-      }
+            [Op.ne]: null,
+          },
+        },
+      },
     });
 
     const reference = await db.FundAccount.findOne({
       where: {
-        transactionReference: txRef
-      }
+        transactionReference: txRef,
+      },
     });
     if (reference) {
       Response.setError(400, 'Transaction Reference already exist');
@@ -2106,22 +2101,22 @@ class OrganisationController {
     if (organisation) {
       await organisation
         .createMintTransaction({
-          amount: amount,
+          amount,
           transactionReference: txRef,
-          channel: 'bantu'
+          channel: 'bantu',
         })
-        .then(fundTransaction => {
+        .then((fundTransaction) => {
           const messageBody = {
             id: organisation.id,
             fund: fundTransaction.id,
             address: organisation.Wallet[0].address,
             walletId: organisation.Wallet[0].uuid,
-            amount: amount
+            amount,
           };
           mintTokenQueue.send(
             new Message(messageBody, {
-              contentType: 'application/json'
-            })
+              contentType: 'application/json',
+            }),
           );
           Response.setSuccess(200, 'Mint Action Initiated');
           return Response.send(res);
@@ -2130,6 +2125,7 @@ class OrganisationController {
       Response.setError(400, 'Invalid Organisation Id');
       return Response.send(res);
     }
+    return null;
   }
 
   static async getWallets(req, res) {
@@ -2137,18 +2133,18 @@ class OrganisationController {
       const id = req.params.organisationId;
       const organisation = await db.Organisations.findOne({
         where: {
-          id
+          id,
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           attributes: {
-            exclude: ['bantuPrivateKey', 'privateKey']
-          }
-        }
+            exclude: ['bantuPrivateKey', 'privateKey'],
+          },
+        },
       });
       Response.setSuccess(200, 'Organisation Wallet Retrieved', {
-        wallets: organisation.Wallet
+        wallets: organisation.Wallet,
       });
       return Response.send(res);
     } catch (error) {
@@ -2163,23 +2159,23 @@ class OrganisationController {
       console.log(id, 'id');
       const organisation = await db.Organisations.findOne({
         where: {
-          id
+          id,
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           attributes: {
-            exclude: ['bantuPrivateKey', 'privateKey']
+            exclude: ['bantuPrivateKey', 'privateKey'],
           },
           where: {
             bantuAddress: {
-              [Op.ne]: null
-            }
-          }
-        }
+              [Op.ne]: null,
+            },
+          },
+        },
       });
       Response.setSuccess(200, 'Organisation Wallet Retrieved', {
-        wallet: organisation.Wallet[0]
+        wallet: organisation.Wallet[0],
       });
       return Response.send(res);
     } catch (error) {
@@ -2191,24 +2187,24 @@ class OrganisationController {
   static async getCampignWallet(req, res) {
     try {
       const id = req.params.organisationId;
-      const campaign = req.params.campaignId;
+      const eachCampaign = req.params.campaignId;
       const organisation = await db.Organisations.findOne({
         where: {
-          id
+          id,
         },
         include: {
           model: db.Wallet,
           as: 'Wallet',
           attributes: {
-            exclude: ['bantuPrivateKey', 'privateKey']
+            exclude: ['bantuPrivateKey', 'privateKey'],
           },
           where: {
-            CampaignId: campaign
-          }
-        }
+            CampaignId: eachCampaign,
+          },
+        },
       });
       Response.setSuccess(200, 'Organisation Wallet Retrieved', {
-        wallet: organisation.Wallet[0]
+        wallet: organisation.Wallet[0],
       });
       return Response.send(res);
     } catch (error) {
@@ -2222,107 +2218,103 @@ class OrganisationController {
     const rules = {
       campaign: 'required|numeric',
       organisation_id: 'required|numeric',
-      amount: 'required|numeric|min:100'
+      amount: 'required|numeric|min:100',
     };
 
     const validation = new Validator(data, rules);
     if (validation.fails()) {
       Response.setError(422, validation.errors);
       return Response.send(res);
-    } else {
-      const organisation = await db.Organisations.findOne({
-        where: {
-          id: data.organisation_id
-        },
-        include: {
-          model: db.Wallet,
-          as: 'Wallet'
-        }
-      });
-
-      if (!organisation) {
-        Response.setError(400, 'Invalid Organisation Id');
-        return Response.send(res);
-      }
-
-      const wallets = organisation.Wallet;
-      let mainWallet;
-      let reciepientWallet;
-      let campaignExist = false;
-      wallets.forEach(element => {
-        if (element.CampaignId == data.campaign) {
-          campaignExist = true;
-          reciepientWallet = element;
-        }
-        if (element.bantuAddress) {
-          mainWallet = element;
-        }
-      });
-
-      if (!campaignExist) {
-        Response.setError(
-          400,
-          'Organisation does not have a wallet attached to this campaign'
-        );
-        return Response.send(res);
-      }
-
-      const campaign = await db.Campaign.findByPk(data.campaign);
-
-      if (mainWallet.balance < data.amount) {
-        Response.setError(400, 'Main Wallet Balance has Insufficient Balance');
-        return Response.send(res);
-      } else {
-        await organisation
-          .createTransaction({
-            walletSenderId: mainWallet.uuid,
-            walletRecieverId: reciepientWallet.uuid,
-            amount: data.amount,
-            narration: 'Funding ' + campaign.title + ' campaign '
-          })
-          .then(transaction => {
-            transferToQueue.send(
-              new Message(
-                {
-                  senderAddress: mainWallet.address,
-                  senderPass: mainWallet.privateKey,
-                  reciepientAddress: reciepientWallet.address,
-                  amount: data.amount,
-                  transaction: transaction.uuid
-                },
-                {
-                  contentType: 'application/json'
-                }
-              )
-            );
-          });
-        Response.setSuccess(200, 'Transfer has been Initiated');
-        return Response.send(res);
-      }
     }
+    const organisation = await db.Organisations.findOne({
+      where: {
+        id: data.organisation_id,
+      },
+      include: {
+        model: db.Wallet,
+        as: 'Wallet',
+      },
+    });
+
+    if (!organisation) {
+      Response.setError(400, 'Invalid Organisation Id');
+      return Response.send(res);
+    }
+
+    const wallets = organisation.Wallet;
+    let mainWallet;
+    let reciepientWallet;
+    let campaignExist = false;
+    wallets.forEach((element) => {
+      if (element.CampaignId === data.campaign) {
+        campaignExist = true;
+        reciepientWallet = element;
+      }
+      if (element.bantuAddress) {
+        mainWallet = element;
+      }
+    });
+
+    if (!campaignExist) {
+      Response.setError(
+        400,
+        'Organisation does not have a wallet attached to this campaign',
+      );
+      return Response.send(res);
+    }
+
+    const eachCampaign = await db.Campaign.findByPk(data.campaign);
+
+    if (mainWallet.balance < data.amount) {
+      Response.setError(400, 'Main Wallet Balance has Insufficient Balance');
+      return Response.send(res);
+    }
+    await organisation
+      .createTransaction({
+        walletSenderId: mainWallet.uuid,
+        walletRecieverId: reciepientWallet.uuid,
+        amount: data.amount,
+        narration: `Funding ${eachCampaign.title} campaign `,
+      })
+      .then((transaction) => {
+        transferToQueue.send(
+          new Message(
+            {
+              senderAddress: mainWallet.address,
+              senderPass: mainWallet.privateKey,
+              reciepientAddress: reciepientWallet.address,
+              amount: data.amount,
+              transaction: transaction.uuid,
+            },
+            {
+              contentType: 'application/json',
+            },
+          ),
+        );
+      });
+    Response.setSuccess(200, 'Transfer has been Initiated');
+    return Response.send(res);
   }
 
   static async getBeneficiariesFinancials(req, res) {
     // try {
-    const id = req.params.id;
-    let ngo = await db.Organisations.findOne({
+    const { id } = req.params;
+    const ngo = await db.Organisations.findOne({
       where: {
-        id
+        id,
       },
       include: {
         model: db.OrganisationMembers,
-        as: 'Member'
-      }
+        as: 'Member',
+      },
     });
     if (ngo) {
-      const members = ngo['Member'].map(element => {
-        return element.id;
-      });
+      const members = ngo.Member.map((element) => element.id);
       const campaigns = await db.Campaign.findAll({
         where: {
           OrganisationMemberId: {
-            [Op.or]: members
-          }
+            [Op.or]: members,
+          },
         },
         include: {
           model: db.Beneficiaries,
@@ -2332,48 +2324,49 @@ class OrganisationController {
             as: 'User',
             include: {
               model: db.Wallet,
-              as: 'Wallet'
-            }
-          }
-        }
+              as: 'Wallet',
+            },
+          },
+        },
       });
       const wallets = [];
       let remaining = 0;
-      for (let camp of campaigns) {
-        for (let beneficiary of camp.Beneficiaries) {
-          let wallet = beneficiary.User.Wallet;
-          if (!wallets.includes(wallet)) {
+      campaigns.forEach((camp) => {
+        camp.Beneficiaries.forEach((beneficiary) => {
+          const wallet = beneficiary.User.Wallet;
+          if (!wallets.includes(wallet.uuid)) {
             wallets.push(wallet.uuid);
           }
-          remaining = remaining + wallet.balance;
-        }
-      }
+          remaining += wallet.balance;
+        });
+      });
       const spent = await db.Transaction.sum('amount', {
         where: {
           walletSenderId: {
-            [Op.or]: wallets
-          }
-        }
+            [Op.or]: wallets,
+          },
+        },
       });
       const recieved = await db.Transaction.sum('amount', {
         where: {
           walletRecieverId: {
-            [Op.or]: wallets
-          }
-        }
+            [Op.or]: wallets,
+          },
+        },
       });
       Response.setSuccess(200, 'Beneficiaries', {
         spent,
         recieved,
-        remaining
+        remaining,
       });
       return Response.send(res);
     }
+    return null;
   }
 
   static async createVendor(req, res) {
     try {
-      const {user, organisation} = req;
+      const { user, organisation } = req;
       console.log('user', user);
       console.log('organisation', organisation);
       const data = SanitizeObject(req.body, [
@@ -2383,33 +2376,34 @@ class OrganisationController {
         'phone',
         'address',
         'store_name',
-        'location'
+        'location',
       ]);
       const vendor = await OrganisationService.createVendorAccount(
         organisation,
         data,
-        user
+        user,
       );
       await QueueService.createWallet(vendor.id, 'user');
 
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.` + error);
+      Response.setError(500, `Internal server error. Contact support.${error}`);
       return Response.send(res);
     }
   }
 
   static async getOrganisationVendors(req, res) {
     try {
-      const {organisation} = req;
+      const { organisation } = req;
       const vendors = (
         await VendorService.organisationVendors(organisation)
-      ).map(res => {
-        const toObject = res.toObject();
-        toObject.Wallet.map(wallet => {
-          delete wallet.privateKey;
-          delete wallet.bantuPrivateKey;
+      ).map((response) => {
+        const toObject = response.toObject();
+        toObject.Wallet.map((wallet) => {
+          const walletCopy = { ...wallet };
+          delete walletCopy.privateKey;
+          delete walletCopy.bantuPrivateKey;
           return wallet;
         });
         return toObject;
@@ -2417,21 +2411,22 @@ class OrganisationController {
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, 'Internal server error. Contact support.');
       return Response.send(res);
     }
   }
 
   static async getDonorVendors(req, res) {
     try {
-      const {organisation} = req;
+      const { organisation } = req;
       const vendors = (
         await VendorService.organisationVendors(organisation, req.query)
-      ).map(res => {
-        const toObject = res.toObject();
-        toObject.Wallet.map(wallet => {
-          delete wallet.privateKey;
-          delete wallet.bantuPrivateKey;
+      ).map((response) => {
+        const toObject = response.toObject();
+        toObject.Wallet.map((wallet) => {
+          const walletCopy = { ...wallet };
+          delete walletCopy.privateKey;
+          delete walletCopy.bantuPrivateKey;
           return wallet;
         });
         return toObject;
@@ -2439,7 +2434,7 @@ class OrganisationController {
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, 'Internal server error. Contact support.');
       return Response.send(res);
     }
   }
@@ -2450,58 +2445,61 @@ class OrganisationController {
       const vendorId = req.params.vendor_id || req.body.vendor_id;
       const vendorProducts = await VendorService.vendorStoreProducts(vendorId);
       const vendor = await VendorService.vendorPublicDetails(vendorId, {
-        OrganisationId
+        OrganisationId,
       });
       vendor.dataValues.Store = {
-        Products: vendorProducts
+        Products: vendorProducts,
       };
-      vendor.dataValues.total_received = vendor.Wallets.map(wallet =>
-        wallet.ReceivedTransactions.map(tx => tx.amount).reduce(
-          (a, b) => a + b,
-          0
-        )
-      ).reduce((a, b) => a + b, 0);
-      vendor.dataValues.total_spent = vendor.Wallets.map(wallet =>
-        wallet.SentTransactions.map(tx => tx.amount).reduce((a, b) => a + b, 0)
-      ).reduce((a, b) => a + b, 0);
+      vendor.dataValues.total_received = vendor.Wallets
+        .map((wallet) => wallet.ReceivedTransactions
+          .map((tx) => tx.amount)
+          .reduce((a, b) => a + b, 0))
+        .reduce((a, b) => a + b, 0);
+
+      vendor.dataValues.total_spent = vendor.Wallets
+        .map((wallet) => wallet.SentTransactions
+          .map((tx) => tx.amount)
+          .reduce((a, b) => a + b, 0))
+        .reduce((a, b) => a + b, 0);
+
       Response.setSuccess(200, 'Organisation vendor', vendor);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, 'Internal server error. Contact support.');
       return Response.send(res);
     }
   }
 
   static async getVendorsSummary(req, res) {
     try {
-      const organisation = req.organisation;
-      const vendors_count = (
+      const { organisation } = req;
+      const vendorsCount = (
         await VendorService.organisationVendors(organisation, req.query)
       ).length;
       const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
-      const previous_stat = await VendorService.organisationDailyVendorStat(
+      const previousStat = await VendorService.organisationDailyVendorStat(
         organisation.id,
-        yesterday
+        yesterday,
       );
-      const today_stat = await VendorService.organisationDailyVendorStat(
-        organisation.id
+      const todayStat = await VendorService.organisationDailyVendorStat(
+        organisation.id,
       );
       const Transactions = await VendorService.organisationVendorsTransactions(
         organisation.id,
-        req.query
+        req.query,
       );
       Response.setSuccess(200, 'Organisation vendors Summary', {
         organisation,
-        vendors_count,
-        previous_stat,
-        today_stat,
-        Transactions: Transactions.data
+        vendors_count: vendorsCount,
+        previous_stat: previousStat,
+        today_stat: todayStat,
+        Transactions: Transactions.data,
       });
       return Response.send(res);
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
@@ -2517,75 +2515,80 @@ class OrganisationController {
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true,
-        ...req.query
+        ...req.query,
       });
-      const isOrganisationCampWallet =
-        await WalletService.findOrganisationCampaignWallets(
-          isOrgMember.OrganisationId
-        );
-      isOrganisationCamp.data.forEach(matric => {
+      const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
+        isOrgMember.OrganisationId,
+      );
+      isOrganisationCamp.data.forEach((matric) => {
         disbursedDates.push(matric.updatedAt);
       });
-      isOrganisationCampWallet.forEach(spend => {
+      isOrganisationCampWallet.forEach((spend) => {
         spendDate.push(spend.updatedAt);
       });
       matrics.maxDisbursedDate = new Date(Math.max(...disbursedDates));
       matrics.minDisbursedDate = new Date(Math.min(...disbursedDates));
       matrics.maxSpendDate = new Date(Math.max(...spendDate));
       matrics.minSpendDate = new Date(Math.min(...spendDate));
-      Response.setSuccess(200, `matrics received`, matrics);
+      Response.setSuccess(200, 'matrics received', matrics);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.` + error);
+      Response.setError(500, `Internal server error. Contact support.${error}`);
       return Response.send(res);
     }
   }
 
-  static async cash_item() {
-    try {
-    } catch (error) {}
-  }
+  // static async cash_item() {
+  //   try {
+  //   } catch (error) {}
+  // }
+
   static async record(req, res) {
+    let isOrgMember;
+    let isOrganisationCamp;
+    const isOrganisationCampWallet = await WalletService.findOrganisationCampaignWallets(
+      isOrgMember.OrganisationId,
+    );
+
+    function getDifference() {
+      return isOrganisationCampWallet.filter(
+        (wallet) => isOrganisationCamp.data.some(
+          (eachCampaign) => wallet.CampaignId === eachCampaign.id,
+        ),
+      );
+    }
     try {
-      const isOrgMember = await OrganisationService.isMemberUser(req.user.id);
-      const isOrganisationCamp = await CampaignService.getAllCampaigns({
+      isOrgMember = await OrganisationService.isMemberUser(req.user.id);
+      isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
         is_funded: true,
-        ...req.query
+        ...req.query,
       });
-      const isOrganisationCampWallet =
-        await WalletService.findOrganisationCampaignWallets(
-          isOrgMember.OrganisationId
-        );
-      function getDifference() {
-        return isOrganisationCampWallet.filter(wallet => {
-          return isOrganisationCamp.data.some(campaign => {
-            return wallet.CampaignId === campaign.id;
-          });
-        });
+      let campaignBudget = 0;
+      if (isOrganisationCamp.data.length > 0) {
+        campaignBudget = isOrganisationCamp.data
+          .map((val) => val.budget)
+          .reduce((accumulator, curValue) => accumulator + curValue);
       }
 
-      const campaign_budget = isOrganisationCamp.data
-        .map(val => val.budget)
-        .reduce((accumulator, curValue) => accumulator + curValue, 0);
-      const amount_disbursed = isOrganisationCamp.data
-        .map(val => val.amount_disbursed)
+      const amountDisbursed = isOrganisationCamp.data
+        .map((val) => val.amount_disbursed)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
       const balance = getDifference()
-        .map(val => val.balance)
+        .map((val) => val.balance)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
-      const total_items_distributed = isOrganisationCamp.data
-        .map(val => val.minting_limit)
+      const totalItemsDistributed = isOrganisationCamp.data
+        .map((val) => val.minting_limit)
         .reduce((accumulator, curValue) => accumulator + curValue, 0);
       Response.setSuccess(200, 'transaction', {
-        campaign_budget,
-        amount_disbursed,
-        total_items_distributed,
-        balance
+        campaign_budget: campaignBudget,
+        amount_disbursed: amountDisbursed,
+        total_items_distributed: totalItemsDistributed,
+        balance,
       });
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, 'Internal server error. Contact support.');
       return Response.send(res);
     }
   }
@@ -2597,39 +2600,40 @@ class OrganisationController {
       const org = await OrganisationService.isMemberUser(req.user.id);
       const nonOrgBeneficiaries = await BeneficiaryService.nonOrgBeneficiaries({
         ...query,
-        OrganisationId: org.OrganisationId
+        OrganisationId: org.OrganisationId,
       });
       Response.setSuccess(
         200,
         'this beneficiary not under your organisation',
-        nonOrgBeneficiaries
+        nonOrgBeneficiaries,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
   }
 
   static async fundWithProvidus(req, res) {
-    const {organisation_id} = req.params;
+    const { organisation_id: organisationId } = req.params;
     try {
       const fundWithProvidus = await ProvidusService.fundWithProvidus(
-        organisation_id
+        organisationId,
       );
       Response.setSuccess(200, 'fund with providus', fundWithProvidus);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async createTicket(req, res) {
     const data = req.body;
     try {
@@ -2639,7 +2643,7 @@ class OrganisationController {
         description: 'required|string',
         'contact.email': 'email',
         'contact.firstName': 'string',
-        'contact.lastName': 'string'
+        'contact.lastName': 'string',
       };
       console.log(data, 'data');
 
@@ -2656,7 +2660,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
@@ -2667,7 +2671,7 @@ class OrganisationController {
     try {
       const rules = {
         subject: 'required|string',
-        description: 'required|string'
+        description: 'required|string',
       };
 
       const validation = new Validator(data, rules);
@@ -2677,7 +2681,7 @@ class OrganisationController {
       }
       const member = await OrganisationService.isMemberUser(req.user.id);
       const organisation = await OrganisationService.findOneById(
-        member.OrganisationId
+        member.OrganisationId,
       );
 
       const org = organisation.Organisations[0];
@@ -2687,7 +2691,7 @@ class OrganisationController {
         firstName: organisation.first_name,
         lastName: organisation.first_name,
         phone: org.phone,
-        email: org.email
+        email: org.email,
       };
 
       const createdTicket = await ZohoService.createTicket(data);
@@ -2696,7 +2700,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
@@ -2710,11 +2714,12 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async destroyToken(req, res) {
     try {
       const token = await ZohoService.destroy(req.query.id);
@@ -2723,11 +2728,12 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
   }
+
   static async saveToken(req, res) {
     try {
       const token = await ZohoService.saveToken(req.body);
@@ -2736,31 +2742,11 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         500,
-        `Internal server error. Contact support. ${error}`
+        `Internal server error. Contact support. ${error}`,
       );
       return Response.send(res);
     }
   }
-}
-
-function extractDomain(url) {
-  var domain;
-  //find & remove protocol (http, ftp, etc.) and get domain
-  if (url.indexOf('://') > -1) {
-    domain = url.split('/')[2];
-  } else {
-    domain = url.split('/')[0];
-  }
-
-  //find & remove www
-  if (domain.indexOf('www.') > -1) {
-    domain = domain.split('www.')[1];
-  }
-
-  domain = domain.split(':')[0]; //find & remove port number
-  domain = domain.split('?')[0]; //find & remove url params
-
-  return domain;
 }
 
 module.exports = OrganisationController;

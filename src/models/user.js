@@ -1,12 +1,13 @@
-'use strict';
-const {Model} = require('sequelize');
-const {AclRoles} = require('../utils');
+const { Model } = require('sequelize');
+const { AclRoles } = require('../utils');
+
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    capitalizeFirstLetter(str) {
-      let string = str.toLowerCase();
+    static capitalizeFirstLetter(str) {
+      const string = str.toLowerCase();
       return string.charAt(0).toUpperCase() + string.slice(1);
     }
+
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -19,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
 
       User.hasMany(models.Transaction, {
         as: 'OrderTransaction',
-        foreignKey: 'BeneficiaryId'
+        foreignKey: 'BeneficiaryId',
         // scope: {
         //   transaction_type: 'order'
         // }
@@ -28,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       User.belongsToMany(models.Campaign, {
         as: 'Campaigns',
         foreignKey: 'UserId',
-        through: models.Beneficiary
+        through: models.Beneficiary,
       });
 
       // User.hasMany(models.Campaign, {
@@ -38,11 +39,11 @@ module.exports = (sequelize, DataTypes) => {
 
       User.hasMany(models.Complaint, {
         as: 'Complaints',
-        foreignKey: 'UserId'
+        foreignKey: 'UserId',
       });
       User.hasMany(models.FormAnswer, {
         as: 'Answers',
-        foreignKey: 'beneficiaryId'
+        foreignKey: 'beneficiaryId',
       });
 
       User.hasMany(models.Wallet, {
@@ -50,78 +51,79 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'UserId',
         constraints: false,
         scope: {
-          wallet_type: 'user'
-        }
+          wallet_type: 'user',
+        },
       });
       User.hasMany(models.Wallet, {
         as: 'Wallets',
         foreignKey: 'UserId',
         constraints: false,
         scope: {
-          wallet_type: 'user'
-        }
+          wallet_type: 'user',
+        },
       });
-      ////////////////////////
+      /// /////////////////////
       User.hasOne(models.Market, {
         as: 'Store',
-        foreignKey: 'UserId'
+        foreignKey: 'UserId',
       });
       User.hasMany(models.Order, {
         as: 'Orders',
         foreignKey: 'VendorId',
         scope: {
-          RoleId: AclRoles.Vendor
-        }
+          RoleId: AclRoles.Vendor,
+        },
       });
       User.hasMany(models.Transaction, {
         as: 'StoreTransactions',
         foreignKey: 'VendorId',
         scope: {
-          transaction_origin: 'store'
-        }
+          transaction_origin: 'store',
+        },
       });
       User.hasMany(models.OrganisationMembers, {
-        as: 'AssociatedOrganisations'
+        as: 'AssociatedOrganisations',
       });
       User.belongsToMany(models.Organisation, {
         as: 'Organisations',
-        through: models.OrganisationMembers
+        through: models.OrganisationMembers,
       });
       User.hasMany(models.FingerPrints, {
-        as: 'Print'
+        as: 'Print',
       });
       User.hasMany(models.BankAccount, {
-        as: 'BankAccounts'
+        as: 'BankAccounts',
       });
       User.hasOne(models.Group, {
         as: 'members',
-        foreignKey: 'representative_id'
+        foreignKey: 'representative_id',
       });
       User.hasOne(models.Liveness, {
         as: 'liveness',
-        foreignKey: 'authorized_by'
+        foreignKey: 'authorized_by',
       });
       User.hasMany(models.VerificationToken, {
-        as: 'VerificationTokens'
+        as: 'VerificationTokens',
       });
       User.hasMany(models.TaskAssignment, {
-        as: 'Assignments'
+        as: 'Assignments',
       });
       User.belongsTo(models.Role, {
         foreignKey: 'RoleId',
-        as: 'Role'
+        as: 'Role',
       });
       User.belongsToMany(models.Product, {
         foreignKey: 'vendorId',
         through: 'VendorProduct',
-        as: 'ProductVendors'
+        as: 'ProductVendors',
       });
       User.hasOne(models.VendorProposal, {
         foreignKey: 'vendor_id',
-        as: 'proposalOwner'
+        as: 'proposalOwner',
       });
 
-      //Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
+      // Product.belongsToMany(models.User, { foreignKey: 'productId', as:
+      // 'ProductVendors', through: 'VendorProduct'  })
     }
   }
   User.init(
@@ -132,19 +134,19 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         set(value) {
           this.setDataValue('first_name', this.capitalizeFirstLetter(value));
-        }
+        },
       },
       last_name: {
         type: DataTypes.STRING,
         set(value) {
           this.setDataValue('last_name', this.capitalizeFirstLetter(value));
-        }
+        },
       },
       email: {
         type: DataTypes.STRING,
         set(value) {
           this.setDataValue('email', value.toLowerCase());
-        }
+        },
       },
       username: DataTypes.STRING,
       password: DataTypes.STRING,
@@ -178,12 +180,12 @@ module.exports = (sequelize, DataTypes) => {
       tfa_binded_date: DataTypes.DATE,
       is_verified: DataTypes.BOOLEAN,
       is_verified_all: DataTypes.BOOLEAN,
-      registration_type: DataTypes.ENUM('individual', 'organisation')
+      registration_type: DataTypes.ENUM('individual', 'organisation'),
     },
     {
       sequelize,
-      modelName: 'User'
-    }
+      modelName: 'User',
+    },
   );
 
   User.prototype.toObject = function () {

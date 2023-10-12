@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -12,7 +10,7 @@ module.exports = {
       after: 'id',
       type: Sequelize.STRING,
       allowNull: false,
-      unique: true
+      unique: true,
     });
 
     await queryInterface.addColumn('Orders', 'VendorId', {
@@ -23,8 +21,8 @@ module.exports = {
         model: {
           tableName: 'Users',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
 
     await queryInterface.removeColumn('Orders', 'OrderUniqueId');
@@ -45,7 +43,7 @@ module.exports = {
       after: 'id',
       type: Sequelize.STRING,
       allowNull: false,
-      unique: true
+      unique: true,
     });
     await queryInterface.addColumn('Orders', 'UserId', {
       after: 'OrderUniqueId',
@@ -55,8 +53,8 @@ module.exports = {
         model: {
           tableName: 'Users',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
-  }
+  },
 };

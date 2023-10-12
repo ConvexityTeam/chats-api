@@ -1,9 +1,9 @@
 require('dotenv').config();
-const db = require('../models');
-const {util, Response, Logger} = require('../libs');
-const {HttpStatusCode, GenearteVendorId} = require('../utils');
 const Validator = require('validatorjs');
-const uploadFile = require('./AmazonController');
+const axios = require('axios');
+const db = require('../models');
+const { util, Response } = require('../libs');
+const { HttpStatusCode, GenearteVendorId } = require('../utils');
 const {
   UserService,
   OrganisationService,
@@ -12,49 +12,47 @@ const {
   CampaignService,
   TransactionService,
   BlockchainService,
-  MailerServices
 } = require('../services');
-const {SanitizeObject} = require('../utils');
-const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
-const axios = require('axios');
-const {termiiConfig} = require('../config');
-const {async} = require('regenerator-runtime');
+const { SanitizeObject } = require('../utils');
+
+const { termiiConfig } = require('../config');
 const MailerService = require('../services/MailerService');
 const SmsService = require('../services/SmsService');
-const {AclRoles} = require('../utils');
+const { AclRoles } = require('../utils');
 
 class AdminController {
-  static async testEmail(req, res) {
+  static async testEmail(res) {
     try {
       const vendor_id = GenearteVendorId();
       MailerService.verify(
         'jibrilmohammed39@gmail.com',
         'Jibril mohammed',
         vendor_id,
-        'password'
+        'password',
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Email verified',
-        vendor_id
+        vendor_id,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        'Internal server error. Contact support.',
       );
       return Response.send(res);
     }
   }
+
   static async updateStatus(req, res) {
     const data = req.body;
 
     try {
       const rules = {
         userId: 'required|numeric',
-        status: 'required|string|in:activated,suspended'
+        status: 'required|string|in:activated,suspended',
       };
 
       const validation = new Validator(data, rules);
@@ -63,45 +61,49 @@ class AdminController {
         return Response.send(res);
       }
       const bodyAllowedList = new Set(['userId', 'status']);
-      for (let prop in req.body) {
-        if (req.body.hasOwnProperty(prop) && !bodyAllowedList.has(prop)) {
+
+      const bodyProperties = Object.keys(req.body);
+
+      bodyProperties.forEach((prop) => {
+        if (!bodyAllowedList.has(prop)) {
           Response.setError(
             HttpStatusCode.STATUS_BAD_REQUEST,
-            'unexpected parameter in POST body'
+            'Unexpected parameter in POST body',
           );
           return Response.send(res);
         }
-      }
+        return null;
+      });
 
-      const userExist = await db.User.findOne({where: {id: data.userId}});
+      const userExist = await db.User.findOne({ where: { id: data.userId } });
 
       if (!userExist) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          `Invalid user ID`
+          'Invalid user ID',
         );
         return Response.send(res);
       }
       // userExist.dataValues.is_verified_all = true;
       const updatesUser = await userExist.update({
         status: data.status,
-        is_verified_all: true
+        is_verified_all: true,
       });
 
       const to = userExist.email;
       // const OrgName = userExist.;
       const OrgName = '';
       if (updatesUser && data.status === 'activated') {
-        //send email notification to user
+        // send email notification to user
         await MailerService.ngoApprovedMail(to, OrgName);
       }
       updatesUser.dataValues.password = null;
-      Response.setSuccess(HttpStatusCode.STATUS_CREATED, `User status updated`);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'User status updated');
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        'Internal server error. Contact support.',
       );
       return Response.send(res);
     }
@@ -111,32 +113,32 @@ class AdminController {
     const data = req.body;
     const rules = {
       campaignId: 'required|numeric',
-      status: 'required|string|in:in-progress,paused,pending'
+      status: 'required|string|in:in-progress,paused,pending',
     };
 
     const validation = new Validator(data, rules);
     if (validation.fails()) {
       util.setError(422, validation.errors);
       return util.send(res);
-    } else {
-      const campaignExist = await db.Campaign.findOne({
-        where: {id: data.campaignId}
-      });
-      if (campaignExist) {
-        await campaignExist.update({status: data.status}).then(response => {
-          util.setError(200, 'Campaign Status Updated');
-          return util.send(res);
-        });
-      } else {
-        util.setError(404, 'Invalid Campaign Id', error);
-        return util.send(res);
-      }
     }
+    const campaignExist = await db.Campaign.findOne({
+      where: { id: data.campaignId },
+    });
+    if (campaignExist) {
+      await campaignExist.update({ status: data.status }).then(() => {
+        util.setError(200, 'Campaign Status Updated');
+        return util.send(res);
+      });
+    } else {
+      util.setError(404, 'Invalid Campaign Id');
+      return util.send(res);
+    }
+    return null;
   }
 
   static async verifyAccount(req, res) {
     try {
-      const {userprofile_id} = req.params;
+      const { userprofile_id } = req.params;
       const data = req.body;
       data.country = 'Nigeria';
       data.currency = 'NGN';
@@ -150,7 +152,7 @@ class AdminController {
         dob: 'string',
         phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
         nin: 'required|digits_between:10,11',
-        marital_status: 'string'
+        marital_status: 'string',
       };
 
       const validation = new Validator(data, rules);
@@ -159,16 +161,16 @@ class AdminController {
         return Response.send(res);
       }
       if (!req.file) {
-        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Upload Selfie`);
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Upload Selfie');
         return Response.send(res);
       }
       const organisation = await OrganisationService.findOneById(
-        userprofile_id
+        userprofile_id,
       );
       if (!organisation) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          `Organisation Not Found`
+          'Organisation Not Found',
         );
         return Response.send(res);
       }
@@ -178,21 +180,21 @@ class AdminController {
           profile_pic: data.nin_image_url,
           ...data,
           status: 'activated',
-          is_nin_verified: true
+          is_nin_verified: true,
         },
-        {where: {id: organisation.id}}
+        { where: { id: organisation.id } },
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `NIN Verified`,
-        organisation
+        'NIN Verified',
+        organisation,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal Server Error Try Again: ${error}`
+        `Internal Server Error Try Again: ${error}`,
       );
       return Response.send(res);
     }
@@ -201,62 +203,123 @@ class AdminController {
   static async getAllNGO(req, res) {
     try {
       const allNGOs = await OrganisationService.getAllOrganisations();
-
-      for (let ngo of allNGOs) {
+      const ngoPromises = allNGOs.map(async (ngo) => {
         const [transactions, campaigns] = await Promise.all([
           TransactionService.findTransactions({
             OrganisationId: ngo.id,
             transaction_type: 'transfer',
             status: 'success',
             VendorId: null,
-            BeneficiaryId: null
+            BeneficiaryId: null,
           }),
           CampaignService.getCampaigns(ngo.id, {
-            is_funded: true
-          })
+            is_funded: true,
+          }),
         ]);
 
-        const sum = transactions.reduce((accumulator, object) => {
-          return accumulator + object.amount;
-        }, 0);
-        let count = 0;
-        const user = await UserService.findUser(ngo.Members[0].UserId);
-        ngo.dataValues.name =
-          ngo.name || user.first_name + ' ' + user.last_name;
-        ngo.dataValues.status = user.status;
-        ngo.dataValues.UserId = user.id;
-        ngo.dataValues.liveness = user.liveness;
+        const sum = transactions.reduce((accumulator, object) => accumulator + object.amount, 0);
+        const { status, id: UserId, liveness } = await UserService.findUser(ngo.Members[0].UserId);
+        // const name = ngo.name || `${user.first_name} ${user.last_name}`;
 
-        for (let campaign of campaigns.data) {
-          let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(
-              campaign.id,
-              req.query
-            );
-          count = count + beneficiaries.data.length;
-        }
-        ngo.dataValues.beneficiary_count = count;
-        ngo.dataValues.disbursedSum = sum;
-        delete ngo.dataValues.Transactions;
-        delete ngo.dataValues.Campaigns;
-        delete ngo.dataValues.Members;
-      }
+        const beneficiaryCounts = await Promise.all(campaigns.data.map(async (campaign) => {
+          const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+            campaign.id,
+            req.query,
+          );
+          return beneficiaries.data.length;
+        }));
 
-      if (allNGOs.length > 0) {
-        Response.setSuccess(200, 'NGOs retrieved', allNGOs);
+        const beneficiary_count = beneficiaryCounts
+          .reduce((accumulator, count) => accumulator + count, 0);
+
+        return {
+          ...ngo,
+          dataValues: {
+            ...ngo.dataValues,
+            name: ngo.name,
+            status,
+            UserId,
+            liveness,
+            beneficiary_count,
+            disbursedSum: sum,
+          },
+        };
+      });
+
+      const ngoResults = await Promise.all(ngoPromises);
+
+      if (ngoResults.length > 0) {
+        Response.setSuccess(200, 'NGOs retrieved', ngoResults);
       } else {
         Response.setSuccess(200, 'No NGO found');
       }
+
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error.' + error
+        `Internal Server Error.${error}`,
       );
       return Response.send(res);
     }
   }
+
+  // static async getAllNGO(req, res) {
+  //   try {
+  //     const allNGOs = await OrganisationService.getAllOrganisations();
+
+  //     for (const ngo of allNGOs) {
+  //       const [transactions, campaigns] = await Promise.all([
+  //         TransactionService.findTransactions({
+  //           OrganisationId: ngo.id,
+  //           transaction_type: 'transfer',
+  //           status: 'success',
+  //           VendorId: null,
+  //           BeneficiaryId: null,
+  //         }),
+  //         CampaignService.getCampaigns(ngo.id, {
+  //           is_funded: true,
+  //         }),
+  //       ]);
+
+  //       const sum = transactions.reduce((accumulator, object) => accumulator + object.amount, 0);
+  //       let count = 0;
+  //       const user = await UserService.findUser(ngo.Members[0].UserId);
+  //       ngo.dataValues.name = ngo.name || `${user.first_name} ${user.last_name}`;
+  //       ngo.dataValues.status = user.status;
+  //       ngo.dataValues.UserId = user.id;
+  //       ngo.dataValues.liveness = user.liveness;
+
+  //       for (const campaign of campaigns.data) {
+  //         const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+  //           campaign.id,
+  //           req.query,
+  //         );
+  //         count += beneficiaries.data.length;
+  //       }
+  //       ngo.dataValues.beneficiary_count = count;
+  //       ngo.dataValues.disbursedSum = sum;
+  //       delete ngo.dataValues.Transactions;
+  //       delete ngo.dataValues.Campaigns;
+  //       delete ngo.dataValues.Members;
+  //     }
+
+  //     if (allNGOs.length > 0) {
+  //       Response.setSuccess(200, 'NGOs retrieved', allNGOs);
+  //     } else {
+  //       Response.setSuccess(200, 'No NGO found');
+  //     }
+  //     return Response.send(res);
+  //   } catch (error) {
+  //     console.log(error);
+  //     Response.setError(
+  //       HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+  //       `Internal Server Error.${error}`,
+  //     );
+  //     return Response.send(res);
+  //   }
+  // }
 
   static async fetchLiveness(req, res) {
     try {
@@ -266,52 +329,54 @@ class AdminController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error.'
+        'Internal Server Error.',
       );
       return Response.send(res);
     }
   }
+
   static async findLiveness(req, res) {
     try {
       const liveness = await UserService.findLivenessByUserId(
-        req.params.user_id
+        req.params.user_id,
       );
       Response.setSuccess(200, 'Liveness retrieved', liveness);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error.'
+        'Internal Server Error.',
       );
       return Response.send(res);
     }
   }
+
   static async updateUserStatus(req, res) {
     try {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
-      for (let ngo of allNGOs) {
-        const sum = ngo.Transactions.reduce((accumulator, object) => {
-          return accumulator + object.amount;
-        }, 0);
+      allNGOs.forEach(async (ngo) => {
+        const ngoCopy = { ...ngo };
+        const sum = ngo.Transactions
+          .reduce((accumulator, object) => accumulator + object.amount, 0);
         let count = 0;
         const user = await UserService.findUser(ngo.Members[0].UserId);
-        ngo.dataValues.status = user.status;
-        ngo.dataValues.UserId = user.id;
-        for (let campaign of ngo.Campaigns) {
-          let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(
-              campaign.id,
-              req.query
-            );
-          count = count + beneficiaries.data.length;
-        }
-        ngo.dataValues.beneficiary_count = count;
-        ngo.dataValues.disbursedSum = sum;
-        delete ngo.dataValues.Transactions;
-        delete ngo.dataValues.Campaigns;
-        delete ngo.dataValues.Members;
-      }
+        ngoCopy.dataValues.status = user.status;
+        ngoCopy.dataValues.UserId = user.id;
+
+        ngo.Campaigns.forEach(async (campaign) => {
+          const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
+            campaign.id,
+            req.query,
+          );
+          count += beneficiaries.data.length;
+        });
+        ngoCopy.dataValues.beneficiary_count = count;
+        ngoCopy.dataValues.disbursedSum = sum;
+        delete ngoCopy.dataValues.Transactions;
+        delete ngoCopy.dataValues.Campaigns;
+        delete ngoCopy.dataValues.Members;
+      });
 
       if (allNGOs.length > 0) {
         Response.setSuccess(200, 'NGOs retrieved', allNGOs);
@@ -323,32 +388,31 @@ class AdminController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error.'
+        'Internal Server Error.',
       );
       return Response.send(res);
     }
   }
 
   static async getNGODisbursedAndBeneficiaryTotal(req, res) {
-    const {organisation_id} = req.params;
+    const { organisation_id } = req.params;
 
     try {
-      let total = await TransactionService.getTotalTransactionAmountAdmin(
-        organisation_id
+      const total = await TransactionService.getTotalTransactionAmountAdmin(
+        organisation_id,
       );
-      const beneficiaries =
-        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
+      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
       const beneficiariesCount = Object.keys(beneficiaries).length;
 
-      let spend_for_campaign = total.map(a => a.dataValues.amount);
+      const spend_for_campaign = total.map((a) => a.dataValues.amount);
       let disbursedSum = 0;
-      for (let i = 0; i < spend_for_campaign.length; i++) {
+      for (let i = 0; i < spend_for_campaign.length; i += 1) {
         disbursedSum += Math.floor(spend_for_campaign[i]);
       }
 
       Response.setSuccess(200, 'Disbursed and Beneficiaries total retrieved', {
         disbursedSum,
-        beneficiariesCount
+        beneficiariesCount,
       });
 
       return Response.send(res);
@@ -363,48 +427,49 @@ class AdminController {
     try {
       const allVendors = await VendorService.getAllVendorsAdmin();
 
-      for (let vendor of allVendors) {
-        const sum = vendor.StoreTransactions.reduce((accumulator, object) => {
-          return accumulator + object.amount;
-        }, 0);
+      allVendors.forEach(async (vendor) => {
+        const vendorCopy = { ...vendor };
+        const sum = vendor.StoreTransactions
+          .reduce((accumulator, object) => accumulator + object.amount, 0);
         const campaign = await CampaignService.getVendorCampaigns(vendor.id);
-        vendor.dataValues.total_amount_sold = sum;
-        vendor.dataValues.total_campaign = campaign.length || null;
-        vendor.dataValues.total_ngos = vendor.Organisations.length;
-        delete vendor.dataValues.Organisations;
-        delete vendor.dataValues.StoreTransactions;
-      }
+        vendorCopy.dataValues.total_amount_sold = sum;
+        vendorCopy.dataValues.total_campaign = campaign.length || null;
+        vendorCopy.dataValues.total_ngos = vendor.Organisations.length;
+        delete vendorCopy.dataValues.Organisations;
+        delete vendorCopy.dataValues.StoreTransactions;
+      });
+
       Response.setSuccess(200, 'Vendors retrieved', allVendors);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal Server Error' + error
+        `Internal Server Error${error}`,
       );
       return Response.send(res);
     }
   }
 
   static async getVendorCampaignAndAmountTotal(req, res) {
-    const {vendor_id} = req.params;
+    const { vendor_id } = req.params;
     try {
       const transactions = await VendorService.vendorsTransactionsAdmin(
-        vendor_id
+        vendor_id,
       );
       const campaigns = await CampaignService.getVendorCampaignsAdmin(
-        vendor_id
+        vendor_id,
       );
       const campaignsCount = Object.keys(campaigns).length;
 
-      let spend_for_campaign = transactions.map(a => a.dataValues.amount);
+      const spend_for_campaign = transactions.map((a) => a.dataValues.amount);
       let amount_sold = 0;
-      for (let i = 0; i < spend_for_campaign.length; i++) {
+      for (let i = 0; i < spend_for_campaign.length; i += 1) {
         amount_sold += Math.floor(spend_for_campaign[i]);
       }
 
       Response.setSuccess(200, 'Campaign and amount sold total retrieved', {
         amount_sold,
-        campaignsCount
+        campaignsCount,
       });
 
       return Response.send(res);
@@ -419,24 +484,24 @@ class AdminController {
     try {
       const allBeneficiaries = await BeneficiaryService.getBeneficiariesAdmin();
 
-      for (let beneficiary of allBeneficiaries) {
+      allBeneficiaries.forEach(async (beneficiary) => {
+        const beneficiaryCopy = { ...beneficiary };
         const sum = beneficiary.OrderTransaction.reduce(
-          (accumulator, object) => {
-            return accumulator + object.amount;
-          },
-          0
+          (accumulator, object) => accumulator + object.amount,
+          0,
         );
         const campaign = await BeneficiaryService.findCampaignBeneficiary(
-          beneficiary.id
+          beneficiary.id,
         );
         const ngo = await CampaignService.getCampaignWithBeneficiaries(
-          campaign[0].CampaignId
+          campaign[0].CampaignId,
         );
-        beneficiary.dataValues.total_amount_spent = sum;
-        beneficiary.dataValues.total_campaign = campaign.length;
-        beneficiary.dataValues.organisationId = ngo.OrganisationId;
-        delete beneficiary.dataValues.OrderTransaction;
-      }
+        beneficiaryCopy.dataValues.total_amount_spent = sum;
+        beneficiaryCopy.dataValues.total_campaign = campaign.length;
+        beneficiaryCopy.dataValues.organisationId = ngo.OrganisationId;
+        delete beneficiaryCopy.dataValues.OrderTransaction;
+      });
+
       Response.setSuccess(200, 'Beneficiaries retrieved', allBeneficiaries);
       return Response.send(res);
     } catch (error) {
@@ -446,27 +511,26 @@ class AdminController {
   }
 
   static async getBeneficiaryAmountAndCampaignsTotal(req, res) {
-    const {beneficiary_id} = req.params;
+    const { beneficiary_id } = req.params;
 
     try {
-      let total =
-        await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
-          beneficiary_id
-        );
+      const total = await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
+        beneficiary_id,
+      );
       const campaigns = await CampaignService.beneficiaryCampaingsAdmin(
-        beneficiary_id
+        beneficiary_id,
       );
       const campaignCount = Object.keys(campaigns).length;
 
-      let spend_for_campaign = total.map(a => a.dataValues.amount);
+      const spend_for_campaign = total.map((a) => a.dataValues.amount);
       let spentSum = 0;
-      for (let i = 0; i < spend_for_campaign.length; i++) {
+      for (let i = 0; i < spend_for_campaign.length; i += 1) {
         spentSum += Math.floor(spend_for_campaign[i]);
       }
 
       Response.setSuccess(200, 'Spent and campaign total retrieved', {
         spentSum,
-        campaignCount
+        campaignCount,
       });
 
       return Response.send(res);
@@ -481,23 +545,25 @@ class AdminController {
     try {
       const query = SanitizeObject(req.query, ['type']);
       const allCampaign = await CampaignService.getAllCampaigns({
-        ...query
+        ...query,
       });
 
-      for (let campaign of allCampaign) {
-        campaign.dataValues.total_amount = campaign.budget;
-        campaign.dataValues.total_amount_spent = campaign.amount_disbursed;
-      }
+      allCampaign.forEach(async (campaign) => {
+        const campaignCopy = { ...campaign };
+        campaignCopy.dataValues.total_amount = campaign.budget;
+        campaignCopy.dataValues.total_amount_spent = campaign.amount_disbursed;
+      });
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign retrieved',
-        allCampaign
+        allCampaign,
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.' + error
+        `Internal error occured. Please try again.${error}`,
       );
       return Response.send(res);
     }
@@ -507,28 +573,27 @@ class AdminController {
     try {
       const allDonors = await OrganisationService.getAllDonorsAdmin();
 
-      for (let donor of allDonors) {
+      allDonors.forEach(async (donor) => {
+        const donorCopy = { ...donor };
         const transactions = await TransactionService.findTransactions({
           OrganisationId: donor.id,
           BeneficiaryId: null,
           transaction_type: 'transfer',
           is_approved: true,
-          status: 'success'
+          status: 'success',
         });
         const userExist = await UserService.findByEmail(donor.email);
-        const sum = transactions.reduce((accumulator, object) => {
-          return accumulator + object.amount;
-        }, 0);
-        donor.dataValues.total_campaign = donor.associatedCampaigns.length;
+        const sum = transactions.reduce((accumulator, object) => accumulator + object.amount, 0);
+        donorCopy.dataValues.total_campaign = donor.associatedCampaigns.length;
         const ngos = [
-          ...new Set(donor.associatedCampaigns.map(item => item.OrganisationId))
+          ...new Set(donor.associatedCampaigns.map((item) => item.OrganisationId)),
         ];
-        donor.dataValues.total_donation = sum;
-        donor.dataValues.total_ngo = ngos.length;
-        donor.dataValues.UserId = userExist.id;
-        donor.dataValues.status = userExist.status;
-        delete donor.dataValues.associatedCampaigns;
-      }
+        donorCopy.dataValues.total_donation = sum;
+        donorCopy.dataValues.total_ngo = ngos.length;
+        donorCopy.dataValues.UserId = userExist.id;
+        donorCopy.dataValues.status = userExist.status;
+        delete donorCopy.dataValues.associatedCampaigns;
+      });
 
       if (allDonors.length > 0) {
         Response.setSuccess(200, 'Donors retrieved', allDonors);
@@ -547,41 +612,41 @@ class AdminController {
     try {
       const userId = await db.User.findOne({
         where: {
-          id: req.params.donor_id
-        }
+          id: req.params.donor_id,
+        },
       });
 
       const donor = await db.Organisation.findOne({
         where: {
-          email: userId.email
-        }
+          email: userId.email,
+        },
       });
 
       if (!donor) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'User not a donor'
+          'User not a donor',
         );
         return Response.send(res);
       }
 
-      let total = await TransactionService.getTotalTransactionAmountAdmin(
-        donor.id
+      const total = await TransactionService.getTotalTransactionAmountAdmin(
+        donor.id,
       );
       const campaigns = await CampaignService.getPrivateCampaignsAdmin(
-        donor.id
+        donor.id,
       );
       // const campaignsCount = Object.keys(campaigns).length
 
-      let spend_for_campaign = total.map(a => a.dataValues.amount);
+      const spend_for_campaign = total.map((a) => a.dataValues.amount);
       let disbursedSum = 0;
-      for (let i = 0; i < spend_for_campaign.length; i++) {
+      for (let i = 0; i < spend_for_campaign.length; i += 1) {
         disbursedSum += Math.floor(spend_for_campaign[i]);
       }
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaigns.', {
         disbursedSum,
-        campaigns
+        campaigns,
       });
       return Response.send(res);
     } catch (error) {
@@ -595,16 +660,16 @@ class AdminController {
 setInterval(async () => {
   const user = await db.User.findOne({
     where: {
-      RoleId: AclRoles.SuperAdmin
-    }
+      RoleId: AclRoles.SuperAdmin,
+    },
   });
   let resp;
   if (process.env.NODE_ENV === 'production') {
     await axios
       .get(
-        `https://api.ng.termii.com/api/get-balance?api_key=${termiiConfig.api_key}`
+        `https://api.ng.termii.com/api/get-balance?api_key=${termiiConfig.api_key}`,
       )
-      .then(async result => {
+      .then(async (result) => {
         resp = result.data;
         if (resp.balance <= 100) {
           await SmsService.sendAdminSmsCredit(user.phone, resp.balance);
@@ -612,7 +677,7 @@ setInterval(async () => {
           console.log('SMS balance is getting low');
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.log('error', error.message);
       });
   }
@@ -621,33 +686,32 @@ setInterval(async () => {
 setInterval(async () => {
   const user = await db.User.findOne({
     where: {
-      RoleId: AclRoles.SuperAdmin
-    }
+      RoleId: AclRoles.SuperAdmin,
+    },
   });
 
   const options = {
     port: 443,
     method: 'GET',
     headers: {
-      'x-api-key': ` ${process.env.IDENTITY_API_KEY}`
-    }
+      'x-api-key': ` ${process.env.IDENTITY_API_KEY}`,
+    },
   };
 
   await axios
     .get(
       'https://api.myidentitypay.com/api/v1/biometrics/merchant/data/wallet/balance',
-      options
+      options,
     )
-    .then(async result => {
-      let resp;
-      resp = result.data;
+    .then(async (result) => {
+      const resp = result.data;
       if (resp.balance <= 4000) {
         await SmsService.sendAdminNinCredit(user.phone, resp.balance);
         await MailerService.sendAdminNinCreditMail(user.email, resp.balance);
         console.log('NIN balance is getting low');
       }
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('error', error.message);
     });
 }, 3600000);
@@ -655,14 +719,14 @@ setInterval(async () => {
 setInterval(async () => {
   const user = await db.User.findOne({
     where: {
-      RoleId: AclRoles.SuperAdmin
-    }
+      RoleId: AclRoles.SuperAdmin,
+    },
   });
   if (process.env.NODE_ENV === 'production') {
     const balance = await BlockchainService.getNativeBalance(
-      process.env.BLOCKCHAIN_ADMIN
+      process.env.BLOCKCHAIN_ADMIN,
     );
-    if (parseInt(balance) < 2) {
+    if (parseInt(balance, 10) < 2) {
       await MailerService.sendAdminBlockchainCreditMail(user.email, balance);
       await SmsService.sendAdminBlockchainCredit(user.phone, balance);
       console.log('Blockchain gas is getting low');

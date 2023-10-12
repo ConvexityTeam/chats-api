@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -12,11 +10,11 @@ module.exports = {
     await queryInterface.addColumn('Users', 'is_otp_verified', {
       allowNull: true,
       type: Sequelize.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -24,5 +22,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.removeColumn('Users', 'is_otp_verified');
-  }
+  },
 };

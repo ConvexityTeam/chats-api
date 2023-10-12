@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -9,14 +7,13 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
 
-    
     queryInterface.addColumn('Tasks', 'isCompleted', {
       type: Sequelize.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -25,6 +22,5 @@ module.exports = {
      */
     // queryInterface.dr('Tasks', 'isCompleted');
     await queryInterface.dropTable('Tasks');
-    
-  }
+  },
 };

@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -11,11 +9,11 @@ module.exports = {
     await queryInterface.removeColumn('Organisations', 'verificationMode');
     await queryInterface.addColumn('Organisations', 'profile_completed', {
       type: Sequelize.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
     });
     await queryInterface.addColumn('Beneficiaries', 'approved', {
       type: Sequelize.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
     });
   },
 
@@ -26,11 +24,11 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.removeColumn('Beneficiaries', 'approved');
-     await queryInterface.removeColumn('Organisations', 'profile_completed');
-     await queryInterface.addColumn('Organisations', 'verificationMode', {
-      type: Sequelize.ENUM("1", "2"),
-        defaultValue: "1",
+    await queryInterface.removeColumn('Beneficiaries', 'approved');
+    await queryInterface.removeColumn('Organisations', 'profile_completed');
+    await queryInterface.addColumn('Organisations', 'verificationMode', {
+      type: Sequelize.ENUM('1', '2'),
+      defaultValue: '1',
     });
-  }
+  },
 };

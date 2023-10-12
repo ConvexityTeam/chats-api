@@ -1,12 +1,9 @@
-const {User} = require('../models');
-const {Response} = require('../libs');
+const { Response } = require('../libs');
 const {
   OrganisationService,
   NgoService,
-  ProductService,
-  MailerService
 } = require('../services');
-const {HttpStatusCode, SanitizeObject} = require('../utils');
+const { HttpStatusCode, SanitizeObject } = require('../utils');
 const utils = require('../libs/Utils');
 
 class NgoController {
@@ -27,7 +24,7 @@ class NgoController {
   }
 
   static async getOneNGO(req, res) {
-    const {id} = req.params;
+    const { id } = req.params;
 
     if (!Number(id)) {
       Response.setError(400, 'Invalid Request Parameter');
@@ -49,27 +46,27 @@ class NgoController {
 
   static async createAdminMember(req, res) {
     try {
-      const {role, ...data} = SanitizeObject(req.body);
-      const {user, organisation} = req;
+      const { role, ...data } = SanitizeObject(req.body);
+      const { organisation } = req;
       const newPassword = utils.generatePassword();
       const admin = await NgoService.createAdminAccount(
         organisation,
         data,
         role,
-        newPassword
+        newPassword,
       );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Account Created.',
-        admin
+        admin,
       );
       return Response.send(res);
     } catch (error) {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Internal server error. Contact support.`
+        'Internal server error. Contact support.',
       );
       return Response.send(res);
     }
@@ -79,7 +76,7 @@ class NgoController {
     try {
       const memebrs = await NgoService.getMembers(
         req.organisation.id,
-        req.query
+        req.query,
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'NGO members', memebrs);
       return Response.send(res);
@@ -87,7 +84,7 @@ class NgoController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Server Error: Please retry.`
+        'Server Error: Please retry.',
       );
       return Response.send(res);
     }
@@ -102,7 +99,7 @@ class NgoController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        `Server Error: Please retry.`
+        'Server Error: Please retry.',
       );
       return Response.send(res);
     }

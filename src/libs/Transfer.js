@@ -8,21 +8,21 @@ class Transfer {
    * @param {strig} transactionType
    */
   processTransfer(senderId, recipientsId, amount, transactionType = 'CR') {
-    return new Promise((resolve, reject) => {
+    return new Promise((reject) => {
       this.usersBalance(recipientsId)
-        .then(oldBalance => {
-          //get balance
+        .then((oldBalance) => {
+          // get balance
           // const newBalance = (oldBalance + amount);
           // this.updateBalance(recipientsId, newBalance);
           if (transactionType === 'CR') {
-            //if crediting wallet
+            // if crediting wallet
             return this.creditTransactions(
               senderId,
               recipientsId,
               amount,
               oldBalance,
             );
-          } else if (transactionType === 'DR') {
+          } if (transactionType === 'DR') {
             if (oldBalance >= amount) {
               return this.debitTransactions(
                 senderId,
@@ -30,12 +30,12 @@ class Transfer {
                 amount,
                 oldBalance,
               );
-            } else {
-              throw 'Insufficients Balance';
             }
+            throw new Error('Insufficients Balance');
           }
+          return null;
         })
-        .catch(err => reject(false));
+        .catch(() => reject(false));
     });
   }
 
@@ -46,12 +46,12 @@ class Transfer {
    */
   updateBalance(userId, amount) {
     return new Promise((resolve, reject) => {
-      db.User.update({balance: amount}, {where: {id: userId}})
-        .then(user => {
+      db.User.update({ balance: amount }, { where: { id: this.userId } })
+        .then((user) => {
           console.log(user);
           resolve(user);
         })
-        .catch(err => {
+        .catch((err) => {
           reject(err);
         });
 
@@ -61,6 +61,7 @@ class Transfer {
       //     reject(false);
     });
   }
+
   /**
    *
    * @param {string} userId
@@ -77,24 +78,25 @@ class Transfer {
   ) {
     return new Promise((resolve, reject) => {
       db.Transaction.create({
-        amount: amount,
+        amount,
         UserId: userId, // sender
-        recipientsId: recipientsId,
+        recipientsId,
         status: 1,
         type: 'DR',
-        narration: 'Debiting Wallet with ' + amount + ' ' + narration,
-        log: log,
+        narration: `Debiting Wallet with ${amount} ${narration}`,
+        log,
       })
-        .then(transaction => {
+        .then((transaction) => {
           this.updateBalance(userId, oldBalance - amount)
-            .then(res => {
+            .then(() => {
               resolve(transaction);
             })
-            .catch(err => reject(err));
+            .catch((err) => reject(err));
         })
-        .catch(err => reject(err));
+        .catch((err) => reject(err));
     });
   }
+
   /**
    *
    * @param {string} userId
@@ -114,41 +116,42 @@ class Transfer {
   ) {
     return new Promise((resolve, reject) => {
       db.Transaction.create({
-        amount: amount,
+        amount,
         UserId: userId, // sender
-        recipientsId: recipientsId,
+        recipientsId,
         status: 1,
         type: 'CR',
-        narration: 'Crediting Wallet with ' + amount + ' ' + narration,
-        log: log,
+        narration: `Crediting Wallet with ${amount} ${narration}`,
+        log,
       })
-        .then(transaction => {
+        .then((transaction) => {
           // console.log(transaction);
           // console.log("===========================Credited===========================");
           // const updated = await this.updateBalance(userId, amount + oldBalance);
           // console.log(updated);
           this.updateBalance(recipientsId, amount + oldBalance)
-            .then(res => {
+            .then(() => {
               // console.log(res);
               resolve(transaction);
             })
-            .catch(err => reject(err));
+            .catch((err) => reject(err));
         })
-        .catch(err => reject(err));
+        .catch((err) => reject(err));
     });
   }
+
   /**
    * Return  Users balance
    * @returns balance
    * @param {string} userId
    */
-  usersBalance(userId) {
+  usersBalance() {
     return new Promise((resolve, reject) => {
-      db.User.findOne({where: {id: userId}})
-        .then(user => {
+      db.User.findOne({ where: { id: this.userId } })
+        .then((user) => {
           resolve(user.balance);
         })
-        .catch(err => {
+        .catch((err) => {
           reject(err);
         });
     });

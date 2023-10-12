@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -11,11 +9,11 @@ module.exports = {
     await queryInterface.addColumn('Users', 'tfa_method', {
       type: Sequelize.ENUM('qrCode', 'email', 'sms'),
       allowNull: true,
-      after: 'tfa_secret'
+      after: 'tfa_secret',
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -23,5 +21,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.removeColumn('Users', 'tfa_method');
-  }
+  },
 };

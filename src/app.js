@@ -3,11 +3,11 @@ const express = require('express');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cors = require('cors');
-const {Logger} = require('./libs');
+const { Logger } = require('./libs');
 
-const {Response} = require('./libs');
-const {HttpStatusCode} = require('./utils');
-//Routers link
+const { Response } = require('./libs');
+const { HttpStatusCode } = require('./utils');
+// Routers link
 const adminRoute = require('./routers/admin');
 const usersRoute = require('./routers/users');
 const transactionRouter = require('./routers/transaction');
@@ -34,11 +34,11 @@ const impactReportRouter = require('./routers/impact');
 
 const app = express();
 
-app.use(cors({origin: '*'}));
+app.use(cors({ origin: '*' }));
 app.use(helmet());
 app.use(morgan('combined'));
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 // const adminRouter = require("./routers/admin");
 
 // Routing endpoint
@@ -72,10 +72,9 @@ app.get('/', (req, res) => {
     Response.setSuccess(HttpStatusCode.STATUS_OK, 'Welcome to CHATS App ');
     return Response.send(res);
   } catch (error) {
-    const message =
-      process.env.NODE_ENV === 'production'
-        ? 'Internal Server Error.'
-        : error.toString();
+    const message = process.env.NODE_ENV === 'production'
+      ? 'Internal Server Error.'
+      : error.toString();
     Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, message);
     return Response.send(res);
   }
@@ -85,14 +84,13 @@ app.all('*', (req, res) => {
     Logger.info('trying to get an unknown route');
     Response.setError(
       HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-      'Requested resource not found.'
+      'Requested resource not found.',
     );
     return Response.send(res);
   } catch (error) {
-    const message =
-      process.env.NODE_ENV === 'production'
-        ? 'Internal Server Error.'
-        : error.toString();
+    const message = process.env.NODE_ENV === 'production'
+      ? 'Internal Server Error.'
+      : error.toString();
     Logger.error(message);
     Response.setError(HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR, message);
     return Response.send(res);

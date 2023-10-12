@@ -4,17 +4,15 @@ const {
   VendorController,
   AuthController,
   OrderController,
-  OrganisationController
+  OrganisationController,
 } = require('../controllers');
 const {
   Auth,
   VendorAuth,
   NgoSubAdminAuth,
   IsOrgMember,
-  BeneficiaryAuth,
-  IsRequestWithValidPin
 } = require('../middleware');
-const {ParamValidator, FileValidator, AuthValidator} = require('../validators');
+const { ParamValidator, FileValidator, AuthValidator } = require('../validators');
 const VendorValidator = require('../validators/VendorValidator');
 
 router.get('/', VendorController.getAllVendors);
@@ -28,7 +26,7 @@ router.get(
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   IsOrgMember,
-  OrderController.productPurchased
+  OrderController.productPurchased,
 );
 router.post('/product', VendorController.addProduct);
 router.get('/products/single/:id', VendorController.singleProduct);
@@ -41,7 +39,7 @@ router.get('/proposals', VendorAuth, VendorController.ProposalRequests);
 router.get(
   '/proposal/:campaign_id',
   VendorAuth,
-  VendorController.ProposalRequest
+  VendorController.ProposalRequest,
 );
 
 router.get('/my-proposals', VendorAuth, VendorController.myProposal);
@@ -49,12 +47,12 @@ router.post(
   '/submit-proposal/:campaign_id',
   VendorAuth,
   ParamValidator.CampaignId,
-  VendorController.submitProposal
+  VendorController.submitProposal,
 );
 router.post(
   '/verify/sms-token/:smstoken',
   VendorAuth,
-  VendorController.verifySMStoken
+  VendorController.verifySMStoken,
 );
 router.get('/product_vendors', OrganisationController.ProductVendors);
 
@@ -63,7 +61,7 @@ router.post(
   VendorAuth,
   VendorValidator.VendorExists,
   FileValidator.checkProfilePic(),
-  VendorController.uploadprofilePic
+  VendorController.uploadprofilePic,
 );
 router.post('/register', VendorController.registeredSelf);
 router.post('/resend-otp', VendorController.resendPasswordToken);
@@ -72,12 +70,12 @@ router.post(
   AuthValidator.confirmOTPRules(),
   AuthValidator.validate,
   AuthValidator.checkResetPasswordToken,
-  VendorController.confirmOTP
+  VendorController.confirmOTP,
 );
 router.post(
   '/business/:vendor_id',
   VendorValidator.VendorExists,
-  VendorController.addBusiness
+  VendorController.addBusiness,
 );
 router.get('/product-category', VendorController.fetchDefaultCategory);
 router.post('/store', VendorController.addMarket);
@@ -87,14 +85,14 @@ router.put(
   '/store',
   VendorAuth,
   VendorValidator.VendorExists,
-  VendorController.updateStore
+  VendorController.updateStore,
 );
 router
   .route('/products')
   .get(
     VendorAuth,
     VendorValidator.VendorExists,
-    VendorController.vendorProducts
+    VendorController.vendorProducts,
   );
 
 router
@@ -102,7 +100,7 @@ router
   .get(
     VendorAuth,
     VendorValidator.VendorExists,
-    VendorController.vendorCampaigns
+    VendorController.vendorCampaigns,
   );
 
 router
@@ -110,7 +108,7 @@ router
   .get(
     VendorAuth,
     ParamValidator.CampaignId,
-    VendorController.vendorCampaignProducts
+    VendorController.vendorCampaignProducts,
   );
 
 router
@@ -121,7 +119,7 @@ router
     VendorValidator.VendorExists,
     VendorValidator.VendorApprovedForCampaign,
     VendorValidator.createOrder,
-    VendorController.createOrder
+    VendorController.createOrder,
   );
 
 router

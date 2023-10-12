@@ -1,21 +1,15 @@
-const {generateTransactionRef} = require('../utils');
-const {userConst, walletConst} = require('../constants');
+const { generateTransactionRef } = require('../utils');
+const { userConst } = require('../constants');
 const {
   Transaction,
-  Wallet,
-  Sequelize,
   User,
   OrderProduct,
   Order,
-  Product
+  Product,
 } = require('../models');
 
-const Op = Sequelize.Op;
-
 const QueueService = require('./QueueService');
-const {ProductService} = require('.');
 const Pagination = require('../utils/pagination');
-const {Logger} = require('../libs');
 
 class OrderService {
   static async processOrder(
@@ -25,9 +19,9 @@ class OrderService {
     order,
     vendor,
     amount,
-    campaign
+    campaign,
   ) {
-    order.update({status: 'processing'});
+    order.update({ status: 'processing' });
     const transaction = await Transaction.create({
       amount,
       reference: generateTransactionRef(),
@@ -41,7 +35,7 @@ class OrderService {
       OrganisationId: campaign.OrganisationId,
       VendorId: vendor.id,
       BeneficiaryId: beneficiaryWallet.UserId,
-      narration: 'Vendor Order'
+      narration: 'Vendor Order',
     });
     if (campaign.type === 'item') {
       QueueService.processNFTOrder(
@@ -51,7 +45,7 @@ class OrderService {
         order,
         vendor,
         amount,
-        transaction.uuid
+        transaction.uuid,
       );
     } else {
       QueueService.processOrder(
@@ -61,7 +55,7 @@ class OrderService {
         order,
         vendor,
         amount,
-        transaction.uuid
+        transaction.uuid,
       );
     }
 
@@ -70,27 +64,27 @@ class OrderService {
   }
 
   static async productPurchased(OrganisationId, extraClasue = {}) {
-    const {page, size} = extraClasue;
-    const {limit, offset} = await Pagination.getPagination(page, size);
+    const { page, size } = extraClasue;
+    const { limit, offset } = await Pagination.getPagination(page, size);
     const where = extraClasue;
     delete where.page;
     delete where.size;
     const queryOptions = {
-      where
+      where,
     };
     if (limit && offset) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
     const gender = await Order.findAndCountAll({
-      where: {status: 'confirmed'},
+      where: { status: 'confirmed' },
       ...queryOptions,
       include: [
         {
           model: User,
           as: 'Vendor',
           attributes: userConst.publicAttr,
-          include: ['Store']
+          include: ['Store'],
         },
         {
           model: OrderProduct,
@@ -104,27 +98,28 @@ class OrderService {
                   model: User,
                   as: 'ProductBeneficiaries',
                   attributes: userConst.publicAttr,
-                  through: {where: {OrganisationId}}
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  through: { where: { OrganisationId } },
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
-    return await Pagination.getPagingData(gender, page, size);
+    const response = Pagination.getPagingData(gender, page, size);
+    return response;
   }
 
   static async productPurchasedBy(id) {
     const product = await Order.findOne({
-      where: {id},
+      where: { id },
       include: [
         {
           model: User,
           as: 'Vendor',
           attributes: userConst.publicAttr,
-          include: ['Store']
+          include: ['Store'],
         },
 
         {
@@ -138,13 +133,13 @@ class OrderService {
                 {
                   model: User,
                   as: 'ProductBeneficiaries',
-                  attributes: userConst.publicAttr
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  attributes: userConst.publicAttr,
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
     return product;

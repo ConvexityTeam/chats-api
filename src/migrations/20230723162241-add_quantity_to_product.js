@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -12,21 +10,21 @@ module.exports = {
     await queryInterface.addColumn('Products', 'quantity', {
       type: Sequelize.INTEGER,
       allowNull: true,
-      defaultValue: 0
+      defaultValue: 0,
     });
     await queryInterface.addColumn('Products', 'proposal_id', {
       type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'ProposalRequests',
-        key: 'id'
+        key: 'id',
       },
       OnDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
+      onUpdate: 'CASCADE',
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * Add reverting commands here.
      *
@@ -34,5 +32,5 @@ module.exports = {
      * await queryInterface.dropTable('users');
      */
     await queryInterface.removeColumn('Products', 'quantity');
-  }
+  },
 };

@@ -1,3 +1,0 @@
-class StoreService {
-  // static find
-}

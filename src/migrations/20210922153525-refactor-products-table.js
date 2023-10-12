@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
@@ -13,16 +11,16 @@ module.exports = {
     await queryInterface.removeColumn('Products', 'price');
     await queryInterface.addColumn('Products', 'type', {
       type: Sequelize.ENUM('product', 'service', 'item'),
-      after: 'id'
+      after: 'id',
     });
     await queryInterface.addColumn('Products', 'tag', {
       type: Sequelize.STRING,
-      after: 'type'
+      after: 'type',
     });
 
     await queryInterface.addColumn('Products', 'cost', {
       type: Sequelize.FLOAT,
-      after: 'tag'
+      after: 'tag',
     });
 
     await queryInterface.addColumn('Products', 'CampaignId', {
@@ -31,10 +29,10 @@ module.exports = {
       type: Sequelize.INTEGER,
       references: {
         model: {
-          tableName: 'Campaigns'
+          tableName: 'Campaigns',
         },
-        key: 'id'
-      }
+        key: 'id',
+      },
     });
   },
 
@@ -50,13 +48,13 @@ module.exports = {
     await queryInterface.removeColumn('Products', 'cost');
     await queryInterface.removeColumn('Products', 'CampaignId');
     await queryInterface.addColumn('Products', 'name', {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
     });
     await queryInterface.addColumn('Products', 'quantity', {
-      type: Sequelize.INTEGER
+      type: Sequelize.INTEGER,
     });
     await queryInterface.addColumn('Products', 'price', {
-      type: Sequelize.FLOAT
+      type: Sequelize.FLOAT,
     });
-  }
+  },
 };

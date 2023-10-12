@@ -1,5 +1,5 @@
-'use strict';
-const {Model} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class RequestFund extends Model {
     /**
@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       RequestFund.hasOne(models.Campaign, {
         foreignKey: 'id',
-        as: 'campaign'
+        as: 'campaign',
       });
     }
   }
@@ -20,12 +20,12 @@ module.exports = (sequelize, DataTypes) => {
       donor_organisation_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       reason: DataTypes.STRING,
-      status: DataTypes.ENUM('Pending', 'Approved', 'Rejected')
+      status: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
     },
     {
       sequelize,
-      modelName: 'RequestFund'
-    }
+      modelName: 'RequestFund',
+    },
   );
   return RequestFund;
 };

@@ -1,7 +1,7 @@
-const { Response } = require("../libs");
-const { HttpStatusCode } = require("../utils");
 const { validationResult, query } = require('express-validator');
-
+const { isInt } = require('validator');
+const { Response } = require('../libs');
+const { HttpStatusCode } = require('../utils');
 
 class BaseValidator {
   static validate(req, res, next) {
@@ -18,7 +18,7 @@ class BaseValidator {
         extractedErrors[err.param].push(err.msg);
       });
 
-    Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed.', extractedErrors)
+    Response.setError(HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY, 'Validation Failed.', extractedErrors);
     return Response.send(res);
   }
 

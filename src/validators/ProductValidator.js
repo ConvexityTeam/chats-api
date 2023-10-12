@@ -1,16 +1,12 @@
+const { body } = require('express-validator');
 const BaseValidator = require('./BaseValidator');
-const {Response} = require('../libs');
-const {HttpStatusCode, AclRoles} = require('../utils');
-const {User, Organisations} = require('../models');
-const {VendorService, ProductService} = require('../services');
-const {check, body} = require('express-validator');
-const {userConst} = require('../constants');
+const { VendorService } = require('../services');
 
 class ProductValidator extends BaseValidator {
   static types = ['product', 'service', 'item'];
 
   static addProductRules = [
-    body().isArray({min: 1}).withMessage('Minimum of 1 product is required.'),
+    body().isArray({ min: 1 }).withMessage('Minimum of 1 product is required.'),
     body('*.type')
       .notEmpty()
       .withMessage('Product / Service/ Item type is required')
@@ -25,31 +21,28 @@ class ProductValidator extends BaseValidator {
     //   .isInt()
     //   .withMessage('Category ID must be numeric.'),
     body('*.vendors')
-      .isArray({min: 1})
+      .isArray({ min: 1 })
       .withMessage('Minimum of 1 vendor is required.'),
     body('*.vendors.*')
       .isInt()
       .withMessage('Vendor ID must be numeric.')
       .custom(ProductValidator.productVendorsExist),
-    this.validate
+    this.validate,
   ];
 
-  static productVendorsExist(id, {req}) {
+  static productVendorsExist(id, { req }) {
     const orgId = req.params.organisation_id || req.organisation.id;
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve) => {
       try {
-        const vendor = await VendorService.getOrganisationVendor(id, orgId);
-
+        const vendor = VendorService.getOrganisationVendor(id, orgId);
         if (!vendor) {
-          reject('Organisation vendor not found.');
-          return;
+          throw new Error('Organisation vendor not found.');
         }
         resolve(true);
       } catch (error) {
-        reject(`Error checking vendor`);
+        throw new Error('Error checking vendor');
       }
     });
   }
 }
-
 module.exports = ProductValidator;

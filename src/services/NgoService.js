@@ -1,54 +1,58 @@
-const {OrgAdminRolesToAcl} = require('../utils').Types;
-const {Op} = require('sequelize');
+const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
+const { OrgAdminRolesToAcl } = require('../utils').Types;
 
-const {userConst} = require('../constants');
+const { userConst } = require('../constants');
 
-const {User, Campaign, Product, OrganisationMembers} = require('../models');
+const {
+  User, Campaign, Product, OrganisationMembers,
+} = require('../models');
 
 const QueueService = require('./QueueService');
 const MailerService = require('./MailerService');
-const bcrypt = require('bcryptjs');
 const Pagination = require('../utils/pagination');
 
 class NgoService {
   static createAdminAccount(organisation, data, role, newPassword) {
-    return new Promise(async (resolve, reject) => {
+    const dataCopy = { ...data };
+    return new Promise((resolve, reject) => {
       const password = bcrypt.hashSync(newPassword, 10);
-      data.RoleId = OrgAdminRolesToAcl[role];
+      dataCopy.RoleId = OrgAdminRolesToAcl[role];
 
       User.create({
         ...data,
-        password
+        password,
       })
-        .then(async user => {
+        .then(async (user) => {
           await OrganisationMembers.create({
             UserId: user.id,
             OrganisationId: organisation.id,
-            role
+            role,
           });
           MailerService.sendFieldPassword(
             user.email,
-            user.first_name + ' ' + user.last_name,
-            newPassword
+            `${user.first_name} ${user.last_name}`,
+            newPassword,
           );
           await QueueService.createWallet(user.id, 'user');
           // send password to user
           resolve(user.toObject());
         })
-        .catch(err => {
+        .catch((err) => {
           reject(err);
         });
     });
   }
 
   static async getMembers(OrganisationId, extraClause = null) {
-    const page = extraClause.page;
-    const size = extraClause.size;
-    delete extraClause?.page;
-    delete extraClause?.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
+    const modifiedClause = { ...extraClause };
+    const { page } = modifiedClause;
+    const { size } = modifiedClause;
+    delete modifiedClause?.page;
+    delete modifiedClause?.size;
+    const { limit, offset } = await Pagination.getPagination(page, size);
 
-    let options = {...extraClause};
+    const options = { ...extraClause };
     if (page && size) {
       options.limit = limit;
       options.offset = offset;
@@ -59,16 +63,16 @@ class NgoService {
       where: {
         OrganisationId,
         role: {
-          [Op.ne]: 'vendor'
-        }
+          [Op.ne]: 'vendor',
+        },
       },
       include: [
         {
           model: User,
           as: 'User',
-          attributes: userConst.publicAttr
-        }
-      ]
+          attributes: userConst.publicAttr,
+        },
+      ],
     });
     const response = await Pagination.getPagingData(members, page, limit);
     return response;
@@ -79,10 +83,10 @@ class NgoService {
       include: [
         {
           model: Product,
-          as: 'CampaignProducts'
+          as: 'CampaignProducts',
         },
-        {model: User, as: 'CampaignVendors'}
-      ]
+        { model: User, as: 'CampaignVendors' },
+      ],
     });
   }
 }
