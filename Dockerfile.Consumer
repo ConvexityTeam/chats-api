@@ -4,4 +4,4 @@ COPY package.json ./
 RUN npm i
 COPY . .
 ENV NODE_ENV=production
-CMD [ "npm", "run", "start:consumer:dev" ]
+# CMD [ "npm", "run", "start:consumer:dev" ]
