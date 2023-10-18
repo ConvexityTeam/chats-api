@@ -15,6 +15,7 @@ const {Op, Sequelize} = require('sequelize');
 const {userConst, walletConst} = require('../constants');
 const moment = require('moment');
 const Pagination = require('../utils/pagination');
+const {Logger} = require('../libs');
 
 class BeneficiariesService {
   static capitalizeFirstLetter(str) {
@@ -692,6 +693,29 @@ class BeneficiariesService {
         CampaignId,
         UserId,
         approved: true
+      }
+    });
+  }
+
+  static async spendingStatus(CampaignId, UserId, data) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const find = await Beneficiary.findOne({
+          where: {
+            CampaignId,
+            UserId,
+            approved: true
+          }
+        });
+        if (!find) {
+          return resolve(null);
+        }
+        await find.update(data);
+        Logger.info(`Beneficiary spending status: ${find.status}`);
+        resolve(find);
+      } catch (error) {
+        Logger.error(`Error Beneficiary spending status: ${error}`);
+        reject(error);
       }
     });
   }

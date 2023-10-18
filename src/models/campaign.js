@@ -107,12 +107,20 @@ module.exports = (sequelize, DataTypes) => {
         'completed',
         'ended'
       ),
+      fund_status: DataTypes.ENUM(
+        'pending',
+        'in_progress',
+        'processing',
+        'success',
+        'error'
+      ),
       is_funded: DataTypes.BOOLEAN,
       is_public: DataTypes.BOOLEAN,
       funded_with: DataTypes.STRING,
       budget: DataTypes.FLOAT,
       contractIndex: DataTypes.INTEGER,
       amount_disbursed: DataTypes.FLOAT,
+
       location: DataTypes.JSON,
       start_date: DataTypes.DATE,
       paused_date: DataTypes.DATE,

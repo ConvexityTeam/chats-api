@@ -541,7 +541,6 @@ class CampaignController {
 
       const OrgWallet = organisation.Wallet;
 
-      console.log(organisation, 'organisation');
       if (campaign.fund_status == 'in_progress') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -610,7 +609,8 @@ class CampaignController {
           OrgWallet
         );
       }
-      campaign.update({fund_status: 'in_progress'});
+      const update = await campaign.update({fund_status: 'in_progress'});
+      Logger.info(`Updating Campaign: ${JSON.stringify(update)}`);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`
@@ -1458,7 +1458,7 @@ class CampaignController {
             );
             count++;
             onboard.push(res);
-            campaign.update({
+            await campaign.update({
               total_imported: count,
               total_beneficiaries: replicaCampaign.Beneficiaries.length
             });

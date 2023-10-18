@@ -134,24 +134,28 @@ class CampaignService {
     });
   }
 
-  static addBeneficiary(CampaignId, UserId, source = null) {
-    return Beneficiary.findOne({
-      where: {
-        CampaignId,
-        UserId
-      }
-    }).then(beneficiary => {
-      if (beneficiary) {
-        return beneficiary;
-      }
-      return Beneficiary.create({
-        CampaignId,
-        UserId,
-        source
-      }).then(async newBeneficiary => {
+  static async addBeneficiary(CampaignId, UserId, source = null) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const find = await Beneficiary.findOne({
+          where: {
+            CampaignId,
+            UserId
+          }
+        });
+        if (find) {
+          return resolve(find);
+        }
+        const newBeneficiary = await Beneficiary.create({
+          CampaignId,
+          UserId,
+          source
+        });
         await QueueService.createWallet(UserId, 'user', CampaignId);
-        return newBeneficiary;
-      });
+        return resolve(newBeneficiary);
+      } catch (error) {
+        return reject(error);
+      }
     });
   }
 
@@ -711,10 +715,21 @@ class CampaignService {
     });
   }
 
-  static updateSingleCampaign(id, update) {
-    return Campaign.update(update, {
-      where: {
-        id
+  static async updateSingleCampaign(id, update) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const updated = await Campaign.update(update, {
+          where: {
+            id
+          }
+        });
+        Logger.info(
+          `CampaignService.updateSingleCampaign: ${JSON.stringify(updated)}`
+        );
+        resolve(updated);
+      } catch (error) {
+        Logger.error(`CampaignService.updateSingleCampaign: ${error}`);
+        reject(error);
       }
     });
   }
