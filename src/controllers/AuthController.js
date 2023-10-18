@@ -539,7 +539,7 @@ class AuthController {
               iris: fields.iris
             })
               .then(async user => {
-                // await QueueService.createWallet(user.id, 'user');
+                await QueueService.createWallet(user.id, 'user');
                 const extension = files.profile_pic.name.substring(
                   files.profile_pic.name.lastIndexOf('.') + 1
                 );
@@ -565,11 +565,11 @@ class AuthController {
                     approved: true,
                     source: 'field app'
                   }).then(async () => {
-                    // await QueueService.createWallet(
-                    //   user.id,
-                    //   'user',
-                    //   fields.campaign
-                    // );
+                    await QueueService.createWallet(
+                      user.id,
+                      'user',
+                      fields.campaign
+                    );
                   });
                 }
                 // const data = await encryptData(
@@ -679,7 +679,7 @@ class AuthController {
                     iris: fields.iris
                   })
                     .then(async user => {
-                      // await QueueService.createWallet(user.id, 'user');
+                      await QueueService.createWallet(user.id, 'user');
 
                       var i = 0;
                       files.fingerprints.forEach(async fingerprint => {
@@ -727,11 +727,11 @@ class AuthController {
                           approved: true,
                           source: 'field app'
                         }).then(async () => {
-                          // await QueueService.createWallet(
-                          //   user.id,
-                          //   'user',
-                          //   fields.campaign
-                          // );
+                          await QueueService.createWallet(
+                            user.id,
+                            'user',
+                            fields.campaign
+                          );
                         });
                       }
 

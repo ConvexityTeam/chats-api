@@ -45,7 +45,9 @@ const {
   BlockchainService,
   DepositService,
   PaystackService,
-  SmsService
+  SmsService,
+  CampaignService,
+  BeneficiaryService
 } = require('../services');
 
 const {
@@ -356,12 +358,6 @@ const deployEscrowCollection = RabbitMq['default'].declareQueue(ESCROW_HASH, {
   prefetch: 1,
   durable: true
 });
-const update_campaign = async (id, args) => {
-  const campaign = await Campaign.findOne({where: {id}});
-  if (!campaign) return null;
-  await campaign.update(args);
-  return campaign;
-};
 
 const update_order = async (reference, args) => {
   const order = await Order.findOne({where: {reference}});
@@ -372,8 +368,11 @@ const update_order = async (reference, args) => {
 
 const update_transaction = async (args, uuid) => {
   const transaction = await Transaction.findOne({where: {uuid}});
+  Logger.info(`Transaction updating: ${JSON.stringify(transaction)}`);
   if (!transaction) return null;
   await transaction.update(args);
+  Logger.info(`Transaction updated: ${JSON.stringify(transaction)}`);
+
   return transaction;
 };
 const deductWalletAmount = async (balance, uuid) => {
@@ -456,42 +455,66 @@ RabbitMq['default']
         } = msg.getContent();
         if (approved && status != 'successful' && status != 'declined') {
           const message = msg.getContent();
-          let mint;
           if (CampaignId) {
             const campaignAddress = await BlockchainService.setUserKeypair(
               `campaign_${CampaignId}`
             );
-            mint = await BlockchainService.mintToken(
+            const mint = await BlockchainService.mintToken(
               campaignAddress.address,
               amount,
               message
+            );
+            if (!mint) {
+              msg.nack();
+              return;
+            }
+            Logger.info(`Campaign Funding Minted: ${mint.Minted}`);
+
+            const tran = await update_transaction(
+              {transaction_hash: mint.Minted},
+              transactionId
+            );
+            await QueueService.confirmNGO_FUNDING(
+              mint.Minted,
+              OrganisationId,
+              CampaignId,
+              transactionId,
+              transactionReference,
+              amount
             );
           } else {
             const organisation = await BlockchainService.setUserKeypair(
               `organisation_${OrganisationId}`
             );
-            mint = await BlockchainService.mintToken(
+            const mint = await BlockchainService.mintToken(
               organisation.address,
               amount,
               message
             );
+            Logger.info(`NGO Funding Minted: ${mint.Minted}`);
+
+            if (!mint) {
+              msg.nack();
+              return;
+            }
+            await update_transaction(
+              {transaction_hash: mint.Minted},
+              transactionId
+            ).catch(error => {
+              Logger.error(`Transaction Error: ${error.message}`);
+            });
+
+            await QueueService.confirmNGO_FUNDING(
+              mint.Minted,
+              OrganisationId,
+              CampaignId,
+              transactionId,
+              transactionReference,
+              amount
+            );
+
+            Logger.info(`NGO Funding Minted...: ${mint.Minted}`);
           }
-          if (!mint) {
-            msg.nack();
-            return;
-          }
-          await update_transaction(
-            {transaction_hash: mint.Minted},
-            transactionId
-          );
-          await QueueService.confirmNGO_FUNDING(
-            mint.Minted,
-            OrganisationId,
-            CampaignId,
-            transactionId,
-            transactionReference,
-            amount
-          );
         }
       })
       .catch(error => {
@@ -535,6 +558,7 @@ RabbitMq['default']
           transactionReference,
           amount
         );
+        // Logger.info(`NGO Funding Gas: ${gasFee.retried}`);
       })
       .catch(error => {
         Logger.error(`Consumer Error: ${error.message}`);
@@ -557,7 +581,7 @@ RabbitMq['default']
         } = msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
-
+        Logger.info(`confirm: ${confirm}`);
         if (!confirm) {
           msg.nack();
           return;
@@ -566,6 +590,7 @@ RabbitMq['default']
           {status: 'success', is_approved: true},
           transactionId
         );
+        Logger.info(`Minted..: ${confirm}`);
         if (CampaignId) {
           const campaignWallet = await WalletService.findSingleWallet({
             CampaignId,
@@ -591,10 +616,11 @@ RabbitMq['default']
             );
           } else {
             await campaignWallet.update({
-              balance: Sequelize.literal(`balance + ${amount}`)
-              //fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
+              balance: Sequelize.literal(`balance + ${amount}`),
+              fiat_balance: Sequelize.literal(`fiat_balance + ${amount}`)
             });
-            await update_campaign(CampaignId, {
+
+            await CampaignService.updateSingleCampaign(CampaignId, {
               is_funded: true,
               is_processing: false,
               amount_disbursed: Sequelize.literal(
@@ -740,11 +766,14 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await update_campaign(campaign.id, {
-          is_processing: true,
-          fund_status: 'processing'
-        });
-
+        const processing = await CampaignService.updateSingleCampaign(
+          campaign.id,
+          {
+            is_processing: true,
+            fund_status: 'processing'
+          }
+        );
+        Logger.info(`Campaign Processing: ${JSON.stringify(processing)}`);
         await update_transaction(
           {
             transaction_hash: transfer.Transfered
@@ -810,25 +839,34 @@ RabbitMq['default']
 
         if (!confirm) {
           msg.nack();
-          await update_campaign(campaign.id, {
-            fund_status: 'error'
-          });
+          const campaignError = await CampaignService.updateSingleCampaign(
+            campaign.id,
+            {
+              fund_status: 'error'
+            }
+          );
+          Logger.info(`Campaign Error: ${JSON.stringify(campaignError)}`);
           return;
         }
         if (campaign.type === 'cash-for-work') {
-          await update_campaign(campaign.id, {
+          await CampaignService.updateSingleCampaign(campaign.id, {
             status: 'active',
             is_funded: true,
             is_processing: false,
             amount_disbursed: amount,
             fund_status: 'success'
           });
-        } else
-          await update_campaign(campaign.id, {
-            is_funded: true,
-            is_processing: false,
-            fund_status: 'success'
-          });
+        } else {
+          const campaignSuccess = await CampaignService.updateSingleCampaign(
+            campaign.id,
+            {
+              is_funded: true,
+              is_processing: false,
+              fund_status: 'success'
+            }
+          );
+          Logger.info(`Campaign Success: ${JSON.stringify(campaignSuccess)}`);
+        }
 
         await update_transaction(
           {
@@ -1054,11 +1092,12 @@ RabbitMq['default']
         }
 
         lastIndex &&
-          (await update_campaign(campaign.id, {
+          (await CampaignService.updateSingleCampaign(campaign.id, {
             status: campaign.type === 'cash-for-work' ? 'active' : 'ongoing',
             is_funded: true,
             amount_disbursed: budget
           }));
+
         msg.ack();
       })
       .catch(error => {
@@ -2071,11 +2110,6 @@ RabbitMq['default']
 
         Logger.info(`Message: ${JSON.stringify(msg.getContent())}`);
         const share = amount;
-        const find = await Beneficiary.findOne({
-          where: {
-            UserId: beneficiary.id
-          }
-        });
 
         const {Approved} = await BlockchainService.approveToSpend(
           campaignPrivateKey,
@@ -2092,12 +2126,27 @@ RabbitMq['default']
 
           'multiple'
         );
+        Logger.info(`Beneficiary: ${JSON.stringify(beneficiary)}`);
+        // Logger.info(`Beneficiary ID: ${beneficiary.id}`);
         if (!Approved) {
-          await find.update({status: 'error'});
+          await BeneficiaryService.spendingStatus(
+            beneficiary.CampaignId,
+            beneficiary.UserId,
+            {
+              status: 'error'
+            }
+          );
+          Logger.info(`Approve Spending Failed. Retrying`);
           msg.nack();
           return;
         }
-        await find.update({status: 'processing'});
+        const find = await BeneficiaryService.spendingStatus(
+          beneficiary.CampaignId,
+          beneficiary.UserId,
+          {
+            status: 'processing'
+          }
+        );
         Logger.info(`Approve Spending Processing: ${find.status}`);
         await QueueService.confirmOneBeneficiary(
           Approved,
@@ -2117,7 +2166,6 @@ RabbitMq['default']
     confirmOneBeneficiary
       .activateConsumer(async msg => {
         const {hash, uuid, transactionId, beneficiary} = msg.getContent();
-        Logger.info(`Message Confirm: ${JSON.stringify(msg.getContent())}`);
         const confirm = await BlockchainService.confirmTransaction(hash);
         if (!confirm) {
           msg.nack();
@@ -2127,11 +2175,14 @@ RabbitMq['default']
           {is_approved: true, transaction_hash: hash, status: 'success'},
           transactionId
         );
-        const find = await Beneficiary.findOne({
-          UserId: beneficiary.id
-        });
+        const status = await BeneficiaryService.spendingStatus(
+          beneficiary.CampaignId,
+          beneficiary.UserId,
+          {
+            status: 'success'
+          }
+        );
         // updating beneficiary
-        const status = await find.update({status: 'success'});
         Logger.info(`Approve Spending Success: ${status.status}`);
         await updateWasFunded(uuid);
         Logger.info(`Approve Spending Success: ${status.status}`);
@@ -2155,7 +2206,7 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await update_campaign(collection.id, {
+        await CampaignService.updateSingleCampaign(collection.campaign_id, {
           escrow_hash: newCollection.escrow
         });
 
