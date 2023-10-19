@@ -4,9 +4,9 @@ module.exports = {
     await queryInterface.createTable('Orders', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.UUID
       },
       OrderUniqueId: {
         type: Sequelize.STRING,
@@ -15,16 +15,24 @@ module.exports = {
       },
       UserId: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: {
-            tableName: 'Users',
+            tableName: 'Users'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       status: {
-        type: Sequelize.ENUM('pending', 'processing', 'confirmed','delivered', 'failed'),
+        type: Sequelize.ENUM(
+          'pending',
+          'processing',
+          'confirmed',
+          'delivered',
+          'failed'
+        ),
         allowNull: false,
         defaultValue: 'pending'
       },

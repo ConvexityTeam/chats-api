@@ -5,7 +5,7 @@ const {
   GenerateVendorOtp
 } = require('../utils');
 const {User, OneTimePassword, Invites} = require('../models');
-const {v4: uuidv4} = require('uuid');
+const {v4: UUIDV4} = require('uuid');
 const {createHash, GenerateOtp} = require('../utils');
 const bcrypt = require('bcryptjs');
 const moment = require('moment');
@@ -372,7 +372,7 @@ class AuthService {
         expiresIn: '24hr'
       }
     );
-    await Invites.create({id: uuidv4(), email, inviterId, token, CampaignId});
+    await Invites.create({id: UUIDV4(), email, inviterId, token, CampaignId});
     return token;
   }
 }

@@ -14,16 +14,18 @@ module.exports = (sequelize, DataTypes) => {
       Complaint.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' })
     }
   };
-  Complaint.init({
-    
-    report: DataTypes.TEXT,
-    status: DataTypes.ENUM('resolved', 'unresolved'),
-    CampaignId: DataTypes.INTEGER,
-    UserId: DataTypes.INTEGER,
-  }, {
-    sequelize,
-    modelName: 'Complaint',
-  });
+  Complaint.init(
+    {
+      report: DataTypes.TEXT,
+      status: DataTypes.ENUM('resolved', 'unresolved'),
+      CampaignId: DataTypes.UUID,
+      UserId: DataTypes.UUID
+    },
+    {
+      sequelize,
+      modelName: 'Complaint'
+    }
+  );
   sequelizePaginate.paginate(Complaint)
   return Complaint;
 };

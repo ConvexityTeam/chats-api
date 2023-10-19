@@ -18,13 +18,15 @@ module.exports = {
     await queryInterface.addColumn('Orders', 'VendorId', {
       after: 'reference',
       allowNull: false,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Users',
+          tableName: 'Users'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.removeColumn('Orders', 'OrderUniqueId');
@@ -50,10 +52,10 @@ module.exports = {
     await queryInterface.addColumn('Orders', 'UserId', {
       after: 'OrderUniqueId',
       allowNull: false,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Users',
+          tableName: 'Users'
         },
         key: 'id'
       }

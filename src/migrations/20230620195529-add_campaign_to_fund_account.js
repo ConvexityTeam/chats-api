@@ -10,13 +10,15 @@ module.exports = {
      */
     await queryInterface.addColumn('FundAccounts', 'CampaignId', {
       allowNull: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
           tableName: 'Campaigns'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   },
   down: async (queryInterface, Sequelize) => {

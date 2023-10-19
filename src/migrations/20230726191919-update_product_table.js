@@ -14,24 +14,28 @@ module.exports = {
     await queryInterface.removeColumn('Products', 'CampaignId');
 
     await queryInterface.addColumn('Products', 'CampaignId', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: {
           tableName: 'Campaigns'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
     await queryInterface.addColumn('Products', 'vendor_proposal_id', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: {
           tableName: 'VendorProposals'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   },
 

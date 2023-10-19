@@ -5,12 +5,12 @@ module.exports = {
     await queryInterface.createTable('ProposalRequests', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       campaign_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: 'Campaigns',
@@ -20,7 +20,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       organisation_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: 'Organisations',

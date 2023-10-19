@@ -9,35 +9,32 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.removeColumn('Complaints', 'BeneficiaryId');
-    await queryInterface.addColumn(
-      'Complaints',
-      'CampaignId', {
-        after: 'status',
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Campaigns',
-          },
-          key: 'id'
-        }
-      }
-    );
-    await queryInterface.addColumn(
-      'Complaints',
-      'UserId', {
-        after: 'CampaignId',
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Users',
-          },
-          key: 'id'
-        }
-      }
-    );
-
+    await queryInterface.addColumn('Complaints', 'CampaignId', {
+      after: 'status',
+      allowNull: false,
+      type: Sequelize.UUID,
+      references: {
+        model: {
+          tableName: 'Campaigns'
+        },
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
+    await queryInterface.addColumn('Complaints', 'UserId', {
+      after: 'CampaignId',
+      allowNull: false,
+      type: Sequelize.UUID,
+      references: {
+        model: {
+          tableName: 'Users'
+        },
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -47,19 +44,18 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.addColumn(
-      'Complaints',
-      'BeneficiaryId', {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Beneficiaries',
-          },
-          key: 'id'
-        }
-      }
-    );
+    await queryInterface.addColumn('Complaints', 'BeneficiaryId', {
+      allowNull: false,
+      type: Sequelize.UUID,
+      references: {
+        model: {
+          tableName: 'Beneficiaries'
+        },
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
     await queryInterface.removeColumn('Complaints', 'CampaignId');
     await queryInterface.removeColumn('Complaints', 'UserId');
   }

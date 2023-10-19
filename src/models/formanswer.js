@@ -13,10 +13,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   FormAnswer.init(
     {
-      formId: DataTypes.INTEGER,
-      beneficiaryId: DataTypes.INTEGER,
+      formId: DataTypes.UUID,
+      beneficiaryId: DataTypes.UUID,
       questions: DataTypes.JSON,
-      campaignId: DataTypes.INTEGER
+      campaignId: DataTypes.UUID
     },
     {
       sequelize,

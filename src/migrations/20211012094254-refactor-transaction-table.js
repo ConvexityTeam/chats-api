@@ -11,17 +11,23 @@ module.exports = {
 
     await queryInterface.addColumn('Transactions', 'reference', {
       allowNull: true,
-      type: Sequelize.TEXT,
+      type: Sequelize.TEXT
     });
 
     await queryInterface.addColumn('Transactions', 'transaction_hash', {
       allowNull: true,
-      type: Sequelize.TEXT,
+      type: Sequelize.TEXT
     });
 
     await queryInterface.addColumn('Transactions', 'transaction_type', {
       allowNull: true,
-      type: Sequelize.ENUM('deposit', 'withdrawal', 'transfer', 'approval', 'spent')
+      type: Sequelize.ENUM(
+        'deposit',
+        'withdrawal',
+        'transfer',
+        'approval',
+        'spent'
+      )
     });
 
     await queryInterface.addColumn('Transactions', 'SenderWalletId', {
@@ -29,10 +35,12 @@ module.exports = {
       type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Wallets',
+          tableName: 'Wallets'
         },
         key: 'uuid'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.addColumn('Transactions', 'ReceiverWalletId', {
@@ -40,54 +48,64 @@ module.exports = {
       type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Wallets',
+          tableName: 'Wallets'
         },
         key: 'uuid'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.addColumn('Transactions', 'OrderId', {
       allowNull: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Orders',
+          tableName: 'Orders'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.addColumn('Transactions', 'VendorId', {
       allowNull: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Users',
+          tableName: 'Users'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.addColumn('Transactions', 'BeneficiaryId', {
       allowNull: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Users',
+          tableName: 'Users'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.addColumn('Transactions', 'OrganisationId', {
       allowNull: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: 'Organisations',
+          tableName: 'Organisations'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.removeColumn('Transactions', 'walletSenderId');
@@ -95,7 +113,6 @@ module.exports = {
     await queryInterface.removeColumn('Transactions', 'TransactionalId');
     await queryInterface.removeColumn('Transactions', 'TransactionalType');
     await queryInterface.removeColumn('Transactions', 'transactionHash');
-
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -114,19 +131,18 @@ module.exports = {
     await queryInterface.removeColumn('Transactions', 'BeneficiaryId');
     await queryInterface.removeColumn('Transactions', 'OrganisationId');
 
-
     await queryInterface.addColumn('Transactions', 'walletSenderId', {
       type: Sequelize.UUID,
-      allowNull: false,
+      allowNull: false
     });
 
     await queryInterface.addColumn('Transactions', 'walletRecieverId', {
       type: Sequelize.UUID,
-      allowNull: false,
+      allowNull: false
     });
 
     await queryInterface.addColumn('Transactions', 'TransactionalId', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID
     });
 
     await queryInterface.addColumn('Transactions', 'TransactionalType', {

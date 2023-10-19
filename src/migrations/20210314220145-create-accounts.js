@@ -4,19 +4,21 @@ module.exports = {
     await queryInterface.createTable('Accounts', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.UUID
       },
       UserId: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: {
-            tableName: 'Users',
+            tableName: 'Users'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       account_number: {
         type: Sequelize.INTEGER,

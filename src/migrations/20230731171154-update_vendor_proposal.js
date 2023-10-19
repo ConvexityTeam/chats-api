@@ -9,12 +9,14 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.addColumn('VendorProposals', 'CampaignId', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: 'Campaigns',
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   },
 

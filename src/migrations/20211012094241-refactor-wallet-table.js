@@ -10,23 +10,27 @@ module.exports = {
      */
 
     await queryInterface.addColumn('Wallets', 'UserId', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: "Users",
+          tableName: 'Users'
         },
-        key: "id",
+        key: 'id'
       },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.addColumn('Wallets', 'OrganisationId', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
-          tableName: "Organisations",
+          tableName: 'Organisations'
         },
-        key: "id",
+        key: 'id'
       },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
 
     await queryInterface.addColumn('Wallets', 'wallet_type', {
@@ -36,12 +40,12 @@ module.exports = {
 
     await queryInterface.addColumn('Wallets', 'crypto_balance', {
       type: Sequelize.FLOAT,
-      defaultValue: 0.00,
+      defaultValue: 0.0
     });
 
     await queryInterface.addColumn('Wallets', 'fiat_balance', {
       type: Sequelize.FLOAT,
-      defaultValue: 0.00,
+      defaultValue: 0.0
     });
 
     await queryInterface.addColumn('Wallets', 'local_currency', {
@@ -51,7 +55,6 @@ module.exports = {
 
     await queryInterface.removeColumn('Wallets', 'AccountUserId');
     await queryInterface.removeColumn('Wallets', 'AccountUserType');
-
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -69,10 +72,10 @@ module.exports = {
     await queryInterface.removeColumn('Wallets', 'local_currency');
     await queryInterface.addColumn('Wallets', 'AccountUserId', {
       allowNull: false,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID
     });
     await queryInterface.addColumn('Wallets', 'AccountUserType', {
-      type: Sequelize.STRING,
+      type: Sequelize.STRING
     });
   }
 };

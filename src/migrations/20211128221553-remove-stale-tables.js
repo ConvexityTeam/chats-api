@@ -8,9 +8,9 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-     await queryInterface.dropTable("TaskProgressEvidences");
-     await queryInterface.dropTable("TaskProgresses");
-     await queryInterface.dropTable("TaskUsers");
+    await queryInterface.dropTable('TaskProgressEvidences');
+    await queryInterface.dropTable('TaskProgresses');
+    await queryInterface.dropTable('TaskUsers');
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -20,106 +20,113 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-     await queryInterface.createTable("TaskUsers", {
+    await queryInterface.createTable('TaskUsers', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       UserId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "Users",
+            tableName: 'Users'
           },
-          key: "id",
+          key: 'id'
         },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       TaskId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "Tasks",
+            tableName: 'Tasks'
           },
-          key: "id",
+          key: 'id'
         },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       type: {
-        type: Sequelize.ENUM("supervisor", "worker"),
-        defaultValue: "worker",
+        type: Sequelize.ENUM('supervisor', 'worker'),
+        defaultValue: 'worker'
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-      },
+        type: Sequelize.DATE
+      }
     });
 
-    await queryInterface.createTable("TaskProgresses", {
+    await queryInterface.createTable('TaskProgresses', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       TaskUserId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "TaskUsers",
+            tableName: 'TaskUsers'
           },
-          key: "id",
+          key: 'id'
         },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       description: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-      },
+        type: Sequelize.DATE
+      }
     });
 
-    await queryInterface.createTable("TaskProgressEvidences", {
+    await queryInterface.createTable('TaskProgressEvidences', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       TaskProgressId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "TaskProgresses",
+            tableName: 'TaskProgresses'
           },
-          key: "id",
+          key: 'id'
         },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       imageUrl: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-      },
+        type: Sequelize.DATE
+      }
     });
-
   }
 };

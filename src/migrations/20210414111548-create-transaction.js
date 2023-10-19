@@ -10,14 +10,14 @@ module.exports = {
       },
       walletSenderId: {
         type: Sequelize.UUID,
-        allowNull: false,
+        allowNull: false
       },
       walletRecieverId: {
         type: Sequelize.UUID,
-        allowNull: false,
+        allowNull: false
       },
       TransactionalId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.INTEGER
       },
       TransactionalType: {
         type: Sequelize.STRING
@@ -41,10 +41,10 @@ module.exports = {
       },
       narration: {
         allowNull: false,
-        type: Sequelize.STRING,
+        type: Sequelize.STRING
       },
       log: {
-        type: Sequelize.TEXT,
+        type: Sequelize.TEXT
       },
       createdAt: {
         allowNull: false,

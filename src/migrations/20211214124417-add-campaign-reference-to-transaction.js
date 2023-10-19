@@ -9,15 +9,17 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.addColumn('Transactions', 'CampaignId', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: {
-          tableName: 'Campaigns',
+          tableName: 'Campaigns'
         },
         key: 'id'
-      }
-    })
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -27,6 +29,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropColumn('Transactions', 'CampaignId')
+    await queryInterface.dropColumn('Transactions', 'CampaignId');
   }
 };

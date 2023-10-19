@@ -4,29 +4,33 @@ module.exports = {
     await queryInterface.createTable('TaskAssignments', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       TaskId: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: {
-            tableName: 'Tasks',
+            tableName: 'Tasks'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       UserId: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: {
-            tableName: 'Users',
+            tableName: 'Users'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       uploaded_evidence: {
         type: Sequelize.BOOLEAN,
@@ -53,7 +57,14 @@ module.exports = {
         defaultValue: null
       },
       status: {
-        type: Sequelize.ENUM('pending','in progress', 'rejected', 'disbursed', 'approved', 'completed'), //approved -> recieved approval from NGO admin | completed -> paid
+        type: Sequelize.ENUM(
+          'pending',
+          'in progress',
+          'rejected',
+          'disbursed',
+          'approved',
+          'completed'
+        ), //approved -> recieved approval from NGO admin | completed -> paid
         default: 'pending'
       },
       createdAt: {

@@ -13,8 +13,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   AssociatedCampaign.init(
     {
-      DonorId: DataTypes.INTEGER,
-      CampaignId: DataTypes.INTEGER
+      DonorId: DataTypes.UUID,
+      CampaignId: DataTypes.UUID
     },
     {
       sequelize,

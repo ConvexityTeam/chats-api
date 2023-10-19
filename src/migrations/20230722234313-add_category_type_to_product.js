@@ -11,7 +11,7 @@ module.exports = {
     // await queryInterface.removeColumn('Products', 'product_category');
     await queryInterface.addColumn('Products', 'category_id', {
       allowNull: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       after: 'tag',
       reference: {
         model: 'ProductCategories',

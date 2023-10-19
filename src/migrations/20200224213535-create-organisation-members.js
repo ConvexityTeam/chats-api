@@ -1,48 +1,50 @@
-"use strict";
+'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("OrganisationMembers", {
+    await queryInterface.createTable('OrganisationMembers', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.UUID
       },
       UserId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "Users",
+            tableName: 'Users'
           },
-          key: "id",
+          key: 'id'
         },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       OrganisationId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "Organisations",
+            tableName: 'Organisations'
           },
-          key: "id",
-        },
+          key: 'id'
+        }
       },
       role: {
-        type: Sequelize.ENUM("admin", "member"),
-        defaultValue: "member",
+        type: Sequelize.ENUM('admin', 'member'),
+        defaultValue: 'member'
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-      },
+        type: Sequelize.DATE
+      }
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("OrganisationMembers");
-  },
+    await queryInterface.dropTable('OrganisationMembers');
+  }
 };

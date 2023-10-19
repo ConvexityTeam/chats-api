@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class CampaignVendor extends Model {
     /**
@@ -11,18 +9,30 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      CampaignVendor.belongsTo(models.User, { foreignKey: 'VendorId', as: 'Vendor' });
-      CampaignVendor.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' });
-      CampaignVendor.hasMany(models.Product, { foreignKey: 'CampaignId', as: 'CampaignVendors' });
+      CampaignVendor.belongsTo(models.User, {
+        foreignKey: 'VendorId',
+        as: 'Vendor'
+      });
+      CampaignVendor.belongsTo(models.Campaign, {
+        foreignKey: 'CampaignId',
+        as: 'Campaign'
+      });
+      CampaignVendor.hasMany(models.Product, {
+        foreignKey: 'CampaignId',
+        as: 'CampaignVendors'
+      });
     }
-  };
-  CampaignVendor.init({
-    VendorId: DataTypes.NUMERIC,
-    CampaignId: DataTypes.NUMERIC,
-    approved: DataTypes.BOOLEAN
-  }, {
-    sequelize,
-    modelName: 'CampaignVendor',
-  });
+  }
+  CampaignVendor.init(
+    {
+      VendorId: DataTypes.UUID,
+      CampaignId: DataTypes.UUID,
+      approved: DataTypes.BOOLEAN
+    },
+    {
+      sequelize,
+      modelName: 'CampaignVendor'
+    }
+  );
   return CampaignVendor;
 };

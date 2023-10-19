@@ -5,9 +5,9 @@ module.exports = {
     await queryInterface.createTable('VendorProposals', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
 
       quantity: {
@@ -17,15 +17,17 @@ module.exports = {
         type: Sequelize.FLOAT
       },
       vendor_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: 'Users',
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       product_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: 'Products',
@@ -35,7 +37,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       proposal_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: 'ProposalRequests',

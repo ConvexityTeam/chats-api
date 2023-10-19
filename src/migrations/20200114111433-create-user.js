@@ -2,25 +2,26 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Users', {
-
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.UUID
       },
       referal_id: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING
       },
       RoleId: {
         allowNull: false,
         type: Sequelize.INTEGER,
         references: {
           model: {
-            tableName: 'Roles',
+            tableName: 'Roles'
           },
-          key: 'id'
-        }
+          key: 'RoleId'
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       first_name: {
         type: Sequelize.STRING

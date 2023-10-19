@@ -4,19 +4,21 @@ module.exports = {
     await queryInterface.createTable('TaskAssignmentEvidences', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       TaskAssignmentId: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: {
-            tableName: 'TaskAssignments',
+            tableName: 'TaskAssignments'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       comment: {
         allowNull: false,

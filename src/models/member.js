@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       full_name: DataTypes.STRING,
       dob: DataTypes.DATE,
       profile_pic: DataTypes.STRING,
-      group_id: DataTypes.INTEGER
+      group_id: DataTypes.UUID
     },
     {
       sequelize,

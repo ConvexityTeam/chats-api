@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
       },
-      UserId: DataTypes.INTEGER,
+      UserId: DataTypes.UUID,
       token: DataTypes.STRING,
       request_ip: DataTypes.STRING,
       expires_at: DataTypes.DATE

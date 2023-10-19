@@ -1,8 +1,8 @@
-const { Op } = require('sequelize');
-const { generate2faSecret, verify2faToken } = require('../utils');
-const { User, PasswordResetToken, Invites } = require('../models');
-const { v4: uuidv4 } = require('uuid');
-const { createHash, GenerateOtp } = require('../utils');
+const {Op} = require('sequelize');
+const {generate2faSecret, verify2faToken} = require('../utils');
+const {User, PasswordResetToken, Invites} = require('../models');
+const {v4: UUIDV4} = require('uuid');
+const {createHash, GenerateOtp} = require('../utils');
 const bcrypt = require('bcryptjs');
 const moment = require('moment');
 const redis = require('redis');
@@ -11,15 +11,15 @@ const OtpService = require('./OtpService');
 const MailerService = require('./MailerService');
 const UserService = require('./UserService');
 const SmsService = require('./SmsService');
-const { email } = require('../config/switchwallet');
+const {email} = require('../config/switchwallet');
 
 /**
  * Verification Service is for generating and verifying users contact details(email, phone, etc)
-*/
+ */
 
 class VerificationServices {
   /**
-   * 
+   *
    * @param {usersEmail} usersEmail users email to be verify
    */
   static async verifyEmail(usersEmail) {
@@ -29,11 +29,9 @@ class VerificationServices {
     this.verifyToken(usersToken);
   }
   generateToken(email) {
-    return jwt.sign(
-      { email: data.email },
-      process.env.SECRET_KEY,
-      { expiresIn: '24hr' }
-    );
+    return jwt.sign({email: data.email}, process.env.SECRET_KEY, {
+      expiresIn: '24hr'
+    });
   }
   verifyToken(token) {
     //verify token
@@ -52,7 +50,7 @@ class VerificationServices {
         }
         //fetch users records from the database
         const userExist = await db.User.findOne({
-          where: { email: payload.email }
+          where: {email: payload.email}
         });
 
         if (!userExist) {
@@ -67,8 +65,8 @@ class VerificationServices {
         }
         //update users status to verified
         db.User.update(
-          { status: 'activated', is_email_verified: true },
-          { where: { email: payload.email } }
+          {status: 'activated', is_email_verified: true},
+          {where: {email: payload.email}}
         )
           .then(() => {
             Response.setSuccess(
@@ -87,6 +85,5 @@ class VerificationServices {
     );
   }
 }
-
 
 module.exports = VerificationServices;

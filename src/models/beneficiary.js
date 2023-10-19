@@ -21,8 +21,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   Beneficiary.init(
     {
-      UserId: DataTypes.INTEGER,
-      CampaignId: DataTypes.INTEGER,
+      UserId: DataTypes.UUID,
+      CampaignId: DataTypes.UUID,
       approved: DataTypes.BOOLEAN,
       approve_spending: DataTypes.BOOLEAN,
       status: DataTypes.ENUM(

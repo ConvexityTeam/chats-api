@@ -5,9 +5,9 @@ module.exports = {
     await queryInterface.createTable('Businesses', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       name: {
         type: Sequelize.STRING
@@ -19,7 +19,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       vendorId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: 'Users',
           key: 'id'
@@ -29,7 +29,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       accountId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: 'BankAccounts',
           key: 'id'

@@ -4,22 +4,24 @@ module.exports = {
     await queryInterface.createTable('FundAccounts', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.UUID
       },
       channel: {
         type: Sequelize.STRING
       },
       OrganisationId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Organisations',
+            tableName: 'Organisations'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       amount: {
         type: Sequelize.STRING

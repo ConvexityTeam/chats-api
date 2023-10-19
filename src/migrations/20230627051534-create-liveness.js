@@ -5,9 +5,9 @@ module.exports = {
     await queryInterface.createTable('Livenesses', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       first_name: {
         type: Sequelize.STRING
@@ -34,7 +34,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       authorized_by: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: 'Users',
           key: 'id'

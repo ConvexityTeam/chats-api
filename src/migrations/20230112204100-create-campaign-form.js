@@ -4,9 +4,9 @@ module.exports = {
     await queryInterface.createTable('CampaignForms', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       title: {
         type: Sequelize.STRING,
@@ -17,14 +17,16 @@ module.exports = {
         allowNull: false
       },
       organisationId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
             tableName: 'Organisations'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

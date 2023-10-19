@@ -10,12 +10,14 @@ module.exports = {
      */
     await queryInterface.removeColumn('ProductCategories', 'organisation_id');
     await queryInterface.addColumn('ProductCategories', 'organisation_id', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: 'Organisations',
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   },
 

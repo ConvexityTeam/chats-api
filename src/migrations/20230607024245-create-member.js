@@ -5,9 +5,9 @@ module.exports = {
     await queryInterface.createTable('Members', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       full_name: {
         allowNull: false,
@@ -21,14 +21,16 @@ module.exports = {
         type: Sequelize.STRING
       },
       group_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
             tableName: 'Groups'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

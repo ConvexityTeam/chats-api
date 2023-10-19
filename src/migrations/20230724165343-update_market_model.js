@@ -16,11 +16,13 @@ module.exports = {
     });
     await queryInterface.addColumn('Markets', 'category_id', {
       allowNull: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: 'ProductCategories',
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
     await queryInterface.addColumn('Markets', 'website_url', {
       allowNull: true,

@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   FingerPrints.init({
-    UserId: DataTypes.INTEGER,
+    UserId: DataTypes.UUID,
     url: DataTypes.STRING
   }, {
     sequelize,

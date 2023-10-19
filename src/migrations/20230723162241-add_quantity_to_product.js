@@ -15,7 +15,7 @@ module.exports = {
       defaultValue: 0
     });
     await queryInterface.addColumn('Products', 'proposal_id', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: 'ProposalRequests',

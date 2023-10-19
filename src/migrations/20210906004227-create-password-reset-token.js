@@ -6,24 +6,26 @@ module.exports = {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
+        defaultValue: Sequelize.UUIDV4
       },
       UserId: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: {
-            tableName: 'Users',
+            tableName: 'Users'
           },
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       token: {
         type: Sequelize.STRING
       },
       request_ip: {
         type: Sequelize.STRING,
-        allowNull: true,
+        allowNull: true
       },
       expires_at: {
         type: Sequelize.DATE

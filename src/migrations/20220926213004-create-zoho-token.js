@@ -4,9 +4,9 @@ module.exports = {
     await queryInterface.createTable('ZohoTokens', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4
       },
       access_token: {
         type: Sequelize.STRING

@@ -28,13 +28,15 @@ module.exports = {
     await queryInterface.addColumn('Products', 'CampaignId', {
       after: 'MarketId',
       allowNull: false,
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       references: {
         model: {
           tableName: 'Campaigns'
         },
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   },
 

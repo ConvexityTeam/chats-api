@@ -1,48 +1,52 @@
-"use strict";
+'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("TaskUsers", {
+    await queryInterface.createTable('TaskUsers', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.UUID
       },
       UserId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "Users",
+            tableName: 'Users'
           },
-          key: "id",
+          key: 'id'
         },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       TaskId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: {
-            tableName: "Tasks",
+            tableName: 'Tasks'
           },
-          key: "id",
+          key: 'id'
         },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       type: {
-        type: Sequelize.ENUM("supervisor", "worker"),
-        defaultValue: "worker",
+        type: Sequelize.ENUM('supervisor', 'worker'),
+        defaultValue: 'worker'
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-      },
+        type: Sequelize.DATE
+      }
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("TaskUsers");
-  },
+    await queryInterface.dropTable('TaskUsers');
+  }
 };
