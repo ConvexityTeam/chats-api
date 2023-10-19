@@ -1458,14 +1458,13 @@ class CampaignController {
             );
             count++;
             onboard.push(res);
-            await campaign.update({
-              total_imported: count,
-              total_beneficiaries: replicaCampaign.Beneficiaries.length
-            });
           }, index * 5000);
         })
       );
-
+      await campaign.update({
+        total_imported: count,
+        total_beneficiaries: replicaCampaign.Beneficiaries.length
+      });
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Onboarding  ${replicaCampaign.Beneficiaries.length}${
