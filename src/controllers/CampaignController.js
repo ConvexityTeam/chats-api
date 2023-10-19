@@ -1459,10 +1459,10 @@ class CampaignController {
             count++;
             onboard.push(res);
           }, index * 5000);
-        }),
-        await campaign.update({
-          total_imported: count,
-          total_beneficiaries: replicaCampaign.Beneficiaries.length
+          await campaign.update({
+            total_imported: count,
+            total_beneficiaries: replicaCampaign.Beneficiaries.length
+          });
         })
       );
 
