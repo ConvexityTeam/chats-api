@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: api:latest
+    image: registry.gitlab.com/convexityteam/chats-api/api:latest
     container_name: backend
     volumes: 
     - ./:/app/
@@ -30,7 +30,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.Consumer
-    image: consumer:latest
+    image: registry.gitlab.com/convexityteam/consumer:latest
     container_name: consumer
     volumes: 
     - ./:/app/

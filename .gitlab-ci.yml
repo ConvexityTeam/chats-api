@@ -20,12 +20,14 @@ build:
     - apk add --no-cache git
   script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
-    - docker build -f Dockerfile -t $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 .
-    - docker build -f Dockerfile.Consumer -t $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 .
-    - docker tag $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1
-    - docker tag $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2
-    - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1
-    - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2
+    # - docker build -f Dockerfile -t $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 .
+    # - docker build -f Dockerfile.Consumer -t $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 .
+    - docker-compose build
+    - docker-compose push
+    # - docker tag $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1
+    # - docker tag $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2
+    # - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1
+    # - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2
   only:
     - staging
 
@@ -62,7 +64,7 @@ deploy-staging:
                   # \"docker image ls \",
                   # \"docker run -d -p 8080:80 --name backend $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
                   \"docker-compose up -d \",
-                  \"docker image prune -af\"
+                  # \"docker image prune -af\"
                 ]
               }
             }
