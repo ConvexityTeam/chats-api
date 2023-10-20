@@ -54,15 +54,15 @@ deploy-staging:
               \"inputs\":{
                 \"runCommand\":[
                   \"cd /data/app\",
-                  \"sudo rm docker-compose.prod.yml\",
-                  \"aws s3 cp s3://chats-docker/docker-compose.prod.yml /data/app/docker-compose.prod.yml\",
+                  # \"sudo rm docker-compose.prod.yml\",
+                  # \"aws s3 cp s3://chats-docker/docker-compose.prod.yml /data/app/docker-compose.prod.yml\",
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
                   \"docker pull $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2\",
                   \"docker stop backend && docker rm backend\",
-                  \"docker image ls \",
+                  # \"docker image ls \",
                   # \"docker run -d -p 8080:80 --name backend $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1\",
                   \"docker-compose up -d \",
-                  # \"docker image prune -af\"
+                  \"docker image prune -af\"
                 ]
               }
             }
