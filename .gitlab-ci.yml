@@ -57,7 +57,7 @@ deploy-staging:
                 \"runCommand\":[
                   \"cd /data/app\",
                   \"ls -la\", 
-                  \"echo "Current working directory: $(pwd)\",
+                  \"echo "Current working directory: $(pwd)\"\",
                   \"docker stop backend && docker rm backend\",
                   \"docker-compose docker-compose.yml pull\",
                   \"docker-compose docker-compose.yml up -d\",
