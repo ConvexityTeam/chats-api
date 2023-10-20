@@ -1,7 +1,10 @@
 version: "3.3"
 services:
   backend:
-    image: registry.gitlab.com/convexityteam/chats-api/api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: api:latest
     container_name: backend
     volumes: 
     - ./:/app/
@@ -24,7 +27,10 @@ services:
   consumer:
     depends_on:
       - backend
-    image: registry.gitlab.com/convexityteam/chats-api/consumer:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.Consumer
+    image: consumer:latest
     container_name: consumer
     volumes: 
     - ./:/app/
