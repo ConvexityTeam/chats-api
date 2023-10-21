@@ -38,7 +38,9 @@ deploy-staging:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
-    - curl -o docker-compose.yml "$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/path/to/docker-compose.yml"
+    - ls -la  # List the contents of the current directory
+    - pwd  # Print the current working directory
+    - wget -O docker-compose.yml "$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/path/to/docker-compose.yml"
     - docker-compose -f docker-compose.yml pull
     - docker-compose -f docker-compose.yml up -d
     # - >
