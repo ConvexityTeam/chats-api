@@ -653,13 +653,12 @@ RabbitMq['default']
       });
     reFundBeneficiaries
       .activateConsumer(async msg => {
-        const {campaign, BeneficiaryId, amount, transactionId} =
-          msg.getContent();
+        const {campaign, beneficiary, amount, transactionId} = msg.getContent();
         const campaignKeyPair = await BlockchainService.setUserKeypair(
           `campaign_${campaign.id}`
         );
         const beneficiaryKeyPair = await BlockchainService.setUserKeypair(
-          `user_${BeneficiaryId}campaign_${campaign.id}`
+          `user_${beneficiary.UserId}campaign_${campaign.id}`
         );
 
         const {Approved} = await BlockchainService.approveToSpend(
@@ -669,7 +668,7 @@ RabbitMq['default']
           {
             transactionId,
             campaign,
-            beneficiaryId: BeneficiaryId,
+            beneficiaryId: beneficiary.UserId,
             amount
           },
           'refund_beneficiary'
@@ -678,7 +677,11 @@ RabbitMq['default']
           msg.nack();
           return;
         }
-        await QueueService.confirmRefundBeneficiary(Approved, transactionId);
+        await QueueService.confirmRefundBeneficiary(
+          Approved,
+          transactionId,
+          beneficiary
+        );
         Logger.info('Refund Beneficiary Sent For Confirmation');
       })
       .then(_ => {
@@ -691,7 +694,7 @@ RabbitMq['default']
       });
     confirmRefundBeneficiary
       .activateConsumer(async msg => {
-        const {hash, transactionId} = msg.getContent();
+        const {hash, transactionId, beneficiary} = msg.getContent();
         const confirm = await BlockchainService.confirmTransaction(hash);
         if (!confirm) {
           msg.nack();
@@ -705,6 +708,14 @@ RabbitMq['default']
           },
           transactionId
         );
+        await BeneficiaryService.spendingStatus(
+          beneficiary.CampaignId,
+          beneficiary.UserId,
+          {
+            status: 'success'
+          }
+        );
+        Logger.info(`Approve Spending Failed. Retrying`);
         Logger.info(`Refund beneficiary confirmed`);
       })
       .then(_ => {
@@ -728,6 +739,14 @@ RabbitMq['default']
         }
       );
       if (!gasFee) {
+        await BeneficiaryService.spendingStatus(
+          beneficiary.CampaignId,
+          beneficiary.UserId,
+          {
+            status: 'error'
+          }
+        );
+        Logger.info(`Approve Spending Failed. Retrying`);
         msg.nack();
         return;
       }
@@ -920,13 +939,28 @@ RabbitMq['default']
           }
         );
         if (!gasFee) {
+          await BeneficiaryService.spendingStatus(
+            beneficiary.CampaignId,
+            beneficiary.UserId,
+            {
+              status: 'error'
+            }
+          );
           msg.nack();
           return;
         }
         await QueueService.confirmOneBeneficiary(
           gasFee.retried,
           wallet_uuid,
-          transactionId
+          transactionId,
+          beneficiary
+        );
+        await BeneficiaryService.spendingStatus(
+          beneficiary.CampaignId,
+          beneficiary.UserId,
+          {
+            status: 'processing'
+          }
         );
         msg.ack();
       })
