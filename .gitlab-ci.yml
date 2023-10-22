@@ -12,8 +12,7 @@ variables:
   DOCKER_DRIVER: overlay2
 
 before_script:
-  - apt-get update
-  - apt-get install -y awscli openssh-client docker-compose
+  - apk add --update --no-cache aws-cli openssh-client docker-compose
 
 build:
   stage: build
