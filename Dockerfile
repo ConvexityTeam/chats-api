@@ -1,4 +1,4 @@
-FROM node:14.0.0-alpine
+FROM ubuntu:20.04
 WORKDIR /app
 COPY package.json ./
 RUN npm i
