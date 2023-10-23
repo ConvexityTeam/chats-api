@@ -600,7 +600,7 @@ class QueueService {
       beneficiary,
       transactionId: transaction.uuid
     };
-
+    await beneficiary.update({status: 'in_progress'});
     approveOneBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'

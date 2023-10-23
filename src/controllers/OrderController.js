@@ -127,7 +127,7 @@ class OrderController {
         Logger.error('Campaign not found');
         return Response.send(res);
       }
-      await approvedBeneficiary.update({status: 'in_progress'});
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Initializing payment',
