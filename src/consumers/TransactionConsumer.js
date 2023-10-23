@@ -581,7 +581,6 @@ RabbitMq['default']
         } = msg.getContent();
 
         const confirm = await BlockchainService.confirmTransaction(hash);
-        Logger.info(`confirm: ${confirm}`);
         if (!confirm) {
           msg.nack();
           return;
@@ -712,6 +711,7 @@ RabbitMq['default']
           beneficiary.CampaignId,
           beneficiary.UserId,
           {
+            approve_spending: true,
             status: 'success'
           }
         );
@@ -2213,6 +2213,7 @@ RabbitMq['default']
           beneficiary.CampaignId,
           beneficiary.UserId,
           {
+            approve_spending: true,
             status: 'success'
           }
         );
