@@ -39,7 +39,7 @@ deploy-staging:
     - aws configure set region $AWS_DEFAULT_REGION
     - wget "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -O "session-manager-plugin.deb"
     - dpkg -i "session-manager-plugin.deb"
-    - aws ssm start-session --target i-06f240a3b2e573928
+    - aws ssm start-session --target i-0a50b1d0f57ef8829
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     - ls -la  # List the contents of the current directory
     - pwd  # Print the current working directory
