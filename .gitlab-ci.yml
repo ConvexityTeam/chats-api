@@ -1,4 +1,4 @@
-image: docker:latest
+image: debian:11-slim
 
 services:
   - docker:dind
