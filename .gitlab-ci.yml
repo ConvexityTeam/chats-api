@@ -14,7 +14,7 @@ variables:
 
 before_script:
   - apt-get update
-  - apt-get install -y awscli openssh-client docker-compose
+  - apt-get install -y awscli openssh-client docker-compose curl
 
 build:
   stage: build
