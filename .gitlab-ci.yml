@@ -1,7 +1,8 @@
 image: debian:11-slim
 
 services:
-  - docker:dind
+  - name: docker:dind
+    alias: docker
 
 stages:
   - build
@@ -21,6 +22,7 @@ build:
   #   - apk add --no-cache git
   script:
     - apt-get install git
+    - export DOCKER_HOST=tcp://docker:2375
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     # - docker build -f Dockerfile -t $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 .
     # - docker build -f Dockerfile.Consumer -t $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 .
