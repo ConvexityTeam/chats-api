@@ -13,7 +13,7 @@ variables:
 
 before_script:
   - apt-get update
-  - apt-get install -y aws-cli openssh-client docker-compose
+  - apt-get install -y awscli openssh-client docker-compose
 
 build:
   stage: build
