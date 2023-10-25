@@ -46,7 +46,7 @@ deploy-staging:
     - apt-get update
     - apt-get install -y session-manager-plugin
     - apt-get install -y expect
-    - unbuffer aws ssm start-session --target i-06f240a3b2e573928
+    - unbuffer aws ssm start-session --target "i-06f240a3b2e573928" --document-name "AWS-StartSSHSession"
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     - ls -la  # List the contents of the current directory
     - pwd  # Print the current working directory
