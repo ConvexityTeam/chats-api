@@ -15,6 +15,7 @@ variables:
 before_script:
   - apt-get update
   - apt-get install -y awscli openssh-client docker-compose curl
+  - export DOCKER_HOST=tcp://docker:2375
 
 build:
   stage: build
@@ -22,7 +23,6 @@ build:
   #   - apk add --no-cache git
   script:
     - apt-get install git
-    - export DOCKER_HOST=tcp://docker:2375
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     # - docker build -f Dockerfile -t $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 .
     # - docker build -f Dockerfile.Consumer -t $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 .
@@ -43,7 +43,7 @@ deploy-staging:
     - aws configure set region $AWS_DEFAULT_REGION
     - curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
     - dpkg -i "session-manager-plugin.deb"
-    - aws ssm start-session --target i-0a50b1d0f57ef8829
+    - aws ssm start-session --target i-06f240a3b2e573928
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     - ls -la  # List the contents of the current directory
     - pwd  # Print the current working directory
