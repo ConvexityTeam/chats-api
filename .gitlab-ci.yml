@@ -45,11 +45,7 @@ deploy-staging:
     - dpkg -i "session-manager-plugin.deb"
     - apt-get install -y session-manager-plugin
     - apt-get install -y expect
-    - > 
-      unbuffer aws ssm start-session \
-      --target "i-06f240a3b2e573928" \
-      --document-name "AWS-StartSSHSession" \ 
-      --parameters '{"command": ["sudo sh -c \"docker-compose -f docker-compose.yml pull && docker-compose -f docker-compose.yml up -d"]}'
+    - unbuffer aws ssm start-session --target "i-06f240a3b2e573928" --document-name "AWS-StartSSHSession" --parameters '{"commands":["sudo sh -c \"docker-compose -f docker-compose.yml pull && docker-compose -f docker-compose.yml up -d"]}'
     # - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
     # - pwd  # Print the current working directory
     # - wget -O docker-compose.yml "$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml"
