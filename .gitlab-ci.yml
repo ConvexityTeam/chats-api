@@ -38,6 +38,11 @@ deploy-staging:
     - aws configure set region $AWS_DEFAULT_REGION
     - echo "SERVER URL - $CI_SERVER_URL"
 
+    # Put environment variables in SSM Parameter Store
+    - aws ssm put-parameter --name "CI_SERVER_URL" --value "$CI_SERVER_URL" --type "String" --overwrite
+    - aws ssm put-parameter --name "CI_PROJECT_PATH" --value "$CI_PROJECT_PATH" --type "String" --overwrite
+    - aws ssm put-parameter --name "CI_JOB_ID" --value "$CI_JOB_ID" --type "String" --overwrite
+
     - >
       DOCUMENT_NAME="AppDockerComposeDeploy_$(date +'%Y%m%d%H%M%S')"
       COMMAND_ID=$(aws ssm create-document \
@@ -55,10 +60,10 @@ deploy-staging:
                   "runCommand": [
                     "cd /data/app",
                     "echo \"$CONTAINER_REGISTRY_PASSWORD\" | docker login --username \"$CONTAINER_REGISTRY_USERNAME\" --password-stdin \"$CONTAINER_REGISTRY_URL\"",
-                    "echo \"CI_SERVER_URL: $CI_SERVER_URL\"",
-                    "echo \"CI_PROJECT_PATH: $CI_PROJECT_PATH\"",
-                    "echo \"CI_JOB_ID: $CI_JOB_ID\"",
-                    "curl \"$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/raw/docker-compose.yml\"",
+                    "echo \"CI_SERVER_URL: {{ssm:CI_SERVER_URL}}\"",
+                    "echo \"CI_PROJECT_PATH: {{ssm:CI_PROJECT_PATH}}\"",
+                    "echo \"CI_JOB_ID: {{ssm:CI_JOB_ID}}\"",
+                    "curl \"{{ssm:CI_SERVER_URL}}{{ssm:CI_PROJECT_PATH}}/-/jobs/{{ssm:CI_JOB_ID}}/artifacts/raw/docker-compose.yml\"",
                     "ls -al",
                     "docker-compose -f docker-compose.yml pull",
                     "docker-compose -f docker-compose.yml up -d"
@@ -72,11 +77,6 @@ deploy-staging:
       EXECUTION_ID=$(aws ssm send-command \
         --document-name "$DOCUMENT_NAME" \
         --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-06f240a3b2e573928\"]}]" \
-        --parameters '{
-          "CI_SERVER_URL": ["'$CI_SERVER_URL'"],
-          "CI_PROJECT_PATH": ["'$CI_PROJECT_PATH'"],
-          "CI_JOB_ID": ["'$CI_JOB_ID'"]
-        }' \
         --output text \
         --query "Command.CommandId")
 
