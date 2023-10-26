@@ -44,7 +44,7 @@ deploy-staging:
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
-    - echo "Job ID - $CI_JOB_ID"
+    # - echo "Job ID - $CI_JOB_ID"
     # - curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
     # - dpkg -i "session-manager-plugin.deb"
     # - apt-get install -y session-manager-plugin

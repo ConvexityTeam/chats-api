@@ -33,13 +33,13 @@ build:
 deploy-staging:
   stage: deploy-staging
   script:
-    - export CI_SERVER_URL="$CI_SERVER_URL"
-    - export CI_PROJECT_PATH="$CI_PROJECT_PATH"
-    - export CI_JOB_ID="$CI_JOB_ID"
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
-    - echo "Job ID - $CI_JOB_ID"
+    - export CI_SERVER_URL="$CI_SERVER_URL"
+    - export CI_PROJECT_PATH="$CI_PROJECT_PATH"
+    - export CI_JOB_ID="$CI_JOB_ID"
+    - echo "SERVER URL - $CI_SERVER_URL"
 
     - >
       DOCUMENT_NAME="AppDockerComposeDeploy_$(date +'%Y%m%d%H%M%S')"
