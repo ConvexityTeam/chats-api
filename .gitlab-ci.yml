@@ -39,9 +39,10 @@ deploy-staging:
     - echo "SERVER URL - $CI_SERVER_URL"
 
     # Put environment variables in SSM Parameter Store
-    - aws ssm put-parameter --name "CI_SERVER_URL" --value $CI_SERVER_URL --type "String" --overwrite
-    # - aws ssm put-parameter --name "CI_PROJECT_PATH" --value "$CI_PROJECT_PATH" --type "String" --overwrite
-    # - aws ssm put-parameter --name "CI_JOB_ID" --value "$CI_JOB_ID" --type "String" --overwrite
+    - CI_SERVER_URL="https://gitlab.com"
+    - aws ssm put-parameter --name "CI_SERVER_URL" --value "$CI_SERVER_URL" --type "String" --overwrite
+    - aws ssm put-parameter --name "CI_PROJECT_PATH" --value "$CI_PROJECT_PATH" --type "String" --overwrite
+    - aws ssm put-parameter --name "CI_JOB_ID" --value "$CI_JOB_ID" --type "String" --overwrite
 
     - >
       DOCUMENT_NAME="AppDockerComposeDeploy_$(date +'%Y%m%d%H%M%S')"
