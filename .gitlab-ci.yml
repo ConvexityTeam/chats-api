@@ -62,9 +62,9 @@ deploy-staging:
         --document-type "Command" \
         --document-format "YAML" \
         --content '{
-            "CI_SERVER_URL":"'\"$CI_SERVER_URL\"'",
-            "CI_PROJECT_PATH":"'\"$CI_PROJECT_PATH\"'",
-            "CI_JOB_ID":"'\"$CI_JOB_ID\"'",
+            "CI_SERVER_URL":"'"$CI_SERVER_URL"'",
+            "CI_PROJECT_PATH":"'"$CI_PROJECT_PATH"'",
+            "CI_JOB_ID":"'"$CI_JOB_ID"'",
             "schemaVersion": "2.2",
             "description": "Docker Compose Deploy",
             "mainSteps": [
