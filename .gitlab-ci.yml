@@ -36,9 +36,6 @@ deploy-staging:
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
-    - export CI_SERVER_URL="$CI_SERVER_URL"
-    - export CI_PROJECT_PATH="$CI_PROJECT_PATH"
-    - export CI_JOB_ID="$CI_JOB_ID"
     - echo "SERVER URL - $CI_SERVER_URL"
 
     - >
@@ -75,6 +72,11 @@ deploy-staging:
       EXECUTION_ID=$(aws ssm send-command \
         --document-name "$DOCUMENT_NAME" \
         --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-06f240a3b2e573928\"]}]" \
+        --parameters '{
+          "CI_SERVER_URL": ["'$CI_SERVER_URL'"],
+          "CI_PROJECT_PATH": ["'$CI_PROJECT_PATH'"],
+          "CI_JOB_ID": ["'$CI_JOB_ID'"]
+        }' \
         --output text \
         --query "Command.CommandId")
 
