@@ -71,8 +71,9 @@ deploy-staging:
                 "inputs": {
                   "runCommand": [
                     "cd /data/app",
+                    "echo \"$CONTAINER_REGISTRY_PASSWORD\" | docker login --username \"$CONTAINER_REGISTRY_USERNAME\" --password-stdin \"$CONTAINER_REGISTRY_URL\"",
                     # "curl \"'$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/file/docker-compose.yml'\"",
-                    " echo \"curl \"$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/file/docker-compose.yml\"\""
+                    " echo \"curl \"$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/file/docker-compose.yml\"\"",
                     "curl https://gitlab.com/convexityteam/chats-api/-/jobs/5382237951/artifacts/file/docker-compose.yml",
                     "ls -al",
                     "docker-compose -f docker-compose.yml pull",
