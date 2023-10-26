@@ -58,30 +58,26 @@ deploy-staging:
         --name "$DOCUMENT_NAME" \
         --document-type "Command" \
         --document-format "YAML" \
-        --content "\
-        {
-          \"schemaVersion\":\"2.2\",
-          \"description\":\"Docker Compose Deploy\",
-          \"mainSteps\":[
-            {
-              \"action\":\"aws:runShellScript\",
-              \"name\":\"runShellScript\",
-              \"inputs\":{
-                \"runCommand\":[
-                  \"cd /data/app\",
-                  # \"ls -la \",
-                  # \"pwd\",
-                  # \"docker stop backend && docker rm backend\",
-                  \"echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL" \"
-                  \"curl -o docker-compose.yml "$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml" \"
-                  \"docker-compose -f docker-compose.yml pull \",
-                  \"docker-compose -f docker-compose.yml up -d \",
-                  # \"docker image prune -af\"
-                ]
+        --content "{
+            "schemaVersion": "2.2",
+            "description": "Docker Compose Deploy",
+            "mainSteps": [
+              {
+                "action": "aws:runShellScript",
+                "name": "runShellScript",
+                "inputs": {
+                  "runCommand": [
+                    "cd /data/app",
+                    "echo \"$CONTAINER_REGISTRY_PASSWORD\" | docker login --username \"$CONTAINER_REGISTRY_USERNAME\" --password-stdin \"$CONTAINER_REGISTRY_URL\"",
+                    "curl -o docker-compose.yml \"$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml\"",
+                    "docker-compose -f docker-compose.yml pull",
+                    "docker-compose -f docker-compose.yml up -d"
+                  ]
+                }
               }
-            }
-          ]
-        }")
+            ]
+          }"
+        )
 
     - >
       EXECUTION_ID=$(aws ssm send-command \
