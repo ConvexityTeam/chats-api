@@ -68,10 +68,11 @@ deploy-staging:
               \"name\":\"runShellScript\",
               \"inputs\":{
                 \"runCommand\":[
-                  # \"cd /data/app\",
+                  \"cd /data/app\",
                   # \"ls -la \",
                   # \"pwd\",
                   # \"docker stop backend && docker rm backend\",
+                  \"curl -o docker-compose.yml "$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml" \"
                   \"docker-compose pull \",
                   \"docker-compose -f docker-compose.yml up -d \",
                   # \"docker image prune -af\"
