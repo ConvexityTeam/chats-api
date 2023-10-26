@@ -57,7 +57,6 @@ deploy-staging:
                 "inputs": {
                   "runCommand": [
                     "cd /data/app",
-                    "echo \"Job ID: $CI_JOB_ID\"",
                     "echo \"$CONTAINER_REGISTRY_PASSWORD\" | docker login --username \"$CONTAINER_REGISTRY_USERNAME\" --password-stdin \"$CONTAINER_REGISTRY_URL\"",
                     "echo \"CI_SERVER_URL: $CI_SERVER_URL\"",
                     "echo \"CI_PROJECT_PATH: $CI_PROJECT_PATH\"",
