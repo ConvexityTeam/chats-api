@@ -69,7 +69,7 @@ deploy-staging:
                   "runCommand": [
                     "cd /data/app",
                     "echo \"$CONTAINER_REGISTRY_PASSWORD\" | docker login --username \"$CONTAINER_REGISTRY_USERNAME\" --password-stdin \"$CONTAINER_REGISTRY_URL\"",
-                    "curl -O docker-compose.yml \"$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml\"",
+                    "curl \"$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml\"",
                     "docker-compose -f docker-compose.yml pull",
                     "docker-compose -f docker-compose.yml up -d"
                   ]
