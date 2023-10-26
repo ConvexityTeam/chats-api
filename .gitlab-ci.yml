@@ -72,8 +72,8 @@ deploy-staging:
                   # \"ls -la \",
                   # \"pwd\",
                   # \"docker stop backend && docker rm backend\",
-                  \"docker-compose pull -f docker-compose.yml \",
-                  \"docker-compose up -d \",
+                  \"docker-compose -f docker-compose.yml pull \",
+                  \"docker-compose -f docker-compose.yml up -d \",
                   # \"docker image prune -af\"
                 ]
               }
