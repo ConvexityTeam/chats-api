@@ -19,11 +19,19 @@ before_script:
 
 build:
   stage: build
+  # before_script:
+  #   - apk add --no-cache git
   script:
     - apt-get install git
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
+    # - docker build -f Dockerfile -t $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 .
+    # - docker build -f Dockerfile.Consumer -t $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 .
     - docker-compose build
     - docker-compose push
+    # - docker tag $CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1 $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1
+    # - docker tag $CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2 $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2
+    # - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME1:$CONTAINER_IMAGE_TAG1
+    # - docker push $CONTAINER_REGISTRY_URL/$CONTAINER_IMAGE_NAME2:$CONTAINER_IMAGE_TAG2
   artifacts:
     paths:
       - docker-compose.yml
@@ -33,16 +41,29 @@ build:
 deploy-staging:
   stage: deploy-staging
   script:
-    - export CI_SERVER_URL="$CI_SERVER_URL"
-    - export CI_PROJECT_PATH="$CI_PROJECT_PATH"
-    - export CI_JOB_ID="$CI_JOB_ID"
     - aws configure set aws_access_key_id $ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
     - echo "Job ID - $CI_JOB_ID"
-
+    # - curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+    # - dpkg -i "session-manager-plugin.deb"
+    # - apt-get install -y session-manager-plugin
+    # - apt-get install -y expect
+    # - unbuffer aws ssm start-session --target "i-06f240a3b2e573928" --document-name "AWS-StartSSHSession" --parameters '{"Commands":["sudo sh -c \"docker-compose -f docker-compose.yml pull && docker-compose -f docker-compose.yml up -d"]}'
+    
+    # - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login --username "$CONTAINER_REGISTRY_USERNAME" --password-stdin "$CONTAINER_REGISTRY_URL"
+    # - pwd  # Print the current working directory
+    # - wget -O docker-compose.yml "$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml"
+    # - docker-compose -f docker-compose.yml pull
+    # - docker-compose -f docker-compose.yml up -d
+    
     - >
       DOCUMENT_NAME="AppDockerComposeDeploy_$(date +'%Y%m%d%H%M%S')"
+      PARAMETERS='{
+        "CI_SERVER_URL": ["'"$CI_SERVER_URL"'"],
+        "CI_PROJECT_PATH": ["'"$CI_PROJECT_PATH"'"],
+        "CI_JOB_ID": ["'"$CI_JOB_ID"'"]
+      }'
       COMMAND_ID=$(aws ssm create-document \
         --name "$DOCUMENT_NAME" \
         --document-type "Command" \
@@ -59,10 +80,9 @@ deploy-staging:
                     "cd /data/app",
                     "echo \"Job ID: $CI_JOB_ID\"",
                     "echo \"$CONTAINER_REGISTRY_PASSWORD\" | docker login --username \"$CONTAINER_REGISTRY_USERNAME\" --password-stdin \"$CONTAINER_REGISTRY_URL\"",
-                    "echo \"CI_SERVER_URL: $CI_SERVER_URL\"",
-                    "echo \"CI_PROJECT_PATH: $CI_PROJECT_PATH\"",
-                    "echo \"CI_JOB_ID: $CI_JOB_ID\"",
-                    "curl \"$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/raw/docker-compose.yml\"",
+                    # "curl \"'$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/file/docker-compose.yml'\"",
+                    " echo \"curl \"$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/file/docker-compose.yml\"\"",
+                    "curl https://gitlab.com/convexityteam/chats-api/-/jobs/5382237951/artifacts/file/docker-compose.yml",
                     "ls -al",
                     "docker-compose -f docker-compose.yml pull",
                     "docker-compose -f docker-compose.yml up -d"
