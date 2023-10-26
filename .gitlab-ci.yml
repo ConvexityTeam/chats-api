@@ -55,16 +55,19 @@ deploy-staging:
     # - wget -O docker-compose.yml "$CI_SERVER_URL/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/docker-compose.yml"
     # - docker-compose -f docker-compose.yml pull
     # - docker-compose -f docker-compose.yml up -d
+    
     - >
       DOCUMENT_NAME="AppDockerComposeDeploy_$(date +'%Y%m%d%H%M%S')"
+      PARAMETERS='{
+        "CI_SERVER_URL": ["'"$CI_SERVER_URL"'"],
+        "CI_PROJECT_PATH": ["'"$CI_PROJECT_PATH"'"],
+        "CI_JOB_ID": ["'"$CI_JOB_ID"'"]
+      }'
       COMMAND_ID=$(aws ssm create-document \
         --name "$DOCUMENT_NAME" \
         --document-type "Command" \
         --document-format "YAML" \
         --content '{
-            "CI_SERVER_URL":"'"$CI_SERVER_URL"'",
-            "CI_PROJECT_PATH":"'"$CI_PROJECT_PATH"'",
-            "CI_JOB_ID":"'"$CI_JOB_ID"'",
             "schemaVersion": "2.2",
             "description": "Docker Compose Deploy",
             "mainSteps": [
