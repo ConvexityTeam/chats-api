@@ -36,7 +36,7 @@ var amqp_1 = require('./../libs/RabbitMQ/Connection');
 const codeGenerator = require('./QrCodeController');
 const ZohoService = require('../services/ZohoService');
 const sanitizeObject = require('../utils/sanitizeObject');
-const AwsUploadService = require('../services/AwsUploadService');
+const AwsService = require('../services/AwsService');
 const {data} = require('../libs/Response');
 
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
@@ -1922,7 +1922,7 @@ class UsersController {
       //   return Response.send(res);
       // } else {
 
-      const crypto = await AwsUploadService.encrypt('jibril');
+      const crypto = await AwsService.encrypt('jibril');
       console.log(crypto);
     } catch (error) {
       Response.setError(

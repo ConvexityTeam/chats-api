@@ -36,7 +36,7 @@ const {
   AwsService,
   TransactionService
 } = require('../services');
-const AwsUploadService = require('../services/AwsUploadService');
+// const AwsService = require('../services/AwsService');
 const campaign = require('../models/campaign');
 
 const createWalletQueue = amqp['default'].declareQueue('createWallet', {
@@ -85,7 +85,7 @@ class OrganisationController {
       const ext = req.file.mimetype.split('/').pop();
       const key = `${Date.now()}.${ext}`;
       const buket = 'convexity-ngo-logo';
-      const logo_link = await AwsUploadService.uploadFile(file, key, buket);
+      const logo_link = await AwsService.uploadFile(file, key, buket);
       await OrganisationService.updateOrganisationProfile(req.organisation.id, {
         logo_link
       });
@@ -789,7 +789,7 @@ class OrganisationController {
           await HashiCorp.encryptData(`campaignSecret=${campaign.id}`, {
             secretKey: GenerateSecrete()
           });
-          // AwsUploadService.createSecret(campaign.id);
+          // AwsService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',

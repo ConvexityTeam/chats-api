@@ -9,7 +9,7 @@ const sha256 = require('simple-sha256');
 const {tokenConfig, switchWallet} = require('../config');
 const {SwitchToken} = require('../models');
 const {Encryption, Logger, RabbitMq} = require('../libs');
-const AwsUploadService = require('./AwsUploadService');
+const AwsService = require('./AwsService');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const QueueService = require('./QueueService');
 
@@ -811,7 +811,7 @@ class BlockchainService {
     let pair = {};
     // TODO: Rebuild user public and private key after retrieving mnemonic key and return account keypair
     try {
-      var mnemonic = await AwsUploadService.getMnemonic();
+      var mnemonic = await AwsService.getMnemonic();
       mnemonic = JSON.parse(mnemonic);
 
       pair = await this.createNewBSCAccount({
