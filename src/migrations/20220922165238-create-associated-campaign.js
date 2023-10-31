@@ -5,11 +5,16 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
       DonorId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Organisations',
@@ -19,7 +24,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       CampaignId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Campaigns',
           key: 'id'

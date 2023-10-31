@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       phone: DataTypes.STRING,
       marital_status: DataTypes.ENUM('single', 'married', 'divorced'),
       dob: DataTypes.DATE,
-      authorized_by: DataTypes.UUID
+      authorized_by: DataTypes.INTEGER
     },
     {
       sequelize,

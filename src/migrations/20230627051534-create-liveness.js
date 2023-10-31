@@ -6,6 +6,11 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
@@ -34,7 +39,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       authorized_by: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Users',
           key: 'id'

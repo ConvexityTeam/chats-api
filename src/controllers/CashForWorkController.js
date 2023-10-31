@@ -44,7 +44,7 @@ class CashForWorkController {
         return util.send(res);
       } else {
         const campaignExist = await db.Campaign.findOne({
-          where: {id: data.campaign, type: 'cash-for-work'},
+          where: {uuid: data.campaign, type: 'cash-for-work'},
           include: {model: db.Tasks, as: 'Jobs'}
         });
 
@@ -87,7 +87,7 @@ class CashForWorkController {
     try {
       const campaignId = req.params.campaignId;
       const campaignExist = await db.Campaign.findOne({
-        where: {id: campaignId, type: 'cash-for-work'},
+        where: {uuid: campaignId, type: 'cash-for-work'},
         include: {
           model: db.Tasks,
           as: 'Jobs',
@@ -153,7 +153,7 @@ class CashForWorkController {
       const id = req.params.cashforworkid;
       const cashforwork = await db.Campaign.findOne({
         where: {
-          id,
+          uuid,
           type: 'cash-for-work'
         },
         include: {
@@ -187,6 +187,7 @@ class CashForWorkController {
 
       const cashForWorkDetail = {
         id: cashforwork.id,
+        uuid: cashforwork.uuid,
         title: cashforwork.title,
         description: cashforwork.description,
         status: cashforwork.status,
@@ -215,7 +216,7 @@ class CashForWorkController {
 
       const task = await db.Tasks.findOne({
         where: {
-          id: taskId
+          uuid: taskId
         },
         attributes: {exclude: ['CampaignId']},
         include: [
@@ -281,8 +282,8 @@ class CashForWorkController {
 
       const rules = {
         users: 'required|array',
-        taskId: 'required|numeric',
-        'users.*.UserId': 'required|numeric',
+        taskId: 'required|string',
+        'users.*.UserId': 'required|string',
         'users.*.type': 'required|string|in:supervisor,worker'
       };
 
@@ -300,7 +301,7 @@ class CashForWorkController {
 
         const users = await db.User.findAll({
           where: {
-            id: {
+            uuid: {
               [Op.in]: usersIds
             }
           }
@@ -312,7 +313,7 @@ class CashForWorkController {
         }
 
         const task = await db.Tasks.findOne({
-          where: {id: data.taskId},
+          where: {uuid: data.taskId},
           include: {model: db.TaskUsers, as: 'AssociatedWorkers'}
         });
 
@@ -356,8 +357,8 @@ class CashForWorkController {
     var form = new formidable.IncomingForm({multiples: true});
     form.parse(req, async (err, fields, files) => {
       const rules = {
-        taskId: 'required|numeric',
-        userId: 'required|numeric',
+        taskId: 'required|string',
+        userId: 'required|string',
         description: 'required|string'
       };
 
@@ -502,7 +503,7 @@ class CashForWorkController {
           return util.send(res);
         }
 
-        const task = await db.Tasks.findByPk(data.taskId);
+        const task = await db.Tasks.findOne({uuid: data.taskId});
         task.status = 'fulfilled';
         task.save();
 
@@ -521,7 +522,7 @@ class CashForWorkController {
       const data = req.body;
 
       const rules = {
-        taskId: 'required|numeric'
+        taskId: 'required|string'
       };
 
       const validation = new Validator(data, rules);
@@ -531,7 +532,7 @@ class CashForWorkController {
         return util.send(res);
       } else {
         const taskExist = await db.Tasks.findOne({
-          where: {id: data.taskId},
+          where: {uuid: data.taskId},
           include: [
             {
               as: 'Campaign',
@@ -708,8 +709,8 @@ class CashForWorkController {
   static async pickTaskFromCampaign(req, res) {
     const data = req.body;
     const rules = {
-      UserId: 'required|numeric',
-      TaskId: 'required|numeric'
+      UserId: 'required|string',
+      TaskId: 'required|string'
     };
 
     const validation = new Validator(data, rules);
@@ -720,17 +721,17 @@ class CashForWorkController {
         return util.send(res);
       } else {
         const exist = await db.User.findOne({
-          where: {RoleId: AclRoles.Beneficiary, id: data.UserId}
+          where: {RoleId: AclRoles.Beneficiary, uuid: data.UserId}
         });
         const count = await db.TaskAssignment.findAll();
         const assigned = await db.TaskAssignment.findOne({
-          where: {UserId: data.UserId, TaskId: data.TaskId}
+          where: {UserId: data.UserId, uuid: data.TaskId}
         });
         if (assigned) {
           util.setError(400, 'you have already pick a this task');
           return util.send(res);
         } else if (exist) {
-          const task = await db.Task.findByPk(data.TaskId);
+          const task = await db.Task.findOne({uuid: data.TaskId});
           if (task && task.assigned != task.assignment_count) {
             const TaskAssignment = await db.TaskAssignment.create({
               id: count.length + 1,
@@ -743,7 +744,7 @@ class CashForWorkController {
                 {
                   assigned: task.assigned + 1
                 },
-                {where: {id: data.TaskId}}
+                {where: {uuid: data.TaskId}}
               );
               util.setSuccess(200, 'Success Picking Task', TaskAssignment);
               return util.send(res);
@@ -826,7 +827,7 @@ class CashForWorkController {
     let uploadArray = [];
     const files = req.files;
     const rules = {
-      TaskAssignmentId: 'required|numeric',
+      TaskAssignmentId: 'required|string',
       comment: 'required|string',
       type: 'required|string'
     };
@@ -842,7 +843,7 @@ class CashForWorkController {
         return Response.send(res);
       }
       const isTaskExist = await db.TaskAssignment.findOne({
-        where: {id: TaskAssignmentId, UserId: req.user.id}
+        where: {uuid: TaskAssignmentId, UserId: req.user.id}
       });
       if (!isTaskExist) {
         Response.setError(422, 'Task Assignment Not Found');
@@ -883,7 +884,7 @@ class CashForWorkController {
               ...req.body,
               uploads: uploadArray
             },
-            {where: {id: TaskAssignmentId}}
+            {where: {uuid: TaskAssignmentId}}
           );
         }
         await db.TaskAssignmentEvidence.create({
@@ -901,7 +902,7 @@ class CashForWorkController {
         );
         await db.TaskAssignment.update(
           {status: 'completed'},
-          {where: {id: TaskAssignmentId}}
+          {where: {uuid: TaskAssignmentId}}
         );
         Response.setSuccess(
           200,
@@ -925,7 +926,7 @@ class CashForWorkController {
       'location.longitude': 'required|numeric',
       'location.latitude': 'required|numeric',
       'location.time_stamp': 'required|date',
-      TaskAssignmentId: 'required|numeric',
+      TaskAssignmentId: 'required|string',
       comment: 'required|string',
       type: 'required|string'
     };
@@ -942,7 +943,7 @@ class CashForWorkController {
         return Response.send(res);
       }
       const isTaskExist = await db.TaskAssignment.findOne({
-        where: {id: TaskAssignmentId, UserId: beneficiaryId}
+        where: {uuid: TaskAssignmentId, UserId: beneficiaryId}
       });
       if (!isTaskExist) {
         Response.setError(422, 'Task Assignment Not Found');
@@ -984,7 +985,7 @@ class CashForWorkController {
               ...req.body,
               uploads: uploadArray
             },
-            {where: {id: TaskAssignmentId}}
+            {where: {uuid: TaskAssignmentId}}
           );
         }
         await db.TaskAssignmentEvidence.create({
@@ -1002,7 +1003,7 @@ class CashForWorkController {
         );
         await db.TaskAssignment.update(
           {status: 'completed'},
-          {where: {id: TaskAssignmentId}}
+          {where: {uuid: TaskAssignmentId}}
         );
         Response.setSuccess(
           200,
@@ -1022,7 +1023,7 @@ class CashForWorkController {
       const {TaskAssignmentId, comment, type} = req.body;
       const files = req.file;
       const rules = {
-        TaskAssignmentId: 'required|numeric',
+        TaskAssignmentId: 'required|string',
         comment: 'required|string',
         type: 'required|string'
       };
@@ -1098,7 +1099,8 @@ class CashForWorkController {
     const {taskId} = req.body;
 
     try {
-      const tasks = await CampaignService.cashForWorkCampaignByApprovedBeneficiary;
+      const tasks =
+        await CampaignService.cashForWorkCampaignByApprovedBeneficiary;
       if (tasks.length <= 0) {
         Response.setSuccess(200, 'No Task Recieved', tasks);
         return Response.send(res);
@@ -1116,7 +1118,7 @@ class CashForWorkController {
     const {UserId} = req.body;
     try {
       const rules = {
-        UserId: 'required|numeric'
+        UserId: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -1148,8 +1150,8 @@ class CashForWorkController {
     const {user_id, task_id} = req.params;
     try {
       const rules = {
-        user_id: 'required|numeric',
-        task_id: 'required|numeric'
+        user_id: 'required|string',
+        task_id: 'required|string'
       };
 
       const validation = new Validator(req.params, rules);
@@ -1158,13 +1160,16 @@ class CashForWorkController {
         return Response.send(res);
       }
 
-      const user = await db.User.findByPk(user_id, {
+      const user = await db.User.findOne({
+        where: {
+          uuid: user_id
+        },
         attributes: userConst.publicAttr
       });
       const assignment = await db.TaskAssignment.findOne({
         where: {UserId: user_id, TaskId: task_id}
       });
-      const task_exist = await db.Task.findByPk(task_id);
+      const task_exist = await db.Task.findOne({uuid: task_id});
       const submittedEvidence = await db.TaskAssignmentEvidence.findOne({
         where: {TaskAssignmentId: assignment.id}
       });
@@ -1199,7 +1204,7 @@ class CashForWorkController {
     const {UserId, approved_by, approved_at} = req.body;
     try {
       const rules = {
-        UserId: 'required|numeric'
+        UserId: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {
@@ -1238,7 +1243,7 @@ class CashForWorkController {
     const {UserId, approved_by, approved_at} = req.body;
     try {
       const rules = {
-        UserId: 'required|numeric'
+        UserId: 'required|string'
       };
       const validation = new Validator(req.body, rules);
       if (validation.fails()) {

@@ -18,7 +18,7 @@ module.exports = {
     await queryInterface.addColumn('Orders', 'VendorId', {
       after: 'reference',
       allowNull: false,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Users'
@@ -52,7 +52,7 @@ module.exports = {
     await queryInterface.addColumn('Orders', 'UserId', {
       after: 'OrderUniqueId',
       allowNull: false,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Users'

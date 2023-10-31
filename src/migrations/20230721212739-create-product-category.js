@@ -6,6 +6,11 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
@@ -17,7 +22,7 @@ module.exports = {
         type: Sequelize.TEXT
       },
       organisation_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Organisations',

@@ -12,7 +12,7 @@ module.exports = {
     await queryInterface.addColumn('Complaints', 'CampaignId', {
       after: 'status',
       allowNull: false,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Campaigns'
@@ -25,7 +25,7 @@ module.exports = {
     await queryInterface.addColumn('Complaints', 'UserId', {
       after: 'CampaignId',
       allowNull: false,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Users'
@@ -46,7 +46,7 @@ module.exports = {
      */
     await queryInterface.addColumn('Complaints', 'BeneficiaryId', {
       allowNull: false,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Beneficiaries'

@@ -19,9 +19,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       channel: DataTypes.STRING,
       service: DataTypes.STRING,
-      OrganisationId: DataTypes.UUID,
-      CampaignId: DataTypes.UUID,
-      UserId: DataTypes.UUID,
+      OrganisationId: DataTypes.INTEGER,
+      CampaignId: DataTypes.INTEGER,
+      UserId: DataTypes.INTEGER,
       amount: DataTypes.STRING,
       transactionReference: DataTypes.STRING,
       status: DataTypes.ENUM('processing', 'successful', 'declined'),

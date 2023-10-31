@@ -6,6 +6,11 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
@@ -14,7 +19,7 @@ module.exports = {
       },
       CampaignId: {
         allowNull: false,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: {
             tableName: 'Campaigns'
@@ -26,7 +31,7 @@ module.exports = {
       },
       AgentId: {
         allowNull: false,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: {
             tableName: 'Users'

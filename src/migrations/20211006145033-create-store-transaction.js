@@ -5,6 +5,11 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
@@ -30,7 +35,7 @@ module.exports = {
       },
       OrderId: {
         allowNull: false,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: {
             tableName: 'Orders'
@@ -42,7 +47,7 @@ module.exports = {
       },
       VendorId: {
         allowNull: false,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: {
             tableName: 'Users'
@@ -54,7 +59,7 @@ module.exports = {
       },
       BeneficiaryId: {
         allowNull: false,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: {
             tableName: 'Users'

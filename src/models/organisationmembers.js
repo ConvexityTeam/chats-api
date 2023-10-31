@@ -21,8 +21,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   OrganisationMembers.init(
     {
-      UserId: DataTypes.UUID,
-      OrganisationId: DataTypes.UUID,
+      UserId: DataTypes.INTEGER,
+      OrganisationId: DataTypes.INTEGER,
       role: DataTypes.ENUM('admin', 'member', 'vendor')
     },
     {

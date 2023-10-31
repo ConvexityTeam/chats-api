@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       new_end_date: DataTypes.DATE,
       additional_budget: DataTypes.INTEGER,
       beneficiaries: DataTypes.INTEGER,
-      campaign_id: DataTypes.UUID
+      campaign_id: DataTypes.INTEGER
     },
     {
       sequelize,

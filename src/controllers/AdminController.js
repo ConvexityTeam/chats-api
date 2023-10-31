@@ -53,7 +53,7 @@ class AdminController {
 
     try {
       const rules = {
-        userId: 'required|numeric',
+        userId: 'required|string',
         status: 'required|string|in:activated,suspended'
       };
 
@@ -73,7 +73,7 @@ class AdminController {
         }
       }
 
-      const userExist = await db.User.findOne({where: {id: data.userId}});
+      const userExist = await db.User.findOne({where: {uuid: data.userId}});
 
       if (!userExist) {
         Response.setError(
@@ -110,7 +110,7 @@ class AdminController {
   static async updateCampaignStatus(req, res) {
     const data = req.body;
     const rules = {
-      campaignId: 'required|numeric',
+      campaignId: 'required|string',
       status: 'required|string|in:in-progress,paused,pending'
     };
 
@@ -120,7 +120,7 @@ class AdminController {
       return util.send(res);
     } else {
       const campaignExist = await db.Campaign.findOne({
-        where: {id: data.campaignId}
+        where: {uuid: data.campaignId}
       });
       if (campaignExist) {
         await campaignExist.update({status: data.status}).then(response => {
@@ -547,7 +547,7 @@ class AdminController {
     try {
       const userId = await db.User.findOne({
         where: {
-          id: req.params.donor_id
+          uuid: req.params.donor_id
         }
       });
 

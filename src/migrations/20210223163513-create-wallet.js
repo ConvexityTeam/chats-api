@@ -25,7 +25,7 @@ module.exports = {
         allowNull: true
       },
       CampaignId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: {
             tableName: 'Campaigns'

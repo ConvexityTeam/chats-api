@@ -9,7 +9,7 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.addColumn('Campaigns', 'formId', {
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: {
@@ -21,7 +21,7 @@ module.exports = {
       onUpdate: 'CASCADE'
     });
     await queryInterface.addColumn('Campaigns', 'category_id', {
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: {

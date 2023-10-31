@@ -28,7 +28,7 @@ module.exports = {
     await queryInterface.addColumn('Products', 'CampaignId', {
       after: 'MarketId',
       allowNull: false,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Campaigns'

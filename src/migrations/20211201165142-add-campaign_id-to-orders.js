@@ -10,7 +10,7 @@ module.exports = {
      */
     await queryInterface.addColumn('Orders', 'CampaignId', {
       allowNull: true,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Campaigns'

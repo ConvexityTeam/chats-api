@@ -527,8 +527,8 @@ class OrganisationController {
   static async addMember(req, res) {
     const data = req.body;
     const rules = {
-      user_id: 'required|numeric',
-      organisation_id: 'required|numeric',
+      user_id: 'required|string',
+      organisation_id: 'required|string',
       role: 'required|string|in:admin,member'
     };
     const validation = new Validator(data, rules);
@@ -614,7 +614,7 @@ class OrganisationController {
   static async updateCampaign(req, res) {
     const data = req.body;
     const rules = {
-      campaignId: 'required|numeric',
+      campaignId: 'required|string',
       budget: 'required|numeric',
       description: 'required|string',
       spending: 'in:vendor,all',
@@ -630,7 +630,7 @@ class OrganisationController {
     } else {
       const campaignExist = await db.Campaign.findOne({
         where: {
-          id: data.campaignId
+          uuid: data.campaignId
         }
       });
 
@@ -663,7 +663,7 @@ class OrganisationController {
 
       const organisationExist = await db.Organisations.findOne({
         where: {
-          id: organisationId
+          uuid: organisationId
         },
         include: {
           as: 'Transaction',
@@ -706,8 +706,8 @@ class OrganisationController {
       const rules = {
         'location.country': 'required|string',
         'location.state': 'required|array',
-        formId: 'numeric',
-        category_id: 'numeric'
+        formId: 'string',
+        category_id: 'string'
       };
 
       const validation = new Validator(req.body, rules);
@@ -873,7 +873,7 @@ class OrganisationController {
   static async DeleteCampaignProduct(req, res) {
     const {ProductId} = req.body;
     try {
-      const iSProduct = await db.Product.findByPk(ProductId);
+      const iSProduct = await db.Product.find({where: {uuid: ProductId}});
       if (!iSProduct) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -889,7 +889,7 @@ class OrganisationController {
         if (isVendorDeleted)
           await db.Product.destroy({
             where: {
-              id: ProductId
+              uuid: ProductId
             }
           });
         Response.setSuccess(
@@ -985,9 +985,9 @@ class OrganisationController {
   static async approveOrReject(req, res) {
     try {
       const rules = {
-        campaign_id: 'required|numeric',
+        campaign_id: 'required|string',
         type: 'required|string|in:reject,approve',
-        request_id: 'required|numeric'
+        request_id: 'required|string'
       };
 
       const validation = new Validator(req.body, rules);
@@ -1025,7 +1025,7 @@ class OrganisationController {
 
       const request = await db.RequestFund.findOne({
         where: {
-          id: req.body.request_id,
+          uuid: req.body.request_id,
           campaign_id: req.body.campaign_id
         }
       });
@@ -1062,7 +1062,7 @@ class OrganisationController {
     try {
       const rules = {
         end_date: `required|date`,
-        campaign_id: 'required|numeric',
+        campaign_id: 'required|string',
         additional_budget: 'numeric'
       };
 
@@ -1180,7 +1180,7 @@ class OrganisationController {
   static async UpdateCampaignProduct(req, res) {
     const {ProductId} = req.body;
     try {
-      const iSProduct = await db.Product.findByPk(ProductId);
+      const iSProduct = await db.Product.findOne({where: {uuid: ProductId}});
       if (!iSProduct) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -1194,7 +1194,7 @@ class OrganisationController {
           },
           {
             where: {
-              id: ProductId
+              uuid: ProductId
             }
           }
         );
@@ -1234,7 +1234,7 @@ class OrganisationController {
     try {
       const campaignId = req.params.campaign_id;
       const products = await ProductService.findCampaignProducts(campaignId);
-      const campaign = await db.Campaign.findOne({where: {id: campaignId}});
+      const campaign = await db.Campaign.findOne({where: {uuid: campaignId}});
 
       products.forEach(product => {
         product.dataValues.campaign_status = campaign.status;
@@ -1810,7 +1810,6 @@ class OrganisationController {
 
   static async getCampaignVendors(req, res) {
     try {
-      Logger.info('Fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(
         req.params.campaign_id,
         req.query
@@ -1895,7 +1894,9 @@ class OrganisationController {
               (organisation_exist.id == fields.organisation_id)
           ) {
             if (!organisation_exist) {
-              var org = await db.Organisations.findByPk(fields.organisation_id);
+              var org = await db.Organisations.findOne({
+                where: {uuid: fields.organisation_id}
+              });
             } else {
               var org = organisation_exist;
             }
@@ -1975,7 +1976,7 @@ class OrganisationController {
       const id = req.params.id;
       let ngo = await db.Organisations.findOne({
         where: {
-          id
+          uuid: id
         },
         include: {
           model: db.Wallet,
@@ -2011,7 +2012,7 @@ class OrganisationController {
   static async bantuTransfer(req, res) {
     const data = req.body;
     const rules = {
-      organisation_id: 'required|numeric',
+      organisation_id: 'required|string',
       xbnAmount: 'required|numeric'
     };
 
@@ -2022,7 +2023,7 @@ class OrganisationController {
     } else {
       const organisation = await db.Organisations.findOne({
         where: {
-          id: data.organisation_id
+          uuid: data.organisation_id
         },
         include: {
           model: db.Wallet,
@@ -2096,7 +2097,7 @@ class OrganisationController {
 
     const organisation = await db.Organisations.findOne({
       where: {
-        id: organisationId
+        uuid: organisationId
       },
       include: {
         model: db.Wallet,
@@ -2153,7 +2154,7 @@ class OrganisationController {
       const id = req.params.organisationId;
       const organisation = await db.Organisations.findOne({
         where: {
-          id
+          uuid: id
         },
         include: {
           model: db.Wallet,
@@ -2179,7 +2180,7 @@ class OrganisationController {
       console.log(id, 'id');
       const organisation = await db.Organisations.findOne({
         where: {
-          id
+          uuid: id
         },
         include: {
           model: db.Wallet,
@@ -2210,7 +2211,7 @@ class OrganisationController {
       const campaign = req.params.campaignId;
       const organisation = await db.Organisations.findOne({
         where: {
-          id
+          uuid: id
         },
         include: {
           model: db.Wallet,
@@ -2248,7 +2249,7 @@ class OrganisationController {
     } else {
       const organisation = await db.Organisations.findOne({
         where: {
-          id: data.organisation_id
+          uuid: data.organisation_id
         },
         include: {
           model: db.Wallet,
@@ -2323,7 +2324,7 @@ class OrganisationController {
     const id = req.params.id;
     let ngo = await db.Organisations.findOne({
       where: {
-        id
+        uuid: id
       },
       include: {
         model: db.OrganisationMembers,
@@ -2390,8 +2391,6 @@ class OrganisationController {
   static async createVendor(req, res) {
     try {
       const {user, organisation} = req;
-      console.log('user', user);
-      console.log('organisation', organisation);
       const data = SanitizeObject(req.body, [
         'first_name',
         'last_name',
@@ -2657,7 +2656,6 @@ class OrganisationController {
         'contact.firstName': 'string',
         'contact.lastName': 'string'
       };
-      console.log(data, 'data');
 
       const validation = new Validator(data, rules);
       if (validation.fails()) {

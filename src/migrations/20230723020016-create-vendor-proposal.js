@@ -6,6 +6,11 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
@@ -17,7 +22,7 @@ module.exports = {
         type: Sequelize.FLOAT
       },
       vendor_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Users',
@@ -27,7 +32,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       product_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Products',
@@ -37,7 +42,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       proposal_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'ProposalRequests',

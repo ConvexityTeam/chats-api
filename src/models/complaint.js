@@ -1,6 +1,6 @@
 'use strict';
 
-const { Model } = require('sequelize');
+const {Model} = require('sequelize');
 const sequelizePaginate = require('sequelize-paginate');
 module.exports = (sequelize, DataTypes) => {
   class Complaint extends Model {
@@ -10,22 +10,28 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Complaint.belongsTo(models.User, { foreignKey: 'UserId', as: 'Beneficiary' })
-      Complaint.belongsTo(models.Campaign, { foreignKey: 'CampaignId', as: 'Campaign' })
+      Complaint.belongsTo(models.User, {
+        foreignKey: 'UserId',
+        as: 'Beneficiary'
+      });
+      Complaint.belongsTo(models.Campaign, {
+        foreignKey: 'CampaignId',
+        as: 'Campaign'
+      });
     }
-  };
+  }
   Complaint.init(
     {
       report: DataTypes.TEXT,
       status: DataTypes.ENUM('resolved', 'unresolved'),
-      CampaignId: DataTypes.UUID,
-      UserId: DataTypes.UUID
+      CampaignId: DataTypes.INTEGER,
+      UserId: DataTypes.INTEGER
     },
     {
       sequelize,
       modelName: 'Complaint'
     }
   );
-  sequelizePaginate.paginate(Complaint)
+  sequelizePaginate.paginate(Complaint);
   return Complaint;
 };

@@ -36,7 +36,10 @@ class CampaignService {
     return await ProposalRequest.create(data);
   }
   static campaignHistory(id) {
-    return Campaign.findByPk(id, {
+    return Campaign.findOne({
+      where: {
+        uuid: id
+      },
       include: ['history']
     });
   }
@@ -44,7 +47,7 @@ class CampaignService {
     return Campaign.findAll({
       where: {
         type,
-        id: {
+        uuid: {
           [Op.ne]: CampaignId
         }
       },
@@ -53,8 +56,9 @@ class CampaignService {
   }
 
   static getACampaignWithReplica(id, type) {
-    return Campaign.findByPk(id, {
+    return Campaign.findOne({
       where: {
+        uuid: id,
         type
       },
       include: ['Beneficiaries']
@@ -79,13 +83,19 @@ class CampaignService {
   static getCampaignToken(campaignId) {
     return VoucherToken.findAll({where: {campaignId}});
   }
-  static async getCampaign(id) {
-    return Campaign.findByPk(id, {
+  static async getCampaign(uuid) {
+    return Campaign.findOne({
+      where: {
+        uuid
+      },
       attributes: ['total_beneficiaries', 'total_imported', 'fund_status']
     });
   }
   static getCampaignById(id) {
-    return Campaign.findByPk(id, {
+    return Campaign.findOne({
+      where: {
+        uuid: id
+      },
       include: ['Organisation'],
       include: {
         model: User,
@@ -101,8 +111,8 @@ class CampaignService {
       }
     });
   }
-  static getPubCampaignById(id) {
-    return Campaign.findOne({where: {id, is_public: true}});
+  static getPubCampaignById(uuid) {
+    return Campaign.findOne({where: {uuid, is_public: true}});
   }
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
@@ -280,11 +290,11 @@ class CampaignService {
       ]
     });
   }
-  static getPrivateCampaignWithBeneficiaries(id) {
+  static getPrivateCampaignWithBeneficiaries(uuid) {
     return Campaign.findOne({
       order: [['createdAt', 'ASC']],
       where: {
-        id,
+        uuid,
         is_public: false
       },
       // attributes: {
@@ -316,11 +326,11 @@ class CampaignService {
       ]
     });
   }
-  static getCampaignWithBeneficiaries(id) {
+  static getCampaignWithBeneficiaries(uuid) {
     return Campaign.findOne({
       order: [['createdAt', 'DESC']],
       where: {
-        id
+        uuid
       },
       // attributes: {
       //   include: [
@@ -809,7 +819,7 @@ class CampaignService {
     try {
       const CampaignToUpdate = await Campaign.findOne({
         where: {
-          id: Number(id)
+          uuid: id
         }
       });
 
@@ -835,18 +845,18 @@ class CampaignService {
       include: ['Beneficiaries']
     });
   }
-  static async deleteCampaign(id) {
+  static async deleteCampaign(uuid) {
     try {
       const CampaignToDelete = await Campaign.findOne({
         where: {
-          id: Number(id)
+          uuid
         }
       });
 
       if (CampaignToDelete) {
         const deletedCampaign = await Campaign.destroy({
           where: {
-            id: Number(id)
+            uuid
           }
         });
         return deletedCampaign;
@@ -876,9 +886,9 @@ class CampaignService {
     });
   }
 
-  static cash4work(id, campaignId) {
+  static cash4work(uuid, campaignId) {
     return User.findOne({
-      where: {id},
+      where: {uuid},
       attributes: userConst.publicAttr,
       include: [
         {
@@ -894,11 +904,11 @@ class CampaignService {
     });
   }
 
-  static cash4workfield(id) {
+  static cash4workfield(uuid) {
     return Campaign.findOne({
       where: {
         type: 'cash-for-work',
-        id
+        uuid
       },
       include: {model: Task, as: 'Jobs'}
     });
@@ -922,7 +932,7 @@ class CampaignService {
   static async getCampaignWallet(id, OrganisationId) {
     return Campaign.findOne({
       where: {
-        id: Number(id),
+        uuid: id,
         OrganisationId
       },
       include: [
@@ -948,7 +958,7 @@ class CampaignService {
   }
   static async findCampaignForm(id) {
     return await CampaignForm.findOne({
-      where: {id},
+      where: {uuid: id},
       include: ['campaigns']
     });
   }
@@ -977,9 +987,9 @@ class CampaignService {
       where: {title}
     });
   }
-  static async findCampaignFormById(id) {
+  static async findCampaignFormById(uuid) {
     return await CampaignForm.findOne({
-      where: {id}
+      where: {uuid}
     });
   }
   static async findCampaignFormByCampaignId(id) {

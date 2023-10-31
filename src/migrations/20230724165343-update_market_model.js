@@ -16,7 +16,7 @@ module.exports = {
     });
     await queryInterface.addColumn('Markets', 'category_id', {
       allowNull: true,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: 'ProductCategories',
         key: 'id'

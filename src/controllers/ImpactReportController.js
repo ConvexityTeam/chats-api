@@ -18,8 +18,8 @@ class ImpactReportController {
     try {
       const rules = {
         title: 'string',
-        AgentId: 'integer|required',
-        CampaignId: 'integer|required',
+        AgentId: 'integer|string',
+        CampaignId: 'integer|string',
         MediaLink: 'required'
       };
       const validation = new Validator(data, rules);
@@ -81,7 +81,7 @@ class ImpactReportController {
   static async getReportByCampaignId(req, res) {
     const campaignId = req.params.campaignId;
     try {
-      if (!Number(campaignId)) {
+      if (!campaignId) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Please input a valid CampaignId'

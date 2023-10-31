@@ -158,7 +158,7 @@ class CampaignController {
       const OrganisationId = req.params.id;
       const organisation_exist = await db.Organisations.findOne({
         where: {
-          id: OrganisationId
+          uuid: OrganisationId
         },
         include: 'Member'
       });
@@ -209,7 +209,7 @@ class CampaignController {
     try {
       const campaign_exist = await db.Campaign.findOne({
         where: {
-          id: req.params.campaignId,
+          uuid: req.params.campaignId,
           type: 'campaign'
         }
       });
@@ -733,7 +733,7 @@ class CampaignController {
     const {organisation_id, campaign_id} = req.params;
     try {
       const rules = {
-        '.*.category_id': 'required|numeric',
+        '.*.category_id': 'required|string',
         '.*.tag': 'required|string',
         '.*.type': 'required|string,in:product,service',
         '.*.cost': 'required|numeric',
@@ -790,7 +790,9 @@ class CampaignController {
   static async rejectSubmission(req, res) {
     const {taskAssignmentId} = req.params;
     try {
-      const assignment = await db.TaskAssignment.findByPk(taskAssignmentId);
+      const assignment = await db.TaskAssignment.findOne({
+        uuid: taskAssignmentId
+      });
       if (!assignment) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -835,9 +837,9 @@ class CampaignController {
         campaign_id
       );
 
-      const task_assignment = await db.TaskAssignment.findByPk(
-        taskAssignmentId
-      );
+      const task_assignment = await db.TaskAssignment.findOne({
+        uuid: taskAssignmentId
+      });
       if (task_assignment.status === 'disbursed') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -1050,8 +1052,8 @@ class CampaignController {
   static async updatedCampaign(req, res) {
     const alteredCampaign = req.body;
     const {id} = req.params;
-    if (!Number(id)) {
-      Response.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      Response.setError(400, 'Please input a valid value');
       return Response.send(res);
     }
     try {
@@ -1073,15 +1075,15 @@ class CampaignController {
 
   static async getACampaign(req, res) {
     const {id} = req.params;
-    if (!Number(id)) {
-      Response.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      Response.setError(400, 'Please input a valid value');
       return Response.send(res);
     }
 
     try {
       const theCampaign = await db.Campaign.findOne({
         where: {
-          id,
+          uuid: id,
           type: 'campaign'
         },
         include: {
@@ -1134,7 +1136,7 @@ class CampaignController {
   static async deleteCampaign(req, res) {
     const {id} = req.params;
     if (!id) {
-      Response.setError(400, 'Please provide a numeric value');
+      Response.setError(400, 'Please provide a valid value');
       return Response.send(res);
     }
 
@@ -1153,7 +1155,7 @@ class CampaignController {
   }
   static async complaints(req, res) {
     const campaign = req.params.campaignId;
-    let campaignExist = await db.Campaign.findByPk(campaign);
+    let campaignExist = await db.Campaign.findOne({uuid: campaign});
     if (!campaignExist) {
       Response.setError(422, 'Campaign Invalid');
       return Response.send(res);
@@ -1770,7 +1772,7 @@ class CampaignController {
     const data = req.body;
     try {
       const rules = {
-        id: 'required|numeric',
+        id: 'required|string',
         title: 'required|string',
         'questions.*.type': 'required|in:multiple,optional,short',
         'questions.*.value': 'numeric',
@@ -1822,7 +1824,7 @@ class CampaignController {
   static async destroyCampaignForm(req, res) {
     try {
       const rules = {
-        formId: 'required:numeric'
+        formId: 'required:string'
       };
       const validation = new Validator(req.body, rules);
 

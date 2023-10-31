@@ -17,7 +17,7 @@ class NgoAuthController {
           userId: 2,
           status: 'Pending',
           type: 'CR',
-          narration: 'Paying Vendors',
+          narration: 'Paying Vendors'
         },
         {
           transactionId: 'CNBFGGDG-FGGH-345623412',
@@ -25,7 +25,7 @@ class NgoAuthController {
           userId: 2,
           status: 'Sucessful',
           type: 'DR',
-          narration: 'Paying Beneficiaries',
+          narration: 'Paying Beneficiaries'
         },
         {
           transactionId: 'DNBFGGDG-FAAH-345623412',
@@ -33,7 +33,7 @@ class NgoAuthController {
           userId: 5,
           status: 'Succesful',
           type: 'CR',
-          narration: 'Paying Vendors',
+          narration: 'Paying Vendors'
         },
         {
           transactionId: 'EANBFGGDG-FCCH-345623412',
@@ -41,7 +41,7 @@ class NgoAuthController {
           userId: 4,
           status: 'Pending',
           type: 'DR',
-          narration: 'Paying Vendors',
+          narration: 'Paying Vendors'
         },
         {
           transactionId: 'FNBFGGDG-FDDH-345623412',
@@ -49,7 +49,7 @@ class NgoAuthController {
           userId: 2,
           status: 'Pending',
           type: 'CR',
-          narration: 'Paying Vendors',
+          narration: 'Paying Vendors'
         },
         {
           transactionId: 'ANBFFGDG-FBBH-345623412',
@@ -57,7 +57,7 @@ class NgoAuthController {
           userId: 2,
           status: 'Pending',
           type: 'CR',
-          narration: 'Paying Vendors',
+          narration: 'Paying Vendors'
         },
         {
           transactionId: 'GNBFGGDG-FGGH-345623412',
@@ -65,7 +65,7 @@ class NgoAuthController {
           userId: 2,
           status: 'Sucessful',
           type: 'DR',
-          narration: 'Paying Beneficiaries',
+          narration: 'Paying Beneficiaries'
         },
         {
           transactionId: 'JNBFGGDG-FAAH-345623412',
@@ -73,7 +73,7 @@ class NgoAuthController {
           userId: 5,
           status: 'Succesful',
           type: 'CR',
-          narration: 'Paying Vendors',
+          narration: 'Paying Vendors'
         },
         {
           transactionId: 'INBFGGDG-FCCH-345623412',
@@ -81,7 +81,7 @@ class NgoAuthController {
           userId: 4,
           status: 'Pending',
           type: 'DR',
-          narration: 'Paying Vendors',
+          narration: 'Paying Vendors'
         },
         {
           transactionId: 'ZNBFGGDG-FDDH-345623412',
@@ -89,8 +89,8 @@ class NgoAuthController {
           userId: 2,
           status: 'Pending',
           type: 'CR',
-          narration: 'Paying Vendors',
-        },
+          narration: 'Paying Vendors'
+        }
       ],
       beneficiaries: [
         {
@@ -99,7 +99,7 @@ class NgoAuthController {
           last_name: 'Sullivan',
           gender: 'Female',
           marital_status: 'Single',
-          phone: '2348064652233',
+          phone: '2348064652233'
         },
         {
           id: 33,
@@ -107,7 +107,7 @@ class NgoAuthController {
           last_name: 'Luthor',
           gender: 'Male',
           marital_status: 'Single',
-          phone: '2348065652143',
+          phone: '2348065652143'
         },
         {
           id: 14,
@@ -115,7 +115,7 @@ class NgoAuthController {
           last_name: 'Lane',
           gender: 'Female',
           marital_status: 'Single',
-          phone: '2348065652213',
+          phone: '2348065652213'
         },
         {
           id: 15,
@@ -123,7 +123,7 @@ class NgoAuthController {
           last_name: 'Quin',
           gender: 'Male',
           marital_status: 'Single',
-          phone: '2348065652211',
+          phone: '2348065652211'
         },
         {
           id: 36,
@@ -131,7 +131,7 @@ class NgoAuthController {
           last_name: 'Kent',
           gender: 'Female',
           marital_status: 'Divorce',
-          phone: '2348065652233',
+          phone: '2348065652233'
         },
         {
           id: 52,
@@ -139,7 +139,7 @@ class NgoAuthController {
           last_name: 'Fish',
           gender: 'Male',
           marital_status: 'Single',
-          phone: '2348065652233',
+          phone: '2348065652233'
         },
         {
           id: 63,
@@ -147,7 +147,7 @@ class NgoAuthController {
           last_name: 'Zakanda',
           gender: 'Female',
           marital_status: 'Single',
-          phone: '2348065652233',
+          phone: '2348065652233'
         },
         {
           id: 74,
@@ -155,7 +155,7 @@ class NgoAuthController {
           last_name: 'Zior',
           gender: 'Male',
           marital_status: 'Married',
-          phone: '2348065652213',
+          phone: '2348065652213'
         },
         {
           id: 15,
@@ -163,7 +163,7 @@ class NgoAuthController {
           last_name: 'Kent',
           gender: 'Male',
           marital_status: 'Single',
-          phone: '2348065652211',
+          phone: '2348065652211'
         },
         {
           id: 66,
@@ -171,45 +171,45 @@ class NgoAuthController {
           last_name: 'Lang',
           gender: 'Female',
           marital_status: 'Single',
-          phone: '2348065652233',
-        },
+          phone: '2348065652233'
+        }
       ],
       complaint: [
         {
           title: 'Low Garri In Circulation',
           status: 'Pending',
-          userId: 23,
+          userId: 23
         },
         {
           title: 'Poor Services',
           status: 'Pending',
-          userId: 23,
+          userId: 23
         },
         {
           title: 'Payment Failure',
           status: 'InProgress',
-          userId: 23,
+          userId: 23
         },
         {
           title: 'Cash Not Received',
           status: 'InProgress',
-          userId: 23,
+          userId: 23
         },
         {
           title: 'Small Rice Served For Lunch',
           status: 'InProgress',
-          userId: 23,
+          userId: 23
         },
         {
           title: 'Payment Suspension',
           status: 'Closed',
-          userId: 23,
+          userId: 23
         },
         {
           title: 'Vendors Poor Services',
           status: 'Closed',
-          userId: 23,
-        },
+          userId: 23
+        }
       ],
       campaign: [
         {
@@ -218,7 +218,7 @@ class NgoAuthController {
           budget: '456890000',
           start_date: '12-01-2020',
           location: '',
-          end_date: '31-12-2021',
+          end_date: '31-12-2021'
         },
         {
           title: 'Laptop For Girl Child',
@@ -226,7 +226,7 @@ class NgoAuthController {
           budget: '656890000',
           start_date: '12-01-2021',
           location: '',
-          end_date: '31-12-2021',
+          end_date: '31-12-2021'
         },
         {
           title: 'War Against Marternal Mortality',
@@ -234,7 +234,7 @@ class NgoAuthController {
           budget: '456890000',
           start_date: '12-01-2020',
           location: '',
-          end_date: '31-12-2021',
+          end_date: '31-12-2021'
         },
         {
           title: 'Feeding IDP Camp',
@@ -242,7 +242,7 @@ class NgoAuthController {
           budget: '456890000',
           start_date: '12-01-2020',
           location: '',
-          end_date: '31-12-2021',
+          end_date: '31-12-2021'
         },
         {
           title: 'Antigraft War',
@@ -250,7 +250,7 @@ class NgoAuthController {
           budget: '556890000',
           start_date: '12-01-2020',
           location: '',
-          end_date: '31-12-2021',
+          end_date: '31-12-2021'
         },
         {
           title: 'Child Education in Africa',
@@ -258,8 +258,8 @@ class NgoAuthController {
           budget: '656890000',
           start_date: '12-01-2020',
           location: '',
-          end_date: '31-12-2021',
-        },
+          end_date: '31-12-2021'
+        }
       ],
       balance: 456788809,
       disbursed: 9877737373,
@@ -267,39 +267,39 @@ class NgoAuthController {
       genderStat: [
         {
           gender: 'Male',
-          count: 45321,
+          count: 45321
         },
         {
           gender: 'Female',
-          count: 55321,
+          count: 55321
         },
         {
           gender: 'Male',
-          count: 45321,
+          count: 45321
         },
         {
           gender: 'Unknow',
-          count: 321,
-        },
+          count: 321
+        }
       ],
       ageStat: [
         {
           age: '1-17',
-          count: 5600,
+          count: 5600
         },
         {
           age: '18-30',
-          count: 15600,
+          count: 15600
         },
         {
           age: '31-39',
-          count: 16320,
+          count: 16320
         },
         {
           age: '40-Above',
-          count: 5600,
-        },
-      ],
+          count: 5600
+        }
+      ]
     };
   }
   static async dashboard(req, res) {
@@ -348,13 +348,13 @@ class NgoAuthController {
         contact_name,
         contact_phone,
         location,
-        logo_link,
+        logo_link
       } = req.body;
       //check if email already exist
       db.User.findOne({
         where: {
-          email: req.body.email,
-        },
+          email: req.body.email
+        }
       })
         .then(user => {
           if (user !== null) {
@@ -370,7 +370,7 @@ class NgoAuthController {
             contact_phone: contact_phone,
             location: location,
             is_individual: false,
-            logo_link: logo_link,
+            logo_link: logo_link
           })
             .then(organisation => {
               bcrypt.genSalt(10, (err, salt) => {
@@ -394,13 +394,13 @@ class NgoAuthController {
                     address: contact_address,
                     referal_id: '',
                     pin: '',
-                    last_login: new Date(),
+                    last_login: new Date()
                   })
                     .then(user => {
                       util.setSuccess(
                         201,
                         'Account Successfully Created',
-                        user.id,
+                        user.id
                       );
                       return util.send(res);
                     })
@@ -434,8 +434,8 @@ class NgoAuthController {
       db.User.findOne({
         where: {
           email: email,
-          RoleId: 3,
-        },
+          RoleId: 3
+        }
       })
         .then(user => {
           bcrypt
@@ -453,16 +453,16 @@ class NgoAuthController {
                 {
                   userId: user.id,
                   OrganisationId: user.OrganisationId,
-                  RoleId: user.RoleId,
+                  RoleId: user.RoleId
                 },
                 process.env.SECRET_KEY,
                 {
-                  expiresIn: '24hr',
-                },
+                  expiresIn: '24hr'
+                }
               );
               const resp = {
                 userId: user.id,
-                token: token,
+                token: token
               };
               util.setSuccess(200, 'Login Successful', resp);
               return util.send(res);
@@ -486,8 +486,8 @@ class NgoAuthController {
     try {
       db.User.findOne({
         where: {
-          id: id,
-        },
+          uuid: id
+        }
       })
         .then(user => {
           util.setSuccess(200, 'Got Users Details', user);
@@ -507,8 +507,8 @@ class NgoAuthController {
     //check if users exist in the db with email address
     db.User.findOne({
       where: {
-        email: email,
-      },
+        email: email
+      }
     })
       .then(user => {
         //reset users email password
@@ -524,20 +524,20 @@ class NgoAuthController {
               const balance = 0.0;
               return db.User.update(
                 {
-                  password: encryptedPassword,
+                  password: encryptedPassword
                 },
                 {
                   where: {
-                    email: email,
-                  },
-                },
+                    email: email
+                  }
+                }
               ).then(updatedRecord => {
                 //mail user a new password
                 //respond with a success message
                 res.status(201).json({
                   status: 'success',
                   message:
-                    'An email has been sent to the provided email address, kindly login to your email address to continue',
+                    'An email has been sent to the provided email address, kindly login to your email address to continue'
                 });
               });
             });
@@ -547,7 +547,7 @@ class NgoAuthController {
       .catch(err => {
         res.status(404).json({
           status: 'error',
-          error: err,
+          error: err
         });
       });
   }
@@ -556,8 +556,8 @@ class NgoAuthController {
     const userId = req.body.userId;
     db.User.findOne({
       where: {
-        id: userId,
-      },
+        uuid: userId
+      }
     })
       .then(user => {
         if (user !== null) {
@@ -566,18 +566,18 @@ class NgoAuthController {
             {
               firstName: firstName,
               lastName: lastName,
-              phone: phone,
+              phone: phone
             },
             {
               where: {
-                id: userId,
-              },
-            },
+                uuid: userId
+              }
+            }
           ).then(updatedRecord => {
             //respond with a success message
             res.status(201).json({
               status: 'success',
-              message: 'Profile Updated Successfully!',
+              message: 'Profile Updated Successfully!'
             });
           });
         }
@@ -585,7 +585,7 @@ class NgoAuthController {
       .catch(err => {
         res.status(404).json({
           status: 'error',
-          error: err,
+          error: err
         });
       });
   }
@@ -594,14 +594,14 @@ class NgoAuthController {
     if (newPassword !== confirmedPassword) {
       return res.status(419).json({
         status: error,
-        error: new Error('New Password Does not Match with Confirmed Password'),
+        error: new Error('New Password Does not Match with Confirmed Password')
       });
     }
     const userId = req.body.userId;
     db.User.findOne({
       where: {
-        id: userId,
-      },
+        uuid: userId
+      }
     })
       .then(user => {
         bcrypt
@@ -610,7 +610,7 @@ class NgoAuthController {
             if (!valid) {
               return res.status(419).json({
                 status: error,
-                error: new Error('Existing Password Error'),
+                error: new Error('Existing Password Error')
               });
             }
             //update new password in the db
@@ -621,20 +621,20 @@ class NgoAuthController {
                 const balance = 0.0;
                 return db.User.update(
                   {
-                    password: encryptedPassword,
+                    password: encryptedPassword
                   },
                   {
                     where: {
-                      email: email,
-                    },
-                  },
+                      email: email
+                    }
+                  }
                 ).then(updatedRecord => {
                   //mail user a new password
                   //respond with a success message
                   res.status(201).json({
                     status: 'success',
                     message:
-                      'An email has been sent to the provided email address, kindly login to your email address to continue',
+                      'An email has been sent to the provided email address, kindly login to your email address to continue'
                   });
                 });
               });
@@ -644,14 +644,14 @@ class NgoAuthController {
             //the two password does not match
             return res.status(419).json({
               status: error,
-              error: new Error('Existing Password Error'),
+              error: new Error('Existing Password Error')
             });
           });
       })
       .catch(err => {
         res.status(404).json({
           status: 'error',
-          error: err,
+          error: err
         });
       });
   }

@@ -49,7 +49,7 @@ class AuthController {
   static async verifyNin(req, res) {
     const data = req.body;
 
-    const user = await db.User.findByPk(data.userId);
+    const user = await db.User.findOne({uuid: data.userId});
     if (user) {
       if (user.nin == null) {
         Response.setError(422, 'User has not supplied Nin Number');
@@ -73,7 +73,7 @@ class AuthController {
     try {
       db.User.findOne({
         where: {
-          id: id
+          uuid: id
         }
       })
         .then(user => {
@@ -95,7 +95,7 @@ class AuthController {
     const userId = req.body.userId;
     db.User.findOne({
       where: {
-        id: userId
+        uuid: userId
       }
     })
       .then(user => {
@@ -141,7 +141,6 @@ class AuthController {
       });
 
       if (!campaignExist) {
-        console.log('Campaign not found');
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Invalid Campaign ID'
@@ -259,7 +258,7 @@ class AuthController {
     try {
       let campaignExist = await db.Campaign.findOne({
         where: {
-          id: campaignId,
+          uuid: campaignId,
           type: 'campaign'
         }
       });
@@ -454,7 +453,7 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric'
+        campaign: 'required|string'
         // pin: 'size:4|required' //pin validation disabled
       };
 
@@ -478,7 +477,7 @@ class AuthController {
 
         let campaignExist = await db.Campaign.findOne({
           where: {
-            id: fields.campaign,
+            uuid: fields.campaign,
             type: 'campaign'
           }
         });
@@ -616,7 +615,7 @@ class AuthController {
         password: 'required',
         dob: 'required|date|before:today',
         nfc: 'string',
-        campaign: 'required|numeric'
+        campaign: 'required|string'
         // pin: 'size:4|required' //disabled for now
       };
       const validation = new Validator(fields, rules);
@@ -635,7 +634,7 @@ class AuthController {
             var uploadFilePromises = [];
             let campaignExist = await db.Campaign.findOne({
               where: {
-                id: fields.campaign,
+                uuid: fields.campaign,
                 type: 'campaign'
               }
             });
@@ -1486,7 +1485,7 @@ class AuthController {
       }
       const user = await db.User.findOne({
         where: {
-          id: req.user.id
+          uuid: req.user.id
         },
         include: {
           model: db.OrganisationMembers,
@@ -1671,7 +1670,7 @@ class AuthController {
     try {
       const rules = {
         token: 'required|string',
-        campaignId: 'integer|required'
+        campaignId: 'string|required'
       };
       const validation = new Validator(req.params, rules);
       if (validation.fails()) {

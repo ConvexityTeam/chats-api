@@ -7,9 +7,9 @@ class ComplaintService {
     return Complaint.create(complaint);
   }
 
-  static getComplaint(id) {
+  static getComplaint(uuid) {
     return Complaint.findOne({
-      where: {id},
+      where: {uuid},
       include: [
         'Campaign',
         {
@@ -56,8 +56,8 @@ class ComplaintService {
     });
   }
 
-  static updateComplaint(id, update) {
-    return Complaint.update(update, {where: {id}});
+  static updateComplaint(uuid, update) {
+    return Complaint.update(update, {where: {uuid}});
   }
 }
 

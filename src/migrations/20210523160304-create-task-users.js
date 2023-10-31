@@ -5,11 +5,16 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         defaultValue: Sequelize.UUIDV4,
         type: Sequelize.UUID
       },
       UserId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
@@ -21,7 +26,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       TaskId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {

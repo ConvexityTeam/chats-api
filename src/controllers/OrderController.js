@@ -66,7 +66,7 @@ class OrderController {
         ),
         UserService.findSingleUser({
           RoleId: AclRoles.Beneficiary,
-          id: data.beneficiary_id
+          uuid: data.beneficiary_id
         })
       ]);
       if (approvedBeneficiary.status === 'processing') {
@@ -175,7 +175,7 @@ class OrderController {
     try {
       Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
       const data = await VendorService.getOrder({reference});
-      const user = await UserService.findSingleUser({id});
+      const user = await UserService.findSingleUser({uuid: id});
 
       if (!user) {
         Response.setError(

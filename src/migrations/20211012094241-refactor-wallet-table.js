@@ -10,7 +10,7 @@ module.exports = {
      */
 
     await queryInterface.addColumn('Wallets', 'UserId', {
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Users'
@@ -22,7 +22,7 @@ module.exports = {
     });
 
     await queryInterface.addColumn('Wallets', 'OrganisationId', {
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Organisations'
@@ -72,7 +72,7 @@ module.exports = {
     await queryInterface.removeColumn('Wallets', 'local_currency');
     await queryInterface.addColumn('Wallets', 'AccountUserId', {
       allowNull: false,
-      type: Sequelize.UUID
+      type: Sequelize.INTEGER
     });
     await queryInterface.addColumn('Wallets', 'AccountUserType', {
       type: Sequelize.STRING

@@ -125,8 +125,8 @@ class BeneficiariesController {
   static async updatedUser(req, res) {
     const alteredUser = req.body;
     const {id} = req.params;
-    if (!Number(id)) {
-      util.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      util.setError(400, 'Please input a valid value');
       return util.send(res);
     }
     try {
@@ -146,8 +146,8 @@ class BeneficiariesController {
   static async getAUser(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
-      util.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      util.setError(400, 'Please input a valid value');
       return util.send(res);
     }
 
@@ -168,8 +168,8 @@ class BeneficiariesController {
   static async deleteUser(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
-      util.setError(400, 'Please provide a numeric value');
+    if (!id) {
+      util.setError(400, 'Please provide a valid value');
       return util.send(res);
     }
 
@@ -191,7 +191,7 @@ class BeneficiariesController {
   static async createComplaint(req, res) {
     const data = req.body;
     const rules = {
-      beneficiaryId: 'required|numeric',
+      beneficiaryId: 'required|string',
       report: 'required|string'
     };
 
@@ -223,7 +223,7 @@ class BeneficiariesController {
   static async resolveComplaint(req, res) {
     const data = req.body;
     const rules = {
-      complaintId: 'required|numeric'
+      complaintId: 'required|string'
     };
     const validation = new Validator(data, rules);
     if (validation.fails()) {
@@ -286,7 +286,7 @@ class BeneficiariesController {
     const beneficiary = req.params.beneficiary;
     const beneficiary_exist = await db.User.findOne({
       where: {
-        id: beneficiary
+        uuid: beneficiary
       },
       include: {
         as: 'Wallet',
@@ -316,7 +316,7 @@ class BeneficiariesController {
 
   static async getBeneficiaryUser(req, res) {
     const beneficiary = req.params.beneficiary;
-    const beneficiary_exist = await db.User.findByPk(beneficiary);
+    const beneficiary_exist = await db.User.findOne({uuid: beneficiary});
     const campaigns = await db.Beneficiary.findAll({
       where: {
         UserId: beneficiary
@@ -338,7 +338,7 @@ class BeneficiariesController {
   static async getComplaintsByCampaign(req, res) {
     let campaign = req.params.campaign;
     let status = req.query.status;
-    let campaignExist = await db.Campaign.findByPk(campaign);
+    let campaignExist = await db.Campaign.findOne({uuid: campaign});
     if (!campaignExist) {
       util.setError(422, 'Campaign Invalid');
       return util.send(res);
@@ -1058,10 +1058,10 @@ class BeneficiariesController {
 
     const validation = new Validator(req.body, rules);
     try {
-      if (!Number(vendorId)) {
+      if (!vendorId) {
         util.setError(400, 'Please input a valid vendor ID');
         return util.send(res);
-      } else if (!Number(productId)) {
+      } else if (!productId) {
         util.setError(400, 'Please input a valid product ID');
         return util.send(res);
       } else if (validation.fails()) {
@@ -1160,7 +1160,7 @@ class BeneficiariesController {
 
     try {
       const rules = {
-        formId: 'required|numeric',
+        formId: 'required|string',
         'questions.*.type': 'required|in:multiple,optional,short',
         'questions.*.question': 'required|string',
         'questions.*.answer': 'required|string',
@@ -1180,7 +1180,7 @@ class BeneficiariesController {
           'Campaign not found'
         );
       }
-      req.body.beneficiaryId = req.user.id;
+      req.body.beneficiaryId = req.user.uuid;
       req.body.campaignId = id;
       const createdForm = await CampaignService.formAnswer(req.body);
       Response.setSuccess(
@@ -1204,8 +1204,8 @@ class BeneficiariesController {
 
     try {
       const rules = {
-        formId: 'required|numeric',
-        beneficiaryId: 'required|numeric',
+        formId: 'required|string',
+        beneficiaryId: 'required|string',
         'questions.*.type': 'required|in:multiple,optional,short',
         'questions.*.question': 'required|string',
         'questions.*.answer': 'required|array',

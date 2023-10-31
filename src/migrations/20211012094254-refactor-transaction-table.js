@@ -58,7 +58,7 @@ module.exports = {
 
     await queryInterface.addColumn('Transactions', 'OrderId', {
       allowNull: true,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Orders'
@@ -71,7 +71,7 @@ module.exports = {
 
     await queryInterface.addColumn('Transactions', 'VendorId', {
       allowNull: true,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Users'
@@ -84,7 +84,7 @@ module.exports = {
 
     await queryInterface.addColumn('Transactions', 'BeneficiaryId', {
       allowNull: true,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Users'
@@ -97,7 +97,7 @@ module.exports = {
 
     await queryInterface.addColumn('Transactions', 'OrganisationId', {
       allowNull: true,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Organisations'

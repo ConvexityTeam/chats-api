@@ -29,7 +29,7 @@ class NgoController {
   static async getOneNGO(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
+    if (!id) {
       Response.setError(400, 'Invalid Request Parameter');
       return Response.send(res);
     }

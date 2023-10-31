@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class FingerPrints extends Model {
     /**
@@ -12,13 +10,16 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
     }
-  };
-  FingerPrints.init({
-    UserId: DataTypes.UUID,
-    url: DataTypes.STRING
-  }, {
-    sequelize,
-    modelName: 'FingerPrints',
-  });
+  }
+  FingerPrints.init(
+    {
+      UserId: DataTypes.INTEGER,
+      url: DataTypes.STRING
+    },
+    {
+      sequelize,
+      modelName: 'FingerPrints'
+    }
+  );
   return FingerPrints;
 };

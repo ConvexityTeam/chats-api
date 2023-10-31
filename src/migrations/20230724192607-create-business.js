@@ -6,6 +6,11 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
+        type: Sequelize.INTEGER,
+        autoIncrement: true
+      },
+      uuid: {
+        allowNull: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
@@ -19,7 +24,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       vendorId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Users',
           key: 'id'
@@ -29,7 +34,7 @@ module.exports = {
         onUpdate: 'CASCADE'
       },
       accountId: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         references: {
           model: 'BankAccounts',
           key: 'id'

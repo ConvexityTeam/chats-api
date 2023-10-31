@@ -11,7 +11,7 @@ module.exports = {
     await queryInterface.removeColumn('Campaigns', 'OrganisationMemberId');
     await queryInterface.addColumn('Campaigns', 'OrganisationId', {
       allowNull: true,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'Organisations'
@@ -33,8 +33,7 @@ module.exports = {
     await queryInterface.removeColumn('Campaigns', 'OrganisationId');
     await queryInterface.addColumn('Campaigns', 'OrganisationMemberId', {
       allowNull: true,
-      defaultValue: Sequelize.UUIDV4,
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       references: {
         model: {
           tableName: 'OrganisationMembers'

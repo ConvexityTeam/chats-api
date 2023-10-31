@@ -313,7 +313,7 @@ class VendorService {
     const {OrganisationId, ...filter} = extraClause;
     return User.findOne({
       where: {
-        id,
+        uuid: id,
         ...filter,
         RoleId: AclRoles.Vendor
       },

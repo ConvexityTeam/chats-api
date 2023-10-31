@@ -20,8 +20,8 @@ module.exports = (sequelize, DataTypes) => {
       },
       email: DataTypes.STRING,
       token: DataTypes.STRING,
-      inviterId: DataTypes.UUID,
-      CampaignId: DataTypes.UUID,
+      inviterId: DataTypes.INTEGER,
+      CampaignId: DataTypes.INTEGER,
       isAdded: DataTypes.BOOLEAN
     },
     {

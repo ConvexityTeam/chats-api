@@ -15,11 +15,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   Market.init(
     {
-      UserId: DataTypes.UUID,
+      UserId: DataTypes.INTEGER,
       store_name: DataTypes.STRING,
       address: DataTypes.STRING,
       location: DataTypes.JSON,
-      category_id: DataTypes.UUID,
+      category_id: DataTypes.INTEGER,
       website_url: DataTypes.STRING
     },
     {
