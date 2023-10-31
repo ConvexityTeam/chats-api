@@ -134,6 +134,41 @@ class CampaignService {
     });
   }
 
+  static async addBeneficiaries(
+    CampaignId,
+    UserId,
+    campaign,
+    count,
+    replicaCampaignLength,
+    source = null
+  ) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const find = await Beneficiary.findOne({
+          where: {
+            CampaignId,
+            UserId
+          }
+        });
+        if (find) {
+          return resolve(find);
+        }
+        const newBeneficiary = await Beneficiary.create({
+          CampaignId,
+          UserId,
+          source
+        });
+        await campaign.update({
+          total_imported: count,
+          total_beneficiaries: replicaCampaignLength
+        });
+        await QueueService.createWallet(UserId, 'user', CampaignId);
+        return resolve(newBeneficiary);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
   static async addBeneficiary(CampaignId, UserId, source = null) {
     return new Promise(async (resolve, reject) => {
       try {
