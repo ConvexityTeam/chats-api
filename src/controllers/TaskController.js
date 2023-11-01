@@ -38,7 +38,7 @@ class TaskController {
         req.query
       );
 
-      if (!CashForWorkTasks.data) {
+      if (!CashForWorkTasks) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Task Not Found'
@@ -46,7 +46,7 @@ class TaskController {
         return Response.send(res);
       }
 
-      CashForWorkTasks.data.forEach(data => {
+      CashForWorkTasks.forEach(data => {
         data.dataValues.completed_tasks = data.completed_tasks
           ? completed_tasks++
           : completed_tasks;
@@ -92,13 +92,13 @@ class TaskController {
         data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
         data.dataValues.Assigned_Status = data.TaskAssignment.status;
       });
-      // CashForWorkTasks.response.dataValues.completed_task = completed_task;
-      // CashForWorkTasks.response.dataValues.total_task_allowed =
-      //   CashForWorkTasks.response.assignment_count;
+      CashForWorkTasks.response.dataValues.campleted_task = completed_task;
+      CashForWorkTasks.response.dataValues.total_task_allowed =
+        CashForWorkTasks.assignment_count;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
-        CashForWorkTasks.response
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
