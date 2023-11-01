@@ -10,19 +10,19 @@ class TaskController {
       const campaignId = req.params.campaign_id;
       const createdTasks = await TaskService.createCashForWorkTask(
         tasks,
-        campaignId,
+        campaignId
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Tasks created successfully',
-        createdTasks,
+        createdTasks
       );
       return Response.send(res);
     } catch (error) {
       console.log(error, 'error');
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -33,17 +33,20 @@ class TaskController {
       let completed_tasks = 0;
       let task_count = 0;
       const params = SanitizeObject(req.params);
-      const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
+      const CashForWorkTasks = await TaskService.getCashForWorkTasks(
+        params,
+        req.query
+      );
 
-      if (!CashForWorkTasks) {
+      if (!CashForWorkTasks.data) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
 
-      CashForWorkTasks.forEach(data => {
+      CashForWorkTasks.data.forEach(data => {
         data.dataValues.completed_tasks = data.completed_tasks
           ? completed_tasks++
           : completed_tasks;
@@ -52,13 +55,13 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork Campaign Tasks retreived',
-        CashForWorkTasks,
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -70,11 +73,12 @@ class TaskController {
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
         params,
+        req.query
       );
       if (!CashForWorkTasks) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
@@ -94,13 +98,13 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
-        CashForWorkTasks,
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -115,13 +119,13 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Task updated',
-        updatedTask,
+        updatedTask
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -134,20 +138,20 @@ class TaskController {
       if (!task) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
       const updated = await db.Task.update(
         {isCompleted: true},
-        {where: {id: taskId}},
+        {where: {id: taskId}}
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Task updated', updated);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -162,26 +166,26 @@ class TaskController {
     try {
       const evidence = await TaskService.uploadProgressEvidence(
         taskProgressId,
-        imageUrl,
+        imageUrl
       );
       if (evidence) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Task Evidence Uploaded Successfully',
-          evidence,
+          evidence
         );
         return Response.send(res);
       } else {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Something went wrong while uploading evidence',
+          'Something went wrong while uploading evidence'
         );
         return Response.send(res);
       }
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
