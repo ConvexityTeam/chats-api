@@ -93,7 +93,7 @@ class TaskService {
     });
 
     const response = await Pagination.getPagingData(
-      task.AssignedWorkers,
+      {data: task.AssignedWorkers, count: task.AssignedWorkers.length},
       page,
       limit
     );
