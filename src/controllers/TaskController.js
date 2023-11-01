@@ -75,7 +75,7 @@ class TaskController {
         params,
         req.query
       );
-      if (!CashForWorkTasks) {
+      if (!CashForWorkTasks.data) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Task Not Found'
@@ -84,7 +84,7 @@ class TaskController {
       }
       //console.log(CashForWorkTasks)
 
-      CashForWorkTasks.AssignedWorkers.forEach(data => {
+      CashForWorkTasks.data.forEach(data => {
         data.TaskAssignment.status === 'completed'
           ? completed_task++
           : completed_task;
