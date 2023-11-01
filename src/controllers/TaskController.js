@@ -98,7 +98,7 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
-        CashForWorkTasks.response
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
