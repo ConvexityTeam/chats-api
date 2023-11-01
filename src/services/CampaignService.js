@@ -650,13 +650,30 @@ class CampaignService {
     return campaign;
   }
 
-  static async fetchRequest(proposal_id) {
-    return await User.findAll({
+  static async fetchRequest(proposal_id, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const request = await User.findAndCountAll({
+      ...queryOptions,
+      distinct: true,
       where: {
         RoleId: AclRoles.Vendor,
         proposal_id: Sequelize.where(
           Sequelize.col('proposalOwner.proposal_id'),
           proposal_id
+        ),
+        status: Sequelize.where(
+          Sequelize.col('proposalOwner.status'),
+          ...extraClause
         )
       },
       attributes: userConst.publicAttr,
@@ -667,6 +684,8 @@ class CampaignService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(request, page, limit);
+    return response;
   }
   static async fetchProposalRequests(OrganisationId, extraClause = {}) {
     const page = extraClause.page;

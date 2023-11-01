@@ -650,7 +650,10 @@ class CampaignController {
   static async getProposalRequests(req, res) {
     const {proposal_id} = req.params;
     try {
-      const vendors = await CampaignService.fetchRequest(proposal_id);
+      const vendors = await CampaignService.fetchRequest(
+        proposal_id,
+        req.query
+      );
 
       // const campaign = await CampaignService.getCampaignById(proposal_id);
       const org_proposal = await CampaignService.fetchProposalRequest(
