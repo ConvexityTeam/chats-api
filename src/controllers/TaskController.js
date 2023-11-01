@@ -84,14 +84,14 @@ class TaskController {
       }
       //console.log(CashForWorkTasks)
 
-      CashForWorkTasks.response.data.forEach(data => {
-        data.TaskAssignment.status === 'completed'
-          ? completed_task++
-          : completed_task;
-        data.dataValues.Assigned_UpdatedAt = data.TaskAssignment.updatedAt;
-        data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
-        data.dataValues.Assigned_Status = data.TaskAssignment.status;
-      });
+      // CashForWorkTasks.response.data.forEach(data => {
+      //   data.TaskAssignment.status === 'completed'
+      //     ? completed_task++
+      //     : completed_task;
+      //   data.dataValues.Assigned_UpdatedAt = data.TaskAssignment.updatedAt;
+      //   data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
+      //   data.dataValues.Assigned_Status = data.TaskAssignment.status;
+      // });
       CashForWorkTasks.response.dataValues.campleted_task = completed_task;
       CashForWorkTasks.response.dataValues.total_task_allowed =
         CashForWorkTasks.response.assignment_count;
