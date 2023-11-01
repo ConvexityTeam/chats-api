@@ -7,6 +7,7 @@ const {
   TaskProgressEvidence
 } = require('../models');
 const {publicAttr} = require('../constants/user.constants');
+const Pagination = require('../utils/pagination');
 
 class TaskService {
   static async createCashForWorkTask(tasks, campaignId) {
@@ -34,8 +35,21 @@ class TaskService {
     return Task.bulkCreate(_tasks);
   }
 
-  static async getCashForWorkTasks(params) {
-    return Task.findAll({
+  static async getCashForWorkTasks(params, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const tasks = await Task.findAndCountAll({
+      ...queryOptions,
+      distinct: true,
       where: {
         CampaignId: params.campaign_id
       },
@@ -47,6 +61,8 @@ class TaskService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(tasks, page, limit);
+    return response;
   }
 
   static async getCashForBeneficiaries(params) {
