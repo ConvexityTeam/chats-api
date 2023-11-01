@@ -97,7 +97,7 @@ class TaskService {
       page,
       limit
     );
-    return response;
+    return {task, response};
   }
 
   static async updateTask(id, updateTaskObj) {
