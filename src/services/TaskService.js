@@ -65,19 +65,39 @@ class TaskService {
     return response;
   }
 
-  static async getCashForBeneficiaries(params) {
-    return Task.findOne({
+  static async getCashForBeneficiaries(params, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const task = await Task.findOne({
       where: {
         id: params.task_id
       },
       include: [
         {
+          ...queryOptions,
           model: User,
           as: 'AssignedWorkers',
           attributes: publicAttr
         }
       ]
     });
+
+    const response = await Pagination.getPagingData(
+      task.AssignedWorkers,
+      page,
+      limit
+    );
+    return response;
   }
 
   static async updateTask(id, updateTaskObj) {
