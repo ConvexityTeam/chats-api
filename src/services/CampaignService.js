@@ -653,6 +653,7 @@ class CampaignService {
   static async fetchRequest(proposal_id, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
+    const status = extraClause.status;
 
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
@@ -671,10 +672,7 @@ class CampaignService {
           Sequelize.col('proposalOwner.proposal_id'),
           proposal_id
         ),
-        status: Sequelize.where(
-          Sequelize.col('proposalOwner.status'),
-          ...extraClause
-        )
+        status: Sequelize.where(Sequelize.col('proposalOwner.status'), status)
       },
       attributes: userConst.publicAttr,
       include: [
