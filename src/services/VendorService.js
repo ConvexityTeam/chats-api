@@ -409,7 +409,18 @@ class VendorService {
     });
   }
 
-  static async organisationVendors({id: OrganisationId}) {
+  static async organisationVendors({id: OrganisationId}, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
     const vendorIds = (
       await OrganisationMembers.findAll({
         where: {
@@ -418,14 +429,20 @@ class VendorService {
         }
       })
     ).map(m => m.UserId);
-    return User.findAll({
+    const vendors = await User.findAndCountAll({
       where: {
         id: {
           [Op.in]: [...vendorIds]
         }
       },
+      distinct: true,
+      ...queryOptions,
+      attributes: userConst.publicAttr,
+
       include: ['Wallet', 'Store']
     });
+    const response = await Pagination.getPagingData(vendors, page, limit);
+    return response;
   }
 
   static async organisationVendorsAdmin(OrganisationId) {
