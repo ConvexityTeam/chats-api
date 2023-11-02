@@ -222,8 +222,23 @@ class BeneficiariesService {
     });
   }
 
-  static async organisationBeneficiaryDetails(id, OrganisationId) {
-    return User.findOne({
+  static async organisationBeneficiaryDetails(
+    id,
+    OrganisationId,
+    extraClause = null
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const user = await User.findOne({
       where: {
         id
       },
@@ -239,12 +254,20 @@ class BeneficiariesService {
           where: {
             OrganisationId
           },
+          ...options,
+          distinct: true,
           include: [
             {where: {UserId: id}, model: Wallet, as: 'BeneficiariesWallets'}
           ]
         }
       ]
     });
+    const response = await Pagination.getPagingData(
+      {count: user.Campaigns.length, rows: user.Campaigns},
+      page,
+      limit
+    );
+    return {user, response};
   }
 
   static async beneficiaryDetails(id, extraClause = null) {
