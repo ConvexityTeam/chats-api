@@ -1452,12 +1452,13 @@ class CampaignController {
       // }
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
+          const count = index + 1;
           setTimeout(async () => {
             const res = await CampaignService.addBeneficiaries(
               campaign_id,
               beneficiary.id,
               campaign,
-              index++,
+              count,
               replicaCampaign.Beneficiaries.length,
               source
             );
