@@ -1650,14 +1650,14 @@ class OrganisationController {
       const [beneficiary, transaction] = await Promise.all([
         BeneficiaryService.organisationBeneficiaryDetails(
           id,
-          req.organisation.id
+          req.organisation.id,
+          req.query
         ),
         TransactionService.findTransactions({
           BeneficiaryId: id,
           is_approved: true
         })
       ]);
-      console.log(beneficiary, 'opop');
       for (let tran of transaction) {
         if (
           tran.narration === 'Vendor Order' ||
@@ -1672,7 +1672,7 @@ class OrganisationController {
           total_wallet_received += tran.amount;
         }
       }
-      for (let campaign of beneficiary.Campaigns) {
+      for (let campaign of beneficiary.response.data.Campaigns) {
         for (let wallet of campaign.BeneficiariesWallets) {
           if (wallet.CampaignId && wallet.address) {
             const campaignWallet = await WalletService.findUserCampaignWallet(
@@ -1688,9 +1688,9 @@ class OrganisationController {
           }
         }
       }
-      beneficiary.dataValues.total_wallet_spent = total_wallet_spent;
-      beneficiary.dataValues.total_wallet_balance = total_wallet_balance;
-      beneficiary.dataValues.total_wallet_received = total_wallet_received;
+      beneficiary.response.total_wallet_spent = total_wallet_spent;
+      beneficiary.response.total_wallet_balance = total_wallet_balance;
+      beneficiary.response.total_wallet_received = total_wallet_received;
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
