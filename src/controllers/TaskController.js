@@ -92,8 +92,8 @@ class TaskController {
         data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
         data.dataValues.Assigned_Status = data.TaskAssignment.status;
       });
-      CashForWorkTasks.response.dataValues.completed_task = completed_task;
-      CashForWorkTasks.response.dataValues.total_task_allowed =
+      CashForWorkTasks.response.completed_task = completed_task;
+      CashForWorkTasks.response.total_task_allowed =
         CashForWorkTasks.assignment_count;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
