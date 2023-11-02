@@ -2419,17 +2419,10 @@ class OrganisationController {
   static async getOrganisationVendors(req, res) {
     try {
       const {organisation} = req;
-      const vendors = (
-        await VendorService.organisationVendors(organisation, req.query)
-      ).data.map(res => {
-        const toObject = res.toObject();
-        toObject.Wallet.map(wallet => {
-          delete wallet.privateKey;
-          delete wallet.bantuPrivateKey;
-          return wallet;
-        });
-        return toObject;
-      });
+      const vendors = await VendorService.organisationVendors(
+        organisation,
+        req.query
+      );
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
