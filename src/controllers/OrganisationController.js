@@ -2420,8 +2420,8 @@ class OrganisationController {
     try {
       const {organisation} = req;
       const vendors = (
-        await VendorService.organisationVendors(organisation)
-      ).map(res => {
+        await VendorService.organisationVendors(organisation, req.query)
+      ).data.map(res => {
         const toObject = res.toObject();
         toObject.Wallet.map(wallet => {
           delete wallet.privateKey;
