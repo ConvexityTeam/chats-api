@@ -165,10 +165,14 @@ class CampaignService {
           UserId,
           source
         });
-        await campaign.update({
-          total_imported: count,
-          total_beneficiaries: replicaCampaignLength
+        await CampaignService.updateCampaign(CampaignId, {
+          total_beneficiaries: count,
+          total_imported: replicaCampaignLength
         });
+        // await campaign.update({
+        //   total_imported: count,
+        //   total_beneficiaries: replicaCampaignLength
+        // });
         await QueueService.createWallet(UserId, 'user', CampaignId);
         return resolve(newBeneficiary);
       } catch (error) {

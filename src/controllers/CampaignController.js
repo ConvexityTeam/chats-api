@@ -1452,13 +1452,12 @@ class CampaignController {
       // }
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
-          const count = index + 1;
           setTimeout(async () => {
             const res = await CampaignService.addBeneficiaries(
               campaign_id,
               beneficiary.id,
               campaign,
-              count,
+              index++,
               replicaCampaign.Beneficiaries.length,
               source
             );
@@ -1489,7 +1488,7 @@ class CampaignController {
   static async importStatus(req, res) {
     try {
       const campaign_id = req.params.campaign_id;
-      const campaign = await CampaignService.getCampaign(campaign_id);
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Status',
