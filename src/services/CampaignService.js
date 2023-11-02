@@ -143,6 +143,9 @@ class CampaignService {
     source = null
   ) {
     return new Promise(async (resolve, reject) => {
+      Logger.info(`replicaCampaignLength: ${replicaCampaignLength}`);
+      Logger.info(`count: ${count}`);
+      Logger.info(`campaign: ${campaign}`);
       try {
         const find = await Beneficiary.findOne({
           where: {
