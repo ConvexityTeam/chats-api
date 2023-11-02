@@ -105,6 +105,10 @@ class CampaignService {
     return Campaign.findOne({where: {id, is_public: true}});
   }
 
+  static getCleanCampaignById(id) {
+    return Campaign.findByPk(id);
+  }
+
   static campaignBeneficiaryExists(CampaignId, UserId) {
     return Beneficiary.findOne({
       where: {

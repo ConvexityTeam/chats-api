@@ -1434,7 +1434,7 @@ class CampaignController {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
       const {source, type} = SanitizeObject(req.body, ['source', 'type']);
-      const campaign = await CampaignService.getCampaign(campaign_id);
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
       const replicaCampaign = await CampaignService.getACampaignWithReplica(
         replicaCampaignId,
         type
