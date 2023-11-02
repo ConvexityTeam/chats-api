@@ -373,18 +373,18 @@ class BeneficiariesService {
   static async findOrgnaisationBeneficiaries(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
-
-    let options = {};
+    let queryOptions = {};
     if (page && size) {
-      options.limit = limit;
-      options.offset = offset;
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
     }
     const users = await User.findAndCountAll({
       distinct: true,
-      ...options,
+      ...queryOptions,
       where: {
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
