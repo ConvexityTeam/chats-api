@@ -1672,7 +1672,7 @@ class OrganisationController {
           total_wallet_received += tran.amount;
         }
       }
-      for (let campaign of beneficiary.response.data.Campaigns) {
+      for (let campaign of beneficiary.response.data) {
         for (let wallet of campaign.BeneficiariesWallets) {
           if (wallet.CampaignId && wallet.address) {
             const campaignWallet = await WalletService.findUserCampaignWallet(
