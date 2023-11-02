@@ -169,14 +169,27 @@ class VendorService {
   }
   // Refactor
 
-  static async vendorStoreProducts(vendorId, where = {}) {
-    return Product.findAll({
+  static async vendorStoreProducts(vendorId, where = {}, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const products = await Product.findAndCountAll({
       where: {
         ...where,
         vendor_proposal_id: {
           [Op.eq]: null
         }
       },
+      ...queryOptions,
+      distinct: true,
       include: [
         {
           model: User,
@@ -188,6 +201,8 @@ class VendorService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(products, page, limit);
+    return response;
   }
 
   static async vendorStoreMarketProducts(CampaignId) {
