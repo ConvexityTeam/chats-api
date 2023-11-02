@@ -435,6 +435,10 @@ class VendorService {
           [Op.in]: [...vendorIds]
         }
       },
+      distinct: true,
+      ...queryOptions,
+      attributes: userConst.publicAttr,
+
       include: ['Wallet', 'Store']
     });
     const response = await Pagination.getPagingData(vendors, page, limit);
