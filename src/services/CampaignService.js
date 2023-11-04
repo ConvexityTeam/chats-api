@@ -18,7 +18,7 @@ const {
   Task,
   CampaignVendor
 } = require('../models');
-const {userConst, walletConst} = require('../constants');
+const {userConst, userConstFilter, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef, AclRoles} = require('../utils');
@@ -289,7 +289,7 @@ class CampaignService {
       include: {
         model: User,
         as: 'Vendor',
-        attributes: userConst.publicAttr
+        attributes: userConstFilter.publicAttr
       }
     });
     return await Pagination.getPagingData(vendors, page, limit);
@@ -492,7 +492,7 @@ class CampaignService {
 
           include: [
             {model: Task, as: 'Jobs'},
-            {model: User, as: 'Beneficiaries'}
+            {model: User, as: 'Beneficiaries', attributes: userConstFilter.publicAttr}
           ]
         }
       ]

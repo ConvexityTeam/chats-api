@@ -12,7 +12,7 @@ const {
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
-const {userConst, walletConst} = require('../constants');
+const {userConst, userConstFilter, walletConst} = require('../constants');
 const moment = require('moment');
 const Pagination = require('../utils/pagination');
 const {Logger} = require('../libs');
@@ -472,7 +472,7 @@ class BeneficiariesService {
         {
           model: User,
           as: 'User',
-          attributes: userConst.publicAttr,
+          attributes: userConstFilter.publicAttr,
           include: [
             {
               model: FormAnswer,
