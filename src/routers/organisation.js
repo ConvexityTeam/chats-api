@@ -693,7 +693,7 @@ router
     ProductController.addCategoryType
   );
 router
-  .route('/products/:vendor_id')
+  .route('/products/:campaign_id')
   .get(OrganisationController.getProductVendors);
 
 router

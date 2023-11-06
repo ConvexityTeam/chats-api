@@ -130,7 +130,11 @@ class BeneficiariesController {
       return util.send(res);
     }
     try {
-      const updateUser = await BeneficiaryService.updateUser(id, alteredUser);
+      const user = await UserService.getUserByUUID(id);
+      const updateUser = await BeneficiaryService.updateUser(
+        user.id,
+        alteredUser
+      );
       if (!updateUser) {
         util.setError(404, `Cannot find User with the id: ${id}`);
       } else {
@@ -152,11 +156,12 @@ class BeneficiariesController {
     }
 
     try {
-      const theUser = await BeneficiaryService.getAUser(id);
-      if (!theUser) {
+      const user = await UserService.getUserByUUID(id);
+
+      if (!user) {
         util.setError(404, `Cannot find User with the id ${id}`);
       } else {
-        util.setSuccess(200, 'Found User', theUser);
+        util.setSuccess(200, 'Found User', user);
       }
       return util.send(res);
     } catch (error) {
@@ -174,7 +179,9 @@ class BeneficiariesController {
     }
 
     try {
-      const UserToDelete = await BeneficiaryService.deleteUser(id);
+      const user = await UserService.getUserByUUID(id);
+
+      const UserToDelete = await BeneficiaryService.deleteUser(user.id);
 
       if (UserToDelete) {
         util.setSuccess(200, 'User deleted');
@@ -200,7 +207,7 @@ class BeneficiariesController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      const beneficiary_exist = await BeneficiaryService.checkBeneficiary(
+      const beneficiary_exist = await BeneficiaryService.checkBeneficiaryByUUID(
         data.beneficiaryId
       );
       if (beneficiary_exist) {
@@ -208,9 +215,7 @@ class BeneficiariesController {
           BeneficiaryId: data.beneficiaryId,
           report: data.report
         };
-        const complaint = await BeneficiaryService.createComplaint(
-          newComplaint
-        );
+        await BeneficiaryService.createComplaint(newComplaint);
         util.setSuccess(200, 'A new complaint has been made successfully');
         return util.send(res);
       } else {
@@ -230,14 +235,16 @@ class BeneficiariesController {
       util.setError(422, validation.errors);
       return util.send(res);
     } else {
-      const complaint_exist = await BeneficiaryService.checkComplaint(
+      const complaint_exist = await BeneficiaryService.checkComplaintByUUID(
         data.complaintId
       );
       if (complaint_exist) {
-        await BeneficiaryService.updateComplaint(data.complaintId).then(() => {
-          util.setSuccess(200, 'Complaint Resolved successfully.');
-          return util.send(res);
-        });
+        await BeneficiaryService.updateComplaint(complaint_exist.id).then(
+          () => {
+            util.setSuccess(200, 'Complaint Resolved successfully.');
+            return util.send(res);
+          }
+        );
       } else {
         util.setError(422, 'Complaint Id is Invalid');
         return util.send(res);
@@ -298,7 +305,7 @@ class BeneficiariesController {
     });
     const campaigns = await db.Beneficiaries.findAll({
       where: {
-        UserId: beneficiary
+        UserId: beneficiary_exist.id
       },
       include: ['Campaign']
     });
@@ -319,7 +326,7 @@ class BeneficiariesController {
     const beneficiary_exist = await db.User.findOne({uuid: beneficiary});
     const campaigns = await db.Beneficiary.findAll({
       where: {
-        UserId: beneficiary
+        UserId: beneficiary_exist.id
       },
       include: ['Campaign']
     });
@@ -371,9 +378,12 @@ class BeneficiariesController {
         return Response.send(res);
       }
 
+      const user = await BeneficiaryService.checkBeneficiaryByUUID(
+        beneficiaryId
+      );
       const beneficiary = await CampaignService.addBeneficiary(
         campaign.id,
-        beneficiaryId,
+        user.id,
         BeneficiarySource.beneficiary
       );
       Response.setSuccess(
@@ -403,10 +413,12 @@ class BeneficiariesController {
         );
         return Response.send(res);
       }
-
+      const user = await BeneficiaryService.checkBeneficiaryByUUID(
+        beneficiaryId
+      );
       const beneficiary = await CampaignService.addBeneficiary(
         campaign.id,
-        beneficiaryId,
+        user.id,
         BeneficiarySource.beneficiary
       );
       Response.setSuccess(
@@ -1068,18 +1080,19 @@ class BeneficiariesController {
         util.setError(422, validation.errors);
         return util.send(res);
       }
-      //c4dc0ac9-ae1c-44e6-a727-49502fe8657d
-      //25c7ac70-1c3b-463b-9a66-ed3f72c2b092
-      //b82417e6-4524-448a-98fe-a62e5ec893a0
-      //8217e5e4-4846-4c3b-926b-4e32bd3dd1be
-      const beneficiary = await db.User.findOne({
-        where: {id: req.user.id},
-        attributes: ['id', 'first_name', 'last_name'],
-        include: [{model: db.Wallet, as: 'Wallets', where: {uuid}}]
-      });
-      const campaignWallet = await db.Wallet.findOne({
-        where: {CampaignId: campaignId}
-      });
+
+      const [campaign, beneficiary, campaignWallet] = await Promise.all([
+        CampaignService.getCampaignByUUID(campaignId),
+        db.User.findOne({
+          where: {id: req.user.id},
+          attributes: ['id', 'first_name', 'last_name'],
+          include: [{model: db.Wallet, as: 'Wallets', where: {uuid}}]
+        }),
+        db.Wallet.findOne({
+          where: {CampaignId: campaign.id}
+        })
+      ]);
+
       const vendor = await BeneficiaryService.payForProduct(
         vendorId,
         productId
@@ -1139,7 +1152,10 @@ class BeneficiariesController {
   static async getCampaignQuestion(req, res) {
     const id = req.params.campaign_id;
     try {
-      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      const campaign = await CampaignService.getCampaignByUUID(id);
+      const question = await CampaignService.findCampaignFormByCampaignId(
+        campaign.id
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Survey questions',
@@ -1173,14 +1189,18 @@ class BeneficiariesController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      const campaign = await CampaignService.getCampaignByUUID(id);
+
+      const question = await CampaignService.findCampaignFormByCampaignId(
+        campaign.id
+      );
       if (!question && question.campaign_form) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Campaign not found'
         );
       }
-      req.body.beneficiaryId = req.user.uuid;
+      req.body.beneficiaryId = req.user.id;
       req.body.campaignId = id;
       const createdForm = await CampaignService.formAnswer(req.body);
       Response.setSuccess(
@@ -1218,9 +1238,14 @@ class BeneficiariesController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
+      const [campaign, user] = await Promise.all([
+        CampaignService.getCampaignByUUID(id),
+        UserService.getUserByUUID(data.beneficiaryId)
+      ]);
+
       const beneficiary = await BeneficiaryService.fetchCampaignBeneficiary(
-        id,
-        data.beneficiaryId
+        campaign.id,
+        user.id
       );
       if (!beneficiary) {
         Response.setError(
@@ -1230,8 +1255,8 @@ class BeneficiariesController {
         return Response.send(res);
       }
       const formAnswer = await CampaignService.findCampaignFormAnswer({
-        campaignId: id,
-        beneficiaryId: data.beneficiaryId
+        campaignId: campaign.id,
+        beneficiaryId: user.id
       });
       if (formAnswer) {
         Response.setError(
@@ -1240,7 +1265,9 @@ class BeneficiariesController {
         );
         return Response.send(res);
       }
-      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      const question = await CampaignService.findCampaignFormByCampaignId(
+        campaign.id
+      );
 
       if (question && !question.campaign_form) {
         Response.setError(
@@ -1273,8 +1300,8 @@ class BeneficiariesController {
     const {first_name, last_name, email, phone} = req.body;
     try {
       const rules = {
-        first_name: 'required|alpha',
-        last_name: 'required|alpha',
+        first_name: 'required|string',
+        last_name: 'required|string',
         email: 'required|email',
         phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/']
       };
@@ -1341,7 +1368,10 @@ class BeneficiariesController {
         return Response.send(res);
       }
 
-      const user = await UserService.findByUsername(data.username);
+      const [user, campaign] = await Promise.all([
+        UserService.findByUsername(data.username),
+        CampaignService.getCampaignByUUID(data.campaignId)
+      ]);
 
       if (!user) {
         Response.setError(
@@ -1417,7 +1447,7 @@ class BeneficiariesController {
       if (data.from_wallet === 'campaign') {
         const from_campaign_wallet = await WalletService.findSingleWallet({
           UserId: req.user.id,
-          CampaignId: data.campaignId
+          CampaignId: campaign.id
         });
 
         if (!from_campaign_wallet) {
@@ -1430,7 +1460,7 @@ class BeneficiariesController {
 
         const campaign_wallet = await WalletService.findSingleWallet({
           UserId: null,
-          CampaignId: data.campaignId
+          CampaignId: campaign.id
         });
 
         if (!campaign_wallet) {

@@ -18,24 +18,6 @@ const SmsService = require('./SmsService');
 const CurrencyServices = require('./CurrencyServices');
 const {user} = require('../config/mailer');
 
-// const Vault = require('hashi-vault-js');
-
-// const vault = new Vault({
-//   https: true,
-//   baseUrl: '172.25.16.0/v1',
-//   rootPath: 'secret',
-//   timeout: 5000,
-//   proxy: false
-// });
-
-// async function func() {
-//   const token = await vault.loginWithUserpass(
-//     process.env.VAULT_USER,
-//     process.env.VAULT_PASS
-//   ).client_token;
-//   return token;
-// }
-
 class AuthService {
   static async login(data, _password, roleId = null) {
     const error = new Error();
@@ -71,13 +53,6 @@ class AuthService {
               expiresIn: '48hr'
             }
           );
-
-          // for (const key in currencyData) {
-          //   if (currencyData.hasOwnProperty(key)) {
-          //     user[key] = currencyData[key];
-          //   }
-          // }
-
           resolve({
             user,
             token

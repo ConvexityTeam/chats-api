@@ -15,7 +15,9 @@ const {
   BlockchainService,
   ZohoService,
   WalletService,
-  QueueService
+  QueueService,
+  UserService,
+  TaskService
 } = require('../services');
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
   durable: true
@@ -153,7 +155,7 @@ class CashForWorkController {
       const id = req.params.cashforworkid;
       const cashforwork = await db.Campaign.findOne({
         where: {
-          uuid,
+          uuid: id,
           type: 'cash-for-work'
         },
         include: {
@@ -480,8 +482,8 @@ class CashForWorkController {
     try {
       const data = req.body;
       const rules = {
-        userId: 'required|numeric',
-        taskId: 'required|numeric'
+        userId: 'required|string',
+        taskId: 'required|string'
       };
 
       const validation = new Validator(data, rules);
@@ -490,10 +492,15 @@ class CashForWorkController {
         util.setError(400, validation.errors);
         return util.send(res);
       } else {
+        const [user, task] = await Promise.all([
+          await UserService.getUserByUUID(data.userId),
+          await TaskService.getTaskByUUID(data.taskId)
+        ]);
+
         const workerRecord = await db.TaskUsers.findOne({
           where: {
-            UserId: data.userId,
-            TaskId: data.taskId,
+            UserId: user.id,
+            TaskId: task.id,
             type: 'supervisor'
           }
         });
@@ -502,8 +509,6 @@ class CashForWorkController {
           util.setError(400, 'Unauthorized! User is not a supervisor');
           return util.send(res);
         }
-
-        const task = await db.Tasks.findOne({uuid: data.taskId});
         task.status = 'fulfilled';
         task.save();
 
@@ -683,8 +688,9 @@ class CashForWorkController {
   static async viewCashForWorkRefractorFieldApp(req, res) {
     const {beneficiaryId} = req.params;
     try {
+      const user = await UserService.getUserByUUID(beneficiaryId);
       const beneficiary = await db.TaskAssignment.findAll({
-        where: {UserId: beneficiaryId},
+        where: {UserId: user.id},
         include: [
           {
             model: db.TaskAssignmentEvidence,
@@ -724,8 +730,9 @@ class CashForWorkController {
           where: {RoleId: AclRoles.Beneficiary, uuid: data.UserId}
         });
         const count = await db.TaskAssignment.findAll();
+        const task = await TaskService.getTaskByUUID(data.TaskId);
         const assigned = await db.TaskAssignment.findOne({
-          where: {UserId: data.UserId, uuid: data.TaskId}
+          where: {UserId: exist.id, id: task.id}
         });
         if (assigned) {
           util.setError(400, 'you have already pick a this task');
@@ -737,14 +744,14 @@ class CashForWorkController {
               id: count.length + 1,
               UserId: data.UserId,
               status: 'in progress',
-              TaskId: data.TaskId
+              TaskId: task.id
             });
             if (TaskAssignment) {
               await db.Task.update(
                 {
                   assigned: task.assigned + 1
                 },
-                {where: {uuid: data.TaskId}}
+                {where: {id: task.id}}
               );
               util.setSuccess(200, 'Success Picking Task', TaskAssignment);
               return util.send(res);
@@ -942,8 +949,9 @@ class CashForWorkController {
         Response.setError(422, 'Please upload file evidence');
         return Response.send(res);
       }
+      const user = await UserService.getUserByUUID(beneficiaryId);
       const isTaskExist = await db.TaskAssignment.findOne({
-        where: {uuid: TaskAssignmentId, UserId: beneficiaryId}
+        where: {uuid: TaskAssignmentId, UserId: user.id}
       });
       if (!isTaskExist) {
         Response.setError(422, 'Task Assignment Not Found');
@@ -1036,8 +1044,11 @@ class CashForWorkController {
           Response.setError(422, 'Task Assignment Evidence Required');
           return Response.send(res);
         } else {
+          const taskUnique = await db.Task.findOne({
+            uuid: TaskAssignmentId
+          });
           const task = await db.TaskAssignment.findOne({
-            where: {TaskId: TaskAssignmentId}
+            where: {TaskId: taskUnique.id}
           });
           if (task) {
             const extension = req.file.mimetype.split('/').pop();
@@ -1077,8 +1088,11 @@ class CashForWorkController {
     const {taskId} = req.params;
 
     try {
+      const taskUnique = await db.Task.findOne({
+        uuid: taskId
+      });
       const tasks = await db.TaskAssignment.findAll({
-        where: {TaskId: taskId},
+        where: {TaskId: taskUnique.id},
         include: {model: db.Task, as: 'Task'}
       });
       if (tasks.length <= 0) {
@@ -1096,8 +1110,6 @@ class CashForWorkController {
   }
 
   static async viewCash4WorkTask(req, res) {
-    const {taskId} = req.body;
-
     try {
       const tasks =
         await CampaignService.cashForWorkCampaignByApprovedBeneficiary;
@@ -1125,8 +1137,9 @@ class CashForWorkController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       } else {
+        const user = await UserService.getUserByUUID(UserId);
         const tasks = await db.TaskAssignment.findAll({
-          where: {UserId},
+          where: {UserId: user.id},
           include: [
             {model: db.Task, as: 'Task'},
             {model: db.TaskAssignmentEvidence, as: 'SubmittedEvidences'}
@@ -1160,6 +1173,9 @@ class CashForWorkController {
         return Response.send(res);
       }
 
+      const taskUnique = await db.Task.findOne({
+        uuid: task_id
+      });
       const user = await db.User.findOne({
         where: {
           uuid: user_id
@@ -1167,7 +1183,7 @@ class CashForWorkController {
         attributes: userConst.publicAttr
       });
       const assignment = await db.TaskAssignment.findOne({
-        where: {UserId: user_id, TaskId: task_id}
+        where: {UserId: user_id, TaskId: taskUnique.id}
       });
       const task_exist = await db.Task.findOne({uuid: task_id});
       const submittedEvidence = await db.TaskAssignmentEvidence.findOne({
@@ -1211,7 +1227,10 @@ class CashForWorkController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       } else {
-        const tasks = await db.TaskAssignment.findOne({where: {UserId}});
+        const user = await UserService.getUserByUUID(UserId);
+        const tasks = await db.TaskAssignment.findOne({
+          where: {UserId: user.id}
+        });
         if (!tasks) {
           Response.setError(
             404,
@@ -1227,7 +1246,7 @@ class CashForWorkController {
             approved_by_agent: true,
             approved_at
           },
-          {where: {UserId}}
+          {where: {UserId: user.id}}
         );
         Response.setSuccess(200, 'Task Approved Success');
         return Response.send(res);
@@ -1250,7 +1269,11 @@ class CashForWorkController {
         Response.setError(422, validation.errors);
         return Response.send(res);
       } else {
-        const tasks = await db.TaskAssignment.findOne({where: {UserId}});
+        const user = await UserService.getUserByUUID(UserId);
+
+        const tasks = await db.TaskAssignment.findOne({
+          where: {UserId: user.id}
+        });
         if (!tasks) {
           Response.setError(
             404,
@@ -1266,7 +1289,7 @@ class CashForWorkController {
             approved_by_vendor: true,
             approved_at
           },
-          {where: {UserId}}
+          {where: {UserId: user.id}}
         );
         Response.setSuccess(200, 'Task Approved Success');
         return Response.send(res);
@@ -1281,7 +1304,13 @@ class CashForWorkController {
   static async getAllCashForWorkTask(req, res) {
     const {campaignId} = req.params;
     try {
-      const tasks = await CampaignService.cash4work(req.user.id, campaignId);
+      const campaignUnique = await CampaignService.getCampaignByUUID(
+        campaignId
+      );
+      const tasks = await CampaignService.cash4work(
+        req.user.id,
+        campaignUnique.id
+      );
       if (!tasks) {
         Response.setError(404, `No task retrieved`, tasks);
         return Response.send(res);
@@ -1296,7 +1325,10 @@ class CashForWorkController {
   static async getAllCashForWorkTaskFieldAgent(req, res) {
     const {campaignId} = req.params;
     try {
-      const tasks = await CampaignService.cash4workfield(campaignId);
+      const campaignUnique = await CampaignService.getCampaignByUUID(
+        campaignId
+      );
+      const tasks = await CampaignService.cash4workfield(campaignUnique.id);
       if (!tasks) {
         Response.setError(404, `No task retrieved`, tasks);
         return Response.send(res);

@@ -1,15 +1,12 @@
 require('dotenv').config();
-const db = require('../models');
-const {util, Response, Logger} = require('../libs');
+const {Response} = require('../libs');
 const {HttpStatusCode} = require('../utils');
 const Validator = require('validatorjs');
-const uploadFile = require('./AmazonController');
-const {ImpactReportService} = require('../services');
-const {SanitizeObject} = require('../utils');
-const environ = process.env.NODE_ENV == 'development' ? 'd' : 'p';
-const {termiiConfig} = require('../config');
-const {async} = require('regenerator-runtime');
-const {AclRoles} = require('../utils');
+const {
+  ImpactReportService,
+  CampaignService,
+  UserService
+} = require('../services');
 
 class ImpactReportController {
   static async createReport(req, res) {
@@ -28,23 +25,19 @@ class ImpactReportController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, validation.errors);
         return Response.send(res);
       }
+
+      const [campaignUnique, user] = await Promise.all([
+        CampaignService.getCampaignByUUID(data.CampaignId),
+        UserService.getUserByUUID(data.AgentId)
+      ]);
+
       const payload = {
         title: data.title,
-        AgentId: data.AgentId,
-        CampaignId: data.CampaignId,
+        AgentId: user.id,
+        CampaignId: campaignUnique.id,
         MediaLink: data.MediaLink
       };
-      // valiate Campaign
-      // const campaignExist = await db.Campaigns.findOne({
-      //   where: {id: data.CampaignId}
-      // });
-      // if (!campaignExist) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-      //     'Campaign not found, provide a valild campaign'
-      //   );
-      //   return Response.send(res);
-      // }
+
       const report = await ImpactReportService.create(payload);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
@@ -88,7 +81,8 @@ class ImpactReportController {
         );
         return Response.send(res);
       }
-      const report = await ImpactReportService.getById(campaignId);
+      const campaign = await CampaignService.getCampaignByUUID(campaignId);
+      const report = await ImpactReportService.getById(campaign.id);
       //   await db.ImpactReports.findAll({
       //   where: {
       //     CampaignId: campaignId

@@ -13,6 +13,10 @@ class ImpactReportService {
   static async get(id) {
     return await ImpactReports.findByPk(id);
   }
+
+  static async getByUUID(uuid) {
+    return await ImpactReports.findOne({where: {uuid}});
+  }
   static async getReportByCampaignId(campaignId) {
     return CampaignImpactReport.findAll({
       where: {

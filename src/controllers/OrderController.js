@@ -11,8 +11,8 @@ const {
   OrderService,
   CampaignService,
   BlockchainService,
-  OrganisationService,
-  QueueService
+  QueueService,
+  OrganisationService
 } = require('../services');
 const db = require('../models');
 const Utils = require('../libs/Utils');
@@ -46,6 +46,8 @@ class OrderController {
     const data = req.body;
     try {
       const [
+        campaignUnique,
+        userUnique,
         campaign,
         approvedBeneficiaries,
         approvedBeneficiary,
@@ -53,20 +55,19 @@ class OrderController {
         beneficiaryWallet,
         user
       ] = await Promise.all([
-        CampaignService.getCampaignById(data.campaign_id),
-        BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
+        CampaignService.getCampaignByUUID(data.campaign_id),
+        UserService.getUserByUUID(data.beneficiary_id),
+        CampaignService.getCampaignById(campaignUnique.id),
+        BeneficiariesService.getApprovedBeneficiaries(campaignUnique.id),
         BeneficiariesService.getApprovedBeneficiary(
-          data.campaign_id,
-          data.beneficiary_id
+          campaignUnique.id,
+          userUnique.id
         ),
-        BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
-        WalletService.findUserCampaignWallet(
-          data.beneficiary_id,
-          data.campaign_id
-        ),
+        BlockchainService.setUserKeypair(`campaign_${campaignUnique.id}`),
+        WalletService.findUserCampaignWallet(userUnique.id, campaignUnique.id),
         UserService.findSingleUser({
           RoleId: AclRoles.Beneficiary,
-          uuid: data.beneficiary_id
+          id: userUnique.id
         })
       ]);
       if (approvedBeneficiary.status === 'processing') {
@@ -105,8 +106,8 @@ class OrderController {
 
       if (campaign.type === 'item' && !beneficiaryWallet.was_funded) {
         await QueueService.approveNFTSpending(
-          data.beneficiary_id,
-          data.campaign_id,
+          userUnique.id,
+          campaignUnique.id,
           campaign
         );
       }
@@ -148,9 +149,13 @@ class OrderController {
   static async approveStatus(req, res) {
     const {campaign_id, beneficiary_id} = req.params;
     try {
+      const [campaignUnique, userUnique] = await Promise.all([
+        CampaignService.getCampaignByUUID(campaign_id),
+        UserService.getUserByUUID(beneficiary_id)
+      ]);
       const is_approved = await BeneficiariesService.getApprovedBeneficiary(
-        campaign_id,
-        beneficiary_id
+        campaignUnique.id,
+        userUnique.id
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -174,8 +179,11 @@ class OrderController {
     const {reference} = req.params;
     try {
       Logger.info(`Body: ${JSON.stringify(req.body)}, ref: ${reference}`);
-      const data = await VendorService.getOrder({reference});
-      const user = await UserService.findSingleUser({uuid: id});
+      const [userUnique, data, user] = await Promise.all([
+        UserService.getUserByUUID(id),
+        VendorService.getOrder({reference}),
+        UserService.findSingleUser({id: userUnique.id})
+      ]);
 
       if (!user) {
         Response.setError(
@@ -432,12 +440,15 @@ class OrderController {
       let gender = {male: [], female: []};
       const {organisation_id} = req.params;
       const filtered_data = [];
+      const organisation = await OrganisationService.getOrganisationByUUID(
+        organisation_id
+      );
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id,
+        OrganisationId: organisation.id,
         ...req.query
       });
-      const products = await OrderService.productPurchased(organisation_id);
+      const products = await OrderService.productPurchased(organisation.id);
 
       if (products.data.length <= 0) {
         Response.setSuccess(
@@ -508,11 +519,14 @@ class OrderController {
       let ageRange = ['18-29', '30-41', '42-53', '54-65', '66~'];
       let data = [];
       const filtered_data = [];
+      const organisation = await OrganisationService.getOrganisationByUUID(
+        organisation_id
+      );
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation.id
       });
-      const products = await OrderService.productPurchased(organisation_id);
+      const products = await OrderService.productPurchased(organisation.id);
       if (products.length > 0) {
         campaigns.forEach(campaign => {
           //CampaignId
@@ -625,13 +639,16 @@ class OrderController {
       const {organisation_id} = req.params;
       let filtered_data = [];
       let data = [];
+      const organisation = await OrganisationService.getOrganisationByUUID(
+        organisation_id
+      );
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id,
+        OrganisationId: organisation.id,
         ...req.query
       });
       const products = await OrderService.productPurchased(
-        organisation_id,
+        organisation.id,
         req.query
       );
 
@@ -719,11 +736,14 @@ class OrderController {
     try {
       const {organisation_id} = req.params;
       const data = [];
+      const organisation = await OrganisationService.getOrganisationByUUID(
+        organisation_id
+      );
       const campaigns = await CampaignService.getAllCampaigns({
         type: 'campaign',
-        OrganisationId: organisation_id
+        OrganisationId: organisation.id
       });
-      const products = await OrderService.productPurchased(organisation_id);
+      const products = await OrderService.productPurchased(organisation.id);
 
       if (products && products?.data.length <= 0) {
         Response.setSuccess(

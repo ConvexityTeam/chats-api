@@ -6,14 +6,14 @@ class ComplaintController {
   static async getPubCampaignConplaints(req, res) {
     try {
       const filter = SanitizeObject(req.query, ['status']);
-      const campaign = await CampaignService.getPubCampaignById(
+      const campaignUnique = await CampaignService.getCampaignByUUID(
         req.params.campaign_id
       );
+      const campaign = await CampaignService.getPubCampaignById(
+        campaignUnique.id
+      );
       const {count: complaints_count, rows: Complaints} =
-        await ComplaintService.getCampaignComplaints(
-          req.params.campaign_id,
-          filter
-        );
+        await ComplaintService.getCampaignComplaints(campaign.id, filter);
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Campaign Complaints.', {
         ...campaign,
         complaints_count,
@@ -33,8 +33,12 @@ class ComplaintController {
     try {
       const filter = SanitizeObject(req.query, ['status']);
       const campaign = req.campaign.toJSON();
+      const campaignUnique = await CampaignService.getCampaignByUUID(
+        req.params.campaign_id
+      );
+
       const complaint = await ComplaintService.getCampaignComplaints(
-        req.params.campaign_id,
+        campaignUnique.id,
         filter
       );
 

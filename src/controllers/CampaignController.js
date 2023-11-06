@@ -156,9 +156,10 @@ class CampaignController {
         type = 'campaign';
       }
       const OrganisationId = req.params.id;
+      const organisation = await OrganisationService.getOrganisationByUUID();
       const organisation_exist = await db.Organisations.findOne({
         where: {
-          uuid: OrganisationId
+          id: organisation.id
         },
         include: 'Member'
       });
@@ -207,12 +208,10 @@ class CampaignController {
   }
   static async beneficiariesToCampaign(req, res) {
     try {
-      const campaign_exist = await db.Campaign.findOne({
-        where: {
-          uuid: req.params.campaignId,
-          type: 'campaign'
-        }
-      });
+      const campaign_exist = await CampaignService.getCampaignByUUID(
+        req.params.campaignId
+      );
+
       if (campaign_exist) {
         let beneficiaries = req.body.users;
 
@@ -223,7 +222,7 @@ class CampaignController {
 
         const beneficiaries_already_added = await db.Beneficiaries.findAll({
           where: {
-            CampaignId: req.params.campaignId,
+            CampaignId: campaign_exist.id,
             UserId: {
               [Op.or]: main
             }
@@ -234,13 +233,13 @@ class CampaignController {
           main.forEach(async element => {
             await db.Beneficiaries.create({
               UserId: element,
-              CampaignId: req.params.campaignId
+              CampaignId: campaign_exist.id
             }).then(() => {
               createWalletQueue.send(
                 new Message(
                   {
                     id: element,
-                    campaign: req.params.campaignId,
+                    campaign: campaign_exist.id,
                     type: 'user'
                   },
                   {
@@ -311,14 +310,13 @@ class CampaignController {
     const {campaign_id} = req.params;
     const {currency} = SanitizeObject(req.body);
     try {
+      const findCampaign = await CampaignService.getCampaignByUUID(campaign_id);
       let body = {
-        clientEmailAddress: `campaign_${campaign_id}@campaign_${campaign_id}.com"`,
+        clientEmailAddress: `campaign_${findCampaign.id}@campaign_${findCampaign.id}.com"`,
         currency: currency,
         networkChain: 'POLYGON',
         publicKey: process.env.SWITCH_WALLET_PUBLIC_KEY
       };
-
-      const findCampaign = await CampaignService.getCampaignById(campaign_id);
       if (!findCampaign) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -355,25 +353,33 @@ class CampaignController {
     const {token_type} = req.body;
 
     try {
-      const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${campaign_id}`
-      );
-      const token = await BlockchainService.balance(campaign_token.address);
+      const [
+        organisationUnique,
+        campaignUnique,
+        campaign_token,
+        token,
+        beneficiaries,
+        campaign,
+        organisation
+      ] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(organisation_id),
+        CampaignService.getCampaignByUUID(campaign_id),
+        BlockchainService.setUserKeypair(`campaign_${campaignUnique.id}`),
+        BlockchainService.balance(campaign_token.address),
+        BeneficiaryService.getApprovedFundBeneficiaries(campaignUnique.id),
+        CampaignService.getCampaignWallet(
+          campaignUnique.id,
+          organisationUnique.id
+        ),
+        OrganisationService.getOrganisationWallet(organisationUnique.id)
+      ]);
+
       const balance = Number(token.Balance.split(',').join(''));
-      const beneficiaries =
-        await BeneficiaryService.getApprovedFundBeneficiaries(campaign_id);
+
       const realBeneficiaries = beneficiaries
         .map(exist => exist.User && exist)
         .filter(x => !!x);
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        organisation_id
-      );
       const campaignWallet = campaign.Wallet;
-      const organisation = await OrganisationService.getOrganisationWallet(
-        organisation_id
-      );
-
       const OrgWallet = organisation.Wallet;
 
       if (campaign.status == 'completed') {
@@ -424,7 +430,7 @@ class CampaignController {
         user.dataValues.formAnswer = null;
         if (user.formAnswer) {
           const answers = await CampaignService.findCampaignFormAnswer({
-            campaignId: campaign_id,
+            campaignId: campaignUnique.id,
             beneficiaryId: user.UserId
           });
           user.dataValues.formAnswer = answers;
@@ -466,13 +472,16 @@ class CampaignController {
     const {organisation_id, campaign_id} = req.params;
     const {amount} = req.body;
     try {
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        organisation_id
-      );
-      const organisation = await OrganisationService.getOrganisationWallet(
-        organisation_id
-      );
+      const [organisationUnique, campaignUnique, campaign, organisation] =
+        await Promise.all([
+          OrganisationService.getOrganisationByUUID(organisation_id),
+          CampaignService.getCampaignByUUID(campaign_id),
+          CampaignService.getCampaignWallet(
+            campaignUnique.id,
+            organisationUnique.id
+          ),
+          OrganisationService.getOrganisationWallet(organisation_id)
+        ]);
 
       Logger.info(`Campaign: ${JSON.stringify(campaign)}`);
       const campaignWallet = campaign.Wallet;
@@ -525,20 +534,29 @@ class CampaignController {
   static async approveAndFundCampaign(req, res) {
     const {organisation_id, campaign_id} = req.params;
     try {
-      const organisation_token = await BlockchainService.setUserKeypair(
-        `organisation_${organisation_id}`
-      );
-      const token = await BlockchainService.balance(organisation_token.address);
-      const balance = Number(token.Balance.split(',').join(''));
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        organisation_id
-      );
-      const campaignWallet = campaign.Wallet;
-      const organisation = await OrganisationService.getOrganisationWallet(
-        organisation_id
-      );
+      const [
+        organisationUnique,
+        campaignUnique,
+        organisation_token,
+        token,
+        campaign,
+        organisation
+      ] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(organisation_id),
+        CampaignService.getCampaignByUUID(campaign_id),
+        BlockchainService.setUserKeypair(
+          `organisation_${organisationUnique.id}`
+        ),
+        BlockchainService.balance(organisation_token.address),
+        CampaignService.getCampaignWallet(
+          campaignUnique.id,
+          organisationUnique.id
+        ),
+        OrganisationService.getOrganisationWallet(organisationUnique.id)
+      ]);
 
+      const balance = Number(token.Balance.split(',').join(''));
+      const campaignWallet = campaign.Wallet;
       const OrgWallet = organisation.Wallet;
 
       if (campaign.fund_status == 'in_progress') {
@@ -577,8 +595,6 @@ class CampaignController {
         return Response.send(res);
       }
 
-      console.log(campaign.budget, 'budget');
-      console.log(balance, 'balance');
       if (
         (campaign.type !== 'item' && campaign.budget > balance) ||
         (campaign.type !== 'item' && balance == 0)
@@ -632,7 +648,10 @@ class CampaignController {
   static async fundStatus(req, res) {
     try {
       const {campaign_id} = req.params;
-      const campaign = await CampaignService.getCampaign(campaign_id);
+      const campaignUnique = await CampaignService.getCampaignByUUID(
+        campaign_id
+      );
+      const campaign = await CampaignService.getCampaign(campaignUnique.id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Campaign fund status fetched successfully.`,
@@ -650,15 +669,12 @@ class CampaignController {
   static async getProposalRequests(req, res) {
     const {proposal_id} = req.params;
     try {
-      const vendors = await CampaignService.fetchRequest(proposal_id);
-
-      // const campaign = await CampaignService.getCampaignById(proposal_id);
-      const org_proposal = await CampaignService.fetchProposalRequest(
-        proposal_id
-      );
-      const campaign = await CampaignService.getCampaignById(
-        org_proposal.campaign_id
-      );
+      const [proposal, vendors, org_proposal, campaign] = await Promise.all([
+        CampaignService.fetchRequestByUUID(proposal_id),
+        CampaignService.fetchRequest(proposal.id),
+        CampaignService.fetchProposalRequest(proposal.id),
+        CampaignService.getCampaignById(org_proposal.campaign_id)
+      ]);
 
       const data = {vendors, campaign};
       data.campaign = campaign;
@@ -687,8 +703,11 @@ class CampaignController {
   static async fetchProposalRequests(req, res) {
     try {
       const {organisation_id} = req.params;
+      const organisation = await OrganisationService.getOrganisationByUUID(
+        organisation_id
+      );
       const proposals = await CampaignService.fetchProposalRequests(
-        organisation_id,
+        organisation.id,
         req.query
       );
 
@@ -747,9 +766,14 @@ class CampaignController {
         return Response.send(res);
       }
 
-      const campaignProduct = await ProductService.findCampaignProducts(
-        campaign_id
-      );
+      const [campaign, organisation, campaignProduct, productCategory] =
+        await Promise.all([
+          CampaignService.getCampaignByUUID(campaign_id),
+          OrganisationService.getOrganisationByUUID(organisation_id),
+          ProductService.findCampaignProducts(campaign.id),
+          ProductService.getProductCategoryByUUID(data.category_id)
+        ]);
+
       const find = campaignProduct.filter(a => data.find(b => b.tag === a.tag));
       if (find.length > 0) {
         Response.setError(
@@ -759,9 +783,9 @@ class CampaignController {
         return Response.send(res);
       }
 
-      request.category_id = data.category_id;
-      request.organisation_id = organisation_id;
-      request.campaign_id = campaign_id;
+      request.category_id = productCategory.id;
+      request.organisation_id = organisation.id;
+      request.campaign_id = campaign.id;
       const createdProposal = await CampaignService.proposalRequest(request);
       const products = await Promise.all(
         data.map(async product => {
@@ -809,7 +833,7 @@ class CampaignController {
       }
       const updated = await db.TaskAssignment.update(
         {status: 'rejected'},
-        {where: {id: taskAssignmentId}}
+        {where: {uuid: taskAssignmentId}}
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Task rejected', updated);
       return Response.send(res);
@@ -827,15 +851,23 @@ class CampaignController {
     const {beneficiaryId, taskAssignmentId} = req.body;
 
     try {
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        organisation_id
-      );
+      const [
+        campaignUnique,
+        organisationUnique,
+        campaign,
+        user,
+        beneficiaryWallet
+      ] = await Promise.all([
+        CampaignService.getCampaignByUUID(campaign_id),
+        OrganisationService.getOrganisationByUUID(organisation_id),
+        CampaignService.getCampaignWallet(
+          campaignUnique.id,
+          organisationUnique.id
+        ),
+        UserService.getUserByUUID(beneficiaryId),
+        WalletService.findUserCampaignWallet(user.id, campaignUnique.id)
+      ]);
       const campaignWallet = campaign.Wallet;
-      const beneficiaryWallet = await WalletService.findUserCampaignWallet(
-        beneficiaryId,
-        campaign_id
-      );
 
       const task_assignment = await db.TaskAssignment.findOne({
         uuid: taskAssignmentId
@@ -847,7 +879,9 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      const task = await db.Task.findOne({where: {id: task_assignment.TaskId}});
+      const task = await db.Task.findOne({
+        where: {uuid: task_assignment.TaskId}
+      });
 
       const amount_disburse = task.amount / task.assignment_count;
       if (!task_assignment) {
@@ -892,7 +926,7 @@ class CampaignController {
       let foundbeneneficiary = [];
       const tokens = await db.VoucherToken.findAll();
       beneficiary.forEach(data => {
-        var phone = user.filter(user => user.id === data);
+        var phone = user.filter(user => user.uuid === data);
         foundbeneneficiary.push(phone[0]);
       });
 
@@ -928,12 +962,17 @@ class CampaignController {
 
   static async campaignTokens(req, res) {
     const {campaign_id, organisation_id, token_type} = req.params;
-    const OrganisationId = organisation_id;
+
+    const [campaignUnique, organisationUnique] = await Promise.all([
+      CampaignService.getCampaignByUUID(campaign_id),
+      OrganisationService.getOrganisationByUUID(organisation_id)
+    ]);
+    const OrganisationId = organisationUnique.id;
 
     let where = {
       tokenType: token_type,
-      organisationId: OrganisationId,
-      campaignId: campaign_id
+      organisationId: organisationUnique.id,
+      campaignId: campaignUnique.id
     };
 
     const {page, size} = req.query;
@@ -953,15 +992,17 @@ class CampaignController {
       const response = await Pagination.getPagingData(tokencount, page, limit);
       const user = await UserService.getAllUsers();
       const campaign = await CampaignService.getAllCampaigns({OrganisationId});
-      const singleCampaign = await CampaignService.getCampaignById(campaign_id);
+      const singleCampaign = await CampaignService.getCampaignById(
+        campaignUnique.id
+      );
 
       for (let data of response.data) {
         if (singleCampaign.type !== 'item') {
           const campaignAddress = await BlockchainService.setUserKeypair(
-            `campaign_${campaign_id}`
+            `campaign_${campaignUnique.id}`
           );
           const beneficiaryAddress = await BlockchainService.setUserKeypair(
-            `user_${data.beneficiaryId}campaign_${campaign_id}`
+            `user_${data.beneficiaryId}campaign_${campaignUnique.id}`
           );
           const token = await BlockchainService.allowance(
             campaignAddress.address,
@@ -1030,7 +1071,10 @@ class CampaignController {
   static async toggleCampaign(req, res) {
     const {campaign_id} = req.params;
     try {
-      const campaign = await CampaignService.getCampaignById(campaign_id);
+      const campaignUnique = await CampaignService.getCampaignByUUID(
+        campaign_id
+      );
+      const campaign = await CampaignService.getCampaignById(campaignUnique.id);
       if (!campaign) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -1057,8 +1101,10 @@ class CampaignController {
       return Response.send(res);
     }
     try {
+      const campaignUnique = await CampaignService.getCampaignByUUID(id);
+
       const updateCampaign = await CampaignService.updateCampaign(
-        id,
+        campaignUnique.id,
         alteredCampaign
       );
       if (!updateCampaign) {
@@ -1141,7 +1187,11 @@ class CampaignController {
     }
 
     try {
-      const CampaignToDelete = await CampaignService.deleteCampaign(id);
+      const campaignUnique = await CampaignService.getCampaignByUUID(id);
+
+      const CampaignToDelete = await CampaignService.deleteCampaign(
+        campaignUnique.id
+      );
       if (CampaignToDelete) {
         Response.setSuccess(200, 'Campaign deleted');
       } else {
@@ -1208,21 +1258,26 @@ class CampaignController {
       let assignmentTask = [];
       const campaignId = req.params.campaign_id;
       const OrganisationId = req.params.organisation_id;
+      const [campaignUnique, OrganisationUnique] = await Promise.all([
+        CampaignService.getCampaignByUUID(campaignId),
+        OrganisationService.getOrganisationByUUID(OrganisationId)
+      ]);
+
       const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${campaignId}`
+        `campaign_${campaignUnique.id}`
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
       const campaign = await CampaignService.getCampaignWithBeneficiaries(
-        campaignId
+        campaignUnique.id
       );
       const campaignWallet = await WalletService.findOrganisationCampaignWallet(
-        OrganisationId,
-        campaignId
+        OrganisationUnique.id,
+        campaignUnique.id
       );
       if (!campaignWallet) {
         await QueueService.createWallet(
-          OrganisationId,
+          OrganisationUnique.id,
           'organisation',
           campaignId
         );
@@ -1231,10 +1286,10 @@ class CampaignController {
         campaign.Beneficiaries.forEach(async data => {
           const userWallet = await WalletService.findUserCampaignWallet(
             data.id,
-            campaignId
+            campaignUnique.id
           );
           if (!userWallet) {
-            await QueueService.createWallet(data.id, 'user', campaignId);
+            await QueueService.createWallet(data.id, 'user', campaignUnique.id);
           }
         });
       }
@@ -1278,9 +1333,9 @@ class CampaignController {
         )
       ).toFixed(2);
       campaign.dataValues.Complaints =
-        await CampaignService.getCampaignComplaint(campaignId);
+        await CampaignService.getCampaignComplaint(campaignUnique.id);
       const campaignSecret = await HashiCorp.decryptData(
-        `campaignSecret=${campaignId}`
+        `campaignSecret=${campaignUnique.id}`
       );
       // (await AwsService.getMnemonic(campaign.id)) || null;
       campaign.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
@@ -1306,32 +1361,38 @@ class CampaignController {
       let assignmentTask = [];
       const campaignId = req.params.campaign_id;
       const OrganisationId = req.params.organisation_id;
+      const [campaignUnique, OrganisationUnique] = await Promise.all([
+        CampaignService.getCampaignByUUID(campaignId),
+        OrganisationService.getOrganisationByUUID(OrganisationId)
+      ]);
       const campaign_token = await BlockchainService.setUserKeypair(
-        `campaign_${campaignId}`
+        `campaign_${campaignUnique.id}`
       );
       const token = await BlockchainService.balance(campaign_token.address);
       const balance = Number(token.Balance.split(',').join(''));
       const campaign =
-        await CampaignService.getPrivateCampaignWithBeneficiaries(campaignId);
+        await CampaignService.getPrivateCampaignWithBeneficiaries(
+          campaignUnique.id
+        );
       const campaignWallet = await WalletService.findOrganisationCampaignWallet(
-        OrganisationId,
-        campaignId
+        OrganisationUnique.id,
+        campaignUnique.id
       );
       if (!campaignWallet) {
         await QueueService.createWallet(
-          OrganisationId,
+          OrganisationUnique.id,
           'organisation',
-          campaignId
+          campaignUnique.id
         );
       }
       if (campaign.Beneficiaries) {
         campaign.Beneficiaries.forEach(async data => {
           const userWallet = await WalletService.findUserCampaignWallet(
             data.id,
-            campaignId
+            campaignUnique.id
           );
           if (!userWallet) {
-            await QueueService.createWallet(data.id, 'user', campaignId);
+            await QueueService.createWallet(data.id, 'user', campaignUnique.id);
           }
         });
       }
@@ -1375,7 +1436,7 @@ class CampaignController {
         )
       ).toFixed(2);
       campaign.dataValues.Complaints =
-        await CampaignService.getCampaignComplaint(campaignId);
+        await CampaignService.getCampaignComplaint(campaignUnique.id);
       campaign.dataValues.ck8 = ''; //ait AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1397,10 +1458,13 @@ class CampaignController {
     const {campaign_id} = req.params;
     try {
       const approved = [];
-      const campaign = await CampaignService.getACampaignWithBeneficiaries(
-        campaign_id,
-        'campaign'
-      );
+      const [campaignUnique, campaign] = await Promise.all([
+        CampaignService.getCampaignByUUID(campaign_id),
+        CampaignService.getACampaignWithBeneficiaries(
+          campaignUnique.id,
+          'campaign'
+        )
+      ]);
       campaign.forEach(app => {
         if (app.Beneficiaries.length)
           approved.push({
@@ -1433,38 +1497,26 @@ class CampaignController {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
       const {source, type} = SanitizeObject(req.body, ['source', 'type']);
-      const campaign = await CampaignService.getCampaign(campaign_id);
-      const replicaCampaign = await CampaignService.getACampaignWithReplica(
-        replicaCampaignId,
-        type
-      );
+      const [campaignUnique, campaignUnique2, replicaCampaign] =
+        await Promise.all([
+          CampaignService.getCampaignByUUID(campaign_id),
+          CampaignService.getCampaignByUUID(replicaCampaignId),
+          CampaignService.getACampaignWithReplica(campaignUnique2.id, type)
+        ]);
+
       const onboard = [];
-
-      //const campaign = await CampaignService.getCampaignById(campaign_id);
-
-      // if (campaign.formId) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     `Campaign Has a Form Please Onboard Beneficiary From Field App`
-      //   );
-      //   return Response.send(res);
-      // }
       let count = 0;
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
           setTimeout(async () => {
             const res = await CampaignService.addBeneficiary(
-              campaign_id,
+              campaignUnique.id,
               beneficiary.id,
               source
             );
             count++;
             onboard.push(res);
           }, index * 5000);
-          // await campaign.update({
-          //   total_imported: count,
-          //   total_beneficiaries: replicaCampaign.Beneficiaries.length
-          // });
         })
       );
 
@@ -1490,7 +1542,10 @@ class CampaignController {
   static async importStatus(req, res) {
     try {
       const campaign_id = req.params.campaign_id;
-      const campaign = await CampaignService.getCampaign(campaign_id);
+      const campaignUnique = await CampaignService.getCampaignByUUID(
+        campaign_id
+      );
+      const campaign = await CampaignService.getCampaign(campaignUnique.id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Status',
@@ -1509,7 +1564,8 @@ class CampaignController {
   static async withdrawFund(req, res) {
     const id = req.params.campaign_id;
     try {
-      const campaign = await CampaignService.getCampaignById(id);
+      const campaignUnique = await CampaignService.getCampaignByUUID(id);
+      const campaign = await CampaignService.getCampaignById(campaignUnique.id);
       if (!campaign.is_funded) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -1569,9 +1625,10 @@ class CampaignController {
       let married = 0;
       let single = 0;
       let divorce = 0;
-      const [campaign, vendor] = await Promise.all([
-        CampaignService.getCampaignById(req.params.campaign_id),
-        CampaignService.campaignVendors(req.params.campaign_id)
+      const [campaignUnique, campaign, vendor] = await Promise.all([
+        await CampaignService.getCampaignByUUID(req.params.campaign_id),
+        CampaignService.getCampaignById(campaignUnique.id),
+        CampaignService.campaignVendors(campaignUnique.id)
       ]);
       if (campaign.Beneficiaries) {
         for (let beneficiaries of campaign.Beneficiaries) {
@@ -1686,7 +1743,6 @@ class CampaignController {
   static async campaignForm(req, res) {
     const id = req.params.organisation_id;
     const data = req.body;
-    data.organisationId = id;
     try {
       const rules = {
         title: 'required|string',
@@ -1696,6 +1752,10 @@ class CampaignController {
         'questions.*.question.title': 'required|string',
         'questions.*.question.options': 'array'
       };
+
+      const organisationUnique =
+        await OrganisationService.getOrganisationByUUID(id);
+      data.organisationId = organisationUnique.id;
 
       const validation = new Validator(data, rules);
 
@@ -1788,6 +1848,9 @@ class CampaignController {
         return Response.send(res);
       }
 
+      // const campaignUnique = await CampaignService.getCampaignByUUID(
+      //   data.id
+      // )
       const isForm = await CampaignService.findCampaignForm(req.body.id);
       if (!isForm) {
         Response.setError(
@@ -1883,7 +1946,12 @@ class CampaignController {
   static async getCampaignForm(req, res) {
     const id = req.params.organisation_id;
     try {
-      const form = await CampaignService.getCampaignForm(id, req.query);
+      const organisationUnique =
+        await OrganisationService.getOrganisationByUUID(id);
+      const form = await CampaignService.getCampaignForm(
+        organisationUnique.id,
+        req.query
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign form received',

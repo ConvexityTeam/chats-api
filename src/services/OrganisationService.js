@@ -21,6 +21,13 @@ const SmsService = require('./SmsService');
 const MailerService = require('./MailerService');
 
 class OrganisationService {
+  static getOrganisationByUUID(uuid) {
+    return Organisation.findOne({
+      where: {
+        uuid
+      }
+    });
+  }
   static findOneById(uuid) {
     return User.findOne({
       where: {
@@ -57,7 +64,7 @@ class OrganisationService {
   static async getOrganisation(id) {
     return Organisation.findOne({
       where: {
-        uuid: id
+        id
       }
     });
   }
@@ -118,7 +125,7 @@ class OrganisationService {
   }
 
   static async checkExist(id) {
-    return Organisation.findOne({where: {uuid: id}});
+    return Organisation.findOne({where: {id}});
   }
 
   static async checkExistEmail(email) {

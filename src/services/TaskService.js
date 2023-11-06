@@ -34,6 +34,13 @@ class TaskService {
     return Task.bulkCreate(_tasks);
   }
 
+  static async getTaskByUUID(uuid) {
+    return Task.findOne({
+      where: {
+        uuid
+      }
+    });
+  }
   static async getCashForWorkTasks(params) {
     return Task.findAll({
       where: {

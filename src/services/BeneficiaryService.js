@@ -93,7 +93,7 @@ class BeneficiariesService {
   static async updateUser(id, updateUser) {
     const UserToUpdate = await User.findOne({
       where: {
-        id: id
+        uuid: id
       }
     });
 
@@ -112,7 +112,7 @@ class BeneficiariesService {
   static async getAUser(id) {
     return User.findOne({
       where: {
-        id: id,
+        id,
         RoleId: AclRoles.Beneficiary
       }
     });
@@ -129,14 +129,14 @@ class BeneficiariesService {
   static async deleteUser(id) {
     const UserToDelete = await User.findOne({
       where: {
-        id: id
+        uuid: id
       }
     });
 
     if (UserToDelete) {
       return User.destroy({
         where: {
-          id: id
+          uuid: id
         }
       });
     }
@@ -146,7 +146,15 @@ class BeneficiariesService {
   static async checkBeneficiary(id) {
     return Beneficiary.findOne({
       where: {
-        id: id
+        uuid: id
+      }
+    });
+  }
+
+  static async checkBeneficiaryByUUID(uuid) {
+    return Beneficiary.findOne({
+      where: {
+        uuid
       }
     });
   }
@@ -217,7 +225,14 @@ class BeneficiariesService {
   static async checkComplaint(id) {
     return Complaint.findOne({
       where: {
-        id: id
+        id
+      }
+    });
+  }
+  static async checkComplaintByUUID(uuid) {
+    return Complaint.findOne({
+      where: {
+        uuid
       }
     });
   }
@@ -275,10 +290,10 @@ class BeneficiariesService {
     });
   }
 
-  static async beneficiaryProfile(id) {
+  static async beneficiaryProfile(uuid) {
     return User.findOne({
       where: {
-        id,
+        uuid,
         RoleId: AclRoles.Beneficiary
       },
       include: [
@@ -748,7 +763,7 @@ class BeneficiariesService {
 
   static async payForProduct(VendorId, ProductId) {
     return User.findOne({
-      where: {id: VendorId},
+      where: {uuid: VendorId},
       attributes: userConst.publicAttr,
       include: [
         {

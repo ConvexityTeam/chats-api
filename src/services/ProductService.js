@@ -20,6 +20,13 @@ class ProductService {
   static addCategoryType(categoryType) {
     return ProductCategory.create(categoryType);
   }
+  static getProductCategoryByUUID(uuid) {
+    return ProductCategory.findOne({
+      where: {
+        uuid
+      }
+    });
+  }
 
   static fetchOneMyProposals(extraClause = {}) {
     return VendorProposal.findOne({

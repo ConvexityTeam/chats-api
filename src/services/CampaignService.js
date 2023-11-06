@@ -625,6 +625,13 @@ class CampaignService {
     return campaign;
   }
 
+  static async fetchRequestByUUID(uuid) {
+    return await ProposalRequest.findOne({
+      where: {
+        uuid
+      }
+    });
+  }
   static async fetchRequest(proposal_id) {
     return await User.findAll({
       where: {
@@ -710,6 +717,21 @@ class CampaignService {
     });
     const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
+  }
+
+  static getCampaignByUUID(uuid) {
+    return Campaign.findOne({
+      where: {
+        uuid
+      }
+    });
+  }
+  static getCampaignsByUUID(uuid) {
+    return Campaign.findAll({
+      where: {
+        uuid
+      }
+    });
   }
   static getCash4W(OrganisationId) {
     return Campaign.findAll({
@@ -987,9 +1009,9 @@ class CampaignService {
       where: {title}
     });
   }
-  static async findCampaignFormById(uuid) {
+  static async findCampaignFormById(id) {
     return await CampaignForm.findOne({
-      where: {uuid}
+      where: {id}
     });
   }
   static async findCampaignFormByCampaignId(id) {

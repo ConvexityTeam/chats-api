@@ -162,9 +162,7 @@ class AdminController {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, `Upload Selfie`);
         return Response.send(res);
       }
-      const organisation = await OrganisationService.findOneById(
-        userprofile_id
-      );
+      const organisation = await UserService.getUserByUUID(userprofile_id);
       if (!organisation) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -220,7 +218,7 @@ class AdminController {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
-        const user = await UserService.findUser(ngo.Members[0].UserId);
+        const user = await UserService.getUserByUUID(ngo.Members[0].UserId);
         ngo.dataValues.name =
           ngo.name || user.first_name + ' ' + user.last_name;
         ngo.dataValues.status = user.status;
@@ -273,9 +271,8 @@ class AdminController {
   }
   static async findLiveness(req, res) {
     try {
-      const liveness = await UserService.findLivenessByUserId(
-        req.params.user_id
-      );
+      const user = await UserService.getUserByUUID(req.params.user_id);
+      const liveness = await UserService.findLivenessByUserId(user.id);
       Response.setSuccess(200, 'Liveness retrieved', liveness);
       return Response.send(res);
     } catch (error) {
@@ -295,7 +292,7 @@ class AdminController {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
-        const user = await UserService.findUser(ngo.Members[0].UserId);
+        const user = await UserService.getUserByUUID(ngo.Members[0].UserId);
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
@@ -333,11 +330,14 @@ class AdminController {
     const {organisation_id} = req.params;
 
     try {
-      let total = await TransactionService.getTotalTransactionAmountAdmin(
+      const organisation = await OrganisationService.getOrganisationByUUID(
         organisation_id
       );
+      let total = await TransactionService.getTotalTransactionAmountAdmin(
+        organisation.id
+      );
       const beneficiaries =
-        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
+        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation.id);
       const beneficiariesCount = Object.keys(beneficiaries).length;
 
       let spend_for_campaign = total.map(a => a.dataValues.amount);
@@ -388,12 +388,11 @@ class AdminController {
   static async getVendorCampaignAndAmountTotal(req, res) {
     const {vendor_id} = req.params;
     try {
-      const transactions = await VendorService.vendorsTransactionsAdmin(
-        vendor_id
-      );
-      const campaigns = await CampaignService.getVendorCampaignsAdmin(
-        vendor_id
-      );
+      const vendor = await UserService.getUserByUUID(vendor_id);
+      const [transactions, campaigns] = await Promise.all([
+        VendorService.vendorsTransactionsAdmin(vendor.id),
+        CampaignService.getVendorCampaignsAdmin(vendor.id)
+      ]);
       const campaignsCount = Object.keys(campaigns).length;
 
       let spend_for_campaign = transactions.map(a => a.dataValues.amount);
@@ -449,13 +448,13 @@ class AdminController {
     const {beneficiary_id} = req.params;
 
     try {
-      let total =
-        await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
-          beneficiary_id
-        );
-      const campaigns = await CampaignService.beneficiaryCampaingsAdmin(
-        beneficiary_id
-      );
+      const user = await UserService.getUserByUUID(beneficiary_id);
+
+      const [total, campaigns] = await Promise.all([
+        TransactionService.getBeneficiaryTransactionsAdmin(user.id),
+        CampaignService.beneficiaryCampaingsAdmin(user.id)
+      ]);
+
       const campaignCount = Object.keys(campaigns).length;
 
       let spend_for_campaign = total.map(a => a.dataValues.amount);
@@ -545,9 +544,10 @@ class AdminController {
 
   static async getDonorCampaignCount(req, res) {
     try {
+      const user = await UserService.getUserByUUID(req.params.donor_id);
       const userId = await db.User.findOne({
         where: {
-          uuid: req.params.donor_id
+          id: user.id
         }
       });
 
@@ -565,12 +565,11 @@ class AdminController {
         return Response.send(res);
       }
 
-      let total = await TransactionService.getTotalTransactionAmountAdmin(
-        donor.id
-      );
-      const campaigns = await CampaignService.getPrivateCampaignsAdmin(
-        donor.id
-      );
+      const [total, campaigns] = await Promise.all([
+        TransactionService.getDonorTransactionsAdmin(donor.id),
+        CampaignService.donorCampaingsAdmin(donor.id)
+      ]);
+
       // const campaignsCount = Object.keys(campaigns).length
 
       let spend_for_campaign = total.map(a => a.dataValues.amount);

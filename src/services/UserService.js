@@ -30,6 +30,18 @@ class UserService {
     }
   }
 
+  static async getUserByUUID(uuid) {
+    try {
+      return await User.findOne({
+        where: {
+          uuid: uuid
+        },
+        attributes: userConst.publicAttr
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
   static async addUser(newUser) {
     return User.create(newUser);
   }
@@ -95,10 +107,10 @@ class UserService {
 
   // Refactored ==============
 
-  static findUser(id, extraClause = null) {
+  static findUser(uuid, extraClause = null) {
     return User.findOne({
       where: {
-        id,
+        uuid,
         ...extraClause
       },
       include: ['liveness'],
