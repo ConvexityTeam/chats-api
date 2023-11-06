@@ -1755,7 +1755,7 @@ class OrganisationController {
   static async approvedAllbeneficiaries(req, res) {
     try {
       const campaign = req.campaign;
-      const ids = req.body.ids;
+      const uuids = req.body.ids;
 
       if (campaign.is_funded) {
         Response.setError(
@@ -1764,6 +1764,8 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+      const users = await UserService.findUsers(uuids);
+      const ids = users.map(user => user.id);
       const [approvals] =
         await BeneficiaryService.approveAllCampaignBeneficiaries(
           campaign.id,
@@ -1784,7 +1786,7 @@ class OrganisationController {
   static async rejectAllbeneficiaries(req, res) {
     try {
       const campaign = req.campaign;
-      const ids = req.body.ids;
+      const uuids = req.body.ids;
 
       if (campaign.is_funded) {
         Response.setError(
@@ -1793,6 +1795,8 @@ class OrganisationController {
         );
         return Response.send(res);
       }
+      const users = await UserService.findUsers(uuids);
+      const ids = users.map(user => user.id);
       const [approvals] =
         await BeneficiaryService.rejectAllCampaignBeneficiaries(
           campaign.id,
@@ -1813,10 +1817,10 @@ class OrganisationController {
 
   static async approveCampaignVendor(req, res) {
     try {
-      const approved = await CampaignService.approveVendorForCampaign(
-        req.campaign.id,
-        req.body.vendor_id
-      );
+      const [user, approved] = await Promise.all([
+        UserService.getUserByUUID(req.body.vendor_id),
+        CampaignService.approveVendorForCampaign(req.campaign.id, user.id)
+      ]);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Vendor approved.',
@@ -1834,10 +1838,10 @@ class OrganisationController {
 
   static async removeCampaignVendor(req, res) {
     try {
-      const removed = await CampaignService.removeVendorForCampaign(
-        req.campaign.id,
-        req.body.vendor_id
-      );
+      const [user, removed] = await Promise.all([
+        UserService.getUserByUUID(req.body.vendor_id),
+        CampaignService.removeVendorForCampaign(req.campaign.id, user.id)
+      ]);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Vendor removed.',
@@ -1855,10 +1859,10 @@ class OrganisationController {
 
   static async getCampaignVendors(req, res) {
     try {
-      const vendors = await CampaignService.campaignVendors(
-        req.params.campaign_id,
-        req.query
-      );
+      const [campaign, vendors] = await Promise.all([
+        CampaignService.getCampaignByUUID(req.params.campaign_id),
+        CampaignService.campaignVendors(campaign.id, req.query)
+      ]);
       const setObj = new Set();
       const result = vendors.data.reduce((acc, item) => {
         if (!setObj.has(item.VendorId)) {
@@ -1940,7 +1944,7 @@ class OrganisationController {
           ) {
             if (!organisation_exist) {
               var org = await db.Organisations.findOne({
-                where: {uuid: fields.organisation_id}
+                where: {id: fields.organisation_id}
               });
             } else {
               var org = organisation_exist;
@@ -2021,7 +2025,7 @@ class OrganisationController {
       const id = req.params.id;
       let ngo = await db.Organisations.findOne({
         where: {
-          uuid: id
+          id
         },
         include: {
           model: db.Wallet,
@@ -2068,7 +2072,7 @@ class OrganisationController {
     } else {
       const organisation = await db.Organisations.findOne({
         where: {
-          uuid: data.organisation_id
+          id: data.organisation_id
         },
         include: {
           model: db.Wallet,
@@ -2142,7 +2146,7 @@ class OrganisationController {
 
     const organisation = await db.Organisations.findOne({
       where: {
-        uuid: organisationId
+        id: organisationId
       },
       include: {
         model: db.Wallet,
@@ -2199,7 +2203,7 @@ class OrganisationController {
       const id = req.params.organisationId;
       const organisation = await db.Organisations.findOne({
         where: {
-          uuid: id
+          id
         },
         include: {
           model: db.Wallet,
@@ -2222,10 +2226,9 @@ class OrganisationController {
   static async getMainWallet(req, res) {
     try {
       const id = req.params.organisationId;
-      console.log(id, 'id');
       const organisation = await db.Organisations.findOne({
         where: {
-          uuid: id
+          id
         },
         include: {
           model: db.Wallet,
@@ -2256,7 +2259,7 @@ class OrganisationController {
       const campaign = req.params.campaignId;
       const organisation = await db.Organisations.findOne({
         where: {
-          uuid: id
+          id
         },
         include: {
           model: db.Wallet,
@@ -2294,7 +2297,7 @@ class OrganisationController {
     } else {
       const organisation = await db.Organisations.findOne({
         where: {
-          uuid: data.organisation_id
+          id: data.organisation_id
         },
         include: {
           model: db.Wallet,
@@ -2369,7 +2372,7 @@ class OrganisationController {
     const id = req.params.id;
     let ngo = await db.Organisations.findOne({
       where: {
-        uuid: id
+        id
       },
       include: {
         model: db.OrganisationMembers,
@@ -2508,10 +2511,15 @@ class OrganisationController {
     try {
       const OrganisationId = req.organisation.id;
       const vendorId = req.params.vendor_id || req.body.vendor_id;
-      const vendorProducts = await VendorService.vendorStoreProducts(vendorId);
-      const vendor = await VendorService.vendorPublicDetails(vendorId, {
-        OrganisationId
-      });
+      const [organisationUnique, vendorUnique, vendorProducts, vendor] =
+        await Promise.all([
+          OrganisationService.getOrganisationByUUID(OrganisationId),
+          UserService.getUserByUUID(vendorId),
+          VendorService.vendorStoreProducts(vendorUnique.id),
+          VendorService.vendorPublicDetails(vendorUnique.id, {
+            OrganisationId: organisationUnique.id
+          })
+        ]);
       vendor.dataValues.Store = {
         Products: vendorProducts
       };

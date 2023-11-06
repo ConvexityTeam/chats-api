@@ -133,6 +133,17 @@ class UserService {
       where: {authorized_by}
     });
   }
+
+  static findUsers(ids) {
+    return User.findAll({
+      where: {
+        uuid: {
+          [Op.in]: ids
+        }
+      },
+      attributes: userConst.publicAttr
+    });
+  }
   static findByEmail(email, extraClause = null) {
     return User.findOne({
       where: {
