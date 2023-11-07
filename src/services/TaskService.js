@@ -79,7 +79,7 @@ class TaskService {
   }
 
   static async uploadProgressEvidence(taskProgressId, imageUrl) {
-    const taskProgress = await TaskProgress.findByPk(taskProgressId);
+    const taskProgress = await TaskProgress.findOne({uuid: taskProgressId});
 
     if (!taskProgress) {
       throw new Error('No progress task found');

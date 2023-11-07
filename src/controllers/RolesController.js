@@ -36,7 +36,7 @@ class RolesController {
   static async updatedRole(req, res) {
     const alteredRole = req.body;
     const {id} = req.params;
-    if (!Number(id)) {
+    if (id) {
       util.setError(400, 'Please input a valid numeric value');
       return util.send(res);
     }
@@ -62,8 +62,8 @@ class RolesController {
   static async getARole(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
-      util.setError(400, 'Please input a valid numeric value');
+    if (id) {
+      util.setError(400, 'Please input a valid value');
       return util.send(res);
     }
 
@@ -85,14 +85,13 @@ class RolesController {
   static async deleteRole(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
+    if (id) {
       util.setError(400, 'Please provide a numeric value');
       return util.send(res);
     }
 
     try {
       const RoleToDelete = await Roleservice.deleteRole(id);
-
       if (RoleToDelete) {
         util.setSuccess(200, 'Role deleted');
       } else {

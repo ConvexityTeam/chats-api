@@ -1,5 +1,10 @@
 const {Response, Logger} = require('../libs');
-const {ProductService, UserService} = require('../services');
+const {
+  ProductService,
+  UserService,
+  OrganisationService,
+  CampaignService
+} = require('../services');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const Validator = require('validatorjs');
 
@@ -23,8 +28,11 @@ class ProductController {
         Response.setError(422, 'Category type already exists');
         return Response.send(res);
       }
-      req.body.organisation_id = req.params.organisation_id;
-      const categoryType = await ProductService.addCategoryType(req.body);
+      const [organisationUnique, categoryType] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(req.params.organisation_id),
+        ProductService.addCategoryType(req.body)
+      ]);
+      req.body.organisation_id = organisationUnique.id;
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Category Type Created.',
@@ -43,9 +51,11 @@ class ProductController {
 
   static async fetchCategoryTypes(req, res) {
     try {
-      const categoryTypes = await ProductService.fetchCategoryTypes(
-        req.params.organisation_id
-      );
+      const [organisationUnique, categoryTypes] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(req.params.organisation_id),
+        ProductService.fetchCategoryTypes(organisationUnique.id)
+      ]);
+
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Category Types fetched.',
@@ -65,14 +75,18 @@ class ProductController {
     try {
       const campaignId = req.params.campaign_id;
       const productId = req.params.productId;
-      const products = await ProductService.findCampaignProduct(
-        campaignId,
-        productId
-      );
+      const [campaignUnique, productUnique, products, campaign] =
+        await Promise.all([
+          CampaignService.getCampaignByUUID(campaignId),
+          ProductService.getProductByUUID(productId),
+          ProductService.findCampaignProducts(
+            campaignUnique.id,
+            productUnique.id
+          ),
+          db.Campaign.findOne({where: {id: campaignUnique.id}})
+        ]);
 
-      const campaign = await db.Campaign.findOne({where: {id: campaignId}});
       products.dataValues.campaign_status = campaign.status;
-
       products.ProductVendors.forEach(vendor => {
         vendor.dataValues.VendorName =
           vendor.first_name + ' ' + vendor.last_name;

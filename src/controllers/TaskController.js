@@ -8,21 +8,21 @@ class TaskController {
     try {
       const tasks = req.body;
       const campaignId = req.params.campaign_id;
-      const createdTasks = await TaskService.createCashForWorkTask(
-        tasks,
-        campaignId,
-      );
+      const [campaignUnique, createdTasks] = await Promise.all([
+        db.Campaign.findOne({where: {uuid: campaignId}}),
+        TaskService.createCashForWorkTask(tasks, campaignUnique.id)
+      ]);
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Tasks created successfully',
-        createdTasks,
+        createdTasks
       );
       return Response.send(res);
     } catch (error) {
       console.log(error, 'error');
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -33,12 +33,15 @@ class TaskController {
       let completed_tasks = 0;
       let task_count = 0;
       const params = SanitizeObject(req.params);
-      const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
+      const [campaignUnique, CashForWorkTasks] = await Promise.all([
+        db.Campaign.findOne({where: {uuid: params.campaign_id}}),
+        TaskService.getCashForWorkTasks({campaign_id: campaignUnique.id})
+      ]);
 
       if (!CashForWorkTasks) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
@@ -52,13 +55,13 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork Campaign Tasks retreived',
-        CashForWorkTasks,
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -68,13 +71,15 @@ class TaskController {
     try {
       let completed_task = 0;
       const params = SanitizeObject(req.params);
-      const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
-        params,
-      );
+      const [taskUnique, CashForWorkTasks] = await Promise.all([
+        TaskService.getTaskByUUID(params.task_id),
+        TaskService.getCashForBeneficiaries({task_id: taskUnique.id})
+      ]);
+
       if (!CashForWorkTasks) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
@@ -94,13 +99,13 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
-        CashForWorkTasks,
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -110,18 +115,21 @@ class TaskController {
     try {
       const task = req.body;
       const taskId = req.params.task_id;
-      const updatedTask = await TaskService.updateTask(taskId, task);
+      const [taskUnique, updatedTask] = await Promise.all([
+        TaskService.getTaskByUUID(taskId),
+        TaskService.updateTask(taskUnique.id, task)
+      ]);
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Task updated',
-        updatedTask,
+        updatedTask
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -130,24 +138,25 @@ class TaskController {
   static async amendTask(req, res) {
     try {
       const taskId = req.params.taskId;
-      const task = await db.Task.findByPk(taskId);
-      if (!task) {
+
+      const taskUnique = await TaskService.getTaskByUUID(taskId);
+      if (!taskUnique) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
       const updated = await db.Task.update(
         {isCompleted: true},
-        {where: {id: taskId}},
+        {where: {id: taskUnique.id}}
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Task updated', updated);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -157,31 +166,29 @@ class TaskController {
     const {taskProgressId} = req.params;
     const imageUrl = req.file.path;
 
-    console.log(req.file, taskProgressId);
-
     try {
       const evidence = await TaskService.uploadProgressEvidence(
         taskProgressId,
-        imageUrl,
+        imageUrl
       );
       if (evidence) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Task Evidence Uploaded Successfully',
-          evidence,
+          evidence
         );
         return Response.send(res);
       } else {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Something went wrong while uploading evidence',
+          'Something went wrong while uploading evidence'
         );
         return Response.send(res);
       }
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }

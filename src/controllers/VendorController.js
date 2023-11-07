@@ -59,25 +59,29 @@ class VendorController {
         return Response.send(res);
       }
 
-      const findRequest = await CampaignService.fetchVendorProposalRequest({
-        proposal_id,
-        vendor_id: req.user.id,
-        CampaignId
-      });
+      const [campaignUnique, proposalUnique, findRequest] = await Promise.all([
+        CampaignService.getCampaignByUUID(CampaignId),
+        CampaignService.fetchRequestByUUID(proposal_id),
+        CampaignService.fetchVendorProposalRequest({
+          proposal_id: proposalUnique.id,
+          vendor_id: req.user.id,
+          CampaignId: campaignUnique.id
+        })
+      ]);
       if (findRequest) {
         Response.setError(422, 'Proposal already submitted for this request');
         return Response.send(res);
       }
       const proposal = await VendorService.submitProposal({
         vendor_id: req.user.id,
-        CampaignId,
-        proposal_id
+        CampaignId: campaignUnique.id,
+        proposal_id: proposalUnique.id
       });
       const entered_products = await Promise.all(
         products.map(async product => {
           product.product_ref = generateProductRef();
           product.vendor_proposal_id = proposal.id;
-          product.proposal_id = proposal_id;
+          product.proposal_id = proposalUnique.id;
           const createdProduct = await ProductService.addSingleProduct(product);
           return createdProduct;
         })
@@ -101,10 +105,11 @@ class VendorController {
   static async fetchSubmittedProposals(req, res) {
     const {proposal_id, vendor_id} = req.params;
     try {
-      const proposal = await ProductService.vendorProposal(
-        vendor_id,
-        proposal_id
-      );
+      const [userUnique, proposalUnique, proposal] = await Promise.all([
+        UserService.getUserByUUID(vendor_id),
+        CampaignService.fetchRequestByUUID(proposal_id),
+        ProductService.vendorProposal(userUnique.id, proposalUnique.id)
+      ]);
 
       if (proposal) {
         proposal.dataValues.proposed_budget =
@@ -182,7 +187,7 @@ class VendorController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const vendor = await UserService.getAUser(vendor_id);
+      const vendor = await UserService.getUserByUUID(vendor_id);
       if (!vendor) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -258,7 +263,7 @@ class VendorController {
           Response.setError(400, 'Document is required');
           return Response.send(res);
         }
-        const vendor = await UserService.getAUser(vendorDetails.id);
+        const vendor = await UserService.getUserByUUID(vendorDetails.id);
         if (!vendor) {
           Response.setError(
             HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -353,8 +358,8 @@ class VendorController {
     const {email} = req.body;
     try {
       const rules = {
-        first_name: 'required|alpha',
-        last_name: 'required|alpha',
+        first_name: 'required|string',
+        last_name: 'required|string',
         email: 'required|email',
         phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/']
         // password: 'required|string'
@@ -419,9 +424,10 @@ class VendorController {
   static async resendPasswordToken(req, res) {
     const {UserId} = req.body;
     try {
+      const userUnique = await UserService.getUserByUUID(UserId);
       const passwordToken = await db.OneTimePassword.findOne({
         where: {
-          UserId
+          UserId: userUnique.id
         }
       });
       if (!passwordToken) {
@@ -431,7 +437,10 @@ class VendorController {
         );
         return Response.send(res);
       }
-      const otp = await AuthService.resendPasswordToken(UserId, passwordToken);
+      const otp = await AuthService.resendPasswordToken(
+        userUnique.VendorId,
+        passwordToken
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'OTP has been sent to your phone.',
@@ -520,6 +529,9 @@ class VendorController {
   static async ProposalRequest(req, res) {
     const {campaign_id} = req.params;
     try {
+      const campaignUnique = await CampaignService.getCampaignByUUID(
+        campaign_id
+      );
       const store = await VendorService.findVendorStore(req.user.id);
       if (!store) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Store not found');
@@ -534,7 +546,7 @@ class VendorController {
       }
       const campaigns = await CampaignService.fetchProposalForVendor(
         store.location,
-        campaign_id
+        campaignUnique.id
       );
       if (!campaigns) {
         Response.setError(
@@ -574,9 +586,10 @@ class VendorController {
         return Response.send(res);
       }
 
+      const userUnique = await UserService.getUserByUUID(vendor_id);
       const find = await ProductService.fetchOneMyProposals({
-        id: proposal_owner_id,
-        vendor_id
+        uuid: proposal_owner_id,
+        vendor_id: userUnique.id
       });
       if (!find) {
         Response.setError(
@@ -606,7 +619,7 @@ class VendorController {
 
       const campaignVendor = await CampaignService.getCampaignVendor(
         find.campaign.id,
-        vendor_id
+        userUnique.id
       );
       if (campaignVendor) {
         Response.setError(
@@ -618,9 +631,8 @@ class VendorController {
 
       const isOrgMember = await OrganisationService.isMember(
         find.campaign.OrganisationId,
-        vendor_id
+        userUnique.id
       );
-      console.log(req.body, 'req.body');
 
       if (!isOrgMember) {
         await OrganisationService.createMember(
@@ -631,13 +643,13 @@ class VendorController {
       }
       for (let product of products) {
         await db.VendorProduct.create({
-          vendorId: vendor_id,
+          vendorId: userUnique.id,
           productId: product.id
         });
       }
       await CampaignService.approveVendorForCampaign(
         find.campaign.id,
-        vendor_id
+        userUnique.id
       );
       find.update({status: 'approved'});
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Proposal approved');
@@ -665,9 +677,13 @@ class VendorController {
     const id = req.params.id || req.user.id;
 
     try {
-      const aVendor = await VendorService.getVendorData(id);
+      const [userUnique, aVendor, token] = await Promise.all([
+        UserService.getUserByUUID(id),
+        VendorService.getVendorData(userUnique.id),
+        BlockchainService.balance(aVendor.Wallets[0].address)
+      ]);
+
       const vToObject = aVendor.toObject();
-      const token = await BlockchainService.balance(aVendor.Wallets[0].address);
       const balance = Number(token.Balance.split(',').join(''));
       vToObject.Wallets = aVendor.Wallets.map(wallet => {
         wallet.balance = balance;
@@ -721,8 +737,8 @@ class VendorController {
       const data = req.body;
       data['today'] = new Date(Date.now()).toDateString();
       const rules = {
-        first_name: 'required|alpha',
-        last_name: 'required|alpha',
+        first_name: 'required|string',
+        last_name: 'required|string',
         email: 'required|email',
         phone: 'required|string',
         address: 'required|string',
@@ -821,7 +837,7 @@ class VendorController {
     const user_id = req.params.id;
     await db.User.findOne({
       where: {
-        id: user_id
+        uuid: user_id
       }
     })
       .then(async user => {
@@ -872,7 +888,7 @@ class VendorController {
   static async singleProduct(req, res) {
     const product = await db.Products.findOne({
       where: {
-        id: req.params.id
+        uuid: req.params.id
       },
       include: {
         model: db.Market,
@@ -893,9 +909,14 @@ class VendorController {
   }
 
   static async getProductByStore(req, res) {
+    const market = await db.Market.findOne({
+      where: {
+        uuid: req.params.storeId
+      }
+    });
     const products = await db.Products.findAll({
       where: {
-        MarketId: req.params.storeId
+        MarketId: market.id
       }
     });
     if (products) {
@@ -988,7 +1009,7 @@ class VendorController {
       const vendor = req.params.id;
       const user = await db.User.findOne({
         where: {
-          id: vendor,
+          uuid: vendor,
           RoleId: 4
         },
         include: [
@@ -1083,11 +1104,17 @@ class VendorController {
       const CampaignId = req.params.campaign_id;
       const id = req.params.vendor_id;
       let products = null;
-      if (id === ':vendor_id') {
-        products = await VendorService.vendorStoreMarketProducts(CampaignId);
+      const [userUnique, campaignUnique] = await Promise.all([
+        UserService.getUserByUUID(id),
+        CampaignService.getCampaignByUUID(CampaignId)
+      ]);
+      if (!userUnique.id) {
+        products = await VendorService.vendorStoreMarketProducts(
+          campaignUnique.id
+        );
       } else {
         products = await VendorService.vendorStoreProducts(req.user.id, {
-          CampaignId
+          CampaignId: campaignUnique.id
         });
       }
       Response.setSuccess(
@@ -1121,8 +1148,12 @@ class VendorController {
         total_amount: found_products[prod.product_id].cost * prod.quantity
       }));
 
+      const [campaignUnique, userUnique] = await Promise.all([
+        CampaignService.getCampaignByUUID(campaign_id),
+        UserService.getUserByUUID(VendorId)
+      ]);
       const order = await VendorService.createOrder(
-        {VendorId, CampaignId: campaign_id, reference},
+        {VendorId: userUnique.id, CampaignId: campaignUnique.id, reference},
         cart
       );
       Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'Create Order', order);
@@ -1140,7 +1171,7 @@ class VendorController {
     try {
       const VendorId = req.user.id;
       const id = req.params.order_id;
-      const order = await VendorService.getOrder({id, VendorId});
+      const order = await VendorService.getOrder({uuid: id, VendorId});
 
       if (order) {
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor Order', order);

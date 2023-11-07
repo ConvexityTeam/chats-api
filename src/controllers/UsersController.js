@@ -34,10 +34,7 @@ const {Response, Logger} = require('../libs');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 var amqp_1 = require('./../libs/RabbitMQ/Connection');
 const codeGenerator = require('./QrCodeController');
-const ZohoService = require('../services/ZohoService');
-const sanitizeObject = require('../utils/sanitizeObject');
 const AwsService = require('../services/AwsService');
-const {data} = require('../libs/Response');
 
 var transferToQueue = amqp_1['default'].declareQueue('transferTo', {
   durable: true
@@ -86,8 +83,8 @@ class UsersController {
 
     try {
       const rules = {
-        first_name: 'required|alpha',
-        last_name: 'required|alpha',
+        first_name: 'required|string',
+        last_name: 'required|string',
         email: 'required|email',
         phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
         store_name: 'required|string',
@@ -161,7 +158,7 @@ class UsersController {
 
     try {
       const rules = {
-        campaignId: 'required|integer',
+        campaignId: 'required|string',
         'representative.first_name': 'required|alpha',
         'representative.last_name': 'required|alpha',
         'representative.gender': 'required|in:male,female',
@@ -196,7 +193,9 @@ class UsersController {
         return Response.send(res);
       }
       const result = await db.sequelize.transaction(async t => {
-        const campaignExist = await CampaignService.getCampaignById(campaignId);
+        const campaignExist = await CampaignService.getCampaignByUUID(
+          campaignId
+        );
         if (!campaignExist) {
           Response.setError(404, 'Campaign not found');
           return Response.send(res);
@@ -215,7 +214,7 @@ class UsersController {
           {transaction: t}
         );
 
-        await QueueService.createWallet(parent.id, 'user', campaignId);
+        await QueueService.createWallet(parent.id, 'user', campaignExist.id);
         group.representative_id = parent.id;
         const grouping = await db.Group.create(group, {transaction: t});
 
@@ -292,14 +291,14 @@ class UsersController {
       const rules = {
         vnin: 'required|size:16',
         country: 'string',
-        user_id: 'required|numeric'
+        user_id: 'required|string'
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const user = await UserService.getAUser(data.user_id);
+      const user = await UserService.getUserByUUID(data.user_id);
       if (!user) {
         Response.setError(404, 'User not found');
         return Response.send(res);
@@ -490,8 +489,8 @@ class UsersController {
     try {
       const data = req.body;
       const rules = {
-        first_name: 'required|alpha',
-        last_name: 'required|alpha',
+        first_name: 'required|string',
+        last_name: 'required|string',
         phone: ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
         username: 'string',
         nin: 'size:16'
@@ -663,7 +662,7 @@ class UsersController {
     var form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
       const rules = {
-        userId: 'required|numeric'
+        userId: 'required|string'
       };
       const validation = new Validator(fields, rules);
       if (validation.fails()) {
@@ -674,7 +673,7 @@ class UsersController {
           Response.setError(422, 'Profile Image Required');
           return Response.send(res);
         } else {
-          const user = await db.User.findByPk(fields.userId);
+          const user = await UserService.getUserByUUID(fields.userId);
           if (user) {
             const extension = files.profile_pic.name.substring(
               files.profile_pic.name.lastIndexOf('.') + 1
@@ -704,7 +703,7 @@ class UsersController {
       const data = req.body;
       const rules = {
         nfc: 'required|string',
-        id: 'required|numeric'
+        id: 'required|string'
       };
       const validation = new Validator(data, rules);
       if (validation.fails()) {
@@ -713,7 +712,7 @@ class UsersController {
       } else {
         await db.User.update(data, {
           where: {
-            id: data.id
+            uuid: data.id
           }
         }).then(() => {
           Response.setSuccess(200, 'User NFC Data Updated Successfully');
@@ -741,13 +740,13 @@ class UsersController {
   static async getAUser(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
-      Response.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      Response.setError(400, 'Please input a valid value');
       return Response.send(res);
     }
 
     try {
-      const theUser = await UserService.getAUser(id);
+      const theUser = await UserService.getUserByUUID(id);
       if (!theUser) {
         Response.setError(404, `Cannot find User with the id ${id}`);
       } else {
@@ -817,7 +816,7 @@ class UsersController {
     try {
       const id = req.body.userId;
 
-      const user = await db.User.findByPk(id);
+      const user = await UserService.getUserByUUID;
 
       user.status = 'suspended';
       user.save();
@@ -886,13 +885,16 @@ class UsersController {
   static async deleteUser(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
-      Response.setError(400, 'Please provide a numeric value');
+    if (!id) {
+      Response.setError(400, 'Please provide a value');
       return Response.send(res);
     }
 
     try {
-      const UserToDelete = await UserService.deleteUser(id);
+      const [userUnique, UserToDelete] = await Promise.all([
+        UserService.getUserByUUID(id),
+        UserService.deleteUser(userUnique.id)
+      ]);
 
       if (UserToDelete) {
         Response.setSuccess(200, 'User deleted');
@@ -908,7 +910,10 @@ class UsersController {
 
   static async getBeneficiaryTransactions(req, res) {
     const beneficiary = req.params.beneficiary;
-    const beneficiary_exist = await BeneficiaryService.getUser(beneficiary);
+    const [userUnique, beneficiary_exist] = await Promise.all([
+      UserService.getUserByUUID(beneficiary),
+      BeneficiaryService.getUser(userUnique.id)
+    ]);
     if (beneficiary_exist) {
       const wallet = await beneficiary_exist.getWallet();
       const wallets = wallet.map(element => {
@@ -937,7 +942,10 @@ class UsersController {
 
   static async getRecentTransactions(req, res) {
     const beneficiary = req.params.beneficiary;
-    const beneficiary_exist = await BeneficiaryService.getUser(beneficiary);
+    const [userUnique, beneficiary_exist] = await Promise.all([
+      UserService.getUserByUUID(beneficiary),
+      BeneficiaryService.getUser(userUnique.id)
+    ]);
     if (beneficiary_exist) {
       const wallet = await beneficiary_exist.getWallet();
       const wallets = wallet.map(element => {
@@ -1103,7 +1111,7 @@ class UsersController {
     let id = req.params.id;
     await db.User.findOne({
       where: {
-        id: req.params.id
+        uuid: req.params.id
       },
       include: {
         model: db.Wallet,
@@ -1130,7 +1138,7 @@ class UsersController {
     const user_id = req.params.id;
     const userExist = await db.User.findOne({
       where: {
-        id: user_id
+        uuid: user_id
       },
       include: ['Wallet']
     })
@@ -1147,8 +1155,8 @@ class UsersController {
   static async addToCart(req, res) {
     let data = req.body;
     let rules = {
-      userId: 'required|numeric',
-      productId: 'required|numeric',
+      userId: 'required|string',
+      productId: 'required|string',
       quantity: 'required|numeric'
     };
     let validation = new Validator(data, rules);
@@ -1156,14 +1164,14 @@ class UsersController {
       Response.setError(400, validation.errors);
       return Response.send(res);
     } else {
-      let user = await db.User.findByPk(data.userId);
+      let user = await UserService.getUserByUUID(data.userId);
       if (!user) {
         Response.setError(404, 'Invalid User');
         return Response.send(res);
       }
       let product = await db.Products.findOne({
         where: {
-          id: data.productId
+          uuid: data.productId
         },
         include: {
           model: db.Market,
@@ -1176,7 +1184,7 @@ class UsersController {
       }
       let pendingOrder = await db.Order.findOne({
         where: {
-          UserId: data.userId,
+          UserId: user.id,
           status: 'pending'
         },
         include: {
@@ -1281,14 +1289,14 @@ class UsersController {
 
   static async getCart(req, res) {
     let id = req.params.userId;
-    let user = await db.User.findByPk(id);
+    let user = await UserService.getUserByUUID(id);
     if (!user) {
       Response.setError(404, 'Invalid User');
       return Response.send(res);
     }
     let pendingOrder = await db.Order.findOne({
       where: {
-        UserId: id,
+        UserId: user.id,
         status: 'pending'
       },
       include: {
@@ -1322,7 +1330,7 @@ class UsersController {
       Response.setError(422, validation.errors);
       return Response.send(res);
     } else {
-      let user = await db.User.findByPk(data.userId);
+      let user = await UserService.getUserByUUID(id);
       if (!user) {
         Response.setError(404, 'Invalid User');
         return Response.send(res);
@@ -1344,7 +1352,7 @@ class UsersController {
 
     const user = await db.User.findOne({
       where: {
-        id: req.params.id
+        uuid: req.params.id
       },
       include: {
         model: db.Wallet,
@@ -1542,7 +1550,7 @@ class UsersController {
       userId: 'required|numeric',
       pin: 'required|numeric',
       orderId: 'required|numeric',
-      campaign: 'campaign|numeric'
+      campaign: 'campaign|string'
     };
 
     let validation = new Validator(data, rules);
@@ -1553,7 +1561,7 @@ class UsersController {
     } else {
       let user = await db.User.findOne({
         where: {
-          id: data.userId
+          uuid: data.userId
         },
         include: {
           model: db.Wallet,
@@ -1576,7 +1584,7 @@ class UsersController {
 
       let pendingOrder = await db.Order.findOne({
         where: {
-          UserId: data.userId,
+          UserId: user.id,
           status: 'pending'
         },
         include: {
@@ -1626,13 +1634,14 @@ class UsersController {
                 type = 'campaign';
                 buyer = await db.Wallet.findOne({
                   where: {
-                    AccountUserId: data.userId,
+                    AccountUserId: user.id,
                     AccountUserType: 'user',
                     CampaignId: data.campaign
                   }
                 });
               } else {
                 type = 'main';
+
                 buyer = await db.Wallet.findOne({
                   where: {
                     AccountUserId: data.userId,
@@ -1641,11 +1650,13 @@ class UsersController {
                   }
                 });
               }
-
+              const campaign = await CampaignService.getCampaignByUUID(
+                data.campaign
+              );
               let ngo = await db.Wallet.findOne({
                 where: {
                   AccountUserType: 'organisation',
-                  CampaignId: data.campaign
+                  CampaignId: campaign.id
                 }
               });
 
@@ -1772,24 +1783,26 @@ class UsersController {
       if (!Number(amount)) {
         Response.setError(400, 'Please input a valid amount');
         return Response.send(res);
-      } else if (!Number(campaignId)) {
+      } else if (!campaignId) {
         Response.setError(400, 'Please input a valid campaign ID');
         return Response.send(res);
       } else if (!Number(accountno)) {
         Response.setError(400, 'Please input a valid campaign ID');
         return Response.send(res);
       }
-      const bankAccount = await db.BankAccount.findOne({
-        where: {UserId: req.user.id, account_number: accountno}
-      });
-      const userWallet = await WalletService.findUserCampaignWallet(
-        req.user.id,
-        campaignId
-      );
-      const campaignWallet = await WalletService.findSingleWallet({
-        CampaignId: campaignId,
-        UserId: null
-      });
+      const [campaignUnique, bankAccount, userWallet, campaignWallet] =
+        await Promise.all([
+          CampaignService.getCampaignByUUID(campaignId),
+          db.BankAccount.findOne({
+            where: {UserId: req.user.id, account_number: accountno}
+          }),
+          WalletService.findUserCampaignWallet(req.user.id, campaignUnique.id),
+          WalletService.findSingleWallet({
+            CampaignId: campaignUnique.id,
+            UserId: null
+          })
+        ]);
+
       if (!bankAccount) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -1879,13 +1892,6 @@ class UsersController {
         );
         return Response.send(res);
       }
-      // if (userWallet.balance < amount) {
-      //   Response.setSuccess(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Insufficient Wallet Balance'
-      //   );
-      //   return Response.send(res);
-      // }
       await QueueService.fundVendorBankAccount(
         bankAccount,
         userWallet,

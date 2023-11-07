@@ -8,9 +8,11 @@ const {UserService, BlockchainService} = require('../services');
 class TransactionsController {
   static async vendorTransaction(req, res) {
     try {
-      const transactions = await TransactionService.getVendorTransaction(
-        req.params.vendor_id
-      );
+      const [userUnique, transactions] = await Promise.all([
+        UserService.getUserByUUID(req.params.vendor_id),
+        TransactionService.getVendorTransaction(userUnique.id)
+      ]);
+
       for (let transaction of transactions) {
         const beneficiary = await UserService.findBeneficiary(
           transaction.BeneficiaryId
@@ -77,15 +79,19 @@ class TransactionsController {
   static async updatedTransaction(req, res) {
     const alteredTransaction = req.body;
     const {id} = req.params;
-    if (!Number(id)) {
-      util.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      util.setError(400, 'Please input a valid value');
       return util.send(res);
     }
     try {
-      const updateTransaction = await TransactionService.updateTransaction(
-        id,
-        alteredTransaction
-      );
+      const [transactionUnique, updateTransaction] = await Promise.all([
+        TransactionService.getATransactionByUUID(id),
+        TransactionService.updateTransaction(
+          transactionUnique.id,
+          alteredTransaction
+        )
+      ]);
+
       if (!updateTransaction) {
         util.setError(404, `Cannot find Transaction with the id: ${id}`);
       } else {
@@ -101,15 +107,19 @@ class TransactionsController {
   static async updateTransaction(req, res) {
     const alteredTransaction = req.body;
     const {id} = req.params;
-    if (!Number(id)) {
-      util.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      util.setError(400, 'Please input a valid value');
       return util.send(res);
     }
     try {
-      const updateTransaction = await TransactionService.updateTransaction(
-        id,
-        alteredTransaction
-      );
+      const [transactionUnique, updateTransaction] = await Promise.all([
+        TransactionService.getATransactionByUUID(id),
+        TransactionService.updateTransaction(
+          transactionUnique.id,
+          alteredTransaction
+        )
+      ]);
+
       if (!updateTransaction) {
         util.setError(404, `Cannot find Transaction with the id: ${id}`);
       } else {
@@ -125,13 +135,13 @@ class TransactionsController {
   static async getATransaction(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
-      util.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      util.setError(400, 'Please input a valid value');
       return util.send(res);
     }
 
     try {
-      const theTransaction = await TransactionService.getATransaction(id);
+      const theTransaction = await TransactionService.getATransactionByUUID(id);
 
       if (!theTransaction) {
         util.setError(404, `Cannot find Transaction with the id ${id}`);
@@ -148,12 +158,12 @@ class TransactionsController {
   static async getUserATransaction(req, res) {
     const {id} = req.params;
 
-    if (!Number(id)) {
-      util.setError(400, 'Please input a valid numeric value');
+    if (!id) {
+      util.setError(400, 'Please input a valid value');
       return util.send(res);
     }
     try {
-      const theTransaction = await TransactionService.getUserATransaction(id);
+      const theTransaction = await TransactionService.getATransactionByUUID(id);
 
       if (!theTransaction) {
         util.setError(404, `Cannot find User with the id ${id}`);
@@ -176,9 +186,10 @@ class TransactionsController {
     }
 
     try {
-      const TransactionToDelete = await TransactionService.deleteTransaction(
-        id
-      );
+      const [theTransaction, TransactionToDelete] = await Promise.all([
+        TransactionService.getATransactionByUUID(id),
+        TransactionService.deleteTransaction(theTransaction.id)
+      ]);
 
       if (TransactionToDelete) {
         util.setSuccess(200, 'Transaction deleted');

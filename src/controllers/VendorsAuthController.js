@@ -2,13 +2,12 @@ const db = require('../models');
 var bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const util = require('../libs/Utils');
-const VendorServices = require('../services/VendorService');
-const {data} = require('../libs/Utils');
+
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 var amqp_1 = require('./../libs/RabbitMQ/Connection');
 
 var queue = amqp_1['default'].declareQueue('createWallet', {
-  durable: true,
+  durable: true
 });
 
 const Validator = require('validatorjs');
@@ -69,7 +68,7 @@ class VendorsAuthController {
         store_name,
         country,
         state,
-        coordinates,
+        coordinates
       } = req.body;
       //check if email already exist
 
@@ -81,7 +80,7 @@ class VendorsAuthController {
         password: 'required',
         phone: ['required', 'regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
         country: 'string|required',
-        state: 'string|required',
+        state: 'string|required'
       };
 
       const validation = new Validator(req.body, rules);
@@ -92,8 +91,8 @@ class VendorsAuthController {
       }
       db.User.findOne({
         where: {
-          email,
-        },
+          email
+        }
       })
         .then(user => {
           if (!!user) {
@@ -112,29 +111,29 @@ class VendorsAuthController {
                 password: encryptedPassword,
                 location: JSON.stringify({country, state, coordinates}),
                 address: address,
-                last_login: new Date(),
+                last_login: new Date()
               })
                 .then(async account => {
                   await account.createStore({
                     store_name: store_name,
                     address: address,
-                    location: JSON.stringify({country, state, coordinates}),
+                    location: JSON.stringify({country, state, coordinates})
                   });
                   queue.send(
                     new Message(
                       {
                         id: account.id,
-                        type: 'user',
+                        type: 'user'
                       },
                       {
-                        contentType: 'application/json',
-                      },
-                    ),
+                        contentType: 'application/json'
+                      }
+                    )
                   );
                   util.setSuccess(
                     201,
                     'Account Successfully Created',
-                    account.id,
+                    account.id
                   );
                   return util.send(res);
                 })
@@ -218,8 +217,8 @@ class VendorsAuthController {
       db.User.findOne({
         where: {
           email: email,
-          RoleId: 4,
-        },
+          RoleId: 4
+        }
       })
         .then(user => {
           bcrypt
@@ -234,16 +233,16 @@ class VendorsAuthController {
               }
               const token = jwt.sign(
                 {
-                  userId: user.id,
+                  userId: user.id
                 },
                 process.env.SECRET_KEY,
                 {
-                  expiresIn: '24hr',
-                },
+                  expiresIn: '24hr'
+                }
               );
               const resp = {
                 userId: user.id,
-                token: token,
+                token: token
               };
               util.setSuccess(200, 'Login Successful', resp);
               return util.send(res);
@@ -267,8 +266,8 @@ class VendorsAuthController {
     try {
       db.User.findOne({
         where: {
-          id: id,
-        },
+          uuid: id
+        }
       })
         .then(user => {
           util.setSuccess(200, 'Got Users Details', user);
@@ -288,8 +287,8 @@ class VendorsAuthController {
     //check if users exist in the db with email address
     db.User.findOne({
       where: {
-        email: email,
-      },
+        email: email
+      }
     })
       .then(user => {
         //reset users email password
@@ -303,20 +302,20 @@ class VendorsAuthController {
               const encryptedPassword = hash;
               return db.User.update(
                 {
-                  password: encryptedPassword,
+                  password: encryptedPassword
                 },
                 {
                   where: {
-                    email: email,
-                  },
-                },
+                    email: email
+                  }
+                }
               ).then(updatedRecord => {
                 //mail user a new password
                 //respond with a success message
                 res.status(201).json({
                   status: 'success',
                   message:
-                    'An email has been sent to the provided email address, kindly login to your email address to continue',
+                    'An email has been sent to the provided email address, kindly login to your email address to continue'
                 });
               });
             });
@@ -326,7 +325,7 @@ class VendorsAuthController {
       .catch(err => {
         res.status(404).json({
           status: 'error',
-          error: err,
+          error: err
         });
       });
   }
@@ -335,8 +334,8 @@ class VendorsAuthController {
     const userId = req.body.userId;
     db.User.findOne({
       where: {
-        id: userId,
-      },
+        uuid: userId
+      }
     })
       .then(user => {
         if (user !== null) {
@@ -345,18 +344,18 @@ class VendorsAuthController {
             {
               firstName: firstName,
               lastName: lastName,
-              phone: phone,
+              phone: phone
             },
             {
               where: {
-                id: userId,
-              },
-            },
+                uuid: userId
+              }
+            }
           ).then(updatedRecord => {
             //respond with a success message
             res.status(201).json({
               status: 'success',
-              message: 'Profile Updated Successfully!',
+              message: 'Profile Updated Successfully!'
             });
           });
         }
@@ -364,7 +363,7 @@ class VendorsAuthController {
       .catch(err => {
         res.status(404).json({
           status: 'error',
-          error: err,
+          error: err
         });
       });
   }
@@ -373,14 +372,14 @@ class VendorsAuthController {
     if (newPassword !== confirmedPassword) {
       return res.status(419).json({
         status: error,
-        error: new Error('New Password Does not Match with Confirmed Password'),
+        error: new Error('New Password Does not Match with Confirmed Password')
       });
     }
     const userId = req.body.userId;
     db.User.findOne({
       where: {
-        id: userId,
-      },
+        uuid: userId
+      }
     })
       .then(user => {
         bcrypt
@@ -389,7 +388,7 @@ class VendorsAuthController {
             if (!valid) {
               return res.status(419).json({
                 status: error,
-                error: new Error('Existing Password Error'),
+                error: new Error('Existing Password Error')
               });
             }
             //update new password in the db
@@ -400,20 +399,20 @@ class VendorsAuthController {
                 const balance = 0.0;
                 return db.User.update(
                   {
-                    password: encryptedPassword,
+                    password: encryptedPassword
                   },
                   {
                     where: {
-                      email: email,
-                    },
-                  },
+                      email: email
+                    }
+                  }
                 ).then(updatedRecord => {
                   //mail user a new password
                   //respond with a success message
                   res.status(201).json({
                     status: 'success',
                     message:
-                      'An email has been sent to the provided email address, kindly login to your email address to continue',
+                      'An email has been sent to the provided email address, kindly login to your email address to continue'
                   });
                 });
               });
@@ -423,14 +422,14 @@ class VendorsAuthController {
             //the two password does not match
             return res.status(419).json({
               status: error,
-              error: new Error('Existing Password Error'),
+              error: new Error('Existing Password Error')
             });
           });
       })
       .catch(err => {
         res.status(404).json({
           status: 'error',
-          error: err,
+          error: err
         });
       });
   }

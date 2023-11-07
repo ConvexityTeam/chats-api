@@ -21,15 +21,15 @@ class RoleServices {
     try {
       const RoleToUpdate = await database.Role.findOne({
         where: {
-          id: Number(id),
-        },
+          uuid: id
+        }
       });
 
       if (RoleToUpdate) {
         await database.Role.update(updateRole, {
           where: {
-            id: Number(id),
-          },
+            uuid: id
+          }
         });
 
         return updateRole;
@@ -44,9 +44,9 @@ class RoleServices {
     try {
       const theRole = await database.Role.findOne({
         where: {
-          id: Number(id),
+          uuid: id
         },
-        include: 'Users',
+        include: 'Users'
       });
       return theRole;
     } catch (error) {
@@ -58,15 +58,15 @@ class RoleServices {
     try {
       const RoleToDelete = await database.Role.findOne({
         where: {
-          id: Number(id),
-        },
+          uuid: id
+        }
       });
 
       if (RoleToDelete) {
         const deletedRole = await database.Role.destroy({
           where: {
-            id: Number(id),
-          },
+            uuid: id
+          }
         });
         return deletedRole;
       }

@@ -222,7 +222,19 @@ class TransactionService {
       throw error;
     }
   }
+  static async getATransactionByUUID(id) {
+    try {
+      const theTransaction = await Transaction.findOne({
+        where: {
+          uuid: id
+        }
+      });
 
+      return theTransaction;
+    } catch (error) {
+      throw error;
+    }
+  }
   static async getUserATransaction(id) {
     try {
       const theTransaction = await Transaction.findOne({

@@ -39,7 +39,7 @@ class WebhookController {
 
   static async verifyWalletDeposit(req, res) {
     try {
-      const wallet = await BlockchainService.switchWebhook('some data');
+      await BlockchainService.switchWebhook('some data');
       res.sendStatus(HttpStatusCode.STATUS_OK);
       Logger.info(`Switch Wallet Deposit Verified`);
     } catch (error) {

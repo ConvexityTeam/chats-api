@@ -205,6 +205,14 @@ class ProductService {
       }
     });
   }
+
+  static getProductByUUID(uuid) {
+    return Product.findOne({
+      where: {
+        uuid
+      }
+    });
+  }
   static findCampaignProducts(CampaignId) {
     return Product.findAll({
       where: {CampaignId},

@@ -10,7 +10,7 @@ const {
   CurrencyServices,
   OrganisationService
 } = require('../services');
-const {Logger, Response} = require('../libs');
+const {Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
 const {Op} = require('sequelize');
 const {logger} = require('../libs/Logger');
@@ -22,11 +22,14 @@ class WalletController {
       const OrganisationId = req.params.organisation_id;
       const reference = req.params.reference;
       if (!reference) {
-        const transactions =
-          await TransactionService.findOrgnaisationTransactions(
-            OrganisationId,
+        const [Organisation, transactions] = await Promise.all([
+          OrganisationService.getOrganisationByUUID(OrganisationId),
+          TransactionService.findOrgnaisationTransactions(
+            Organisation.id,
             req.query
-          );
+          )
+        ]);
+
         for (let tran of transactions.data) {
           if (tran.narration === 'crypto funding') {
             tran.dataValues.funded_with = 'Crypto';
@@ -55,10 +58,14 @@ class WalletController {
         return Response.send(res);
       }
 
-      const transactions = await TransactionService.findTransaction({
-        OrganisationId,
-        reference
-      });
+      const [Organisation, transactions] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(OrganisationId),
+        TransactionService.findTransaction({
+          OrganisationId: Organisation.id,
+          reference
+        })
+      ]);
+
       if (!transactions) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -212,10 +219,14 @@ class WalletController {
       const CampaignId = req.params.campaign_id;
       const OrganisationId = req.organisation.id;
 
+      const [organisationUnique, campaignUnique] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(OrganisationId),
+        CampaignService.getCampaignByUUID(CampaignId)
+      ]);
       if (CampaignId) {
         const wallet = await WalletService.findCampaignFundWallet(
-          OrganisationId,
-          CampaignId
+          organisationUnique.id,
+          campaignUnique.id
         );
         if (!wallet) {
           Response.setError(
@@ -233,7 +244,7 @@ class WalletController {
       }
 
       const wallets = await WalletService.findOrganisationCampaignWallets(
-        OrganisationId
+        organisationUnique.id
       );
 
       Response.setSuccess(
@@ -257,13 +268,12 @@ class WalletController {
       const data = SanitizeObject(req.body, ['amount', 'currency', 'method']);
       const {organisation_id} = req.params;
       if (!data.currency) data.currency = 'NGN';
+      const [organisationUnique, organisation, wallet] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(organisation_id),
+        OrganisationService.checkExist(organisationUnique.id),
+        WalletService.findMainOrganisationWallet(organisation.id)
+      ]);
       const CampaignId = req.body.CampaignId ? req.body.CampaignId : null;
-      const organisation = await OrganisationService.checkExistEmail(
-        req.user.email
-      );
-      const wallet = await WalletService.findMainOrganisationWallet(
-        organisation_id
-      );
       if (!wallet) {
         Response.setError(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
@@ -365,12 +375,15 @@ class WalletController {
 
   static async CampaignBalance(req, res) {
     const {campaign_id, organisation_id} = req.params;
-    console.log(campaign_id, organisation_id, 'campaign_id, organisation_id');
     try {
-      const campaign = await CampaignService.getCampaignWallet(
-        campaign_id,
-        organisation_id
-      );
+      const [organisationUnique, campaignUnique, campaign] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(organisation_id),
+        CampaignService.getCampaignByUUID(campaign_id),
+        CampaignService.getCampaignWallet(
+          campaignUnique.id,
+          organisationUnique.id
+        )
+      ]);
       if (campaign) {
         //const balance = campaign.Wallet.balance
         Response.setSuccess(
@@ -398,10 +411,12 @@ class WalletController {
     const {campaign_id, organisation_id} = req.params;
 
     try {
-      const campaign = await WalletService.findUserWallets(
-        campaign_id,
-        organisation_id
-      );
+      const [organisationUnique, campaignUnique, campaign] = await Promise.all([
+        OrganisationService.getOrganisationByUUID(organisation_id),
+        CampaignService.getCampaignByUUID(campaign_id),
+        WalletService.findUserWallets(campaignUnique.id, organisationUnique.id)
+      ]);
+
       if (campaign) {
         const balance = campaign.Wallet.balance;
         Response.setSuccess(

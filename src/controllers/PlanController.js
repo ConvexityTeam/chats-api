@@ -95,10 +95,10 @@ class PlanController {
   static async getAPlan(req, res) {
     const {id} = req.params;
     try {
-      if (!Number(id)) {
+      if (!id) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Please input a valid numeric value'
+          'Please input a valid value'
         );
         return Response.send(res);
       }
@@ -121,10 +121,10 @@ class PlanController {
   static async updatePlan(req, res) {
     const planData = req.body;
     const {id} = req.params;
-    if (!Number(id)) {
+    if (id) {
       Response.setError(
         HttpStatusCode.STATUS_BAD_REQUEST,
-        'Please input a valid numeric value'
+        'Please input a valid value'
       );
       return Response.send(res);
     }
@@ -160,7 +160,7 @@ class PlanController {
     const {id} = req.params;
 
     try {
-      if (!Number(id)) {
+      if (id) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Please input a valid numeric value'

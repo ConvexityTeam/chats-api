@@ -269,7 +269,7 @@ class VendorService {
   }
 
   static async vendorStore(id, UserId) {
-    return Market.findOne({id, UserId});
+    return Market.findOne({uuid: id, UserId});
   }
   static async findVendorStore(UserId) {
     return Market.findOne({
