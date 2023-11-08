@@ -385,17 +385,20 @@ class BeneficiariesService {
     const users = await User.findAndCountAll({
       distinct: true,
       ...queryOptions,
-      where: {
-        OrganisationId: Sequelize.where(
-          Sequelize.col('Campaigns.OrganisationId'),
-          OrganisationId
-        )
-      },
+      // where: {
+      //   OrganisationId: Sequelize.where(
+      //     Sequelize.col('Campaigns.OrganisationId'),
+      //     OrganisationId
+      //   )
+      // },
       attributes: userConst.publicAttr,
       include: [
         {
           model: Campaign,
           as: 'Campaigns',
+          where: {
+            OrganisationId
+          },
           through: {
             where: {
               approved: true
