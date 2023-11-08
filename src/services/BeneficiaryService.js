@@ -254,7 +254,7 @@ class BeneficiariesService {
           where: {
             OrganisationId
           },
-          ...options,
+
           distinct: true,
           include: [
             {where: {UserId: id}, model: Wallet, as: 'BeneficiariesWallets'}
@@ -262,6 +262,13 @@ class BeneficiariesService {
         }
       ]
     });
+
+    if (page && size) {
+      const startIndex = (page - 1) * size;
+      const endIndex = startIndex + size;
+      task.Campaigns = task.Campaigns.slice(startIndex, endIndex);
+    }
+
     const response = await Pagination.getPagingData(
       {count: user.Campaigns.length, rows: user.Campaigns},
       page,
