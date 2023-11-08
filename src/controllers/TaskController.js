@@ -44,7 +44,7 @@ class TaskController {
         );
         return Response.send(res);
       }
-
+      // resolved conflict
       CashForWorkTasks?.data.forEach(data => {
         data.dataValues.completed_tasks = data.completed_tasks
           ? completed_tasks++
