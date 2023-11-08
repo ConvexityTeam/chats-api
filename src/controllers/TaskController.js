@@ -31,7 +31,6 @@ class TaskController {
   static async getCashForWorkTasks(req, res) {
     try {
       let completed_tasks = 0;
-      let task_count = 0;
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForWorkTasks(
         params,
@@ -45,8 +44,8 @@ class TaskController {
         );
         return Response.send(res);
       }
-
-      CashForWorkTasks.forEach(data => {
+      // resolved conflict
+      CashForWorkTasks?.data.forEach(data => {
         data.dataValues.completed_tasks = data.completed_tasks
           ? completed_tasks++
           : completed_tasks;
