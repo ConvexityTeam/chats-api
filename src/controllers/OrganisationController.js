@@ -1627,7 +1627,7 @@ class OrganisationController {
         );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        'Organisation beneficiaries',
+        'Organisation beneficiaries' + error.message,
         beneficiaries
       );
       return Response.send(res);
