@@ -70,17 +70,18 @@ class TaskController {
     try {
       let completed_task = 0;
       const params = SanitizeObject(req.params);
+      const {task_id} = params;
       const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
         params,
         req.query
       );
-      if (!CashForWorkTasks.task) {
-        Response.setSuccess(
-          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found'
-        );
-        return Response.send(res);
-      }
+      // if (!CashForWorkTasks.task) {
+      //   Response.setSuccess(
+      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //     'Task Not Found'
+      //   );
+      //   return Response.send(res);
+      // }
       //console.log(CashForWorkTasks)
 
       CashForWorkTasks.response.data.forEach(data => {
