@@ -91,15 +91,15 @@ class TaskController {
         data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
         data.dataValues.Assigned_Status = data.TaskAssignment.status;
       });
+      delete CashForWorkTasks.AssignedWorkers;
       CashForWorkTasks.task = CashForWorkTasks.task;
       CashForWorkTasks.response.completed_task = completed_task;
       CashForWorkTasks.response.total_task_allowed =
         CashForWorkTasks.assignment_count;
-      delete CashForWorkTasks.AssignedWorkers;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
-        CashForWorkTasks.response
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
