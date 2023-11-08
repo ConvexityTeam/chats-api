@@ -94,12 +94,13 @@ class TaskService {
     });
 
     const response = await Pagination.getPagingData(
-      {rows: task.AssignedWorkers, count: task.AssignedWorkers.length},
+      {rows: task?.AssignedWorkers, count: task?.AssignedWorkers?.length},
       page,
       limit
     );
     return {task, response};
   }
+  //develop
 
   static async updateTask(id, updateTaskObj) {
     const task = await Task.findByPk(id);
