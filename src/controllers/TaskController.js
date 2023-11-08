@@ -91,8 +91,6 @@ class TaskController {
         data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
         data.dataValues.Assigned_Status = data.TaskAssignment.status;
       });
-      delete CashForWorkTasks.AssignedWorkers;
-      CashForWorkTasks.task = CashForWorkTasks.task;
       CashForWorkTasks.response.completed_task = completed_task;
       CashForWorkTasks.response.total_task_allowed =
         CashForWorkTasks.assignment_count;
