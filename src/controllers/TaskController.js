@@ -70,7 +70,6 @@ class TaskController {
     try {
       let completed_task = 0;
       const params = SanitizeObject(req.params);
-      const {task_id} = params;
       const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
         params,
         req.query
