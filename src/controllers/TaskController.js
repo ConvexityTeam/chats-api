@@ -84,7 +84,7 @@ class TaskController {
       // }
       //console.log(CashForWorkTasks)
 
-      CashForWorkTasks.response.data.forEach(data => {
+      CashForWorkTasks?.response.data.forEach(data => {
         data.TaskAssignment.status === 'completed'
           ? completed_task++
           : completed_task;
