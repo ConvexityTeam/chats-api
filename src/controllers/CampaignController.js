@@ -650,7 +650,10 @@ class CampaignController {
   static async getProposalRequests(req, res) {
     const {proposal_id} = req.params;
     try {
-      const vendors = await CampaignService.fetchRequest(proposal_id);
+      const vendors = await CampaignService.fetchRequest(
+        proposal_id,
+        req.query
+      );
 
       // const campaign = await CampaignService.getCampaignById(proposal_id);
       const org_proposal = await CampaignService.fetchProposalRequest(
@@ -660,9 +663,9 @@ class CampaignController {
         org_proposal.campaign_id
       );
 
-      const data = {vendors, campaign};
+      const data = {vendors: vendors.data, campaign};
       data.campaign = campaign;
-      data.total_request = vendors.length;
+      data.total_request = vendors.data.length;
       for (let request of data.vendors) {
         const products = await ProductService.findProduct({
           proposal_id: request.proposalOwner.proposal_id
@@ -1431,7 +1434,7 @@ class CampaignController {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
       const {source, type} = SanitizeObject(req.body, ['source', 'type']);
-      const campaign = await CampaignService.getCampaign(campaign_id);
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
       const replicaCampaign = await CampaignService.getACampaignWithReplica(
         replicaCampaignId,
         type
@@ -1447,22 +1450,20 @@ class CampaignController {
       //   );
       //   return Response.send(res);
       // }
-      let count = 0;
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
+          const count = index + 1;
           setTimeout(async () => {
-            const res = await CampaignService.addBeneficiary(
+            const res = await CampaignService.addBeneficiaries(
               campaign_id,
               beneficiary.id,
+              campaign,
+              count,
+              replicaCampaign.Beneficiaries.length,
               source
             );
-            count++;
             onboard.push(res);
           }, index * 5000);
-          // await campaign.update({
-          //   total_imported: count,
-          //   total_beneficiaries: replicaCampaign.Beneficiaries.length
-          // });
         })
       );
 
@@ -1488,7 +1489,7 @@ class CampaignController {
   static async importStatus(req, res) {
     try {
       const campaign_id = req.params.campaign_id;
-      const campaign = await CampaignService.getCampaign(campaign_id);
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Status',

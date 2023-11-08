@@ -32,7 +32,10 @@ class TaskController {
     try {
       let completed_tasks = 0;
       const params = SanitizeObject(req.params);
-      const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
+      const CashForWorkTasks = await TaskService.getCashForWorkTasks(
+        params,
+        req.query
+      );
 
       if (!CashForWorkTasks) {
         Response.setSuccess(
@@ -42,7 +45,7 @@ class TaskController {
         return Response.send(res);
       }
 
-      CashForWorkTasks?.forEach(data => {
+      CashForWorkTasks?.data.forEach(data => {
         data.dataValues.completed_tasks = data.completed_tasks
           ? completed_tasks++
           : completed_tasks;
@@ -68,9 +71,10 @@ class TaskController {
       let completed_task = 0;
       const params = SanitizeObject(req.params);
       const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
-        params
+        params,
+        req.query
       );
-      if (!CashForWorkTasks) {
+      if (!CashForWorkTasks.task) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
           'Task Not Found'
@@ -79,7 +83,7 @@ class TaskController {
       }
       //console.log(CashForWorkTasks)
 
-      CashForWorkTasks.AssignedWorkers.forEach(data => {
+      CashForWorkTasks.response.data.forEach(data => {
         data.TaskAssignment.status === 'completed'
           ? completed_task++
           : completed_task;
@@ -87,13 +91,13 @@ class TaskController {
         data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
         data.dataValues.Assigned_Status = data.TaskAssignment.status;
       });
-      CashForWorkTasks.dataValues.campleted_task = completed_task;
-      CashForWorkTasks.dataValues.total_task_allowed =
+      CashForWorkTasks.response.completed_task = completed_task;
+      CashForWorkTasks.response.total_task_allowed =
         CashForWorkTasks.assignment_count;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
-        CashForWorkTasks
+        CashForWorkTasks.response
       );
       return Response.send(res);
     } catch (error) {
