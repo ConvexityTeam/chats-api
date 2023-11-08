@@ -4,7 +4,8 @@ const {
   TaskUsers,
   User,
   TaskProgress,
-  TaskProgressEvidence
+  TaskProgressEvidence,
+  Sequelize
 } = require('../models');
 const {publicAttr} = require('../constants/user.constants');
 const Pagination = require('../utils/pagination');
@@ -84,7 +85,7 @@ class TaskService {
       },
       include: [
         {
-          ...queryOptions,
+          // ...queryOptions,
           model: User,
           as: 'AssignedWorkers',
           attributes: publicAttr
