@@ -266,7 +266,7 @@ class BeneficiariesService {
     if (page && size) {
       const startIndex = (page - 1) * size;
       const endIndex = startIndex + size;
-      task.Campaigns = task.Campaigns.slice(startIndex, endIndex);
+      user.Campaigns = user.Campaigns.slice(startIndex, endIndex);
     }
 
     const response = await Pagination.getPagingData(
