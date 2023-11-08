@@ -1627,14 +1627,14 @@ class OrganisationController {
         );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        'Organisation beneficiaries' + error.message,
+        'Organisation beneficiaries',
         beneficiaries
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.'
+        'Internal server error. Please try again later.' + error.message
       );
       return Response.send(res);
     }
