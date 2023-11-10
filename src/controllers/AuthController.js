@@ -408,15 +408,12 @@ class AuthController {
           return Response.send(res);
         } else {
           const password = createHash(req.body.password);
-
           const extension = req.file.mimetype.split('/').pop();
-
           const profile_pic = await uploadFile(
             files,
             'u-' + environ + '-' + email + '-i.' + extension,
             'convexity-profile-images'
           );
-
           const user = await UserService.addUser({
             RoleId,
             phone,

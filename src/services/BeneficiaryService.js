@@ -254,15 +254,12 @@ class BeneficiariesService {
           where: {
             OrganisationId
           },
-
-          distinct: true,
           include: [
             {where: {UserId: id}, model: Wallet, as: 'BeneficiariesWallets'}
           ]
         }
       ]
     });
-
     if (page && size) {
       const startIndex = (page - 1) * size;
       const endIndex = startIndex + size;
