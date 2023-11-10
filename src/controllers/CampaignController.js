@@ -663,10 +663,10 @@ class CampaignController {
         org_proposal.campaign_id
       );
 
-      const data = {vendors: vendors.data, campaign};
+      const data = {vendors: vendors, campaign};
       data.campaign = campaign;
       data.total_request = vendors.data.length;
-      for (let request of data.vendors) {
+      for (let request of vendors.data) {
         const products = await ProductService.findProduct({
           proposal_id: request.proposalOwner.proposal_id
         });
