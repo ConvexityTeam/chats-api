@@ -492,7 +492,11 @@ class CampaignService {
 
           include: [
             {model: Task, as: 'Jobs'},
-            {model: User, as: 'Beneficiaries', attributes: userConstFilter.publicAttr}
+            {
+              model: User,
+              as: 'Beneficiaries',
+              attributes: userConstFilter.publicAttr
+            }
           ]
         }
       ]
@@ -682,8 +686,8 @@ class CampaignService {
         proposal_id: Sequelize.where(
           Sequelize.col('proposalOwner.proposal_id'),
           proposal_id
-        ),
-        status: Sequelize.where(Sequelize.col('proposalOwner.status'), status)
+        )
+        // status: Sequelize.where(Sequelize.col('proposalOwner.status'), status)
       },
       attributes: userConst.publicAttr,
       include: [
