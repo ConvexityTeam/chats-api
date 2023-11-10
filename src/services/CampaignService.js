@@ -668,7 +668,6 @@ class CampaignService {
   static async fetchRequest(proposal_id, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
-    const status = extraClause.status;
 
     const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
@@ -692,6 +691,7 @@ class CampaignService {
       attributes: userConst.publicAttr,
       include: [
         {
+          where: {...extraClause},
           model: VendorProposal,
           as: 'proposalOwner'
         }
