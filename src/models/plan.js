@@ -9,10 +9,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Plan.hasMany(models.Subscription, {
-        as: 'Subscriptions',
-        foreignKey: 'SubscriptionId'
-      });
+      // Plan.hasMany(models.Subscription, {
+      //   as: 'Subscriptions',
+      //   foreignKey: 'SubscriptionId'
+      // });
     }
   }
   Plan.init(
