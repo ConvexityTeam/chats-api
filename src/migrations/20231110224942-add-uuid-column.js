@@ -108,6 +108,7 @@ module.exports = {
             defaultValue: Sequelize.UUIDV4
           })
         ]);
+        //deamon
         const results = await db[modelName].findAll({
           where: {
             uuid: null
