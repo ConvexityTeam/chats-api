@@ -383,15 +383,12 @@ class AuthController {
           return Response.send(res);
         } else {
           const password = createHash(req.body.password);
-
           const extension = req.file.mimetype.split('/').pop();
-
           const profile_pic = await uploadFile(
             files,
             'u-' + environ + '-' + email + '-i.' + extension,
             'convexity-profile-images'
           );
-
           const user = await UserService.addUser({
             RoleId,
             phone,
@@ -739,8 +736,8 @@ class AuthController {
     let user = null;
     const data = req.body;
     const rules = {
-      first_name: 'alpha',
-      last_name: 'alpha',
+      first_name: 'string',
+      last_name: 'string',
       organisation_name: 'string',
       registration_id: 'string',
       email: 'required|email',
@@ -1061,6 +1058,13 @@ class AuthController {
         }
       });
 
+      if (!user) {
+        Response.setError(
+          HttpStatusCode.STATUS_UNAUTHORIZED,
+          'Invalid credentials'
+        );
+        return Response.send(res);
+      }
       if (user && user.is_email_verified === false) {
         Response.setError(
           HttpStatusCode.STATUS_UNAUTHORIZED,

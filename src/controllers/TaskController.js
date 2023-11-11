@@ -8,10 +8,10 @@ class TaskController {
     try {
       const tasks = req.body;
       const campaignId = req.params.campaign_id;
-      const [campaignUnique, createdTasks] = await Promise.all([
-        db.Campaign.findOne({where: {uuid: campaignId}}),
-        TaskService.createCashForWorkTask(tasks, campaignUnique.id)
-      ]);
+      const createdTasks = await TaskService.createCashForWorkTask(
+        tasks,
+        campaignId
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Tasks created successfully',
@@ -31,12 +31,11 @@ class TaskController {
   static async getCashForWorkTasks(req, res) {
     try {
       let completed_tasks = 0;
-      let task_count = 0;
       const params = SanitizeObject(req.params);
-      const [campaignUnique, CashForWorkTasks] = await Promise.all([
-        db.Campaign.findOne({where: {uuid: params.campaign_id}}),
-        TaskService.getCashForWorkTasks({campaign_id: campaignUnique.id})
-      ]);
+      const CashForWorkTasks = await TaskService.getCashForWorkTasks(
+        params,
+        req.query
+      );
 
       if (!CashForWorkTasks) {
         Response.setSuccess(
@@ -45,8 +44,8 @@ class TaskController {
         );
         return Response.send(res);
       }
-
-      CashForWorkTasks.forEach(data => {
+      // resolved conflict
+      CashForWorkTasks?.data.forEach(data => {
         data.dataValues.completed_tasks = data.completed_tasks
           ? completed_tasks++
           : completed_tasks;
@@ -71,21 +70,20 @@ class TaskController {
     try {
       let completed_task = 0;
       const params = SanitizeObject(req.params);
-      const [taskUnique, CashForWorkTasks] = await Promise.all([
-        TaskService.getTaskByUUID(params.task_id),
-        TaskService.getCashForBeneficiaries({task_id: taskUnique.id})
-      ]);
-
-      if (!CashForWorkTasks) {
-        Response.setSuccess(
-          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found'
-        );
-        return Response.send(res);
-      }
+      const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
+        params,
+        req.query
+      );
+      // if (!CashForWorkTasks.task) {
+      //   Response.setSuccess(
+      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //     'Task Not Found'
+      //   );
+      //   return Response.send(res);
+      // }
       //console.log(CashForWorkTasks)
 
-      CashForWorkTasks.AssignedWorkers.forEach(data => {
+      CashForWorkTasks?.response.data.forEach(data => {
         data.TaskAssignment.status === 'completed'
           ? completed_task++
           : completed_task;
@@ -93,8 +91,8 @@ class TaskController {
         data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
         data.dataValues.Assigned_Status = data.TaskAssignment.status;
       });
-      CashForWorkTasks.dataValues.campleted_task = completed_task;
-      CashForWorkTasks.dataValues.total_task_allowed =
+      CashForWorkTasks.response.completed_task = completed_task;
+      CashForWorkTasks.response.total_task_allowed =
         CashForWorkTasks.assignment_count;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -149,7 +147,7 @@ class TaskController {
       }
       const updated = await db.Task.update(
         {isCompleted: true},
-        {where: {id: taskUnique.id}}
+        {where: {id: taskId}}
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Task updated', updated);
       return Response.send(res);

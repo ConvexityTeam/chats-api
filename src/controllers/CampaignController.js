@@ -669,17 +669,23 @@ class CampaignController {
   static async getProposalRequests(req, res) {
     const {proposal_id} = req.params;
     try {
-      const [proposal, vendors, org_proposal, campaign] = await Promise.all([
-        CampaignService.fetchRequestByUUID(proposal_id),
-        CampaignService.fetchRequest(proposal.id),
-        CampaignService.fetchProposalRequest(proposal.id),
-        CampaignService.getCampaignById(org_proposal.campaign_id)
-      ]);
+      const vendors = await CampaignService.fetchRequest(
+        proposal_id,
+        req.query
+      );
 
-      const data = {vendors, campaign};
+      // const campaign = await CampaignService.getCampaignById(proposal_id);
+      const org_proposal = await CampaignService.fetchProposalRequest(
+        proposal_id
+      );
+      const campaign = await CampaignService.getCampaignById(
+        org_proposal.campaign_id
+      );
+
+      const data = {vendors: vendors, campaign};
       data.campaign = campaign;
-      data.total_request = vendors.length;
-      for (let request of data.vendors) {
+      data.total_request = vendors.data.length;
+      for (let request of vendors.data) {
         const products = await ProductService.findProduct({
           proposal_id: request.proposalOwner.proposal_id
         });
@@ -1497,24 +1503,34 @@ class CampaignController {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
       const {source, type} = SanitizeObject(req.body, ['source', 'type']);
-      const [campaignUnique, campaignUnique2, replicaCampaign] =
-        await Promise.all([
-          CampaignService.getCampaignByUUID(campaign_id),
-          CampaignService.getCampaignByUUID(replicaCampaignId),
-          CampaignService.getACampaignWithReplica(campaignUnique2.id, type)
-        ]);
-
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
+      const replicaCampaign = await CampaignService.getACampaignWithReplica(
+        replicaCampaignId,
+        type
+      );
       const onboard = [];
-      let count = 0;
+
+      //const campaign = await CampaignService.getCampaignById(campaign_id);
+
+      // if (campaign.formId) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Campaign Has a Form Please Onboard Beneficiary From Field App`
+      //   );
+      //   return Response.send(res);
+      // }
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
+          const count = index + 1;
           setTimeout(async () => {
-            const res = await CampaignService.addBeneficiary(
-              campaignUnique.id,
+            const res = await CampaignService.addBeneficiaries(
+              campaign_id,
               beneficiary.id,
+              campaign,
+              count,
+              replicaCampaign.Beneficiaries.length,
               source
             );
-            count++;
             onboard.push(res);
           }, index * 5000);
         })
@@ -1542,10 +1558,7 @@ class CampaignController {
   static async importStatus(req, res) {
     try {
       const campaign_id = req.params.campaign_id;
-      const campaignUnique = await CampaignService.getCampaignByUUID(
-        campaign_id
-      );
-      const campaign = await CampaignService.getCampaign(campaignUnique.id);
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Status',

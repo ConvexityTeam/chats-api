@@ -12,7 +12,7 @@ const {
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
-const {userConst, walletConst} = require('../constants');
+const {userConst, userConstFilter, walletConst} = require('../constants');
 const moment = require('moment');
 const Pagination = require('../utils/pagination');
 const {Logger} = require('../libs');
@@ -237,8 +237,23 @@ class BeneficiariesService {
     });
   }
 
-  static async organisationBeneficiaryDetails(id, OrganisationId) {
-    return User.findOne({
+  static async organisationBeneficiaryDetails(
+    id,
+    OrganisationId,
+    extraClause = null
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const user = await User.findOne({
       where: {
         id
       },
@@ -260,6 +275,18 @@ class BeneficiariesService {
         }
       ]
     });
+    if (page && size) {
+      const startIndex = (page - 1) * size;
+      const endIndex = startIndex + size;
+      user.Campaigns = user.Campaigns.slice(startIndex, endIndex);
+    }
+
+    const response = await Pagination.getPagingData(
+      {count: user.Campaigns.length, rows: user.Campaigns},
+      page,
+      limit
+    );
+    return {user, response};
   }
 
   static async beneficiaryDetails(id, extraClause = null) {
@@ -365,29 +392,32 @@ class BeneficiariesService {
   static async findOrgnaisationBeneficiaries(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
-
-    let options = {};
+    let queryOptions = {};
     if (page && size) {
-      options.limit = limit;
-      options.offset = offset;
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
     }
     const users = await User.findAndCountAll({
       distinct: true,
-      ...options,
-      where: {
-        OrganisationId: Sequelize.where(
-          Sequelize.col('Campaigns.OrganisationId'),
-          OrganisationId
-        )
-      },
+      ...queryOptions,
+      // where: {
+      //   OrganisationId: Sequelize.where(
+      //     Sequelize.col('Campaigns.OrganisationId'),
+      //     OrganisationId
+      //   )
+      // },
       attributes: userConst.publicAttr,
       include: [
         {
           model: Campaign,
           as: 'Campaigns',
+          where: {
+            OrganisationId
+          },
           through: {
             where: {
               approved: true
@@ -464,7 +494,7 @@ class BeneficiariesService {
         {
           model: User,
           as: 'User',
-          attributes: userConst.publicAttr,
+          attributes: userConstFilter.publicAttr,
           include: [
             {
               model: FormAnswer,

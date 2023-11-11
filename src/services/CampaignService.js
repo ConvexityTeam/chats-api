@@ -18,7 +18,7 @@ const {
   Task,
   CampaignVendor
 } = require('../models');
-const {userConst, walletConst} = require('../constants');
+const {userConst, userConstFilter, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef, AclRoles} = require('../utils');
@@ -115,6 +115,10 @@ class CampaignService {
     return Campaign.findOne({where: {uuid, is_public: true}});
   }
 
+  static getCleanCampaignById(id) {
+    return Campaign.findByPk(id);
+  }
+
   static campaignBeneficiaryExists(CampaignId, UserId) {
     return Beneficiary.findOne({
       where: {
@@ -144,6 +148,48 @@ class CampaignService {
     });
   }
 
+  static async addBeneficiaries(
+    CampaignId,
+    UserId,
+    campaign,
+    count,
+    replicaCampaignLength,
+    source = null
+  ) {
+    return new Promise(async (resolve, reject) => {
+      Logger.info(`replicaCampaignLength: ${replicaCampaignLength}`);
+      Logger.info(`count: ${count}`);
+      Logger.info(`campaign: ${campaign}`);
+      try {
+        const find = await Beneficiary.findOne({
+          where: {
+            CampaignId,
+            UserId
+          }
+        });
+        if (find) {
+          return resolve(find);
+        }
+        const newBeneficiary = await Beneficiary.create({
+          CampaignId,
+          UserId,
+          source
+        });
+        await CampaignService.updateCampaign(CampaignId, {
+          total_beneficiaries: count,
+          total_imported: replicaCampaignLength
+        });
+        // await campaign.update({
+        //   total_imported: count,
+        //   total_beneficiaries: replicaCampaignLength
+        // });
+        await QueueService.createWallet(UserId, 'user', CampaignId);
+        return resolve(newBeneficiary);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
   static async addBeneficiary(CampaignId, UserId, source = null) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -253,7 +299,7 @@ class CampaignService {
       include: {
         model: User,
         as: 'Vendor',
-        attributes: userConst.publicAttr
+        attributes: userConstFilter.publicAttr
       }
     });
     return await Pagination.getPagingData(vendors, page, limit);
@@ -456,7 +502,11 @@ class CampaignService {
 
           include: [
             {model: Task, as: 'Jobs'},
-            {model: User, as: 'Beneficiaries'}
+            {
+              model: User,
+              as: 'Beneficiaries',
+              attributes: userConstFilter.publicAttr
+            }
           ]
         }
       ]
@@ -625,30 +675,40 @@ class CampaignService {
     return campaign;
   }
 
-  static async fetchRequestByUUID(uuid) {
-    return await ProposalRequest.findOne({
-      where: {
-        uuid
-      }
-    });
-  }
-  static async fetchRequest(proposal_id) {
-    return await User.findAll({
+  static async fetchRequest(proposal_id, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const request = await User.findAndCountAll({
+      ...queryOptions,
+      distinct: true,
       where: {
         RoleId: AclRoles.Vendor,
         proposal_id: Sequelize.where(
           Sequelize.col('proposalOwner.proposal_id'),
           proposal_id
         )
+        // status: Sequelize.where(Sequelize.col('proposalOwner.status'), status)
       },
       attributes: userConst.publicAttr,
       include: [
         {
+          where: {...extraClause},
           model: VendorProposal,
           as: 'proposalOwner'
         }
       ]
     });
+    const response = await Pagination.getPagingData(request, page, limit);
+    return response;
   }
   static async fetchProposalRequests(OrganisationId, extraClause = {}) {
     const page = extraClause.page;

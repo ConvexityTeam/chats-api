@@ -4,9 +4,11 @@ const {
   TaskUsers,
   User,
   TaskProgress,
-  TaskProgressEvidence
+  TaskProgressEvidence,
+  Sequelize
 } = require('../models');
 const {publicAttr} = require('../constants/user.constants');
+const Pagination = require('../utils/pagination');
 
 class TaskService {
   static async createCashForWorkTask(tasks, campaignId) {
@@ -34,6 +36,7 @@ class TaskService {
     return Task.bulkCreate(_tasks);
   }
 
+<<<<<<< HEAD
   static async getTaskByUUID(uuid) {
     return Task.findOne({
       where: {
@@ -43,6 +46,23 @@ class TaskService {
   }
   static async getCashForWorkTasks(params) {
     return Task.findAll({
+=======
+  static async getCashForWorkTasks(params, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const tasks = await Task.findAndCountAll({
+      ...queryOptions,
+      distinct: true,
+>>>>>>> d36b7cdc97388b9719e929abab7f62331fc9c677
       where: {
         CampaignId: params.campaign_id
       },
@@ -54,22 +74,53 @@ class TaskService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(tasks, page, limit);
+    return response;
   }
 
-  static async getCashForBeneficiaries(params) {
-    return Task.findOne({
+  static async getCashForBeneficiaries(params, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    // delete extraClause.page;
+    // delete extraClause.size;
+    // let queryOptions = {};
+    // if (page && size) {
+    //   queryOptions.limit = limit;
+    //   queryOptions.offset = offset;
+    // }
+
+    const task = await Task.findOne({
       where: {
         id: params.task_id
       },
       include: [
         {
+          // ...queryOptions,
           model: User,
           as: 'AssignedWorkers',
           attributes: publicAttr
         }
       ]
     });
+
+    // Apply limit and offset to the associated records
+    if (page && size) {
+      const startIndex = (page - 1) * size;
+      const endIndex = startIndex + size;
+      task.AssignedWorkers = task.AssignedWorkers.slice(startIndex, endIndex);
+    }
+
+    const response = await Pagination.getPagingData(
+      {rows: task?.AssignedWorkers, count: task?.AssignedWorkers?.length},
+      page,
+      limit
+    );
+
+    return {task, response};
   }
+  //develop
 
   static async updateTask(id, updateTaskObj) {
     const task = await Task.findByPk(id);

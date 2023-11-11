@@ -124,7 +124,9 @@ module.exports = (sequelize, DataTypes) => {
       location: DataTypes.JSON,
       start_date: DataTypes.DATE,
       paused_date: DataTypes.DATE,
-      end_date: DataTypes.DATE
+      end_date: DataTypes.DATE,
+      total_beneficiaries: DataTypes.INTEGER,
+      total_imported: DataTypes.INTEGER
     },
     {
       sequelize,
