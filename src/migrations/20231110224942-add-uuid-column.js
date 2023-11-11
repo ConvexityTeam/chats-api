@@ -69,7 +69,7 @@ module.exports = {
       const tableName = toPlural(modelName);
       await queryInterface.addColumn(tableName, 'uuid', {
         type: Sequelize.UUID,
-        allowNull: false,
+        allowNull: true,
         after: 'id',
         defaultValue: Sequelize.UUIDV4
       });
@@ -98,7 +98,7 @@ module.exports = {
         const tableName = toGerund(modelName);
         await queryInterface.addColumn(tableName, 'uuid', {
           type: Sequelize.UUID,
-          allowNull: false,
+          allowNull: true,
           after: 'id',
           defaultValue: Sequelize.UUIDV4
         });
