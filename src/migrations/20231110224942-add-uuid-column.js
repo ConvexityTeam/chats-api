@@ -1,6 +1,5 @@
 'use strict';
-
-const {Sequelize} = require('sequelize');
+const db = require('../models');
 
 function toPlural(modelName) {
   // Very basic pluralization, just for demonstration purposes
@@ -8,6 +7,13 @@ function toPlural(modelName) {
   if (lastChar === 's') {
     return modelName;
   }
+  if (lastChar === 'y') {
+    return modelName.slice(0, -1) + 'ies';
+  }
+  if (lastChar === 'h') {
+    return modelName.slice(0, -1) + 'es';
+  }
+
   return modelName + 's'; // Appending 's' as a simple way to pluralize
 }
 
@@ -33,7 +39,7 @@ const pluralModelNames = [
   'Group',
   'ImpactReports',
   'Invites',
-  'Login',
+  // 'Login',
   'Market',
   'Member',
   'Order',
@@ -54,18 +60,18 @@ const pluralModelNames = [
   'Task',
   'TaskAssignment',
   'TaskAssignmentEvidence',
-  'Transaction',
   'User',
   'VendorProposal',
   'VerificationToken',
   'VoucherToken',
-  'Wallet',
   'ZohoToken'
 ];
 
 module.exports = {
-  up: async queryInterface => {
+  up: async (queryInterface, Sequelize) => {
     const addUuidColumnPromises = pluralModelNames.map(async modelName => {
+      console.log(`Adding uuid column to ${modelName}`);
+
       const tableName = toPlural(modelName);
       await queryInterface.addColumn(tableName, 'uuid', {
         type: Sequelize.UUID,
@@ -74,12 +80,26 @@ module.exports = {
         defaultValue: Sequelize.UUIDV4
       });
 
-      const models = await queryInterface.sequelize.models[modelName].findAll();
-      const updatePromises = models.map(model =>
-        model.update({uuid: Sequelize.UUIDV4}, {where: {uuid: null}})
+      const results = await db[modelName].findAll({
+        where: {
+          uuid: null
+        }
+      });
+
+      const updatePromises = results.map(result =>
+        db[modelName].update(
+          {
+            uuid: Sequelize.UUIDV4
+          },
+          {
+            where: {
+              id: result.id
+            }
+          }
+        )
       );
 
-      return Promise.all(updatePromises);
+      return await Promise.all(updatePromises);
     });
 
     await Promise.all(addUuidColumnPromises);
@@ -93,21 +113,33 @@ module.exports = {
           defaultValue: Sequelize.UUIDV4
         });
 
-        const models = await queryInterface.sequelize.models[
-          modelName
-        ].findAll();
-        const updatePromises = models.map(model =>
-          model.update({uuid: Sequelize.UUIDV4}, {where: {uuid: null}})
+        const results = await db[modelName].findAll({
+          where: {
+            uuid: null
+          }
+        });
+
+        const updatePromises = results.map(result =>
+          db[modelName].update(
+            {
+              uuid: Sequelize.UUIDV4
+            },
+            {
+              where: {
+                id: result.id
+              }
+            }
+          )
         );
 
-        return Promise.all(updatePromises);
+        return await Promise.all(updatePromises);
       }
     );
 
     await Promise.all(addGerundUuidColumnPromises);
   },
 
-  down: async queryInterface => {
+  down: async (queryInterface, Sequelize) => {
     const removePluralUuidColumnPromises = pluralModelNames.map(
       async modelName => {
         const tableName = toPlural(modelName);

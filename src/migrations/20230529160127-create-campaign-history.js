@@ -9,11 +9,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         autoIncrement: true
       },
-      uuid: {
-        allowNull: true,
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4
-      },
       extension_period: {
         allowNull: false,
         type: Sequelize.INTEGER

@@ -9,11 +9,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         autoIncrement: true
       },
-      uuid: {
-        allowNull: true,
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4
-      },
       campaign_id: {
         type: Sequelize.INTEGER,
         allowNull: false,

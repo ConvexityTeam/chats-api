@@ -8,11 +8,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         autoIncrement: true
       },
-      id: {
-        allowNull: true,
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4
-      },
       beneficiaryId: {
         type: Sequelize.INTEGER,
         allowNull: false,
