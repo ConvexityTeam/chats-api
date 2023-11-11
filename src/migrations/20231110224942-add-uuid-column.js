@@ -67,7 +67,7 @@ module.exports = {
     const addUuidColumnPromises = pluralModelNames.map(async modelName => {
       console.log(`Adding uuid column to ${modelName}`);
       const tableName = toPlural(modelName);
-      await queryInterface.removeColumn(tableName, 'uuid');
+      // await queryInterface.removeColumn(tableName, 'uuid');
       await queryInterface.addColumn(tableName, 'uuid', {
         type: Sequelize.UUID,
         allowNull: true,
@@ -97,7 +97,7 @@ module.exports = {
     const addGerundUuidColumnPromises = gerundModelNames.map(
       async modelName => {
         const tableName = toGerund(modelName);
-        await queryInterface.removeColumn(tableName, 'uuid');
+        // await queryInterface.removeColumn(tableName, 'uuid');
         await queryInterface.addColumn(tableName, 'uuid', {
           type: Sequelize.UUID,
           allowNull: true,
