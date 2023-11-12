@@ -1,4 +1,5 @@
 'use strict';
+const {Logger} = require('../libs');
 const db = require('../models');
 function toPlural(modelName) {
   // Very basic pluralization, just for demonstration purposes
@@ -130,7 +131,7 @@ module.exports = {
       );
       return transaction;
     } catch (error) {
-      console.log(error);
+      Logger.error(`Migration for adding and updating uuid failed: ${error}`);
     }
   },
   down: async (queryInterface, Sequelize) => {
@@ -158,7 +159,7 @@ module.exports = {
       );
       return transaction;
     } catch (error) {
-      console.log(error);
+      Logger.error(`Migration for removing uuid failed: ${error}`);
     }
   }
 };
