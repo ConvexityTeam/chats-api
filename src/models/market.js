@@ -15,7 +15,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   Market.init(
     {
-      UserId: DataTypes.INTEGER,
+      uuid: DataTypes.UUID,
+      UserId: DataTypes.STRING,
       store_name: DataTypes.STRING,
       address: DataTypes.STRING,
       location: DataTypes.JSON,

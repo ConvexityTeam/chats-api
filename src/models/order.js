@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Order.init(
     {
+      uuid: DataTypes.UUID,
       reference: DataTypes.STRING,
       VendorId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER,

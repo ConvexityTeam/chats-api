@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Business.init(
     {
+      uuid: DataTypes.UUID,
       name: DataTypes.STRING,
       bizId: DataTypes.STRING,
       document: DataTypes.STRING,

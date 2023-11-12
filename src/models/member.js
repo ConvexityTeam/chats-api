@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Member.init(
     {
+      uuid: DataTypes.UUID,
       full_name: DataTypes.STRING,
       dob: DataTypes.DATE,
       profile_pic: DataTypes.STRING,
