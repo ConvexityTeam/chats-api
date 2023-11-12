@@ -64,86 +64,85 @@ const pluralModelNames = [
 ];
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const addUuidColumnPromises = pluralModelNames.map(async modelName => {
-      console.log(`Adding uuid column to ${modelName}`);
-      const tableName = toPlural(modelName);
-      await Promise.all([
-        queryInterface.removeColumn(tableName, 'uuid')
-        // queryInterface.addColumn(tableName, 'uuid', {
-        //   type: Sequelize.UUID,
-        //   allowNull: true,
-        //   after: 'id',
-        //   defaultValue: Sequelize.UUIDV4
-        // })
-      ]);
-      // const results = await db[modelName].findAll({
-      //   where: {
-      //     uuid: null
-      //   }
-      // });
-      // const updatePromises = results.map(result =>
-      //   db[modelName].update(
-      //     {
-      //       uuid: Sequelize.UUIDV4
-      //     },
-      //     {
-      //       where: {
-      //         id: result.id
-      //       }
-      //     }
-      //   )
-      // );
-      // return await Promise.all(updatePromises);
+    await queryInterface.sequelize.transaction(async t => {
+      await Promise.all(
+        pluralModelNames.map(async modelName => {
+          let tableName = toPlural(modelName);
+          await queryInterface.addColumn(
+            tableName,
+            'uuid',
+            {
+              type: Sequelize.UUID,
+              allowNull: true,
+              after: 'id',
+              defaultValue: Sequelize.UUIDV4
+            },
+            {transaction: t}
+          );
+          console.log(`Adding uuid to ${tableName} 1`);
+          await db[modelName].update(
+            {
+              uuid: Sequelize.UUIDV4
+            },
+            {
+              where: {
+                uuid: null
+              },
+              transaction: t
+            }
+          );
+          console.log(`updating uuid in ${tableName} 1`);
+        })
+      );
+      await Promise.all(
+        gerundModelNames.map(async modelName => {
+          let tableName = toGerund(modelName);
+          await queryInterface.addColumn(
+            tableName,
+            'uuid',
+            {
+              type: Sequelize.UUID,
+              allowNull: true,
+              after: 'id',
+              defaultValue: Sequelize.UUIDV4
+            },
+            {transaction: t}
+          );
+          console.log(`Adding uuid to ${tableName} 2`);
+          await db[modelName].update(
+            {
+              uuid: Sequelize.UUIDV4
+            },
+            {
+              where: {
+                uuid: null
+              },
+              transaction: t
+            }
+          );
+          console.log(`updating uuid in ${tableName} 2`);
+        })
+      );
     });
-    await Promise.all(addUuidColumnPromises);
-    const addGerundUuidColumnPromises = gerundModelNames.map(
-      async modelName => {
-        const tableName = toGerund(modelName);
-        await Promise.all([
-          queryInterface.removeColumn(tableName, 'uuid')
-          // queryInterface.addColumn(tableName, 'uuid', {
-          //   type: Sequelize.UUID,
-          //   allowNull: true,
-          //   after: 'id',
-          //   defaultValue: Sequelize.UUIDV4
-          // })
-        ]);
-        // const results = await db[modelName].findAll({
-        //   where: {
-        //     uuid: null
-        //   }
-        // });
-        // const updatePromises = results.map(result =>
-        //   db[modelName].update(
-        //     {
-        //       uuid: Sequelize.UUIDV4
-        //     },
-        //     {
-        //       where: {
-        //         id: result.id
-        //       }
-        //     }
-        //   )
-        // );
-        // return await Promise.all(updatePromises);
-      }
-    );
-    await Promise.all(addGerundUuidColumnPromises);
   },
   down: async (queryInterface, Sequelize) => {
-    const removePluralUuidColumnPromises = pluralModelNames.map(
-      async modelName => {
-        const tableName = toPlural(modelName);
-        await queryInterface.removeColumn(tableName, 'uuid');
-      }
-    );
-    await Promise.all(removePluralUuidColumnPromises);
-    const removeGerundUuidColumnPromises = gerundModelNames.map(
-      async modelName => {
-        const tableName = toGerund(modelName);
-        await queryInterface.removeColumn(tableName, 'uuid');
-      }
-    );
-    await Promise.all(removeGerundUuidColumnPromises);
+    await queryInterface.sequelize.transaction(async t => {
+      await Promise.all(
+        pluralModelNames.map(async modelName => {
+          const tableName = toPlural(modelName);
+          await queryInterface.removeColumn(tableName, 'uuid', {
+            transaction: t
+          });
+        })
+      );
+      await Promise.all(
+        gerundModelNames.map(async modelName => {
+          const tableName = toGerund(modelName);
+          await queryInterface.removeColumn(tableName, 'uuid', {
+            transaction: t
+          });
+        })
+      );
+    });
   }
 };
