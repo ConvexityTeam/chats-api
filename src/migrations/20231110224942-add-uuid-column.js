@@ -95,19 +95,19 @@ module.exports = {
               // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
-                  if (row.id !== undefined || row.id !== null) {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
+                  console.log(`Row: ${JSON.stringify(row)}`);
+                  console.log(`ID: ${row.id}`);
+                  await db[modelName].update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        uuid: row.uuid
                       },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  }
+                      transaction: t
+                    }
+                  );
                 })
               );
               console.log(`updating uuid in ${tableName} 1`);
@@ -141,19 +141,17 @@ module.exports = {
               // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
-                  if (row.id !== undefined || row.id !== null) {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
+                  await db[modelName].update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        uuid: row.uuid
                       },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  }
+                      transaction: t
+                    }
+                  );
                 })
               );
               console.log(`updating uuid in ${tableName} 2`);
