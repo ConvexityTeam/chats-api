@@ -65,6 +65,7 @@ const pluralModelNames = [
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.sequelize.transaction(async t => {
+      //adding commit
       await Promise.all(
         pluralModelNames.map(async modelName => {
           let tableName = toPlural(modelName);
