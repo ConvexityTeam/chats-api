@@ -85,16 +85,26 @@ module.exports = {
                 {transaction: t}
               );
               console.log(`Adding uuid to ${tableName} 1`);
-              await db[modelName].update(
-                {
-                  uuid: Sequelize.literal('DEFAULT')
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
                 },
-                {
-                  where: {
-                    uuid: null
-                  },
-                  transaction: t
-                }
+                transaction: t
+              });
+              await Promise.all(
+                rowsToUpdate.map(async row => {
+                  await db[modelName].update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        id: row.id
+                      },
+                      transaction: t
+                    }
+                  );
+                })
               );
               console.log(`updating uuid in ${tableName} 1`);
             })
@@ -114,16 +124,26 @@ module.exports = {
                 {transaction: t}
               );
               console.log(`Adding uuid to ${tableName} 2`);
-              await db[modelName].update(
-                {
-                  uuid: Sequelize.literal('DEFAULT')
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
                 },
-                {
-                  where: {
-                    uuid: null
-                  },
-                  transaction: t
-                }
+                transaction: t
+              });
+              await Promise.all(
+                rowsToUpdate.map(async row => {
+                  await db[modelName].update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        id: row.id
+                      },
+                      transaction: t
+                    }
+                  );
+                })
               );
               console.log(`updating uuid in ${tableName} 2`);
             })
