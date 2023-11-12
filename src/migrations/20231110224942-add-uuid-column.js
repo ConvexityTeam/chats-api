@@ -85,12 +85,12 @@ module.exports = {
                 {transaction: t}
               );
               console.log(`Adding uuid to ${tableName} 1`);
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
+              // const rowsToUpdate = await db[modelName].findAll({
+              //   where: {
+              //     uuid: null
+              //   },
+              //   transaction: t
+              // });
 
               console.log(
                 `All rows to update 1: ${JSON.stringify(rowsToUpdate)}`
@@ -104,7 +104,7 @@ module.exports = {
                     },
                     {
                       where: {
-                        id: row.id
+                        uuid: null
                       },
                       transaction: t
                     }
