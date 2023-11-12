@@ -91,6 +91,11 @@ module.exports = {
                 },
                 transaction: t
               });
+
+              console.log(
+                `All rows to update 1: ${JSON.stringify(rowsToUpdate)}`
+              );
+              // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
                   await db[modelName].update(
@@ -130,6 +135,11 @@ module.exports = {
                 },
                 transaction: t
               });
+
+              console.log(
+                `All rows to update 2: ${JSON.stringify(rowsToUpdate)}`
+              );
+              // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
                   await db[modelName].update(
