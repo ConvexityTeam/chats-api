@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   CampaignHistory.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       extension_period: DataTypes.STRING,
       new_end_date: DataTypes.DATE,
       additional_budget: DataTypes.INTEGER,

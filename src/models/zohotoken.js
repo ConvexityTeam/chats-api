@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   ZohoToken.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       access_token: DataTypes.STRING,
       refresh_token: DataTypes.STRING,
       expires_in: DataTypes.DATE

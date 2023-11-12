@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Group.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       group_name: DataTypes.STRING,
       representative_id: DataTypes.INTEGER,
       group_category: DataTypes.ENUM(

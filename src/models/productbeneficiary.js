@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   ProductBeneficiary.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       productId: DataTypes.INTEGER,
       UserId: DataTypes.INTEGER,
       OrganisationId: DataTypes.INTEGER

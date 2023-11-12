@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Product.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       type: DataTypes.ENUM('product', 'service'),
       category_id: DataTypes.INTEGER,
       proposal_id: DataTypes.INTEGER,

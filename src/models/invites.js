@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Invites.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,

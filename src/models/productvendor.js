@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   VendorProduct.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       productId: DataTypes.INTEGER,
       vendorId: DataTypes.INTEGER
     },

@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Complaint.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       report: DataTypes.TEXT,
       status: DataTypes.ENUM('resolved', 'unresolved'),
       CampaignId: DataTypes.INTEGER,
