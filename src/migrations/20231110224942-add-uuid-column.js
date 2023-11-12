@@ -86,22 +86,24 @@ module.exports = {
               );
               console.log(`Adding uuid to ${tableName} 1`);
               const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
+                },
                 transaction: t
               });
 
-              // console.log(
-              //   `All rows to update 1: ${JSON.stringify(rowsToUpdate)}`
-              // );
               // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
+                  console.log(`Row: ${JSON.stringify(row)}`);
+                  console.log(`ID: ${row.id}`);
                   await db[modelName].update(
                     {
                       uuid: uuid.v4()
                     },
                     {
                       where: {
-                        uuid: null
+                        id: row.id
                       },
                       transaction: t
                     }
@@ -127,12 +129,15 @@ module.exports = {
               );
               console.log(`Adding uuid to ${tableName} 2`);
               const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
+                },
                 transaction: t
               });
 
-              // console.log(
-              //   `All rows to update 2: ${JSON.stringify(rowsToUpdate)}`
-              // );
+              console.log(
+                `All rows to update 2: ${JSON.stringify(rowsToUpdate)}`
+              );
               // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
@@ -142,7 +147,7 @@ module.exports = {
                     },
                     {
                       where: {
-                        uuid: null
+                        id: row.id
                       },
                       transaction: t
                     }
