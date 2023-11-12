@@ -93,27 +93,26 @@ module.exports = {
               });
 
               // Update each row with a new UUID
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
+              rowsToUpdate.map(async row => {
+                if (typeof row.id !== 'undefined') {
+                  await db[modelName].update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        id: row.id
                       },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  } else {
-                    console.log(`Model: ${modelName}`);
-                    console.log(`Row: ${JSON.stringify(row)}`);
-                    console.log(`ID: ${row.id}`);
-                  }
-                })
-              );
+                      transaction: t
+                    }
+                  );
+                } else {
+                  console.log(`Model: ${modelName}`);
+                  console.log(`Row: ${JSON.stringify(row)}`);
+                  console.log(`ID: ${row.id}`);
+                }
+              });
+
               console.log(`updating uuid in ${tableName} 1`);
             })
           );
@@ -143,27 +142,26 @@ module.exports = {
                 `All rows to update 2: ${JSON.stringify(rowsToUpdate)}`
               );
               // Update each row with a new UUID
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
+              rowsToUpdate.map(async row => {
+                if (typeof row.id !== 'undefined') {
+                  await db[modelName].update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        id: row.id
                       },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  } else {
-                    console.log(`Model: ${modelName}`);
-                    console.log(`Row: ${JSON.stringify(row)}`);
-                    console.log(`ID: ${row.id}`);
-                  }
-                })
-              );
+                      transaction: t
+                    }
+                  );
+                } else {
+                  console.log(`Model: ${modelName}`);
+                  console.log(`Row: ${JSON.stringify(row)}`);
+                  console.log(`ID: ${row.id}`);
+                }
+              });
+
               console.log(`updating uuid in ${tableName} 2`);
             })
           );
