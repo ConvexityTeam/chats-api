@@ -104,7 +104,7 @@ module.exports = {
                       },
                       {
                         where: {
-                          uuid: row.uuid
+                          id: row.id
                         },
                         transaction: t
                       }
