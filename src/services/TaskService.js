@@ -35,8 +35,6 @@ class TaskService {
 
     return Task.bulkCreate(_tasks);
   }
-
-<<<<<<< HEAD
   static async getTaskByUUID(uuid) {
     return Task.findOne({
       where: {
@@ -44,9 +42,6 @@ class TaskService {
       }
     });
   }
-  static async getCashForWorkTasks(params) {
-    return Task.findAll({
-=======
   static async getCashForWorkTasks(params, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
@@ -62,7 +57,6 @@ class TaskService {
     const tasks = await Task.findAndCountAll({
       ...queryOptions,
       distinct: true,
->>>>>>> d36b7cdc97388b9719e929abab7f62331fc9c677
       where: {
         CampaignId: params.campaign_id
       },
