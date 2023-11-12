@@ -95,19 +95,21 @@ module.exports = {
               // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
-                  console.log(`Row: ${JSON.stringify(row)}`);
-                  console.log(`ID: ${row.id}`);
-                  await db[modelName].update(
-                    {
-                      uuid: uuid.v4()
-                    },
-                    {
-                      where: {
-                        uuid: row.uuid
+                  if (typeof row.id !== 'undefined') {
+                    console.log(`Row: ${JSON.stringify(row)}`);
+                    console.log(`ID: ${row.id}`);
+                    await db[modelName].update(
+                      {
+                        uuid: uuid.v4()
                       },
-                      transaction: t
-                    }
-                  );
+                      {
+                        where: {
+                          id: row.id
+                        },
+                        transaction: t
+                      }
+                    );
+                  }
                 })
               );
               console.log(`updating uuid in ${tableName} 1`);
@@ -141,17 +143,22 @@ module.exports = {
               // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
-                  await db[modelName].update(
-                    {
-                      uuid: uuid.v4()
-                    },
-                    {
-                      where: {
-                        uuid: row.uuid
+                  if (typeof row.id !== 'undefined') {
+                    console.log(`Row: ${JSON.stringify(row)}`);
+                    console.log(`ID: ${row.id}`);
+
+                    await db[modelName].update(
+                      {
+                        uuid: uuid.v4()
                       },
-                      transaction: t
-                    }
-                  );
+                      {
+                        where: {
+                          uuid: row.id
+                        },
+                        transaction: t
+                      }
+                    );
+                  }
                 })
               );
               console.log(`updating uuid in ${tableName} 2`);
