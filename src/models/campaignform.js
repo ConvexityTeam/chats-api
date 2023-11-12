@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   CampaignForm.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       beneficiaryId: DataTypes.INTEGER,
       organisationId: DataTypes.INTEGER,
       title: DataTypes.STRING,

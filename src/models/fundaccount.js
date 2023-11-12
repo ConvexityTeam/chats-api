@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   FundAccount.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       channel: DataTypes.STRING,
       service: DataTypes.STRING,
       OrganisationId: DataTypes.INTEGER,

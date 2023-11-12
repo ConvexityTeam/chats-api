@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   CampaignVendor.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       VendorId: DataTypes.NUMERIC,
       CampaignId: DataTypes.NUMERIC,
       approved: DataTypes.BOOLEAN

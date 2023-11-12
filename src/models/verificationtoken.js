@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   VerificationToken.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       UserId: DataTypes.INTEGER,
       type: DataTypes.STRING,
       token: DataTypes.STRING,

@@ -126,7 +126,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   User.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       referal_id: DataTypes.STRING,
       RoleId: DataTypes.INTEGER,
       first_name: {

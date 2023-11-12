@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Task.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       CampaignId: DataTypes.INTEGER,
       name: DataTypes.STRING,
       description: DataTypes.STRING,

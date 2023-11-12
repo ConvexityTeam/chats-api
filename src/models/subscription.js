@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Subscription.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       isActive: DataTypes.BOOLEAN,
       planId: DataTypes.INTEGER,
       organisationId: DataTypes.INTEGER,

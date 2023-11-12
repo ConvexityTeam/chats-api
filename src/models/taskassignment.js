@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   TaskAssignment.init(
     {
-      uuid: DataTypes.UUIDV4,
+      uuid: DataTypes.UUID,
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true
