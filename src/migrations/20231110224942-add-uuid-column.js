@@ -103,7 +103,7 @@ module.exports = {
                     },
                     {
                       where: {
-                        id: row.id
+                        uuid: row.uuid
                       },
                       transaction: t
                     }
@@ -147,7 +147,7 @@ module.exports = {
                     },
                     {
                       where: {
-                        id: row.id
+                        uuid: row.uuid
                       },
                       transaction: t
                     }
