@@ -96,8 +96,6 @@ module.exports = {
               await Promise.all(
                 rowsToUpdate.map(async row => {
                   if (typeof row.id !== 'undefined') {
-                    console.log(`Row: ${JSON.stringify(row)}`);
-                    console.log(`ID: ${row.id}`);
                     await db[modelName].update(
                       {
                         uuid: uuid.v4()
@@ -109,6 +107,10 @@ module.exports = {
                         transaction: t
                       }
                     );
+                  } else {
+                    console.log(`Model: ${modelName}`);
+                    console.log(`Row: ${JSON.stringify(row)}`);
+                    console.log(`ID: ${row.id}`);
                   }
                 })
               );
@@ -144,9 +146,6 @@ module.exports = {
               await Promise.all(
                 rowsToUpdate.map(async row => {
                   if (typeof row.id !== 'undefined') {
-                    console.log(`Row: ${JSON.stringify(row)}`);
-                    console.log(`ID: ${row.id}`);
-
                     await db[modelName].update(
                       {
                         uuid: uuid.v4()
@@ -158,6 +157,10 @@ module.exports = {
                         transaction: t
                       }
                     );
+                  } else {
+                    console.log(`Model: ${modelName}`);
+                    console.log(`Row: ${JSON.stringify(row)}`);
+                    console.log(`ID: ${row.id}`);
                   }
                 })
               );
