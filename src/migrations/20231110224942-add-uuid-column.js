@@ -33,7 +33,7 @@ const pluralModelNames = [
   'FormAnswer',
   'FundAccount',
   'Group',
-  'ImpactReports',
+  // 'ImpactReports',
   'Invites',
   // 'Login',
   'Market',
