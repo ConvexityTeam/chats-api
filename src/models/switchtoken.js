@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   SwitchToken.init(
     {
+      uuid: DataTypes.UUIDV4,
       accessToken: DataTypes.TEXT,
       expires: DataTypes.DATE
     },

@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Plan.init(
     {
+      uuid: DataTypes.UUIDV4,
       name: DataTypes.STRING,
       conditional_voucher_number: DataTypes.NUMBER,
       is_unlimited_conditional_voucher: DataTypes.BOOLEAN,
