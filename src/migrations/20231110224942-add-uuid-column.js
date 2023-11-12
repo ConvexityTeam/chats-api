@@ -73,9 +73,7 @@ module.exports = {
           await Promise.all(
             pluralModelNames.map(async modelName => {
               let tableName = toPlural(modelName);
-              console.log(
-                `Processing model: ${modelName}, Table: ${tableName}`
-              );
+
               await queryInterface.addColumn(
                 tableName,
                 'uuid',
@@ -117,7 +115,9 @@ module.exports = {
                   }
                 })
               );
-              console.log(`updating uuid in ${tableName} 1`);
+              console.log(
+                `Processing model 1: ${modelName}, Table: ${tableName}`
+              );
             })
           );
           await Promise.all(
@@ -167,7 +167,9 @@ module.exports = {
                   }
                 })
               );
-              console.log(`updating uuid in ${tableName} 2`);
+              console.log(
+                `Processing model 2: ${modelName}, Table: ${tableName}`
+              );
             })
           );
         }
