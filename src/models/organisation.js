@@ -62,6 +62,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Organisation.init(
     {
+      uuid: DataTypes.UUIDV4,
       name: DataTypes.STRING,
       email: {
         type: DataTypes.STRING,

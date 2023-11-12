@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   ProposalRequest.init(
     {
+      uuid: DataTypes.UUIDV4,
       category_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       organisation_id: DataTypes.INTEGER

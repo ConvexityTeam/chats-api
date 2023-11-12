@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   VendorProposal.init(
     {
+      uuid: DataTypes.UUIDV4,
       CampaignId: DataTypes.INTEGER,
       vendor_id: DataTypes.INTEGER,
       proposal_id: DataTypes.INTEGER,

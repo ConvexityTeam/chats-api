@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
 
   TaskAssignmentEvidence.init(
     {
+      uuid: DataTypes.UUIDV4,
       TaskAssignmentId: DataTypes.INTEGER,
       comment: DataTypes.TEXT,
       uploads: DataTypes.ARRAY(DataTypes.STRING),

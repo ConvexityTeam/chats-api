@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   RequestFund.init(
     {
+      uuid: DataTypes.UUIDV4,
       donor_organisation_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       reason: DataTypes.STRING,

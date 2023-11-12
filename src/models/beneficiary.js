@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Beneficiary.init(
     {
+      uuid: DataTypes.UUIDV4,
       UserId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER,
       approved: DataTypes.BOOLEAN,

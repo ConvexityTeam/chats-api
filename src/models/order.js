@@ -1,8 +1,6 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
-const db = require("./index")
+const {Model} = require('sequelize');
+const db = require('./index');
 module.exports = (sequelize, DataTypes) => {
   class Order extends Model {
     /**
@@ -13,30 +11,40 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Order.hasOne(models.Transaction, {
         as: 'Transaction',
-        foreignKey: 'OrderId',
+        foreignKey: 'OrderId'
       });
       Order.hasMany(models.OrderProduct, {
         as: 'Cart',
         foreignKey: 'OrderId'
-      })
+      });
       Order.belongsToMany(models.Product, {
         as: 'Products',
         through: models.OrderProduct
-      })
+      });
       Order.belongsTo(models.User, {
         as: 'Vendor',
         foreignKey: 'VendorId'
-      })
+      });
     }
-  };
-  Order.init({
-    reference: DataTypes.STRING,
-    VendorId: DataTypes.INTEGER,
-    CampaignId: DataTypes.INTEGER,
-    status: DataTypes.ENUM('pending', 'processing', 'confirmed', 'delivered', 'failed'),
-  }, {
-    sequelize,
-    modelName: 'Order',
-  });
+  }
+  Order.init(
+    {
+      uuid: DataTypes.UUIDV4,
+      reference: DataTypes.STRING,
+      VendorId: DataTypes.INTEGER,
+      CampaignId: DataTypes.INTEGER,
+      status: DataTypes.ENUM(
+        'pending',
+        'processing',
+        'confirmed',
+        'delivered',
+        'failed'
+      )
+    },
+    {
+      sequelize,
+      modelName: 'Order'
+    }
+  );
   return Order;
 };

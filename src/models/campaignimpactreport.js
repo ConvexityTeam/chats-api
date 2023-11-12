@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   CampaignImpactReport.init(
     {
+      uuid: DataTypes.UUIDV4,
       title: DataTypes.STRING,
       CampaignId: DataTypes.INTEGER,
       AgentId: DataTypes.INTEGER,
