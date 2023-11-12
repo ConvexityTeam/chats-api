@@ -87,7 +87,7 @@ module.exports = {
               console.log(`Adding uuid to ${tableName} 1`);
               await db[modelName].update(
                 {
-                  uuid: Sequelize.UUIDV4
+                  uuid: Sequelize.literal('DEFAULT')
                 },
                 {
                   where: {
@@ -116,7 +116,7 @@ module.exports = {
               console.log(`Adding uuid to ${tableName} 2`);
               await db[modelName].update(
                 {
-                  uuid: Sequelize.UUIDV4
+                  uuid: Sequelize.literal('DEFAULT')
                 },
                 {
                   where: {
