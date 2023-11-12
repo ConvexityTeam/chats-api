@@ -1,6 +1,7 @@
 'use strict';
 const {Logger} = require('../libs');
 const db = require('../models');
+const uuid = require('uuid');
 function toPlural(modelName) {
   // Very basic pluralization, just for demonstration purposes
   const lastChar = modelName.slice(-1);
@@ -86,7 +87,7 @@ module.exports = {
               console.log(`Adding uuid to ${tableName} 1`);
               await db[modelName].update(
                 {
-                  uuid: Sequelize.UUIDV4
+                  uuid: uuid.v4()
                 },
                 {
                   where: {
@@ -115,7 +116,7 @@ module.exports = {
               console.log(`Adding uuid to ${tableName} 2`);
               await db[modelName].update(
                 {
-                  uuid: Sequelize.UUIDV4
+                  uuid: uuid.v4()
                 },
                 {
                   where: {
