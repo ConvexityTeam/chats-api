@@ -35,9 +35,7 @@ const pluralModelNames = [
   'FormAnswer',
   'FundAccount',
   'Group',
-  // 'ImpactReports',
   'Invites',
-  // 'Login',
   'Market',
   'Member',
   'Order',
@@ -73,7 +71,9 @@ module.exports = {
           await Promise.all(
             pluralModelNames.map(async modelName => {
               let tableName = toPlural(modelName);
-
+              console.log(
+                `Processing model 1: ${modelName}, Table: ${tableName}`
+              );
               await queryInterface.addColumn(
                 tableName,
                 'uuid',
@@ -85,7 +85,6 @@ module.exports = {
                 },
                 {transaction: t}
               );
-              console.log(`Adding uuid to ${tableName} 1`);
               const rowsToUpdate = await db[modelName].findAll({
                 where: {
                   uuid: null
@@ -108,21 +107,22 @@ module.exports = {
                         transaction: t
                       }
                     );
-                  } else {
-                    console.log(`Model: ${modelName}`);
-                    console.log(`Row: ${JSON.stringify(row)}`);
-                    console.log(`ID: ${row.id}`);
                   }
+                  // else {
+                  //   console.log(`Model: ${modelName}`);
+                  //   console.log(`Row: ${JSON.stringify(row)}`);
+                  //   console.log(`ID: ${row.id}`);
+                  // }
                 })
-              );
-              console.log(
-                `Processing model 1: ${modelName}, Table: ${tableName}`
               );
             })
           );
           await Promise.all(
             gerundModelNames.map(async modelName => {
               let tableName = toGerund(modelName);
+              console.log(
+                `Processing model 2: ${modelName}, Table: ${tableName}`
+              );
               await queryInterface.addColumn(
                 tableName,
                 'uuid',
@@ -134,7 +134,7 @@ module.exports = {
                 },
                 {transaction: t}
               );
-              console.log(`Adding uuid to ${tableName} 2`);
+              // console.log(`Adding uuid to ${tableName} 2`);
               const rowsToUpdate = await db[modelName].findAll({
                 where: {
                   uuid: null
@@ -142,9 +142,9 @@ module.exports = {
                 transaction: t
               });
 
-              console.log(
-                `All rows to update 2: ${JSON.stringify(rowsToUpdate)}`
-              );
+              // console.log(
+              //   `All rows to update 2: ${JSON.stringify(rowsToUpdate)}`
+              // );
               // Update each row with a new UUID
               await Promise.all(
                 rowsToUpdate.map(async row => {
@@ -160,15 +160,13 @@ module.exports = {
                         transaction: t
                       }
                     );
-                  } else {
-                    console.log(`Model: ${modelName}`);
-                    console.log(`Row: ${JSON.stringify(row)}`);
-                    console.log(`ID: ${row.id}`);
                   }
+                  // else {
+                  //   console.log(`Model: ${modelName}`);
+                  //   console.log(`Row: ${JSON.stringify(row)}`);
+                  //   console.log(`ID: ${row.id}`);
+                  // }
                 })
-              );
-              console.log(
-                `Processing model 2: ${modelName}, Table: ${tableName}`
               );
             })
           );
