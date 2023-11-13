@@ -117,6 +117,35 @@ class CampaignController {
     }
   }
 
+  static async getFieldAgentCampaigns(req, res) {
+    try {
+      const query = SanitizeObject(req.query, ['type']);
+      const allCampaign = await CampaignService.getAllFieldAgentCampaigns({
+        ...query,
+        status: 'active'
+      });
+
+      await Promise.all(
+        allCampaign?.data.map(async campaign => {
+          //(await AwsService.getMnemonic(campaign.id)) || null;
+          campaign.dataValues.ck8 = GenerateSecrete();
+        })
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign retrieved',
+        allCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async getAllCampaigns(req, res) {
     try {
       const query = SanitizeObject(req.query, ['type']);

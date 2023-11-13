@@ -856,6 +856,47 @@ class CampaignService {
       throw error;
     }
   }
+  static async getAllFieldAgentCampaigns(extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      distinct: true,
+      ...options,
+      where: {
+        ...extraClause
+      },
+      include: ['Organisation']
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
+  }
+  static async getOurCampaigns(
+    userId,
+    OrganisationId,
+    campaignType = 'campaign'
+  ) {
+    try {
+      return await Campaign.findAll({
+        where: {
+          OrganisationId: OrganisationId,
+          type: campaignType
+        }
+      });
+    } catch (error) {
+      // console.log(error)
+      throw error;
+    }
+  }
 
   static async beneficiariesToCampaign(payload) {
     return Beneficiary.bulkCreate(payload);
