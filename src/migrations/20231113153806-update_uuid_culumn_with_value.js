@@ -74,19 +74,31 @@ module.exports = {
               console.log(
                 `Processing model 1: ${modelName}, Table: ${tableName}`
               );
-              await queryInterface.addColumn(
-                tableName,
-                'uuid',
-                {
-                  type: Sequelize.UUID,
-                  allowNull: true,
-                  after: 'id',
-                  defaultValue: Sequelize.UUIDV4
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
                 },
-                {transaction: t}
-              );
+                transaction: t
+              });
 
               // Update each row with a new UUID
+              await Promise.all(
+                rowsToUpdate.map(async row => {
+                  if (typeof row.id !== 'undefined') {
+                    await db[modelName].update(
+                      {
+                        uuid: uuid.v4()
+                      },
+                      {
+                        where: {
+                          id: row.id
+                        },
+                        transaction: t
+                      }
+                    );
+                  }
+                })
+              );
             })
           );
           await Promise.all(
@@ -95,16 +107,28 @@ module.exports = {
               console.log(
                 `Processing model 2: ${modelName}, Table: ${tableName}`
               );
-              await queryInterface.addColumn(
-                tableName,
-                'uuid',
-                {
-                  type: Sequelize.UUID,
-                  allowNull: true,
-                  after: 'id',
-                  defaultValue: Sequelize.UUIDV4
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
                 },
-                {transaction: t}
+                transaction: t
+              });
+              await Promise.all(
+                rowsToUpdate.map(async row => {
+                  if (typeof row.id !== 'undefined') {
+                    await db[modelName].update(
+                      {
+                        uuid: uuid.v4()
+                      },
+                      {
+                        where: {
+                          id: row.id
+                        },
+                        transaction: t
+                      }
+                    );
+                  }
+                })
               );
             })
           );
@@ -117,30 +141,5 @@ module.exports = {
   },
   down: async (queryInterface, Sequelize) => {
     //adding rollback
-    try {
-      const transaction = await queryInterface.sequelize.transaction(
-        async t => {
-          await Promise.all(
-            pluralModelNames.map(async modelName => {
-              const tableName = toPlural(modelName);
-              await queryInterface.removeColumn(tableName, 'uuid', {
-                transaction: t
-              });
-            })
-          );
-          await Promise.all(
-            gerundModelNames.map(async modelName => {
-              const tableName = toGerund(modelName);
-              await queryInterface.removeColumn(tableName, 'uuid', {
-                transaction: t
-              });
-            })
-          );
-        }
-      );
-      return transaction;
-    } catch (error) {
-      Logger.error(`Migration for removing uuid failed: ${error}`);
-    }
   }
 };
