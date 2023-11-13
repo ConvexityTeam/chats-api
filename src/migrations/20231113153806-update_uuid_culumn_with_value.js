@@ -68,70 +68,92 @@ module.exports = {
       const transaction = await queryInterface.sequelize.transaction(
         async t => {
           //adding commit
-          await Promise.all(
-            pluralModelNames.map(async modelName => {
-              let tableName = toPlural(modelName);
-              console.log(
-                `Processing model 1: ${modelName}, Table: ${tableName}`
-              );
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
+          // await Promise.all(
+          // pluralModelNames.map(async modelName => {
+          //   let tableName = toPlural(modelName);
+          //   console.log(
+          //     `Processing model 1: ${modelName}, Table: ${tableName}`
+          //   );
+          const AssociatedCampaign = await db.AssociatedCampaign.findAll({
+            where: {
+              uuid: null
+            },
+            transaction: t
+          });
 
-              // Update each row with a new UUID
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
-                      },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  }
-                })
-              );
-            })
-          );
+          const Beneficiary = await db.Beneficiary.findAll({
+            where: {
+              uuid: null
+            },
+            transaction: t
+          });
+
+          // Update each row with a new UUID
           await Promise.all(
-            gerundModelNames.map(async modelName => {
-              let tableName = toGerund(modelName);
-              console.log(
-                `Processing model 2: ${modelName}, Table: ${tableName}`
-              );
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
-                      },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
+            AssociatedCampaign.map(async row => {
+              if (typeof row.id !== 'undefined') {
+                await db.AssociatedCampaign.update(
+                  {
+                    uuid: uuid.v4()
+                  },
+                  {
+                    where: {
+                      id: row.id
+                    },
+                    transaction: t
                   }
-                })
-              );
+                );
+              }
+            }),
+            Beneficiary.map(async row => {
+              if (typeof row.id !== 'undefined') {
+                await db.Beneficiary.update(
+                  {
+                    uuid: uuid.v4()
+                  },
+                  {
+                    where: {
+                      id: row.id
+                    },
+                    transaction: t
+                  }
+                );
+              }
             })
           );
+          // })
+          // );
+          // await Promise.all(
+          //   gerundModelNames.map(async modelName => {
+          //     let tableName = toGerund(modelName);
+          //     console.log(
+          //       `Processing model 2: ${modelName}, Table: ${tableName}`
+          //     );
+          //     const rowsToUpdate = await db[modelName].findAll({
+          //       where: {
+          //         uuid: null
+          //       },
+          //       transaction: t
+          //     });
+          //     await Promise.all(
+          //       rowsToUpdate.map(async row => {
+          //         if (typeof row.id !== 'undefined') {
+          //           await db[modelName].update(
+          //             {
+          //               uuid: uuid.v4()
+          //             },
+          //             {
+          //               where: {
+          //                 id: row.id
+          //               },
+          //               transaction: t
+          //             }
+          //           );
+          //         }
+          //       })
+          //     );
+          //   })
+          // );
         }
       );
       return transaction;
