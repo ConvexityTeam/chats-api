@@ -566,6 +566,7 @@ class VendorService {
         'Vendors.OrganisationMembers.UserId',
         'Vendors.OrganisationMembers.OrganisationId',
         'Vendors.OrganisationMembers.role',
+        'Vendors.OrganisationMembers.uuid',
         'Vendors.OrganisationMembers.createdAt',
         'Vendors.OrganisationMembers.updatedAt'
       ]
