@@ -85,25 +85,29 @@ module.exports = {
               );
 
               // Update each row with a new UUID
-              let updateRecords = await db[modelName].findAll({
-                where: {uuid: null}
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
+                },
+                transaction: t
               });
-              await Promise.all(
-                updateRecords.map(async record => {
-                  console.log(`ID 1: ${record.id}`);
+              // await Promise.all(
+              rowsToUpdate.map(async row => {
+                if (typeof row.id !== 'undefined') {
                   await db[modelName].update(
                     {
                       uuid: uuid.v4()
                     },
                     {
                       where: {
-                        id: record.id
+                        id: row.id
                       },
                       transaction: t
                     }
                   );
-                })
-              );
+                }
+              });
+              // );
               console.log(
                 `Processing model 1: ${modelName}, Table: ${tableName}`
               );
@@ -125,25 +129,29 @@ module.exports = {
                 {transaction: t}
               );
 
-              let updateRecords = await db[modelName].findAll({
-                where: {uuid: null}
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
+                },
+                transaction: t
               });
-              await Promise.all(
-                updateRecords.map(async record => {
-                  console.log(`ID 2: ${record.id}`);
+              // await Promise.all(
+              rowsToUpdate.map(async row => {
+                if (typeof row.id !== 'undefined') {
                   await db[modelName].update(
                     {
                       uuid: uuid.v4()
                     },
                     {
                       where: {
-                        id: record.id
+                        id: row.id
                       },
                       transaction: t
                     }
                   );
-                })
-              );
+                }
+              });
+              // );
               console.log(
                 `Processing model 2: ${modelName}, Table: ${tableName}`
               );
