@@ -85,36 +85,8 @@ module.exports = {
                 },
                 {transaction: t}
               );
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
 
               // Update each row with a new UUID
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
-                      },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  }
-                  // else {
-                  //   console.log(`Model: ${modelName}`);
-                  //   console.log(`Row: ${JSON.stringify(row)}`);
-                  //   console.log(`ID: ${row.id}`);
-                  // }
-                })
-              );
             })
           );
           await Promise.all(
@@ -133,40 +105,6 @@ module.exports = {
                   defaultValue: Sequelize.UUIDV4
                 },
                 {transaction: t}
-              );
-              // console.log(`Adding uuid to ${tableName} 2`);
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
-
-              // console.log(
-              //   `All rows to update 2: ${JSON.stringify(rowsToUpdate)}`
-              // );
-              // Update each row with a new UUID
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
-                      },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  }
-                  // else {
-                  //   console.log(`Model: ${modelName}`);
-                  //   console.log(`Row: ${JSON.stringify(row)}`);
-                  //   console.log(`ID: ${row.id}`);
-                  // }
-                })
               );
             })
           );
