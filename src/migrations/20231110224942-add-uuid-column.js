@@ -71,9 +71,7 @@ module.exports = {
           await Promise.all(
             pluralModelNames.map(async modelName => {
               let tableName = toPlural(modelName);
-              console.log(
-                `Processing model 1: ${modelName}, Table: ${tableName}`
-              );
+
               await queryInterface.addColumn(
                 tableName,
                 'uuid',
@@ -87,14 +85,34 @@ module.exports = {
               );
 
               // Update each row with a new UUID
+
+              console.log(
+                `Processing model 1: ${modelName}, Table: ${tableName}`
+              );
+              const [updateRecords, mapping] = await Promise.all(
+                await db[modelName].findAll({
+                  where: {uuid: null}
+                }),
+                updateRecords.map(async record => {
+                  await record.update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        id: row.id
+                      }
+                      // transaction: t
+                    }
+                  );
+                })
+              );
             })
           );
           await Promise.all(
             gerundModelNames.map(async modelName => {
               let tableName = toGerund(modelName);
-              console.log(
-                `Processing model 2: ${modelName}, Table: ${tableName}`
-              );
+
               await queryInterface.addColumn(
                 tableName,
                 'uuid',
@@ -105,6 +123,27 @@ module.exports = {
                   defaultValue: Sequelize.UUIDV4
                 },
                 {transaction: t}
+              );
+              console.log(
+                `Processing model 2: ${modelName}, Table: ${tableName}`
+              );
+              const [updateRecords, mapping] = await Promise.all(
+                await db[modelName].findAll({
+                  where: {uuid: null}
+                }),
+                updateRecords.map(async record => {
+                  await record.update(
+                    {
+                      uuid: uuid.v4()
+                    },
+                    {
+                      where: {
+                        id: row.id
+                      }
+                      // transaction: t
+                    }
+                  );
+                })
               );
             })
           );
