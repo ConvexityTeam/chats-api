@@ -85,14 +85,10 @@ module.exports = {
               );
 
               // Update each row with a new UUID
-
-              console.log(
-                `Processing model 1: ${modelName}, Table: ${tableName}`
-              );
-              const [updateRecords, mapping] = await Promise.all(
-                await db[modelName].findAll({
-                  where: {uuid: null}
-                }),
+              let updateRecords = await db[modelName].findAll({
+                where: {uuid: null}
+              });
+              await Promise.all(
                 updateRecords.map(async record => {
                   await record.update(
                     {
@@ -101,11 +97,14 @@ module.exports = {
                     {
                       where: {
                         id: row.id
-                      }
-                      // transaction: t
+                      },
+                      transaction: t
                     }
                   );
                 })
+              );
+              console.log(
+                `Processing model 1: ${modelName}, Table: ${tableName}`
               );
             })
           );
@@ -124,13 +123,11 @@ module.exports = {
                 },
                 {transaction: t}
               );
-              console.log(
-                `Processing model 2: ${modelName}, Table: ${tableName}`
-              );
-              const [updateRecords, mapping] = await Promise.all(
-                await db[modelName].findAll({
-                  where: {uuid: null}
-                }),
+
+              let updateRecords = await db[modelName].findAll({
+                where: {uuid: null}
+              });
+              await Promise.all(
                 updateRecords.map(async record => {
                   await record.update(
                     {
@@ -139,11 +136,14 @@ module.exports = {
                     {
                       where: {
                         id: row.id
-                      }
-                      // transaction: t
+                      },
+                      transaction: t
                     }
                   );
                 })
+              );
+              console.log(
+                `Processing model 2: ${modelName}, Table: ${tableName}`
               );
             })
           );
