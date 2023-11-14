@@ -1926,6 +1926,24 @@ class CampaignController {
       return Response.send(res);
     }
   }
+  static async getFieldAppCampaignForm(req, res) {
+    const id = req.params.organisation_id;
+    try {
+      const form = await CampaignService.getFieldAppCampaignForm(id, req.query);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign form received',
+        form
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
 }
 
 async function loopCampaigns(campaignId, beneficiaries) {
