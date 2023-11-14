@@ -117,6 +117,35 @@ class CampaignController {
     }
   }
 
+  static async getFieldAgentCampaigns(req, res) {
+    try {
+      const query = SanitizeObject(req.query, ['type']);
+      const allCampaign = await CampaignService.getAllFieldAgentCampaigns({
+        ...query,
+        status: 'active'
+      });
+
+      await Promise.all(
+        allCampaign?.data.map(async campaign => {
+          //(await AwsService.getMnemonic(campaign.id)) || null;
+          campaign.dataValues.ck8 = GenerateSecrete();
+        })
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign retrieved',
+        allCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async getAllCampaigns(req, res) {
     try {
       const query = SanitizeObject(req.query, ['type']);
@@ -1883,6 +1912,24 @@ class CampaignController {
     const id = req.params.organisation_id;
     try {
       const form = await CampaignService.getCampaignForm(id, req.query);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign form received',
+        form
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async getFieldAppCampaignForm(req, res) {
+    const id = req.params.organisation_id;
+    try {
+      const form = await CampaignService.getFieldAppCampaignForm(id, req.query);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign form received',

@@ -432,6 +432,69 @@ class OrganisationController {
     }
   }
 
+  static async getAllFieldAppOrgCampaigns(req, res) {
+    try {
+      let completed_task = 0;
+      const assignmentTask = [];
+      const OrganisationId = req.params.organisation_id;
+      const query = SanitizeObject(req.query);
+      const campaigns = await CampaignService.getFieldAppCampaigns(
+        OrganisationId,
+        query
+      );
+
+      for (let data of campaigns?.data) {
+        if (new Date(data.end_date) < new Date())
+          data.update({status: 'ended'});
+        for (let task of data.Jobs) {
+          const assignment = await db.TaskAssignment.findOne({
+            where: {TaskId: task.id, status: 'completed'}
+          });
+          assignmentTask.push(assignment);
+        }
+        const campaignSecret = await HashiCorp.decryptData(
+          `campaignSecret=${data.id}`
+        );
+        Logger.info(`Campaign id...JB..t: ${data.id}`);
+        // (await AwsService.getMnemonic(campaign.id)) || null;
+        data.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
+        //(await AwsService.getMnemonic(data.id)) || null;
+        Logger.info(`${JSON.stringify(campaign)}`);
+        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
+        data.dataValues.task_count = data.Jobs.length;
+        data.dataValues.completed_task = completed_task;
+      }
+      function isExist(id) {
+        let find = assignmentTask.find(a => a && a.TaskId === id);
+        if (find) {
+          return true;
+        }
+        return false;
+      }
+      campaigns &&
+        campaigns?.data.forEach(data => {
+          data.Jobs.forEach(task => {
+            if (isExist(task.id)) {
+              data.dataValues.completed_task++;
+            }
+          });
+        });
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'All Campaigns.',
+        campaigns
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Request failed. Please try again' + error
+      );
+      return Response.send(res);
+    }
+  }
+
   static async getAllOrgCash4W(req, res) {
     try {
       let task_completed = 0,
@@ -1391,6 +1454,37 @@ class OrganisationController {
       return Response.send(res);
     }
   }
+  static async getFieldAppCampaignBeneficiaries(req, res) {
+    try {
+      const CampaignId = req.params.campaign_id;
+      const beneficiaries =
+        await BeneficiaryService.findFieldAppCampaignBeneficiaries(
+          CampaignId,
+          req.query
+        );
+
+      beneficiaries.data.forEach(beneficiary => {
+        beneficiary.User.Answers.forEach(answer => {
+          if (answer.campaignId == CampaignId) {
+            beneficiary.dataValues.User.dataValues.Answers = [answer];
+          }
+        });
+      });
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign Beneficiaries',
+        beneficiaries
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Unexpected error. Please retry.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async getVendorTransactionPerBene(req, res) {
     try {
       const CampaignId = req.params.campaign_id;
@@ -1622,6 +1716,28 @@ class OrganisationController {
       const organisation = req.organisation;
       const beneficiaries =
         await BeneficiaryService.findOrgnaisationBeneficiaries(
+          organisation.id,
+          req.query
+        );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Organisation beneficiaries',
+        beneficiaries
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error.message
+      );
+      return Response.send(res);
+    }
+  }
+  static async getFieldAppOrganisationBeneficiaries(req, res) {
+    try {
+      const organisation = req.organisation;
+      const beneficiaries =
+        await BeneficiaryService.findFieldAppOrgnaisationBeneficiaries(
           organisation.id,
           req.query
         );

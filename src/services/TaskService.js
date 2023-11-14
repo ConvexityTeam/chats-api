@@ -108,6 +108,48 @@ class TaskService {
 
     return {task, response};
   }
+  static async getFieldAppCashForBeneficiaries(params, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    // delete extraClause.page;
+    // delete extraClause.size;
+    // let queryOptions = {};
+    // if (page && size) {
+    //   queryOptions.limit = limit;
+    //   queryOptions.offset = offset;
+    // }
+
+    const task = await Task.findOne({
+      where: {
+        id: params.task_id
+      },
+      include: [
+        {
+          // ...queryOptions,
+          model: User,
+          as: 'AssignedWorkers',
+          attributes: publicAttr
+        }
+      ]
+    });
+
+    // Apply limit and offset to the associated records
+    if (page && size) {
+      const startIndex = (page - 1) * size;
+      const endIndex = startIndex + size;
+      task.AssignedWorkers = task.AssignedWorkers.slice(startIndex, endIndex);
+    }
+
+    const response = await Pagination.getPagingData(
+      {rows: task?.AssignedWorkers, count: task?.AssignedWorkers?.length},
+      page,
+      limit
+    );
+
+    return {task, response};
+  }
   //develop
 
   static async updateTask(id, updateTaskObj) {
