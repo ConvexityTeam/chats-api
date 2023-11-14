@@ -90,13 +90,14 @@ module.exports = {
               });
               await Promise.all(
                 updateRecords.map(async record => {
-                  await record.update(
+                  console.log(`ID 1: ${record.id}`);
+                  await db[modelName].update(
                     {
                       uuid: uuid.v4()
                     },
                     {
                       where: {
-                        id: row.id
+                        id: record.id
                       },
                       transaction: t
                     }
@@ -129,13 +130,14 @@ module.exports = {
               });
               await Promise.all(
                 updateRecords.map(async record => {
-                  await record.update(
+                  console.log(`ID 2: ${record.id}`);
+                  await db[modelName].update(
                     {
                       uuid: uuid.v4()
                     },
                     {
                       where: {
-                        id: row.id
+                        id: record.id
                       },
                       transaction: t
                     }
