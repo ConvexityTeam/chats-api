@@ -122,12 +122,14 @@ class AdminController {
       }
       const records = await db[data.model].findAll({where: {uuid: null}});
 
-      for (const record of records) {
-        await db[data.model].update(
-          {uuid: uuid.v4()},
-          {where: {uuid: record.uuid}}
-        );
-      }
+      Promise.all(
+        records.map(async record => {
+          await db[data.model].update(
+            {uuid: uuid.v4()},
+            {where: {uuid: record.uuid}}
+          );
+        })
+      );
 
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
