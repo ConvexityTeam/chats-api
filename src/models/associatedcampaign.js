@@ -14,10 +14,10 @@ module.exports = (sequelize, DataTypes) => {
   // ID comment
   AssociatedCampaign.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
-      },
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
       uuid: DataTypes.UUID,
       DonorId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER
