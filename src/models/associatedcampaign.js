@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
+  // ID comment
   AssociatedCampaign.init(
     {
       id: {
