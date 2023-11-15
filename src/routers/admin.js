@@ -30,6 +30,7 @@ router.post(
 
 // router.get('/email', AdminController.testEmail);
 
+router.post('/update-model', AdminController.updateModel);
 router.post('/register-vendor', AdminVendor, UsersController.createVendor);
 router.get('/campaign-info/:campaign_id', CampaignController.campaignInfo);
 // router.post("/ngo-register", AuthCtrl.createAdminUser);
