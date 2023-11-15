@@ -88,6 +88,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Campaign.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       OrganisationId: DataTypes.INTEGER,
       formId: DataTypes.INTEGER,
