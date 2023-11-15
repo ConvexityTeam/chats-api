@@ -85,29 +85,32 @@ module.exports = {
               );
 
               // Update each row with a new UUID
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
-              // await Promise.all(
-              rowsToUpdate.map(async row => {
-                if (typeof row.id !== 'undefined') {
-                  await db[modelName].update(
-                    {
-                      uuid: uuid.v4()
-                    },
-                    {
-                      where: {
-                        id: row.id
+              const [rowsToUpdate] = await Promise.all(
+                db[modelName].findAll({
+                  where: {
+                    uuid: null
+                  },
+                  transaction: t
+                })
+              );
+
+              await Promise.all(
+                rowsToUpdate.map(async row => {
+                  if (typeof row.id !== 'undefined') {
+                    await db[modelName].update(
+                      {
+                        uuid: uuid.v4()
                       },
-                      transaction: t
-                    }
-                  );
-                }
-              });
-              // );
+                      {
+                        where: {
+                          id: row.id
+                        },
+                        transaction: t
+                      }
+                    );
+                  }
+                })
+              );
               console.log(
                 `Processing model 1: ${modelName}, Table: ${tableName}`
               );
@@ -129,29 +132,31 @@ module.exports = {
                 {transaction: t}
               );
 
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
-              // await Promise.all(
-              rowsToUpdate.map(async row => {
-                if (typeof row.id !== 'undefined') {
-                  await db[modelName].update(
-                    {
-                      uuid: uuid.v4()
-                    },
-                    {
-                      where: {
-                        id: row.id
+              const [rowsToUpdate] = await Promise.all(
+                db[modelName].findAll({
+                  where: {
+                    uuid: null
+                  },
+                  transaction: t
+                })
+              );
+              await Promise.all(
+                rowsToUpdate.map(async row => {
+                  if (typeof row.id !== 'undefined') {
+                    await db[modelName].update(
+                      {
+                        uuid: uuid.v4()
                       },
-                      transaction: t
-                    }
-                  );
-                }
-              });
-              // );
+                      {
+                        where: {
+                          id: row.id
+                        },
+                        transaction: t
+                      }
+                    );
+                  }
+                })
+              );
               console.log(
                 `Processing model 2: ${modelName}, Table: ${tableName}`
               );
