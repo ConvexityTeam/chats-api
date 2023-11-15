@@ -62,6 +62,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   Organisation.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       name: DataTypes.STRING,
       email: {

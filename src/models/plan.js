@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   Plan.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       name: DataTypes.STRING,
       conditional_voucher_number: DataTypes.NUMBER,
