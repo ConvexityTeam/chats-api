@@ -85,15 +85,12 @@ module.exports = {
               );
 
               // Update each row with a new UUID
-              const [rowsToUpdate] = await Promise.all(
-                db[modelName].findAll({
-                  where: {
-                    uuid: null
-                  },
-                  transaction: t
-                })
-              );
-
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
+                },
+                transaction: t
+              });
               await Promise.all(
                 rowsToUpdate.map(async row => {
                   if (typeof row.id !== 'undefined') {
@@ -132,14 +129,12 @@ module.exports = {
                 {transaction: t}
               );
 
-              const [rowsToUpdate] = await Promise.all(
-                db[modelName].findAll({
-                  where: {
-                    uuid: null
-                  },
-                  transaction: t
-                })
-              );
+              const rowsToUpdate = await db[modelName].findAll({
+                where: {
+                  uuid: null
+                },
+                transaction: t
+              });
               await Promise.all(
                 rowsToUpdate.map(async row => {
                   if (typeof row.id !== 'undefined') {
