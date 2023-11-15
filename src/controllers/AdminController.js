@@ -122,7 +122,7 @@ class AdminController {
       }
       const records = await db[data.model].findAll();
 
-      Promise.all(
+      await Promise.all(
         records.map(async record => {
           await db[data.model].update(
             {uuid: uuid.v4()},
