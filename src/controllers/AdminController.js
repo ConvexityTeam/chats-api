@@ -1,5 +1,7 @@
 require('dotenv').config();
 const db = require('../models');
+const uuid = require('uuid');
+
 const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode, GenearteVendorId} = require('../utils');
 const Validator = require('validatorjs');
@@ -102,6 +104,41 @@ class AdminController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async updateModel(req, res) {
+    const data = req.body;
+    const rules = {
+      model: 'required|string'
+    };
+    try {
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const records = await db[data.model].findAll({where: {uuid: null}});
+
+      for (const record of records) {
+        await db[data.model].update(
+          {uuid: uuid.v4()},
+          {where: {id: record.id}}
+        );
+      }
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Records updated`,
+        records
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
       );
       return Response.send(res);
     }
