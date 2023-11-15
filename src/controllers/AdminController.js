@@ -120,7 +120,7 @@ class AdminController {
         Response.setError(422, Object.values(validation.errors.errors)[0][0]);
         return Response.send(res);
       }
-      const records = await db[data.model].findAll({where: {uuid: null}});
+      const records = await db[data.model].findAll();
 
       Promise.all(
         records.map(async record => {
