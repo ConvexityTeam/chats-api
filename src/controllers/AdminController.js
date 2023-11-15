@@ -126,7 +126,7 @@ class AdminController {
         records.map(async record => {
           await db[data.model].update(
             {uuid: uuid.v4()},
-            {where: {uuid: record.uuid}}
+            {where: {id: record.id}}
           );
         })
       );
