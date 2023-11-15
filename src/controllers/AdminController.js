@@ -125,7 +125,7 @@ class AdminController {
       for (const record of records) {
         await db[data.model].update(
           {uuid: uuid.v4()},
-          {where: {id: record.id}}
+          {where: {uuid: record.uuid}}
         );
       }
 
