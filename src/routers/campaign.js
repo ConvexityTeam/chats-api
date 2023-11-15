@@ -3,6 +3,7 @@ const {CampaignController} = require('../controllers');
 const {Auth} = require('../middleware');
 
 router.route('/').get(Auth, CampaignController.getAllCampaigns);
+router.post('/field-agent/', Auth, CampaignController.getFieldAgentCampaigns);
 
 router.get('/:id', Auth, CampaignController.getACampaign);
 router.put('/:id', Auth, CampaignController.updatedCampaign);

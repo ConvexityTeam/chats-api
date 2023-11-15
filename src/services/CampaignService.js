@@ -768,6 +768,35 @@ class CampaignService {
     const response = await Pagination.getPagingData(campaign, page, limit);
     return response;
   }
+  static async getFieldAppCampaigns(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      where: {
+        ...extraClause,
+        OrganisationId
+      },
+      distinct: true,
+      include: [
+        {model: Task, as: 'Jobs'},
+        {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
+      ]
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
+  }
   static getCash4W(OrganisationId) {
     return Campaign.findAll({
       where: {
@@ -816,6 +845,47 @@ class CampaignService {
   //   });
   // }
   static async getAllCampaigns(extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      distinct: true,
+      ...options,
+      where: {
+        ...extraClause
+      },
+      include: ['Organisation']
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
+  }
+  static async getOurCampaigns(
+    userId,
+    OrganisationId,
+    campaignType = 'campaign'
+  ) {
+    try {
+      return await Campaign.findAll({
+        where: {
+          OrganisationId: OrganisationId,
+          type: campaignType
+        }
+      });
+    } catch (error) {
+      // console.log(error)
+      throw error;
+    }
+  }
+  static async getAllFieldAgentCampaigns(extraClause = null) {
     const page = extraClause.page;
     const size = extraClause.size;
     delete extraClause.page;
@@ -1059,6 +1129,28 @@ class CampaignService {
     return await CampaignForm.create(data);
   }
   static async getCampaignForm(organisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    const form = await CampaignForm.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      distinct: true,
+      where: {organisationId, ...extraClause},
+      ...options
+      // include: ['campaigns']
+    });
+    const response = await Pagination.getPagingData(form, page, limit);
+    return response;
+  }
+  static async getFieldAppCampaignForm(organisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
     delete extraClause.page;

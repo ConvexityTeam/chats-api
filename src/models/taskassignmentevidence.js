@@ -18,6 +18,10 @@ module.exports = (sequelize, DataTypes) => {
 
   TaskAssignmentEvidence.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       TaskAssignmentId: DataTypes.INTEGER,
       comment: DataTypes.TEXT,

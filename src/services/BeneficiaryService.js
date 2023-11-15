@@ -417,6 +417,52 @@ class BeneficiariesService {
     const response = await Pagination.getPagingData(users, page, limit);
     return response;
   }
+  static async findFieldAppOrgnaisationBeneficiaries(
+    OrganisationId,
+    extraClause = {}
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const users = await User.findAndCountAll({
+      distinct: true,
+      ...queryOptions,
+      // where: {
+      //   OrganisationId: Sequelize.where(
+      //     Sequelize.col('Campaigns.OrganisationId'),
+      //     OrganisationId
+      //   )
+      // },
+      attributes: userConst.publicAttr,
+      include: [
+        {
+          model: Campaign,
+          as: 'Campaigns',
+          where: {
+            OrganisationId
+          },
+          through: {
+            where: {
+              approved: true
+            }
+          },
+          attributes: [],
+          require: true
+        },
+        {model: Group, as: 'members'}
+      ]
+    });
+    const response = await Pagination.getPagingData(users, page, limit);
+    return response;
+  }
 
   static async fetchCampaignBeneficiary(CampaignId, UserId) {
     return Beneficiary.findOne({
@@ -457,6 +503,46 @@ class BeneficiariesService {
     });
   }
   static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const beneficiaries = await Beneficiary.findAndCountAll({
+      distinct: true,
+      ...options,
+      where: {
+        ...extraClause,
+        CampaignId
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConstFilter.publicAttr,
+          include: [
+            {
+              model: FormAnswer,
+              as: 'Answers'
+            },
+            {model: Group, as: 'members', include: ['group_members']}
+          ]
+        }
+      ]
+    });
+    const response = await Pagination.getPagingData(beneficiaries, page, limit);
+    return response;
+  }
+  static async findFieldAppCampaignBeneficiaries(
+    CampaignId,
+    extraClause = null
+  ) {
     const page = extraClause.page;
     const size = extraClause.size;
     delete extraClause?.page;

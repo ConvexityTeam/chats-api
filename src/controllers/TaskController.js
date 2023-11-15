@@ -66,6 +66,46 @@ class TaskController {
     }
   }
 
+  static async getFieldAppTaskBeneficiaries(req, res) {
+    try {
+      let completed_task = 0;
+      const params = SanitizeObject(req.params);
+      const CashForWorkTasks =
+        await TaskService.getFieldAppCashForBeneficiaries(params, req.query);
+      // if (!CashForWorkTasks.task) {
+      //   Response.setSuccess(
+      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //     'Task Not Found'
+      //   );
+      //   return Response.send(res);
+      // }
+      //console.log(CashForWorkTasks)
+
+      CashForWorkTasks?.response.data.forEach(data => {
+        data.TaskAssignment.status === 'completed'
+          ? completed_task++
+          : completed_task;
+        data.dataValues.Assigned_UpdatedAt = data.TaskAssignment.updatedAt;
+        data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
+        data.dataValues.Assigned_Status = data.TaskAssignment.status;
+      });
+      CashForWorkTasks.response.completed_task = completed_task;
+      CashForWorkTasks.response.total_task_allowed =
+        CashForWorkTasks.assignment_count;
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'CashForWork  Tasks Beneficiaries',
+        CashForWorkTasks
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
   static async getTaskBeneficiaies(req, res) {
     try {
       let completed_task = 0;
