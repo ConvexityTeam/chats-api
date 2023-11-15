@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
   class AssociatedCampaign extends Model {
     /**
      * Helper method for defining associations.
-     * This me`thod is not a part of Sequelize lifecycle.
+     * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
@@ -14,10 +14,10 @@ module.exports = (sequelize, DataTypes) => {
   // ID comment
   AssociatedCampaign.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
-      },
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
       uuid: DataTypes.UUID,
       DonorId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER
