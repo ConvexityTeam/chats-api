@@ -85,29 +85,29 @@ module.exports = {
               );
 
               // Update each row with a new UUID
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
-                      },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  }
-                })
-              );
+              // const rowsToUpdate = await db[modelName].findAll({
+              //   where: {
+              //     uuid: null
+              //   },
+              //   transaction: t
+              // });
+              // await Promise.all(
+              //   rowsToUpdate.map(async row => {
+              //     if (typeof row.id !== 'undefined') {
+              //       await db[modelName].update(
+              //         {
+              //           uuid: uuid.v4()
+              //         },
+              //         {
+              //           where: {
+              //             id: row.id
+              //           },
+              //           transaction: t
+              //         }
+              //       );
+              //     }
+              //   })
+              // );
               console.log(
                 `Processing model 1: ${modelName}, Table: ${tableName}`
               );
@@ -123,35 +123,35 @@ module.exports = {
                 {
                   type: Sequelize.UUID,
                   allowNull: true,
-                  after: 'id',
+                  // after: 'id',
                   defaultValue: Sequelize.UUIDV4
                 },
                 {transaction: t}
               );
 
-              const rowsToUpdate = await db[modelName].findAll({
-                where: {
-                  uuid: null
-                },
-                transaction: t
-              });
-              await Promise.all(
-                rowsToUpdate.map(async row => {
-                  if (typeof row.id !== 'undefined') {
-                    await db[modelName].update(
-                      {
-                        uuid: uuid.v4()
-                      },
-                      {
-                        where: {
-                          id: row.id
-                        },
-                        transaction: t
-                      }
-                    );
-                  }
-                })
-              );
+              // const rowsToUpdate = await db[modelName].findAll({
+              //   where: {
+              //     uuid: null
+              //   },
+              //   transaction: t
+              // });
+              // await Promise.all(
+              //   rowsToUpdate.map(async row => {
+              //     if (typeof row.id !== 'undefined') {
+              //       await db[modelName].update(
+              //         {
+              //           uuid: uuid.v4()
+              //         },
+              //         {
+              //           where: {
+              //             id: row.id
+              //           },
+              //           transaction: t
+              //         }
+              //       );
+              //     }
+              //   })
+              // );
               console.log(
                 `Processing model 2: ${modelName}, Table: ${tableName}`
               );
