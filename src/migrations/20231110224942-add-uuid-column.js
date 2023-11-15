@@ -78,7 +78,7 @@ module.exports = {
                 {
                   type: Sequelize.UUID,
                   allowNull: true,
-                  after: 'id',
+                  // after: 'id',
                   defaultValue: Sequelize.UUIDV4
                 },
                 {transaction: t}
