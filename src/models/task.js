@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   Task.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       CampaignId: DataTypes.INTEGER,
       name: DataTypes.STRING,
