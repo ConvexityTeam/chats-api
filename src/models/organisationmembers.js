@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   OrganisationMembers.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       UserId: DataTypes.INTEGER,
       OrganisationId: DataTypes.INTEGER,

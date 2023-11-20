@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   OneTimePassword.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       ref: {
         type: DataTypes.UUID,
