@@ -25,10 +25,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   VendorProposal.init(
     {
-      // id: {
-      //   type: DataTypes.INTEGER,
-      //   primaryKey: true
-      // },
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       CampaignId: DataTypes.INTEGER,
       vendor_id: DataTypes.INTEGER,

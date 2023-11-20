@@ -21,10 +21,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   VoucherToken.init(
     {
-      // id: {
-      //   type: DataTypes.INTEGER,
-      //   primaryKey: true
-      // },
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
       uuid: DataTypes.UUID,
       beneficiaryId: DataTypes.INTEGER,
       campaignId: DataTypes.INTEGER,
