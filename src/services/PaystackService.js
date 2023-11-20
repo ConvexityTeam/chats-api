@@ -46,6 +46,7 @@ class PaystackService {
       amount,
 
       metadata: {
+        method: 'paystack',
         CampaignId: CampaignId,
         organisation_id: organisation.id
       },

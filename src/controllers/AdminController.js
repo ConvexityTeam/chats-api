@@ -1,5 +1,7 @@
 require('dotenv').config();
 const db = require('../models');
+const uuid = require('uuid');
+
 const {util, Response, Logger} = require('../libs');
 const {HttpStatusCode, GenearteVendorId} = require('../utils');
 const Validator = require('validatorjs');
@@ -82,8 +84,11 @@ class AdminController {
         );
         return Response.send(res);
       }
-      userExist.dataValues.is_verified_all = true;
-      const updatesUser = await userExist.update({status: data.status});
+      // userExist.dataValues.is_verified_all = true;
+      const updatesUser = await userExist.update({
+        status: data.status,
+        is_verified_all: true
+      });
 
       const to = userExist.email;
       // const OrgName = userExist.;
@@ -99,6 +104,43 @@ class AdminController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async updateModel(req, res) {
+    const data = req.body;
+    const rules = {
+      model: 'required|string'
+    };
+    try {
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const records = await db[data.model].findAll();
+
+      await Promise.all(
+        records.map(async record => {
+          await db[data.model].update(
+            {uuid: uuid.v4()},
+            {where: {id: record.id}}
+          );
+        })
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        `Records updated`,
+        records
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.: ${error}`
       );
       return Response.send(res);
     }
@@ -200,21 +242,37 @@ class AdminController {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
       for (let ngo of allNGOs) {
-        const sum = ngo.Transactions.reduce((accumulator, object) => {
+        const [transactions, campaigns] = await Promise.all([
+          TransactionService.findTransactions({
+            OrganisationId: ngo.id,
+            transaction_type: 'transfer',
+            status: 'success',
+            VendorId: null,
+            BeneficiaryId: null
+          }),
+          CampaignService.getCampaigns(ngo.id, {
+            is_funded: true
+          })
+        ]);
+
+        const sum = transactions.reduce((accumulator, object) => {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
-
         const user = await UserService.findUser(ngo.Members[0].UserId);
         ngo.dataValues.name =
           ngo.name || user.first_name + ' ' + user.last_name;
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         ngo.dataValues.liveness = user.liveness;
-        for (let campaign of ngo.Campaigns) {
+
+        for (let campaign of campaigns.data) {
           let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
-          count = count + beneficiaries.length;
+            await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id,
+              req.query
+            );
+          count = count + beneficiaries.data.length;
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
@@ -281,8 +339,11 @@ class AdminController {
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
           let beneficiaries =
-            await BeneficiaryService.findCampaignBeneficiaries(campaign.id);
-          count = count + beneficiaries.length;
+            await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id,
+              req.query
+            );
+          count = count + beneficiaries.data.length;
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;

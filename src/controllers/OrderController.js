@@ -48,12 +48,17 @@ class OrderController {
       const [
         campaign,
         approvedBeneficiaries,
+        approvedBeneficiary,
         campaign_token,
         beneficiaryWallet,
         user
       ] = await Promise.all([
         CampaignService.getCampaignById(data.campaign_id),
         BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
+        BeneficiariesService.getApprovedBeneficiary(
+          data.campaign_id,
+          data.beneficiary_id
+        ),
         BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
         WalletService.findUserCampaignWallet(
           data.beneficiary_id,
@@ -64,6 +69,26 @@ class OrderController {
           id: data.beneficiary_id
         })
       ]);
+      if (approvedBeneficiary.status === 'processing') {
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Approve spending is already processing.',
+          approvedBeneficiary
+        );
+        Logger.info('Approve spending is already processing.');
+        return Response.send(res);
+      }
+      if (approvedBeneficiary.status === 'in_progress') {
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Please wait approve spending sent for processing.',
+          approvedBeneficiary
+        );
+        Logger.info('Please wait approve spending sent for processing.');
+        return Response.send(res);
+      }
+      //putting logs
+
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
         let amount = (
           parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
@@ -74,7 +99,7 @@ class OrderController {
           amount,
           beneficiaryWallet.uuid,
           campaign,
-          user
+          approvedBeneficiary
         );
       }
 
@@ -102,14 +127,42 @@ class OrderController {
         Logger.error('Campaign not found');
         return Response.send(res);
       }
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Initializing payment');
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Initializing payment',
+        approvedBeneficiary
+      );
       Logger.info('Initializing payment');
       return Response.send(res);
     } catch (error) {
       Logger.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.' + error,
+        'Internal server error. Please try again later.',
+        error
+      );
+      return Response.send(res);
+    }
+  }
+  static async approveStatus(req, res) {
+    const {campaign_id, beneficiary_id} = req.params;
+    try {
+      const is_approved = await BeneficiariesService.getApprovedBeneficiary(
+        campaign_id,
+        beneficiary_id
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Checking beneficiary approve status',
+        is_approved
+      );
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.',
         error
       );
       return Response.send(res);
@@ -132,20 +185,20 @@ class OrderController {
         Logger.error('Invalid beneficiary');
         return Response.send(res);
       }
-      // if (!user.pin) {
-      //   Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
-      //   Logger.error('Pin not set');
-      //   return Response.send(res);
-      // }
+      if (!user.pin && data.order.CampaignId != 188) {
+        Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
+        Logger.error('Pin not set');
+        return Response.send(res);
+      }
 
-      // if (!compareHash(pin, user.pin)) {
-      //   Response.setError(
-      //     HttpStatusCode.STATUS_BAD_REQUEST,
-      //     'Invalid or wrong PIN.'
-      //   );
-      //   Logger.error('Invalid or wrong PIN.');
-      //   return Response.send(res);
-      // }
+      if (!compareHash(pin, user.pin) && data.order.CampaignId != 188) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Invalid or wrong PIN.'
+        );
+        Logger.error('Invalid or wrong PIN.');
+        return Response.send(res);
+      }
 
       if (!data) {
         Response.setError(

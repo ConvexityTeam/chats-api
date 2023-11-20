@@ -18,7 +18,7 @@ const {
   Task,
   CampaignVendor
 } = require('../models');
-const {userConst, walletConst} = require('../constants');
+const {userConst, userConstFilter, walletConst} = require('../constants');
 const Transfer = require('../libs/Transfer');
 const QueueService = require('./QueueService');
 const {generateTransactionRef, AclRoles} = require('../utils');
@@ -79,7 +79,11 @@ class CampaignService {
   static getCampaignToken(campaignId) {
     return VoucherToken.findAll({where: {campaignId}});
   }
-
+  static async getCampaign(id) {
+    return Campaign.findByPk(id, {
+      attributes: ['total_beneficiaries', 'total_imported', 'fund_status']
+    });
+  }
   static getCampaignById(id) {
     return Campaign.findByPk(id, {
       include: ['Organisation'],
@@ -99,6 +103,10 @@ class CampaignService {
   }
   static getPubCampaignById(id) {
     return Campaign.findOne({where: {id, is_public: true}});
+  }
+
+  static getCleanCampaignById(id) {
+    return Campaign.findByPk(id);
   }
 
   static campaignBeneficiaryExists(CampaignId, UserId) {
@@ -130,24 +138,70 @@ class CampaignService {
     });
   }
 
-  static addBeneficiary(CampaignId, UserId, source = null) {
-    return Beneficiary.findOne({
-      where: {
-        CampaignId,
-        UserId
-      }
-    }).then(beneficiary => {
-      if (beneficiary) {
-        return beneficiary;
-      }
-      return Beneficiary.create({
-        CampaignId,
-        UserId,
-        source
-      }).then(async newBeneficiary => {
+  static async addBeneficiaries(
+    CampaignId,
+    UserId,
+    campaign,
+    count,
+    replicaCampaignLength,
+    source = null
+  ) {
+    return new Promise(async (resolve, reject) => {
+      Logger.info(`replicaCampaignLength: ${replicaCampaignLength}`);
+      Logger.info(`count: ${count}`);
+      Logger.info(`campaign: ${campaign}`);
+      try {
+        const find = await Beneficiary.findOne({
+          where: {
+            CampaignId,
+            UserId
+          }
+        });
+        if (find) {
+          return resolve(find);
+        }
+        const newBeneficiary = await Beneficiary.create({
+          CampaignId,
+          UserId,
+          source
+        });
+        await CampaignService.updateCampaign(CampaignId, {
+          total_beneficiaries: count,
+          total_imported: replicaCampaignLength
+        });
+        // await campaign.update({
+        //   total_imported: count,
+        //   total_beneficiaries: replicaCampaignLength
+        // });
         await QueueService.createWallet(UserId, 'user', CampaignId);
-        return newBeneficiary;
-      });
+        return resolve(newBeneficiary);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
+  static async addBeneficiary(CampaignId, UserId, source = null) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const find = await Beneficiary.findOne({
+          where: {
+            CampaignId,
+            UserId
+          }
+        });
+        if (find) {
+          return resolve(find);
+        }
+        const newBeneficiary = await Beneficiary.create({
+          CampaignId,
+          UserId,
+          source
+        });
+        await QueueService.createWallet(UserId, 'user', CampaignId);
+        return resolve(newBeneficiary);
+      } catch (error) {
+        return reject(error);
+      }
     });
   }
 
@@ -210,17 +264,35 @@ class CampaignService {
     return null;
   }
 
-  static campaignVendors(CampaignId) {
-    return CampaignVendor.findAll({
+  static async campaignVendors(CampaignId, extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const vendors = await CampaignVendor.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      distinct: true,
       where: {
+        ...extraClause,
+        //attributes: [[sequelize.fn('DISTINCT', sequelize.col('column_name')), 'column_name']],
         CampaignId
       },
       include: {
         model: User,
         as: 'Vendor',
-        attributes: userConst.publicAttr
+        attributes: userConstFilter.publicAttr
       }
     });
+    return await Pagination.getPagingData(vendors, page, limit);
   }
 
   static async getCampaignVendor(VendorId, CampaignId) {
@@ -420,7 +492,11 @@ class CampaignService {
 
           include: [
             {model: Task, as: 'Jobs'},
-            {model: User, as: 'Beneficiaries'}
+            {
+              model: User,
+              as: 'Beneficiaries',
+              attributes: userConstFilter.publicAttr
+            }
           ]
         }
       ]
@@ -512,13 +588,13 @@ class CampaignService {
 
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      distinct: true,
       ...queryOptions,
       // where: Sequelize.literal(`JSON_CONTAINS(location.state, '${JSON.stringify(location.state)}')`),
       where: {
         location: {
           country: location.country
         }
-  
       },
 
       attributes: [
@@ -541,11 +617,15 @@ class CampaignService {
         }
       ]
     });
-    const matchingItems = campaign.rows.filter((item) => {
+    const matchingItems = campaign.rows.filter(item => {
       const itemTags = item.location.state; // Assuming that `tags` is an array in your model
-      return location.state.some((tag) => itemTags.includes(tag));
+      return location.state.some(tag => itemTags.includes(tag));
     });
-    const response = await Pagination.getPagingData({rows: matchingItems}, page, limit);
+    const response = await Pagination.getPagingData(
+      {rows: matchingItems},
+      page,
+      limit
+    );
     return {...response, totalItems: matchingItems.length};
   }
   static async fetchProposalForVendor(location, id) {
@@ -581,27 +661,44 @@ class CampaignService {
     //   const itemTags = item.location.state; // Assuming that `tags` is an array in your model
     //   return location.state.some((tag) => itemTags.includes(tag));
     // });
-    
-    return campaign
+
+    return campaign;
   }
 
-  static async fetchRequest(proposal_id) {
-    return await User.findAll({
+  static async fetchRequest(proposal_id, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const request = await User.findAndCountAll({
+      ...queryOptions,
+      distinct: true,
       where: {
         RoleId: AclRoles.Vendor,
         proposal_id: Sequelize.where(
           Sequelize.col('proposalOwner.proposal_id'),
           proposal_id
         )
+        // status: Sequelize.where(Sequelize.col('proposalOwner.status'), status)
       },
       attributes: userConst.publicAttr,
       include: [
         {
+          where: {...extraClause},
           model: VendorProposal,
           as: 'proposalOwner'
         }
       ]
     });
+    const response = await Pagination.getPagingData(request, page, limit);
+    return response;
   }
   static async fetchProposalRequests(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
@@ -628,6 +725,7 @@ class CampaignService {
         //   null
         // )
       },
+      distinct: true,
       include: [
         {
           model: Campaign,
@@ -661,7 +759,36 @@ class CampaignService {
         ...extraClause,
         OrganisationId
       },
+      distinct: true,
+      include: [
+        {model: Task, as: 'Jobs'},
+        {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
+      ]
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
+  }
+  static async getFieldAppCampaigns(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
 
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      ...queryOptions,
+      where: {
+        ...extraClause,
+        OrganisationId
+      },
+      distinct: true,
       include: [
         {model: Task, as: 'Jobs'},
         {model: User, as: 'Beneficiaries', attributes: userConst.publicAttr}
@@ -684,10 +811,21 @@ class CampaignService {
     });
   }
 
-  static updateSingleCampaign(id, update) {
-    return Campaign.update(update, {
-      where: {
-        id
+  static async updateSingleCampaign(id, update) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const updated = await Campaign.update(update, {
+          where: {
+            id
+          }
+        });
+        Logger.info(
+          `CampaignService.updateSingleCampaign: ${JSON.stringify(updated)}`
+        );
+        resolve(updated);
+      } catch (error) {
+        Logger.error(`CampaignService.updateSingleCampaign: ${error}`);
+        reject(error);
       }
     });
   }
@@ -720,6 +858,48 @@ class CampaignService {
     }
     const campaign = await Campaign.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      distinct: true,
+      ...options,
+      where: {
+        ...extraClause
+      },
+      include: ['Organisation']
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
+  }
+  static async getOurCampaigns(
+    userId,
+    OrganisationId,
+    campaignType = 'campaign'
+  ) {
+    try {
+      return await Campaign.findAll({
+        where: {
+          OrganisationId: OrganisationId,
+          type: campaignType
+        }
+      });
+    } catch (error) {
+      // console.log(error)
+      throw error;
+    }
+  }
+  static async getAllFieldAgentCampaigns(extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      distinct: true,
       ...options,
       where: {
         ...extraClause
@@ -962,6 +1142,29 @@ class CampaignService {
 
     const form = await CampaignForm.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      distinct: true,
+      where: {organisationId, ...extraClause},
+      ...options
+      // include: ['campaigns']
+    });
+    const response = await Pagination.getPagingData(form, page, limit);
+    return response;
+  }
+  static async getFieldAppCampaignForm(organisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    const form = await CampaignForm.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      distinct: true,
       where: {organisationId, ...extraClause},
       ...options
       // include: ['campaigns']

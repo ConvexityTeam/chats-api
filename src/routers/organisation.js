@@ -124,6 +124,15 @@ router.post(
   ParamValidator.CampaignIdOptional,
   CampaignController.importBeneficiary
 );
+
+router.get(
+  '/:organisation_id/beneficiaries/:campaign_id/import-status',
+  NgoSubAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignController.importStatus
+);
 router.post(
   '/:organisation_id/campaign-funds-withdrawal/:campaign_id',
   NgoSubAdminAuth,
@@ -196,14 +205,15 @@ router
     WalletController.getOrganisationCampaignWallet
   );
 
-router.route('/:organisation_id/wallets/paystack-deposit').post(
+router.route('/:organisation_id/wallets/fiat-deposit').post(
   NgoSubAdminAuth,
   ParamValidator.OrganisationId,
   // IsOrgMember,
   WalletValidator.fiatDepositRules(),
   WalletValidator.validate,
-  WalletController.paystackDeposit
+  WalletController.fiatDeposit
 );
+
 router
   .route('/:organisation_id/wallets/:wallet_id?')
   .get(
@@ -241,6 +251,13 @@ router
     OrganisationController.changeOrganisationLogo
   );
 
+router.get(
+  '/field-agent/:organisation_id/beneficiaries',
+  FieldAgentAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  OrganisationController.getFieldAppOrganisationBeneficiaries
+);
 router
   .route('/:organisation_id/beneficiaries')
   .get(
@@ -342,6 +359,13 @@ router
     OrganisationController.createCampaign
   );
 
+router.get(
+  '/field-agent/:organisation_id/campaigns/all',
+  FieldAgentAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  OrganisationController.getAllFieldAppOrgCampaigns
+);
 router
   .route('/:organisation_id/campaigns/all')
   .get(
@@ -448,6 +472,15 @@ router
     CampaignController.approveAndFundCampaign
   );
 
+router.get(
+  '/:organisation_id/campaigns/:campaign_id/fund-status',
+  NgoAdminAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  CampaignValidator.campaignBelongsToOrganisation,
+  CampaignController.fundStatus
+);
+
 router
   .route('/:organisation_id/campaigns/:campaign_id/fund-crypto-pay')
   .post(
@@ -467,6 +500,13 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     CampaignController.cryptoPayment
   );
+router.get(
+  '/field-agent/:organisation_id/campaign_form',
+  FieldAgentAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  CampaignController.getFieldAppCampaignForm
+);
 router
   .route('/:organisation_id/campaign_form')
   .post(
@@ -621,6 +661,15 @@ router
     ParamValidator.CampaignId,
     OrganisationController.getCampaignBeneficiaries
   );
+
+router.get(
+  '/filed-agent/:organisation_id/campaigns/:campaign_id/beneficiaries',
+  FieldAgentAuth,
+  ParamValidator.OrganisationId,
+  IsOrgMember,
+  ParamValidator.CampaignId,
+  OrganisationController.getFieldAppCampaignBeneficiaries
+);
 router
   .route('/:organisation_id/campaigns/:campaign_id/beneficiaries')
   .get(

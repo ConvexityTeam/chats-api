@@ -10,19 +10,19 @@ class TaskController {
       const campaignId = req.params.campaign_id;
       const createdTasks = await TaskService.createCashForWorkTask(
         tasks,
-        campaignId,
+        campaignId
       );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'Tasks created successfully',
-        createdTasks,
+        createdTasks
       );
       return Response.send(res);
     } catch (error) {
       console.log(error, 'error');
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -31,19 +31,21 @@ class TaskController {
   static async getCashForWorkTasks(req, res) {
     try {
       let completed_tasks = 0;
-      let task_count = 0;
       const params = SanitizeObject(req.params);
-      const CashForWorkTasks = await TaskService.getCashForWorkTasks(params);
+      const CashForWorkTasks = await TaskService.getCashForWorkTasks(
+        params,
+        req.query
+      );
 
       if (!CashForWorkTasks) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
-
-      CashForWorkTasks.forEach(data => {
+      // resolved conflict
+      CashForWorkTasks?.data.forEach(data => {
         data.dataValues.completed_tasks = data.completed_tasks
           ? completed_tasks++
           : completed_tasks;
@@ -52,35 +54,34 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork Campaign Tasks retreived',
-        CashForWorkTasks,
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
   }
 
-  static async getTaskBeneficiaies(req, res) {
+  static async getFieldAppTaskBeneficiaries(req, res) {
     try {
       let completed_task = 0;
       const params = SanitizeObject(req.params);
-      const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
-        params,
-      );
-      if (!CashForWorkTasks) {
-        Response.setSuccess(
-          HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
-        );
-        return Response.send(res);
-      }
+      const CashForWorkTasks =
+        await TaskService.getFieldAppCashForBeneficiaries(params, req.query);
+      // if (!CashForWorkTasks.task) {
+      //   Response.setSuccess(
+      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //     'Task Not Found'
+      //   );
+      //   return Response.send(res);
+      // }
       //console.log(CashForWorkTasks)
 
-      CashForWorkTasks.AssignedWorkers.forEach(data => {
+      CashForWorkTasks?.response.data.forEach(data => {
         data.TaskAssignment.status === 'completed'
           ? completed_task++
           : completed_task;
@@ -88,19 +89,61 @@ class TaskController {
         data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
         data.dataValues.Assigned_Status = data.TaskAssignment.status;
       });
-      CashForWorkTasks.dataValues.campleted_task = completed_task;
-      CashForWorkTasks.dataValues.total_task_allowed =
+      CashForWorkTasks.response.completed_task = completed_task;
+      CashForWorkTasks.response.total_task_allowed =
         CashForWorkTasks.assignment_count;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'CashForWork  Tasks Beneficiaries',
-        CashForWorkTasks,
+        CashForWorkTasks
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
+  static async getTaskBeneficiaies(req, res) {
+    try {
+      let completed_task = 0;
+      const params = SanitizeObject(req.params);
+      const CashForWorkTasks = await TaskService.getCashForBeneficiaries(
+        params,
+        req.query
+      );
+      // if (!CashForWorkTasks.task) {
+      //   Response.setSuccess(
+      //     HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+      //     'Task Not Found'
+      //   );
+      //   return Response.send(res);
+      // }
+      //console.log(CashForWorkTasks)
+
+      CashForWorkTasks?.response.data.forEach(data => {
+        data.TaskAssignment.status === 'completed'
+          ? completed_task++
+          : completed_task;
+        data.dataValues.Assigned_UpdatedAt = data.TaskAssignment.updatedAt;
+        data.dataValues.Assigned_CreatedAt = data.TaskAssignment.createdAt;
+        data.dataValues.Assigned_Status = data.TaskAssignment.status;
+      });
+      CashForWorkTasks.response.completed_task = completed_task;
+      CashForWorkTasks.response.total_task_allowed =
+        CashForWorkTasks.assignment_count;
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'CashForWork  Tasks Beneficiaries',
+        CashForWorkTasks
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
       );
       return Response.send(res);
     }
@@ -115,13 +158,13 @@ class TaskController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Task updated',
-        updatedTask,
+        updatedTask
       );
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -134,20 +177,20 @@ class TaskController {
       if (!task) {
         Response.setSuccess(
           HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-          'Task Not Found',
+          'Task Not Found'
         );
         return Response.send(res);
       }
       const updated = await db.Task.update(
         {isCompleted: true},
-        {where: {id: taskId}},
+        {where: {id: taskId}}
       );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Task updated', updated);
       return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }
@@ -162,26 +205,26 @@ class TaskController {
     try {
       const evidence = await TaskService.uploadProgressEvidence(
         taskProgressId,
-        imageUrl,
+        imageUrl
       );
       if (evidence) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Task Evidence Uploaded Successfully',
-          evidence,
+          evidence
         );
         return Response.send(res);
       } else {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Something went wrong while uploading evidence',
+          'Something went wrong while uploading evidence'
         );
         return Response.send(res);
       }
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        error.message,
+        error.message
       );
       return Response.send(res);
     }

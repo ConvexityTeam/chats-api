@@ -2,14 +2,14 @@ const router = require('express').Router();
 const {
   CampaignValidator,
   FileValidator,
-  TaskValidator,
+  TaskValidator
 } = require('../validators');
-const {NgoSubAdminAuth, IsOrgMember} = require('../middleware');
+const {NgoSubAdminAuth, FieldAgentAuth, IsOrgMember} = require('../middleware');
 const TaskController = require('../controllers/TaskController');
 router.post(
   '/amend-cash-for-work/task/:taskId',
   NgoSubAdminAuth,
-  TaskController.amendTask,
+  TaskController.amendTask
 );
 
 router.post(
@@ -18,14 +18,17 @@ router.post(
   IsOrgMember,
   TaskValidator.taskProgressId(),
   FileValidator.checkTaskProgressFile(),
-  TaskController.uploadEvidence,
+  TaskController.uploadEvidence
 );
 router.route('/cash-for-work/task/:task_id').get(
   // NgoSubAdminAuth,
   // TaskValidator.taskId(),
-  TaskController.getTaskBeneficiaies,
+  TaskController.getTaskBeneficiaies
 );
 
+router
+  .route('/field-agent/cash-for-work/task/:task_id')
+  .get(FieldAgentAuth, TaskController.getFieldAppTaskBeneficiaries);
 router
   .route('/:organisation_id/:campaign_id')
   .get(TaskController.getCashForWorkTasks)
@@ -35,7 +38,7 @@ router
     CampaignValidator.campaignBelongsToOrganisation,
     TaskValidator.createCashForWorkTaskRule(),
     TaskValidator.validate,
-    TaskController.createCashForWorkTask,
+    TaskController.createCashForWorkTask
   );
 
 router.put(
@@ -45,7 +48,7 @@ router.put(
   CampaignValidator.campaignBelongsToOrganisation,
   TaskValidator.updateCashForWorkTaskRule(),
   TaskValidator.validate,
-  TaskController.updateTask,
+  TaskController.updateTask
 );
 
 module.exports = router;

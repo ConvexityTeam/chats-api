@@ -9,14 +9,19 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Plan.hasMany(models.Subscription, {
-        as: 'Subscriptions',
-        foreignKey: 'SubscriptionId'
-      });
+      // Plan.hasMany(models.Subscription, {
+      //   as: 'Subscriptions',
+      //   foreignKey: 'SubscriptionId'
+      // });
     }
   }
   Plan.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
+      uuid: DataTypes.UUID,
       name: DataTypes.STRING,
       conditional_voucher_number: DataTypes.NUMBER,
       is_unlimited_conditional_voucher: DataTypes.BOOLEAN,

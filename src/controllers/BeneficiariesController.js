@@ -1154,6 +1154,25 @@ class BeneficiariesController {
       return Response.send(res);
     }
   }
+
+  static async getCampaignQuestion(req, res) {
+    const id = req.params.campaign_id;
+    try {
+      const question = await CampaignService.findCampaignFormByCampaignId(id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Survey questions',
+        question
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.'
+      );
+      return Response.send(res);
+    }
+  }
   static async submitQuestion(req, res) {
     const id = req.params.campaign_id;
     const data = req.body;

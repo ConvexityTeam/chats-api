@@ -537,8 +537,8 @@ class QueueService {
       })
     );
   }
-  static async confirmOneBeneficiary(hash, uuid, transactionId) {
-    const payload = {hash, uuid, transactionId};
+  static async confirmOneBeneficiary(hash, uuid, transactionId, beneficiary) {
+    const payload = {hash, uuid, transactionId, beneficiary};
     confirmOneBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'
@@ -581,8 +581,8 @@ class QueueService {
   ) {
     const transaction = await Transaction.create({
       reference: generateTransactionRef(),
-      BeneficiaryId: beneficiary.id,
-      CampaignId: campaign.id,
+      BeneficiaryId: beneficiary.UserId,
+      CampaignId: beneficiary.CampaignId,
       amount,
       status: 'processing',
       is_approved: false,
@@ -600,7 +600,7 @@ class QueueService {
       beneficiary,
       transactionId: transaction.uuid
     };
-
+    await beneficiary.update({status: 'in_progress'});
     approveOneBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'
@@ -1205,24 +1205,20 @@ class QueueService {
     amount,
     CampaignId
   }) {
-
-    let wallet = null;
-    if (CampaignId) {
-      wallet = await CampaignService.getCampaignWallet(
-        OrganisationId,
-        CampaignId
-      );
-    } else {
-      wallet = await OrganisationService.getOrganisationWallet(
-        OrganisationId
-      );
-      
-    }
+    // let wallet = null;
+    // if (CampaignId) {
+    //   wallet = await CampaignService.getCampaignWallet(
+    //     OrganisationId,
+    //     CampaignId
+    //   );
+    // } else {
+    //   wallet = await OrganisationService.getOrganisationWallet(OrganisationId);
+    // }
 
     const transaction = await Transaction.create({
       log: transactionReference,
       narration: 'Fiat Deposit Transaction',
-      ReceiverWalletId: wallet.uuid,
+      // ReceiverWalletId: wallet.uuid,
       transaction_origin: 'wallet',
       transaction_type: 'deposit',
       status: 'processing',
@@ -1239,8 +1235,7 @@ class QueueService {
       CampaignId,
       approved,
       status,
-      amount,
-      wallet
+      amount
     };
     verifyFaitDepositQueue.send(
       new Message(payload, {

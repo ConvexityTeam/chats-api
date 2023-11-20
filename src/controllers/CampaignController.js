@@ -29,7 +29,8 @@ const {
   GenerateSecrete,
   AclRoles,
   generateTransactionRef,
-  generateProductRef
+  generateProductRef,
+  HashiCorp
 } = require('../utils');
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
@@ -116,6 +117,35 @@ class CampaignController {
     }
   }
 
+  static async getFieldAgentCampaigns(req, res) {
+    try {
+      const query = SanitizeObject(req.query, ['type']);
+      const allCampaign = await CampaignService.getAllFieldAgentCampaigns({
+        ...query,
+        status: 'active'
+      });
+
+      await Promise.all(
+        allCampaign?.data.map(async campaign => {
+          //(await AwsService.getMnemonic(campaign.id)) || null;
+          campaign.dataValues.ck8 = GenerateSecrete();
+        })
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign retrieved',
+        allCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
   static async getAllCampaigns(req, res) {
     try {
       const query = SanitizeObject(req.query, ['type']);
@@ -540,6 +570,20 @@ class CampaignController {
 
       const OrgWallet = organisation.Wallet;
 
+      if (campaign.fund_status == 'in_progress') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign fund is already in progress.'
+        );
+        return Response.send(res);
+      }
+      if (campaign.fund_status == 'processing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign fund is already processing.'
+        );
+        return Response.send(res);
+      }
       if (campaign.status == 'completed') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -562,13 +606,15 @@ class CampaignController {
         return Response.send(res);
       }
 
+      console.log(campaign.budget, 'budget');
+      console.log(balance, 'balance');
       if (
         (campaign.type !== 'item' && campaign.budget > balance) ||
         (campaign.type !== 'item' && balance == 0)
       ) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Insufficient wallet balance. Please fund organisation wallet.'
+          'Insufficient wallet balance. Please fund organisation wallet...'
         );
         return Response.send(res);
       }
@@ -592,6 +638,8 @@ class CampaignController {
           OrgWallet
         );
       }
+      const update = await campaign.update({fund_status: 'in_progress'});
+      Logger.info(`Updating Campaign: ${JSON.stringify(update)}`);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`
@@ -600,7 +648,7 @@ class CampaignController {
     } catch (error) {
       Logger.error(
         `Error Processing Transfer From NGO Wallet to Campaign Wallet: ${JSON.stringify(
-          error
+          error.message
         )}`
       );
       Response.setError(
@@ -610,11 +658,31 @@ class CampaignController {
       return Response.send(res);
     }
   }
-
+  static async fundStatus(req, res) {
+    try {
+      const {campaign_id} = req.params;
+      const campaign = await CampaignService.getCampaign(campaign_id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Campaign fund status fetched successfully.`,
+        campaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
   static async getProposalRequests(req, res) {
     const {proposal_id} = req.params;
     try {
-      const vendors = await CampaignService.fetchRequest(proposal_id);
+      const vendors = await CampaignService.fetchRequest(
+        proposal_id,
+        req.query
+      );
 
       // const campaign = await CampaignService.getCampaignById(proposal_id);
       const org_proposal = await CampaignService.fetchProposalRequest(
@@ -624,10 +692,10 @@ class CampaignController {
         org_proposal.campaign_id
       );
 
-      const data = {vendors, campaign};
+      const data = {vendors: vendors, campaign};
       data.campaign = campaign;
-      data.total_request = vendors.length;
-      for (let request of data.vendors) {
+      data.total_request = vendors.data.length;
+      for (let request of vendors.data) {
         const products = await ProductService.findProduct({
           proposal_id: request.proposalOwner.proposal_id
         });
@@ -1239,10 +1307,13 @@ class CampaignController {
           0
         )
       ).toFixed(2);
-      campaign.dataValues.Complaints = '';
-      await CampaignService.getCampaignComplaint(campaignId);
+      campaign.dataValues.Complaints =
+        await CampaignService.getCampaignComplaint(campaignId);
+      const campaignSecret = await HashiCorp.decryptData(
+        `campaignSecret=${campaignId}`
+      );
       // (await AwsService.getMnemonic(campaign.id)) || null;
-      campaign.dataValues.ck8 = '';
+      campaign.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1335,8 +1406,7 @@ class CampaignController {
       ).toFixed(2);
       campaign.dataValues.Complaints =
         await CampaignService.getCampaignComplaint(campaignId);
-      campaign.dataValues.ck8 =
-        (await AwsService.getMnemonic(campaign.id)) || null;
+      campaign.dataValues.ck8 = ''; //ait AwsService.getMnemonic(campaign.id)) || null;
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Details',
@@ -1393,7 +1463,7 @@ class CampaignController {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
       const {source, type} = SanitizeObject(req.body, ['source', 'type']);
-
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
       const replicaCampaign = await CampaignService.getACampaignWithReplica(
         replicaCampaignId,
         type
@@ -1411,10 +1481,14 @@ class CampaignController {
       // }
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
+          const count = index + 1;
           setTimeout(async () => {
-            const res = await CampaignService.addBeneficiary(
+            const res = await CampaignService.addBeneficiaries(
               campaign_id,
               beneficiary.id,
+              campaign,
+              count,
+              replicaCampaign.Beneficiaries.length,
               source
             );
             onboard.push(res);
@@ -1430,6 +1504,25 @@ class CampaignController {
             : 'beneficiary'
         } to campaign is processing`,
         onboard
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async importStatus(req, res) {
+    try {
+      const campaign_id = req.params.campaign_id;
+      const campaign = await CampaignService.getCleanCampaignById(campaign_id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign Status',
+        campaign
       );
       return Response.send(res);
     } catch (error) {
@@ -1819,6 +1912,24 @@ class CampaignController {
     const id = req.params.organisation_id;
     try {
       const form = await CampaignService.getCampaignForm(id, req.query);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign form received',
+        form
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.` + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async getFieldAppCampaignForm(req, res) {
+    const id = req.params.organisation_id;
+    try {
+      const form = await CampaignService.getFieldAppCampaignForm(id, req.query);
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign form received',

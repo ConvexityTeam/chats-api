@@ -4,7 +4,8 @@ const {
   SanitizeObject,
   generateOrganisationId,
   generateProductRef,
-  GenerateSecrete
+  GenerateSecrete,
+  HashiCorp
 } = require('../utils');
 
 const moment = require('moment');
@@ -183,8 +184,14 @@ class OrganisationController {
         OrganisationId,
         ...query
       );
+
+      // (await AwsService.getMnemonic(campaign.id)) || null;
+
       let campaignsArray = [];
       for (let campaign of campaigns) {
+        const campaignSecret = await HashiCorp.decryptData(
+          `campaignSecret=${campaign.id}`
+        );
         let beneficiaries_count = await campaign.countBeneficiaries();
         campaignsArray.push({
           id: campaign.id,
@@ -202,7 +209,7 @@ class OrganisationController {
           updatedAt: campaign.updatedAt,
           beneficiaries_count: beneficiaries_count,
           Jobs: campaign.Jobs,
-          ck8: (await AwsUploadService.getMnemonic(campaign.id)) || null
+          ck8: campaignSecret?.data?.data?.secretKey || null
         });
       }
       Response.setSuccess(
@@ -382,9 +389,77 @@ class OrganisationController {
           });
           assignmentTask.push(assignment);
         }
+        const campaignSecret = await HashiCorp.decryptData(
+          `campaignSecret=${data.id}`
+        );
+        Logger.info(`Campaign id...JB..t: ${data.id}`);
+        // (await AwsService.getMnemonic(campaign.id)) || null;
+        data.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
         //(await AwsService.getMnemonic(data.id)) || null;
-        data.dataValues.ck8 = GenerateSecrete();
+        Logger.info(`${JSON.stringify(campaign)}`);
+        data.dataValues.beneficiaries_count = data.Beneficiaries.length;
+        data.dataValues.task_count = data.Jobs.length;
+        data.dataValues.completed_task = completed_task;
+      }
+      function isExist(id) {
+        let find = assignmentTask.find(a => a && a.TaskId === id);
+        if (find) {
+          return true;
+        }
+        return false;
+      }
+      campaigns &&
+        campaigns?.data.forEach(data => {
+          data.Jobs.forEach(task => {
+            if (isExist(task.id)) {
+              data.dataValues.completed_task++;
+            }
+          });
+        });
 
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'All Campaigns.',
+        campaigns
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Request failed. Please try again' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async getAllFieldAppOrgCampaigns(req, res) {
+    try {
+      let completed_task = 0;
+      const assignmentTask = [];
+      const OrganisationId = req.params.organisation_id;
+      const query = SanitizeObject(req.query);
+      const campaigns = await CampaignService.getFieldAppCampaigns(
+        OrganisationId,
+        query
+      );
+
+      for (let data of campaigns?.data) {
+        if (new Date(data.end_date) < new Date())
+          data.update({status: 'ended'});
+        for (let task of data.Jobs) {
+          const assignment = await db.TaskAssignment.findOne({
+            where: {TaskId: task.id, status: 'completed'}
+          });
+          assignmentTask.push(assignment);
+        }
+        const campaignSecret = await HashiCorp.decryptData(
+          `campaignSecret=${data.id}`
+        );
+        Logger.info(`Campaign id...JB..t: ${data.id}`);
+        // (await AwsService.getMnemonic(campaign.id)) || null;
+        data.dataValues.ck8 = campaignSecret?.data?.data?.secretKey || null;
+        //(await AwsService.getMnemonic(data.id)) || null;
+        Logger.info(`${JSON.stringify(campaign)}`);
         data.dataValues.beneficiaries_count = data.Beneficiaries.length;
         data.dataValues.task_count = data.Jobs.length;
         data.dataValues.completed_task = completed_task;
@@ -472,7 +547,8 @@ class OrganisationController {
     try {
       const transactions =
         await BeneficiaryService.findOrganisationVendorTransactions(
-          req.organisation.id
+          req.organisation.id,
+          req.query
         );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -712,20 +788,20 @@ class OrganisationController {
       );
       const is_verified_all = req.user.is_verified_all;
       const is_verified = req.user.is_verified;
-      if (!is_verified_all) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Your account has not been activated yet'
-        );
-        return Response.send(res);
-      }
-      if (!is_verified) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Your profile is not verified yet, please update your profile'
-        );
-        return Response.send(res);
-      }
+      // if (!is_verified_all) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Your account has not been activated yet'
+      //   );
+      //   return Response.send(res);
+      // }
+      // if (!is_verified) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Your profile is not verified yet, please update your profile'
+      //   );
+      //   return Response.send(res);
+      // }
       if (data.formId) {
         const form = await CampaignService.findCampaignFormById(data.formId);
 
@@ -770,10 +846,13 @@ class OrganisationController {
             'organisation',
             campaign.id
           );
-          campaign.type === 'item'
-            ? await QueueService.createCollection(campaign)
-            : await QueueService.createEscrow(campaign);
-          AwsUploadService.createSecret(campaign.id);
+          campaign.type === 'item' &&
+            (await QueueService.createCollection(campaign));
+          // : await QueueService.createEscrow(campaign);
+          await HashiCorp.encryptData(`campaignSecret=${campaign.id}`, {
+            secretKey: GenerateSecrete()
+          });
+          // AwsUploadService.createSecret(campaign.id);
           Response.setSuccess(
             HttpStatusCode.STATUS_CREATED,
             'Created Campaign.',
@@ -1349,10 +1428,42 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
-      beneficiaries.forEach(beneficiary => {
+      beneficiaries.data.forEach(beneficiary => {
+        beneficiary.User.Answers.forEach(answer => {
+          if (answer.campaignId == CampaignId) {
+            beneficiary.dataValues.User.dataValues.Answers = [answer];
+          }
+        });
+      });
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign Beneficiaries',
+        beneficiaries
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Unexpected error. Please retry.' + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async getFieldAppCampaignBeneficiaries(req, res) {
+    try {
+      const CampaignId = req.params.campaign_id;
+      const beneficiaries =
+        await BeneficiaryService.findFieldAppCampaignBeneficiaries(
+          CampaignId,
+          req.query
+        );
+
+      beneficiaries.data.forEach(beneficiary => {
         beneficiary.User.Answers.forEach(answer => {
           if (answer.campaignId == CampaignId) {
             beneficiary.dataValues.User.dataValues.Answers = [answer];
@@ -1404,9 +1515,10 @@ class OrganisationController {
         Jos = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      for (let beneficiary of beneficiaries) {
+      for (let beneficiary of beneficiaries.data) {
         if (beneficiary.User.location.includes('state')) {
           let parsedJson = JSON.parse(beneficiary.User.location);
           if (parsedJson.state === 'Abuja') Abuja++;
@@ -1438,10 +1550,11 @@ class OrganisationController {
       let divorce = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      if (beneficiaries.length > 0) {
-        for (let i = 0; i < beneficiaries.length; i++) {
+      if (beneficiaries.data.length > 0) {
+        for (let i = 0; i < beneficiaries.data.length; i++) {
           if (beneficiaries[i].User.marital_status == 'single') {
             single++;
           } else if (beneficiaries[i].User.marital_status == 'married') {
@@ -1475,10 +1588,11 @@ class OrganisationController {
       let sixty6Up = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
-      for (let i = 0; i < beneficiaries.length; i++) {
+      for (let i = 0; i < beneficiaries.data.length; i++) {
         if (
           parseInt(
             moment().format('YYYY') -
@@ -1614,7 +1728,29 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.'
+        'Internal server error. Please try again later.' + error.message
+      );
+      return Response.send(res);
+    }
+  }
+  static async getFieldAppOrganisationBeneficiaries(req, res) {
+    try {
+      const organisation = req.organisation;
+      const beneficiaries =
+        await BeneficiaryService.findFieldAppOrgnaisationBeneficiaries(
+          organisation.id,
+          req.query
+        );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Organisation beneficiaries',
+        beneficiaries
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.' + error.message
       );
       return Response.send(res);
     }
@@ -1630,14 +1766,14 @@ class OrganisationController {
       const [beneficiary, transaction] = await Promise.all([
         BeneficiaryService.organisationBeneficiaryDetails(
           id,
-          req.organisation.id
+          req.organisation.id,
+          req.query
         ),
         TransactionService.findTransactions({
           BeneficiaryId: id,
           is_approved: true
         })
       ]);
-      console.log(beneficiary, 'opop');
       for (let tran of transaction) {
         if (
           tran.narration === 'Vendor Order' ||
@@ -1652,7 +1788,7 @@ class OrganisationController {
           total_wallet_received += tran.amount;
         }
       }
-      for (let campaign of beneficiary.Campaigns) {
+      for (let campaign of beneficiary.response.data) {
         for (let wallet of campaign.BeneficiariesWallets) {
           if (wallet.CampaignId && wallet.address) {
             const campaignWallet = await WalletService.findUserCampaignWallet(
@@ -1668,9 +1804,9 @@ class OrganisationController {
           }
         }
       }
-      beneficiary.dataValues.total_wallet_spent = total_wallet_spent;
-      beneficiary.dataValues.total_wallet_balance = total_wallet_balance;
-      beneficiary.dataValues.total_wallet_received = total_wallet_received;
+      beneficiary.response.total_wallet_spent = total_wallet_spent;
+      beneficiary.response.total_wallet_balance = total_wallet_balance;
+      beneficiary.response.total_wallet_received = total_wallet_received;
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -1792,21 +1928,23 @@ class OrganisationController {
     try {
       Logger.info('Fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(
-        req.params.campaign_id
+        req.params.campaign_id,
+        req.query
       );
       const setObj = new Set();
-      const result = vendors.reduce((acc, item) => {
+      const result = vendors.data.reduce((acc, item) => {
         if (!setObj.has(item.VendorId)) {
           setObj.add(item.VendorId, item);
           acc.push(item);
         }
         return acc;
       }, []);
+
       Logger.info('Fetched campaign vendors');
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Vendors.',
-        result
+        vendors
       );
       return Response.send(res);
     } catch (error) {
@@ -2368,8 +2506,8 @@ class OrganisationController {
   static async createVendor(req, res) {
     try {
       const {user, organisation} = req;
-      console.log("user", user)
-      console.log("organisation", organisation)
+      console.log('user', user);
+      console.log('organisation', organisation);
       const data = SanitizeObject(req.body, [
         'first_name',
         'last_name',
@@ -2384,12 +2522,12 @@ class OrganisationController {
         data,
         user
       );
-       await QueueService.createWallet(vendor.id, 'user');
+      await QueueService.createWallet(vendor.id, 'user');
 
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`+ error);
+      Response.setError(500, `Internal server error. Contact support.` + error);
       return Response.send(res);
     }
   }
@@ -2397,17 +2535,10 @@ class OrganisationController {
   static async getOrganisationVendors(req, res) {
     try {
       const {organisation} = req;
-      const vendors = (
-        await VendorService.organisationVendors(organisation)
-      ).map(res => {
-        const toObject = res.toObject();
-        toObject.Wallet.map(wallet => {
-          delete wallet.privateKey;
-          delete wallet.bantuPrivateKey;
-          return wallet;
-        });
-        return toObject;
-      });
+      const vendors = await VendorService.organisationVendors(
+        organisation,
+        req.query
+      );
       Response.setSuccess(200, 'Organisation vendors', vendors);
       return Response.send(res);
     } catch (error) {
@@ -2442,13 +2573,15 @@ class OrganisationController {
     try {
       const OrganisationId = req.organisation.id;
       const vendorId = req.params.vendor_id || req.body.vendor_id;
-      const vendorProducts = await VendorService.vendorStoreProducts(vendorId);
+      const vendorProducts = await VendorService.vendorStoreProducts(
+        vendorId,
+        {},
+        req.query
+      );
       const vendor = await VendorService.vendorPublicDetails(vendorId, {
         OrganisationId
       });
-      vendor.dataValues.Store = {
-        Products: vendorProducts
-      };
+      vendor.dataValues.products = vendorProducts;
       vendor.dataValues.total_received = vendor.Wallets.map(wallet =>
         wallet.ReceivedTransactions.map(tx => tx.amount).reduce(
           (a, b) => a + b,
@@ -2481,18 +2614,22 @@ class OrganisationController {
         organisation.id
       );
       const Transactions = await VendorService.organisationVendorsTransactions(
-        organisation.id
+        organisation.id,
+        req.query
       );
       Response.setSuccess(200, 'Organisation vendors Summary', {
         organisation,
         vendors_count,
         previous_stat,
         today_stat,
-        Transactions
+        Transactions: Transactions.data
       });
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`
+      );
       return Response.send(res);
     }
   }

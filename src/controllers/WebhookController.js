@@ -3,14 +3,23 @@ const {Logger} = require('../libs');
 const {WebhookService, BlockchainService} = require('../services');
 
 class WebhookController {
-  static async verifyPaystackDeposit(req, res) {
+  static async verifyFiatDeposit(req, res) {
     try {
-      await WebhookService.verifyPaystackDeposit(req.body);
+      const data = req.body.data.metadata;
+      await WebhookService.verifyFiatDeposit(req.body);
       res.sendStatus(HttpStatusCode.STATUS_OK);
-      Logger.info(`Organisation PayStack Deposit Verified`);
+      Logger.info(
+        `${
+          data?.method === 'koyapay' ? 'KoraPay' : 'Paystack'
+        } Deposit Verified`
+      );
     } catch (err) {
       console.log(err);
-      Logger.error(`Error Verifying Organisation PayStack Deposit: ${err}`);
+      Logger.error(
+        `Error Verifying ${
+          data.method === 'koyapay' ? 'KoraPay' : 'Paystack'
+        } Deposit: ${err}`
+      );
       res.sendStatus(HttpStatusCode.STATUS_BAD_REQUEST);
     }
   }

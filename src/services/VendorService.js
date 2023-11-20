@@ -169,14 +169,27 @@ class VendorService {
   }
   // Refactor
 
-  static async vendorStoreProducts(vendorId, where = {}) {
-    return Product.findAll({
+  static async vendorStoreProducts(vendorId, where = {}, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const products = await Product.findAndCountAll({
       where: {
         ...where,
         vendor_proposal_id: {
           [Op.eq]: null
         }
       },
+      ...queryOptions,
+      distinct: true,
       include: [
         {
           model: User,
@@ -188,6 +201,8 @@ class VendorService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(products, page, limit);
+    return response;
   }
 
   static async vendorStoreMarketProducts(CampaignId) {
@@ -409,7 +424,18 @@ class VendorService {
     });
   }
 
-  static async organisationVendors({id: OrganisationId}) {
+  static async organisationVendors({id: OrganisationId}, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
     const vendorIds = (
       await OrganisationMembers.findAll({
         where: {
@@ -418,14 +444,20 @@ class VendorService {
         }
       })
     ).map(m => m.UserId);
-    return User.findAll({
+    const vendors = await User.findAndCountAll({
       where: {
         id: {
           [Op.in]: [...vendorIds]
         }
       },
+      distinct: true,
+      ...queryOptions,
+      attributes: userConst.publicAttr,
+
       include: ['Wallet', 'Store']
     });
+    const response = await Pagination.getPagingData(vendors, page, limit);
+    return response;
   }
 
   static async organisationVendorsAdmin(OrganisationId) {
@@ -531,19 +563,38 @@ class VendorService {
       ],
       group: [
         'Organisation.id',
+        'Vendors.OrganisationMembers.id',
         'Vendors.OrganisationMembers.UserId',
         'Vendors.OrganisationMembers.OrganisationId',
         'Vendors.OrganisationMembers.role',
+        'Vendors.OrganisationMembers.uuid',
         'Vendors.OrganisationMembers.createdAt',
         'Vendors.OrganisationMembers.updatedAt'
       ]
     });
   }
 
-  static async organisationVendorsTransactions(OrganisationId, filter = null) {
-    return Transaction.findAll({
+  static async organisationVendorsTransactions(
+    OrganisationId,
+    extraClause = null
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {...extraClause};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    const transaction = await Transaction.findAndCountAll({
+      distinct: true,
+      ...options,
       where: {
-        ...filter,
+        ...extraClause,
         OrganisationId,
         transaction_origin: 'store'
       },
@@ -572,6 +623,8 @@ class VendorService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(transaction, page, limit);
+    return response;
   }
 
   static async vendorsTransactionsAdmin(VendorId) {

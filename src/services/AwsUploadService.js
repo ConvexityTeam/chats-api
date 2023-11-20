@@ -71,11 +71,10 @@ class AwsUploadService {
       });
     } catch (error) {}
   }
-  static async getMnemonic(id) {
+  static async getMnemonic() {
     // const { SecretsManager } = AWS;
-    var secretName = id
-        ? awsConfig.campaignSecretName + id
-        : awsConfig.secreteName,
+    // id  ? awsConfig.campaignSecretName + id
+    var secretName = awsConfig.secreteName,
       secret,
       decodedBinarySecret;
     // Create a Secrets Manager client
@@ -118,7 +117,7 @@ class AwsUploadService {
       } else if (err.code === 'ResourceNotFoundException') {
         Logger.error(`We can't find the resource that you asked for.`);
         if (id) {
-          this.createSecret(id);
+          // this.createSecret(id);
         } else throw err;
       }
       Logger.error(`Error decrypting : ${err}`);

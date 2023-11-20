@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ZohoToken extends Model {
     /**
@@ -13,13 +11,21 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  ZohoToken.init({
-    access_token: DataTypes.STRING,
-    refresh_token: DataTypes.STRING,
-    expires_in: DataTypes.DATE
-  }, {
-    sequelize,
-    modelName: 'ZohoToken',
-  });
+  ZohoToken.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
+      uuid: DataTypes.UUID,
+      access_token: DataTypes.STRING,
+      refresh_token: DataTypes.STRING,
+      expires_in: DataTypes.DATE
+    },
+    {
+      sequelize,
+      modelName: 'ZohoToken'
+    }
+  );
   return ZohoToken;
 };
