@@ -13,10 +13,6 @@ module.exports = (sequelize, DataTypes) => {
   }
   Member.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
-      },
       uuid: DataTypes.UUID,
       full_name: DataTypes.STRING,
       dob: DataTypes.DATE,

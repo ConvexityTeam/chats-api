@@ -13,10 +13,6 @@ module.exports = (sequelize, DataTypes) => {
   }
   ProductBeneficiary.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
-      },
       uuid: DataTypes.UUID,
       productId: DataTypes.INTEGER,
       UserId: DataTypes.INTEGER,
