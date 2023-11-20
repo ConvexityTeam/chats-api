@@ -47,6 +47,6 @@ deploy_production:
     # - ssh $USER@$APP_URL_PRODUCTION -o StrictHostKeyChecking=no ". restart_ssh.sh && ssh-add .ssh/gitlab-repo && cd app && git checkout production && git reset --hard && git pull origin production && docker-compose down && docker-compose -f docker-compose.prod.yml up --build -d && exit"
   only:
     - production
-  tags:
-    - production
+  # tags:
+  #   - production
     
