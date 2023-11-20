@@ -13,10 +13,6 @@ module.exports = (sequelize, DataTypes) => {
   }
   FingerPrints.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
-      },
       uuid: DataTypes.UUID,
       UserId: DataTypes.INTEGER,
       url: DataTypes.STRING

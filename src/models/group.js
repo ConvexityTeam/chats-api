@@ -17,10 +17,6 @@ module.exports = (sequelize, DataTypes) => {
   }
   Group.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
-      },
       uuid: DataTypes.UUID,
       group_name: DataTypes.STRING,
       representative_id: DataTypes.INTEGER,

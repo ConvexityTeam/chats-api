@@ -21,10 +21,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   Subscription.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
-      },
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
       uuid: DataTypes.UUID,
       isActive: DataTypes.BOOLEAN,
       planId: DataTypes.INTEGER,
