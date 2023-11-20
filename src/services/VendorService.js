@@ -563,6 +563,7 @@ class VendorService {
       ],
       group: [
         'Organisation.id',
+        'Vendors.OrganisationMembers.id',
         'Vendors.OrganisationMembers.UserId',
         'Vendors.OrganisationMembers.OrganisationId',
         'Vendors.OrganisationMembers.role',
