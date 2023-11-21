@@ -45,7 +45,7 @@ jobs:
       run: |
         docker build -t staging-chatsapi:latest .
         docker save -o chatsapi.tar staging-chatsapi:latest
-        aws s3 cp staging-chatsapi-image.tar.gz s3://chats-docker/chatsapi.tar
+        aws s3 cp chatsapi.tar s3://chats-docker/chatsapi.tar
 
   deploy:
     runs-on: ubuntu-latest
