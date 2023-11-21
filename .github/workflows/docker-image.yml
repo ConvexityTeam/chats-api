@@ -44,8 +44,8 @@ jobs:
     - name: Build and push Docker image
       run: |
         docker build -t staging-chatsapi:latest .
-        docker save staging-chatsapi:latest | gzip > staging-chatsapi-image.tar.gz
-        aws s3 cp staging-chatsapi-image.tar.gz s3://chats-docker/staging-chatsapi-image.tar.gz
+        docker save -o chatsapi.tar staging-chatsapi:latest
+        aws s3 cp staging-chatsapi-image.tar.gz s3://chats-docker/chatsapi.tar
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,13 +61,13 @@ jobs:
         
     - name: Download Docker image from S3
       run: |
-        aws s3 cp s3://chats-docker/staging-chatsapi-image.tar.gz .
-        gunzip -c staging-chatsapi-image.tar.gz | docker load
+        aws s3 cp s3://chats-docker/chatsapi.tar .
+        gunzip -c chatsapi.tar | docker load
 
     - name: Deploy to EC2 via CodeDeploy
       run: |
-        aws deploy create-deployment --application-name staging-chats-api --deployment-group-name staging-chats --s3-location bucket=chats-docker,key=staging-chatsapi-image.tar.gz,bundleType=zip
-
+        aws deploy create-deployment --application-name staging-chats-api --deployment-group-name staging-chats --s3-location bucket=chats-docker,key=chatsapi.tar,bundleType=zip
+s3://chats-docker/staging-chatsapi-image.tar.gz
 
 # name: Basic deploy
 # on:
