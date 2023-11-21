@@ -1,18 +1,82 @@
-name: Docker Image CI
+# name: Docker Image CI
+
+# on:
+#   push:
+#     branches: [ "staging" ]
+#   pull_request:
+#     branches: [ "staging" ]
+
+# jobs:
+
+#   build:
+
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - uses: actions/checkout@v3
+#     - name: Build the Docker image
+#       run: docker build . --file Dockerfile --tag staging-chatsapi:$(date +%s)
+
+name: Build and Deploy to EC2
 
 on:
   push:
-    branches: [ "staging" ]
-  pull_request:
-    branches: [ "staging" ]
+    branches:
+      - staging
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag staging-chatsapi:$(date +%s)
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v1
+
+    - name: Configure AWS credentials
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set region ${{ secrets.AWS_DEFAULT_REGION }}
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t staging-chatsapi:latest .
+        docker save staging-chatsapi:latest | gzip > staging-chatsapi-image.tar.gz
+        aws s3 cp staging-chatsapi-image.tar.gz s3://chats-docker/staging-chatsapi-image.tar.gz
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    steps:
+    - name: Download Docker image from S3
+      run: |
+        aws s3 cp s3://chats-docker/staging-chatsapi-image.tar.gz .
+        gunzip -c staging-chatsapi-image.tar.gz | docker load
+
+    - name: Deploy to EC2 via CodeDeploy
+      run: |
+        aws deploy create-deployment --application-name YourApplicationName --deployment-group-name YourDeploymentGroupName --s3-location bucket=your-s3-bucket,key=your-path/staging-chatsapi-image.tar.gz,bundleType=zip
+
+
+# name: Basic deploy
+# on:
+#   push:
+#     branches: [ main ]
+
+# jobs:
+#   EC2-Deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - id: deploy
+#         uses: bitovi/github-actions-deploy-docker-to-ec2@v1.0.0
+#         with:
+#           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws_default_region: us-east-1
+
+#           aws_elb_app_port: 8080 # This should match the docker exposed port. Defaults to 3000.
