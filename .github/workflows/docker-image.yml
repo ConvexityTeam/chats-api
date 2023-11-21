@@ -61,7 +61,8 @@ jobs:
         
     - name: Download Docker image from S3
       run: |
-        aws s3 cp s3://chats-docker/chatsapi.tar . | docker load
+        aws s3 cp s3://chats-docker/chatsapi.tar . 
+        docker load -i chatsapi.tar
 
     - name: Deploy to EC2 via CodeDeploy
       run: |
