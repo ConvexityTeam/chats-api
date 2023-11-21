@@ -67,7 +67,6 @@ jobs:
     - name: Deploy to EC2 via CodeDeploy
       run: |
         aws deploy create-deployment --application-name staging-chats-api --deployment-group-name staging-chats --s3-location bucket=chats-docker,key=chatsapi.tar,bundleType=zip
-s3://chats-docker/staging-chatsapi-image.tar.gz
 
 # name: Basic deploy
 # on:
