@@ -1,9 +1,16 @@
 const router = require('express').Router();
 const {CampaignController} = require('../controllers');
-const {Auth} = require('../middleware');
+const {Auth, BeneficiaryAuth, FieldAgentAuth} = require('../middleware');
 
 router.route('/').get(Auth, CampaignController.getAllCampaigns);
-router.post('/field-agent/', Auth, CampaignController.getFieldAgentCampaigns);
+router
+  .route('/beneficiary')
+  .get(BeneficiaryAuth, CampaignController.getAllBeneficiaryCampaigns);
+router.post(
+  '/field-agent/',
+  FieldAgentAuth,
+  CampaignController.getFieldAgentCampaigns
+);
 
 router.get('/:id', Auth, CampaignController.getACampaign);
 router.put('/:id', Auth, CampaignController.updatedCampaign);
