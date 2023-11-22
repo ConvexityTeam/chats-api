@@ -77,7 +77,10 @@ class NgoController {
 
   static async members(req, res) {
     try {
-      const memebrs = await NgoService.getMembers(req.organisation.id);
+      const memebrs = await NgoService.getMembers(
+        req.organisation.id,
+        req.query
+      );
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'NGO members', memebrs);
       return Response.send(res);
     } catch (error) {

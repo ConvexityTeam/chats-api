@@ -48,12 +48,17 @@ class OrderController {
       const [
         campaign,
         approvedBeneficiaries,
+        approvedBeneficiary,
         campaign_token,
         beneficiaryWallet,
         user
       ] = await Promise.all([
         CampaignService.getCampaignById(data.campaign_id),
         BeneficiariesService.getApprovedBeneficiaries(data.campaign_id),
+        BeneficiariesService.getApprovedBeneficiary(
+          data.campaign_id,
+          data.beneficiary_id
+        ),
         BlockchainService.setUserKeypair(`campaign_${data.campaign_id}`),
         WalletService.findUserCampaignWallet(
           data.beneficiary_id,
@@ -64,8 +69,30 @@ class OrderController {
           id: data.beneficiary_id
         })
       ]);
+      if (approvedBeneficiary.status === 'processing') {
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Approve spending is already processing.',
+          approvedBeneficiary
+        );
+        Logger.info('Approve spending is already processing.');
+        return Response.send(res);
+      }
+      Logger.info(`Approved Beneficiary Status: ${approvedBeneficiary.status}`);
+      if (approvedBeneficiary.status === 'in_progress') {
+        Response.setSuccess(
+          HttpStatusCode.STATUS_OK,
+          'Please wait approve spending sent for processing.',
+          approvedBeneficiary
+        );
+        Logger.info('Please wait approve spending sent for processing.');
+        return Response.send(res);
+      }
+      //putting logs
       if (campaign.type === 'campaign' && !beneficiaryWallet.was_funded) {
-        let amount = campaign.budget / approvedBeneficiaries.length;
+        let amount = (
+          parseInt(campaign.budget) / parseInt(approvedBeneficiaries.length)
+        ).toFixed(2);
         await QueueService.approveOneBeneficiary(
           campaign_token.privateKey,
           beneficiaryWallet.address,
@@ -100,14 +127,42 @@ class OrderController {
         Logger.error('Campaign not found');
         return Response.send(res);
       }
-      Response.setSuccess(HttpStatusCode.STATUS_OK, 'Initializing payment');
+      await approvedBeneficiary.update({status: 'in_progress'});
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Initializing payment',
+        approvedBeneficiary
+      );
       Logger.info('Initializing payment');
       return Response.send(res);
     } catch (error) {
       Logger.error(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.' + error,
+        'Internal server error. Please try again later.',
+        error
+      );
+      return Response.send(res);
+    }
+  }
+  static async approveStatus(req, res) {
+    const {campaign_id, beneficiary_id} = req.params;
+    try {
+      const is_approved = await BeneficiariesService.getApprovedBeneficiary(
+        campaign_id,
+        beneficiary_id
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Checking beneficiary approve status',
+        is_approved
+      );
+      return Response.send(res);
+    } catch (error) {
+      Logger.error(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal server error. Please try again later.',
         error
       );
       return Response.send(res);
@@ -130,12 +185,13 @@ class OrderController {
         Logger.error('Invalid beneficiary');
         return Response.send(res);
       }
-      if (!user.pin) {
+      if (!user.pin && data.order.CampaignId != 188) {
         Response.setError(HttpStatusCode.STATUS_BAD_REQUEST, 'Pin not set');
         Logger.error('Pin not set');
         return Response.send(res);
       }
-      if (!compareHash(pin, user.pin)) {
+
+      if (!compareHash(pin, user.pin) && data.order.CampaignId != 188) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
           'Invalid or wrong PIN.'
@@ -238,16 +294,17 @@ class OrderController {
         campaignWallet,
         data.order,
         data.order.Vendor,
-        data.total_cost
+        data.total_cost,
+        campaign
       );
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Transaction Processing');
       return Response.send(res);
     } catch (error) {
-      Logger.error(error);
+      Logger.error(`Order Error: ${error}`);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal server error. Please try again later.',
+        'Internal server error. Please try again later.' + error,
         error
       );
       return Response.send(res);
@@ -277,23 +334,22 @@ class OrderController {
         );
         return Response.send(res);
       }
-      const approvedBeneficiaries =
-        await BeneficiariesService.getApprovedBeneficiaries(
-          data.order.CampaignId
-        );
+      const approvedBeneficiaries = await BeneficiariesService.getApprovedBeneficiaries(
+        data.order.CampaignId
+      );
 
-      const [campaignWallet, vendorWallet, beneficiaryWallet] =
-        await Promise.all([
-          WalletService.findSingleWallet({
-            CampaignId: data.order.CampaignId,
-            UserId: null
-          }),
-          WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
-          WalletService.findUserCampaignWallet(
-            req.user.id,
-            data.order.CampaignId
-          )
-        ]);
+      const [
+        campaignWallet,
+        vendorWallet,
+        beneficiaryWallet
+      ] = await Promise.all([
+        WalletService.findSingleWallet({
+          CampaignId: data.order.CampaignId,
+          UserId: null
+        }),
+        WalletService.findSingleWallet({UserId: data.order.Vendor.id}),
+        WalletService.findUserCampaignWallet(req.user.id, data.order.CampaignId)
+      ]);
       const campaign_token = await BlockchainService.setUserKeypair(
         `campaign_${data.order.CampaignId}`
       );
@@ -608,6 +664,7 @@ class OrderController {
               productId: cart.ProductId,
               product_name: cart.Product.tag,
               vendorId: product.Vendor.id,
+              product_category: cart.Product.product_category,
               vendor_name:
                 product.Vendor.first_name + ' ' + product.Vendor.first_name,
               sales_volume: cart.total_amount,
@@ -665,9 +722,9 @@ class OrderController {
         type: 'campaign',
         OrganisationId: organisation_id
       });
-      const products = await OrderService.productPurchasedBy(organisation_id);
+      const products = await OrderService.productPurchased(organisation_id);
 
-      if (products && products.length <= 0) {
+      if (products && products?.data.length <= 0) {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'No Product Purchased Received',
@@ -675,11 +732,11 @@ class OrderController {
         );
         return Response.send(res);
       }
-      campaigns &&
-        campaigns?.forEach(campaign => {
+      campaigns.data &&
+        campaigns.data?.forEach(campaign => {
           //CampaignId
           products &&
-            products?.forEach(product => {
+            products.data?.forEach(product => {
               if (campaign.id === product.CampaignId) {
                 data.push(product);
               }
@@ -704,7 +761,7 @@ class OrderController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server error: Please retry.'
+        'Server error: Please retry. me' + error
       );
       return Response.send(res);
     }

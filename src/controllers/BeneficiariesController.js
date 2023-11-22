@@ -541,8 +541,9 @@ class BeneficiariesController {
   static async getProfile(req, res) {
     try {
       let total_wallet_spent = 0;
-      let total_wallet_balance = 0;
+      let total_cash_balance = 0;
       let total_wallet_received = 0;
+      let personal_wallet_balance = 0;
 
       const _beneficiary = await BeneficiaryService.beneficiaryProfile(
         req.user.id
@@ -565,7 +566,7 @@ class BeneficiariesController {
           );
           const token = await BlockchainService.balance(address.address);
           const balance = Number(token.Balance.split(',').join(''));
-          total_wallet_balance += balance;
+          personal_wallet_balance += balance;
         }
         if (wallet.CampaignId) {
           const campaignAddress = await BlockchainService.setUserKeypair(
@@ -580,16 +581,15 @@ class BeneficiariesController {
             beneficiaryAddress.address
           );
           const balance = Number(token.Allowed.split(',').join(''));
-          total_wallet_balance += balance;
+          total_cash_balance += balance;
         }
       }
 
       const beneficiary = _beneficiary.toObject();
 
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Beneficiary Profile.', {
-        total_wallet_balance,
-        total_wallet_received,
-        total_wallet_spent,
+        total_cash_balance,
+        personal_wallet_balance,
         ...beneficiary
       });
       return Response.send(res);
@@ -883,9 +883,10 @@ class BeneficiariesController {
       let nineHundredKToOneMill = 0;
       let total_wallet_balance = 0;
       const org = await OrganisationService.isMemberUser(req.user.id);
-      const beneficiaries = await BeneficiaryService.getBeneficiariesTotalAmount(
-        org.OrganisationId
-      );
+      const beneficiaries =
+        await BeneficiaryService.getBeneficiariesTotalAmount(
+          org.OrganisationId
+        );
 
       const walletBalance = [];
       beneficiaries.forEach(beneficiary => {
@@ -979,6 +980,7 @@ class BeneficiariesController {
           transaction.dataValues.narration = `Payment from (${
             ngo.name || ngo.email
           })`;
+
           transaction.dataValues.transaction_type = 'credit';
         }
         if (transaction.narration === 'Vendor Order') {

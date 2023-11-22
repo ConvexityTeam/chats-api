@@ -346,15 +346,21 @@ class BeneficiariesService {
     });
   }
 
-  static async findOrgnaisationBeneficiaries(OrganisationId, queryClause = {}) {
-    const {page, size} = queryClause;
+  static async findOrgnaisationBeneficiaries(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    const where = queryClause;
-    delete where.page;
-    delete where.size;
-    const users = await User.findAll({
-      // limit,
-      // offset,
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const users = await User.findAndCountAll({
+      distinct: true,
+      ...options,
       where: {
         OrganisationId: Sequelize.where(
           Sequelize.col('Campaigns.OrganisationId'),
@@ -377,14 +383,22 @@ class BeneficiariesService {
         {model: Group, as: 'members'}
       ]
     });
-    //await Pagination.getPagingData(users, page, limit);
-    return users;
+    const response = await Pagination.getPagingData(users, page, limit);
+    return response;
   }
 
   static async fetchCampaignBeneficiary(CampaignId, UserId) {
     return Beneficiary.findOne({
       where: {
         UserId,
+        CampaignId
+      }
+    });
+  }
+
+  static async fetchCampaignBeneficiaries(CampaignId) {
+    return Beneficiary.findAll({
+      where: {
         CampaignId
       }
     });
@@ -412,7 +426,20 @@ class BeneficiariesService {
     });
   }
   static async findCampaignBeneficiaries(CampaignId, extraClause = null) {
-    return Beneficiary.findAll({
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const beneficiaries = await Beneficiary.findAndCountAll({
+      distinct: true,
+      ...options,
       where: {
         ...extraClause,
         CampaignId
@@ -432,6 +459,8 @@ class BeneficiariesService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(beneficiaries, page, limit);
+    return response;
   }
   static async getBeneficiariesAdmin() {
     return User.findAll({
@@ -552,8 +581,25 @@ class BeneficiariesService {
 
   //get all beneficiaries by marital status
 
-  static async findOrganisationVendorTransactions(OrganisationId) {
-    return Transaction.findAll({
+  static async findOrganisationVendorTransactions(
+    OrganisationId,
+    extraClause = {}
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const transactions = await Transaction.findAndCountAll({
+      distinct: true,
+      order: [['createdAt', 'ASC']],
+      ...options,
       include: [
         {
           model: Wallet,
@@ -580,6 +626,8 @@ class BeneficiariesService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(transactions, page, limit);
+    return response;
   }
 
   static async findVendorTransactionsPerBene(CampaignId) {
@@ -611,6 +659,7 @@ class BeneficiariesService {
       ]
     });
   }
+
   static async getApprovedBeneficiaries(CampaignId) {
     return Beneficiary.findAll({
       where: {
@@ -635,6 +684,15 @@ class BeneficiariesService {
           ]
         }
       ]
+    });
+  }
+  static async getApprovedBeneficiary(CampaignId, UserId) {
+    return Beneficiary.findOne({
+      where: {
+        CampaignId,
+        UserId,
+        approved: true
+      }
     });
   }
   static async getApprovedFundBeneficiaries(CampaignId) {

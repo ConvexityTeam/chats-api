@@ -20,12 +20,17 @@
   "engines": {
     "node": "^14.x"
   },
+  "optionalDependencies": {
+    "fsevents": "^2.3.2"
+  },
   "author": "Habeeb Salami",
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.7.0",
     "@droidsolutions-oss/amqp-ts": "^2.6.3",
-    "@types/xlsx": "^0.0.35",
+    "@types/express-handlebars": "^6.0.0",
+    "@types/nodemailer-express-handlebars": "^4.0.2",
+    "@types/xlsx": "^0.0.36",
     "@zohocrm/nodejs-sdk-2.0": "^5.0.0",
     "amqplib": "^0.7.1",
     "aws-sdk": "^2.856.0",
@@ -37,10 +42,13 @@
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "crypto-js": "^4.0.0",
+    "currency-codes": "^2.1.0",
     "currency-symbol-map": "^5.1.0",
+    "data-uri-to-buffer": "^5.0.1",
     "dotenv": "^8.2.0",
     "ethers": "^5.6.9",
     "express": "^4.17.1",
+    "express-handlebars": "^6.0.6",
     "express-validator": "^6.12.1",
     "faker": "^5.4.0",
     "formidable": "^1.2.2",
@@ -55,6 +63,7 @@
     "node-fetch": "^2.6.1",
     "node-jsencrypt": "^1.0.0",
     "nodemailer": "^6.4.11",
+    "nodemailer-express-handlebars": "^5.0.0",
     "nodemon": "^2.0.12",
     "paystack": "^2.0.1",
     "paystack-api": "^2.0.6",

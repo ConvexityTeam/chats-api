@@ -42,10 +42,14 @@ module.exports = {
   CONFIRM_BENEFICIARY_REDEEM: 'confirmBeneficiaryRedeem',
   CONFIRM_BENEFICIARY_FUNDING_BENEFICIARY:
     'confirmBeneficiaryFundingBeneficiary',
+  CONFIRM_PERSONAL_BENEFICIARY_FUNDING_BENEFICIARY:
+    'confirmPersonalBeneficiaryFundingBeneficiary',
   SEND_EACH_BENEFICIARY_FOR_REDEEMING: 'sendEachBeneficiaryForRedeeming',
   SEND_EACH_BENEFICIARY_FOR_CONFIRMATION: 'sendEachBeneficiaryForConfirmation',
   INCREASE_TRANSFER_CAMPAIGN_GAS: 'increaseTransferCampaignGas',
   INCREASE_TRANSFER_BENEFICIARY_GAS: 'increaseTransferBeneficiaryGas',
+  INCREASE_TRANSFER_PERSONAL_BENEFICIARY_GAS:
+    'increaseTransferPersonalBeneficiaryGas',
   INCREASE_GAS_FOR_BENEFICIARY_WITHDRAWAL:
     'increaseGasForBeneficiaryWithdrawal',
   INCREASE_GAS_FOR_VENDOR_WITHDRAWAL: 'increaseGasForVendorWithdrawal',
@@ -71,5 +75,8 @@ module.exports = {
   FUND_CAMPAIGN_WITH_CRYPTO: 'fundCampaignWithCrypto',
   CONFIRM_FUND_CAMPAIGN_WITH_CRYPTO: 'confirmFundCampaignWithCrypto',
   INCREASE_GAS_FOR_FUND_CAMPAIGN_WITH_CRYPTO:
-    'increaseGasForConfirmFundCampaignWithCrypto'
+    'increaseGasForConfirmFundCampaignWithCrypto',
+  RE_FUN_BENEFICIARIES: 'reFundBeneficiaries',
+  CONFIRM_RE_FUND_BENEFICIARIES: 'confirmReFundBeneficiaries',
+  INCREASE_GAS_FOR_RE_FUND_BENEFICIARIES: 'increaseGasForReFundBeneficiaries'
 };

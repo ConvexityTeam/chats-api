@@ -1,7 +1,7 @@
 require('dotenv').config();
 const db = require('../models');
 const {util, Response, Logger} = require('../libs');
-const {HttpStatusCode} = require('../utils');
+const {HttpStatusCode, GenearteVendorId} = require('../utils');
 const Validator = require('validatorjs');
 const uploadFile = require('./AmazonController');
 const {
@@ -24,6 +24,30 @@ const SmsService = require('../services/SmsService');
 const {AclRoles} = require('../utils');
 
 class AdminController {
+  static async testEmail(req, res) {
+    try {
+      const vendor_id = GenearteVendorId();
+      MailerService.verify(
+        'jibrilmohammed39@gmail.com',
+        'Jibril mohammed',
+        vendor_id,
+        'password'
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Email verified',
+        vendor_id
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
   static async updateStatus(req, res) {
     const data = req.body;
 
@@ -58,7 +82,11 @@ class AdminController {
         );
         return Response.send(res);
       }
-      const updatesUser = await userExist.update({status: data.status});
+      // userExist.dataValues.is_verified_all = true;
+      const updatesUser = await userExist.update({
+        status: data.status,
+        is_verified_all: true
+      });
 
       const to = userExist.email;
       // const OrgName = userExist.;
@@ -175,18 +203,37 @@ class AdminController {
       const allNGOs = await OrganisationService.getAllOrganisations();
 
       for (let ngo of allNGOs) {
-        const sum = ngo.Transactions.reduce((accumulator, object) => {
+        const [transactions, campaigns] = await Promise.all([
+          TransactionService.findTransactions({
+            OrganisationId: ngo.id,
+            transaction_type: 'transfer',
+            status: 'success',
+            VendorId: null,
+            BeneficiaryId: null
+          }),
+          CampaignService.getCampaigns(ngo.id, {
+            is_funded: true
+          })
+        ]);
+
+        const sum = transactions.reduce((accumulator, object) => {
           return accumulator + object.amount;
         }, 0);
         let count = 0;
         const user = await UserService.findUser(ngo.Members[0].UserId);
+        ngo.dataValues.name =
+          ngo.name || user.first_name + ' ' + user.last_name;
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
-        for (let campaign of ngo.Campaigns) {
-          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-            campaign.id
-          );
-          count = count + beneficiaries.length;
+        ngo.dataValues.liveness = user.liveness;
+
+        for (let campaign of campaigns.data) {
+          let beneficiaries =
+            await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id,
+              req.query
+            );
+          count = count + beneficiaries.data.length;
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
@@ -203,6 +250,35 @@ class AdminController {
       return Response.send(res);
     } catch (error) {
       console.log(error);
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async fetchLiveness(req, res) {
+    try {
+      const liveness = await UserService.fetchLiveness();
+      Response.setSuccess(200, 'Liveness retrieved', liveness);
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error.'
+      );
+      return Response.send(res);
+    }
+  }
+  static async findLiveness(req, res) {
+    try {
+      const liveness = await UserService.findLivenessByUserId(
+        req.params.user_id
+      );
+      Response.setSuccess(200, 'Liveness retrieved', liveness);
+      return Response.send(res);
+    } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error.'
@@ -223,10 +299,12 @@ class AdminController {
         ngo.dataValues.status = user.status;
         ngo.dataValues.UserId = user.id;
         for (let campaign of ngo.Campaigns) {
-          let beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-            campaign.id
-          );
-          count = count + beneficiaries.length;
+          let beneficiaries =
+            await BeneficiaryService.findCampaignBeneficiaries(
+              campaign.id,
+              req.query
+            );
+          count = count + beneficiaries.data.length;
         }
         ngo.dataValues.beneficiary_count = count;
         ngo.dataValues.disbursedSum = sum;
@@ -258,9 +336,8 @@ class AdminController {
       let total = await TransactionService.getTotalTransactionAmountAdmin(
         organisation_id
       );
-      const beneficiaries = await BeneficiaryService.findOrgnaisationBeneficiaries(
-        organisation_id
-      );
+      const beneficiaries =
+        await BeneficiaryService.findOrgnaisationBeneficiaries(organisation_id);
       const beneficiariesCount = Object.keys(beneficiaries).length;
 
       let spend_for_campaign = total.map(a => a.dataValues.amount);
@@ -372,9 +449,10 @@ class AdminController {
     const {beneficiary_id} = req.params;
 
     try {
-      let total = await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
-        beneficiary_id
-      );
+      let total =
+        await TransactionService.getBeneficiaryTotalTransactionAmountAdmin(
+          beneficiary_id
+        );
       const campaigns = await CampaignService.beneficiaryCampaingsAdmin(
         beneficiary_id
       );
@@ -452,21 +530,6 @@ class AdminController {
         delete donor.dataValues.associatedCampaigns;
       }
 
-      // for (let users of allDonors) {
-      //   for (let organisation of users.Organisations) {
-      //     const campaign = await OrganisationService.getAssociatedCampaigns(
-      //       organisation.id
-      //     );
-      //     const sum = organisation.Transactions.reduce(
-      //       (accumulator, object) => {
-      //         return accumulator + object.amount;
-      //       },
-      //       0
-      //     );
-      //     organisation.dataValues.AssociatedCampaign = campaign;
-      //     organisation.dataValues.total_donation = sum;
-      //   }
-      // }
       if (allDonors.length > 0) {
         Response.setSuccess(200, 'Donors retrieved', allDonors);
       } else {
@@ -597,7 +660,7 @@ setInterval(async () => {
   });
   if (process.env.NODE_ENV === 'production') {
     const balance = await BlockchainService.getNativeBalance(
-      '0x9bd10E18842Eabe5Bd2ef3B12c831647FC84BF63'
+      process.env.BLOCKCHAIN_ADMIN
     );
     if (parseInt(balance) < 2) {
       await MailerService.sendAdminBlockchainCreditMail(user.email, balance);

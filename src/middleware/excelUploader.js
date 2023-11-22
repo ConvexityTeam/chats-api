@@ -1,5 +1,8 @@
+const path = require('path');
 const multer = require('multer');
-const __basedir = __dirname + '/..';
+const __basedir = path.join(__dirname, '..')
+
+
 
 const excelFilter = (req, file, cb) => {
   if (
@@ -14,12 +17,12 @@ const excelFilter = (req, file, cb) => {
   }
 };
 
+
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, __basedir + '/beneficiaries/upload/');
   },
-  filename: (req, file, cb) => {
-    // console.log(file.originalname);
+  filename: (req, file, cb) => { 
     cb(null, `${Date.now()}-chats-beneficiaries-${file.originalname}`);
   }
 });

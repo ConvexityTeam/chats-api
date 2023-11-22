@@ -28,6 +28,8 @@ router.post(
   BeneficiariesController.adminRegisterBeneficiary
 );
 
+// router.get('/email', AdminController.testEmail);
+
 router.post('/register-vendor', AdminVendor, UsersController.createVendor);
 router.get('/campaign-info/:campaign_id', CampaignController.campaignInfo);
 // router.post("/ngo-register", AuthCtrl.createAdminUser);
@@ -56,8 +58,14 @@ router.post(
   OrganisationController.approveOrReject
 );
 
+// router.get('/liveness', AdminController.fetchLiveness);
+router.get(
+  '/ngos/liveness/:user_id',
+  SuperAdminAuth,
+  AdminController.findLiveness
+);
 router.post('/auth/login', AuthController.signInAdmin);
-router.get('/ngos', SuperAdminAuth, AdminController.getAllNGO);
+router.get('/ngos', AdminController.getAllNGO);
 // router.get('/ngo/:organisation_id', SuperAdminAuth, AdminController.getAnNGO);
 router.get(
   '/ngos/:organisation_id/',
@@ -80,6 +88,7 @@ router.get(
   SuperAdminAuth,
   AdminController.getBeneficiaryAmountAndCampaignsTotal
 );
+router.post('/product-category', VendorController.addDefaultCategory);
 router.get('/campaigns', SuperAdminAuth, AdminController.getAllCampaigns);
 router.get('/donors', SuperAdminAuth, AdminController.getAllDonors);
 router.get(

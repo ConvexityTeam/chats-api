@@ -1,4 +1,4 @@
-const {User, BankAccount, OrganisationMembers} = require('../models');
+const {User, BankAccount, OrganisationMembers, Liveness} = require('../models');
 const axios = require('axios');
 const Axios = axios.create();
 const {AclRoles} = require('../utils');
@@ -8,6 +8,16 @@ const {userConst} = require('../constants');
 class UserService {
   static async createUser(data) {
     return await User.create(data);
+  }
+  static async createLiveness(data) {
+    return await Liveness.create(data);
+  }
+  static async findLiveness(id) {
+    return await Liveness.findOne({
+      where: {
+        id: id
+      }
+    });
   }
 
   static async getAllUsers() {
@@ -51,7 +61,8 @@ class UserService {
       const theUser = await User.findOne({
         where: {
           id: id
-        }
+        },
+        attributes: userConst.publicAttr
       });
 
       return theUser;
@@ -90,6 +101,7 @@ class UserService {
         id,
         ...extraClause
       },
+      include: ['liveness'],
       include: [
         'Store',
         {
@@ -101,12 +113,21 @@ class UserService {
     });
   }
 
+  static async fetchLiveness() {
+    return await Liveness.findAll();
+  }
+  static findLivenessByUserId(authorized_by) {
+    return Liveness.findOne({
+      where: {authorized_by}
+    });
+  }
   static findByEmail(email, extraClause = null) {
     return User.findOne({
       where: {
         email,
         ...extraClause
-      }
+      },
+      include: ['liveness']
     });
   }
   static findByUsername(username, extraClause = null) {
@@ -129,7 +150,9 @@ class UserService {
 
   static findSingleUser(where) {
     return User.findOne({
-      where
+      where,
+      attributes: userConst.publicAttr,
+      include: ['liveness']
     });
   }
 

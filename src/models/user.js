@@ -97,6 +97,10 @@ module.exports = (sequelize, DataTypes) => {
         as: 'members',
         foreignKey: 'representative_id'
       });
+      User.hasOne(models.Liveness, {
+        as: 'liveness',
+        foreignKey: 'authorized_by'
+      });
       User.hasMany(models.VerificationToken, {
         as: 'VerificationTokens'
       });
@@ -112,6 +116,11 @@ module.exports = (sequelize, DataTypes) => {
         through: 'VendorProduct',
         as: 'ProductVendors'
       });
+      User.hasOne(models.VendorProposal, {
+        foreignKey: 'vendor_id',
+        as: 'proposalOwner'
+      });
+
       //Product.belongsToMany(models.User, { foreignKey: 'productId', as: 'ProductVendors', through: 'VendorProduct'  })
     }
   }

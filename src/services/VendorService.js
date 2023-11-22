@@ -10,7 +10,7 @@ const {
   BankAccount,
   Order,
   Market,
-  Campaign,
+  VendorProposal,
   Wallet,
   Product,
   OrderProduct,
@@ -28,6 +28,9 @@ const {
 const Pagination = require('../utils/pagination');
 
 class VendorService {
+  static submitProposal(proposal) {
+    return VendorProposal.create(proposal);
+  }
   static searchVendorStore(store_name, extraClause = null) {
     const where = {
       ...extraClause,
@@ -168,7 +171,12 @@ class VendorService {
 
   static async vendorStoreProducts(vendorId, where = {}) {
     return Product.findAll({
-      where,
+      where: {
+        ...where,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      },
       include: [
         {
           model: User,
@@ -182,6 +190,16 @@ class VendorService {
     });
   }
 
+  static async vendorStoreMarketProducts(CampaignId) {
+    return Product.findAll({
+      where: {
+        CampaignId,
+        vendor_proposal_id: {
+          [Op.eq]: null
+        }
+      }
+    });
+  }
   static async createOrder(order, Cart) {
     return Order.create(
       {
@@ -246,6 +264,13 @@ class VendorService {
     return null;
   }
 
+  static async stores(UserId) {
+    return Market.findAll({UserId});
+  }
+
+  static async vendorStore(id, UserId) {
+    return Market.findOne({id, UserId});
+  }
   static async findVendorStore(UserId) {
     return Market.findOne({
       include: [
@@ -515,10 +540,28 @@ class VendorService {
     });
   }
 
-  static async organisationVendorsTransactions(OrganisationId, filter = null) {
-    return Transaction.findAll({
+  static async organisationVendorsTransactions(
+    OrganisationId,
+    extraClause = null
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {...extraClause};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    const transaction = await Transaction.findAndCountAll({
+      distinct: true,
+      ...options,
       where: {
-        ...filter,
+        ...extraClause,
+        OrganisationId,
         transaction_origin: 'store'
       },
       attributes: ['reference', 'amount', 'createdAt', 'updatedAt'],
@@ -533,9 +576,6 @@ class VendorService {
               model: Organisation,
               as: 'Organisations',
               attributes: [],
-              where: {
-                id: OrganisationId
-              },
               through: {
                 attributes: []
               }
@@ -549,6 +589,8 @@ class VendorService {
         }
       ]
     });
+    const response = await Pagination.getPagingData(transaction, page, limit);
+    return response;
   }
 
   static async vendorsTransactionsAdmin(VendorId) {

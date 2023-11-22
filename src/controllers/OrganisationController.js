@@ -179,10 +179,10 @@ class OrganisationController {
         ..._query,
         status: 'active'
       };
-      const campaigns = await CampaignService.getCampaigns({
-        ...query,
-        OrganisationId
-      });
+      const campaigns = await CampaignService.getCampaigns(
+        OrganisationId,
+        ...query
+      );
       let campaignsArray = [];
       for (let campaign of campaigns) {
         let beneficiaries_count = await campaign.countBeneficiaries();
@@ -295,14 +295,15 @@ class OrganisationController {
       const organisation = await OrganisationService.checkExistEmail(
         req.user.email
       );
+      Logger.info(`Organisation...: ${JSON.stringify(organisation)}`);
       const query = SanitizeObject(req.query);
       const [campaigns, organisationW, transaction] = await Promise.all([
         CampaignService.getPrivateCampaigns(query, organisation.id),
         OrganisationService.getOrganisationWallet(organisation.id),
         TransactionService.findOrgnaisationTransactions(organisation.id)
       ]);
-
-      if (campaigns?.associatedCampaigns) {
+      Logger.info(`Transaction...: ${JSON.stringify(transaction)}`);
+      if (campaigns.associatedCampaigns) {
         for (let campaign of campaigns.associatedCampaigns) {
           if (new Date(campaign.end_date) < new Date())
             campaign.update({status: 'completed'});
@@ -320,25 +321,18 @@ class OrganisationController {
 
           campaign.dataValues.iDonate = false;
           campaign.dataValues.amount_donated = 0;
-          const campaignW = await CampaignService.getCampaignWallet(
-            campaign.id,
-            organisation.id
-          );
-          if (
-            campaignW !== null &&
-            campaignW.Wallet &&
-            organisationW !== null &&
-            organisationW.Wallet
-          ) {
-            for (let tran of transaction) {
-              if (
-                tran.ReceiverWalletId === campaignW.Wallet.uuid &&
-                tran.SenderWalletId === organisationW.Wallet.uuid
-              ) {
-                campaign.dataValues.iDonate = true;
-                campaign.dataValues.amount_donated = tran.amount;
-                campaign.dataValues.donation_date = tran.createdAt;
-              }
+
+          for (let tran of transaction.data) {
+            Logger.info(`Campaign id...: ${campaign.id}`);
+            if (
+              tran.OrganisationId &&
+              tran.OrganisationId === organisation.id &&
+              tran.CampaignId &&
+              tran.CampaignId === campaign.id
+            ) {
+              campaign.dataValues.iDonate = true;
+              campaign.dataValues.amount_donated = tran.amount;
+              campaign.dataValues.donation_date = tran.createdAt;
             }
           }
         }
@@ -374,10 +368,10 @@ class OrganisationController {
       const assignmentTask = [];
       const OrganisationId = req.params.organisation_id;
       const query = SanitizeObject(req.query);
-      const campaigns = await CampaignService.getCampaigns({
-        ...query,
-        OrganisationId
-      });
+      const campaigns = await CampaignService.getCampaigns(
+        OrganisationId,
+        query
+      );
 
       for (let data of campaigns?.data) {
         if (new Date(data.end_date) < new Date())
@@ -420,7 +414,7 @@ class OrganisationController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.' + error
+        'Request failed. Please try again' + error
       );
       return Response.send(res);
     }
@@ -478,7 +472,8 @@ class OrganisationController {
     try {
       const transactions =
         await BeneficiaryService.findOrganisationVendorTransactions(
-          req.organisation.id
+          req.organisation.id,
+          req.query
         );
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
@@ -697,7 +692,10 @@ class OrganisationController {
   static async createCampaign(req, res) {
     try {
       const rules = {
-        formId: 'numeric'
+        'location.country': 'required|string',
+        'location.state': 'required|array',
+        formId: 'numeric',
+        category_id: 'numeric'
       };
 
       const validation = new Validator(req.body, rules);
@@ -713,11 +711,19 @@ class OrganisationController {
       const OrgWallet = await OrganisationService.getOrganisationWallet(
         OrganisationId
       );
+      const is_verified_all = req.user.is_verified_all;
       const is_verified = req.user.is_verified;
+      if (!is_verified_all) {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Your account has not been activated yet'
+        );
+        return Response.send(res);
+      }
       if (!is_verified) {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
-          'Update your profile first'
+          'Your profile is not verified yet, please update your profile'
         );
         return Response.send(res);
       }
@@ -1072,17 +1078,28 @@ class OrganisationController {
           return Response.send(res);
         }
       }
-      if (req.campaign.is_funded) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          `Campaign Already Funded`
-        );
-        return Response.send(res);
-      }
+      // if (req.campaign.is_funded) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     `Campaign Already Funded`
+      //   );
+      //   return Response.send(res);
+      // }
       const dateB = moment(req.campaign.updatedAt);
       const dateC = moment(end_date);
 
       const extension_period = dateC.diff(dateB, 'days');
+
+      const campaign = await CampaignService.getCampaignWallet(
+        campaign_id,
+        req.organisationId
+      );
+      const campaignWallet = campaign.Wallet;
+      const organisation = await OrganisationService.getOrganisationWallet(
+        req.organisationId
+      );
+
+      const OrgWallet = organisation.Wallet;
 
       req.campaign.budget = additional_budget
         ? Number(additional_budget) + req.campaign.budget
@@ -1097,6 +1114,12 @@ class OrganisationController {
         campaign_id
       });
       newCampaign.dataValues.history = history;
+      await QueueService.CampaignExtensionFund(
+        campaign,
+        campaignWallet,
+        OrgWallet,
+        Number(additional_budget)
+      );
       Response.setSuccess(
         HttpStatusCode.STATUS_CREATED,
         'campaign extended',
@@ -1327,10 +1350,11 @@ class OrganisationController {
     try {
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
-      beneficiaries.forEach(beneficiary => {
+      beneficiaries.data.forEach(beneficiary => {
         beneficiary.User.Answers.forEach(answer => {
           if (answer.campaignId == CampaignId) {
             beneficiary.dataValues.User.dataValues.Answers = [answer];
@@ -1382,9 +1406,10 @@ class OrganisationController {
         Jos = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      for (let beneficiary of beneficiaries) {
+      for (let beneficiary of beneficiaries.data) {
         if (beneficiary.User.location.includes('state')) {
           let parsedJson = JSON.parse(beneficiary.User.location);
           if (parsedJson.state === 'Abuja') Abuja++;
@@ -1416,10 +1441,11 @@ class OrganisationController {
       let divorce = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
-      if (beneficiaries.length > 0) {
-        for (let i = 0; i < beneficiaries.length; i++) {
+      if (beneficiaries.data.length > 0) {
+        for (let i = 0; i < beneficiaries.data.length; i++) {
           if (beneficiaries[i].User.marital_status == 'single') {
             single++;
           } else if (beneficiaries[i].User.marital_status == 'married') {
@@ -1453,10 +1479,11 @@ class OrganisationController {
       let sixty6Up = 0;
       const CampaignId = req.params.campaign_id;
       const beneficiaries = await BeneficiaryService.findCampaignBeneficiaries(
-        CampaignId
+        CampaignId,
+        req.query
       );
 
-      for (let i = 0; i < beneficiaries.length; i++) {
+      for (let i = 0; i < beneficiaries.data.length; i++) {
         if (
           parseInt(
             moment().format('YYYY') -
@@ -1770,10 +1797,11 @@ class OrganisationController {
     try {
       Logger.info('Fetching campaign vendors...');
       const vendors = await CampaignService.campaignVendors(
-        req.params.campaign_id
+        req.params.campaign_id,
+        req.query
       );
       const setObj = new Set();
-      const result = vendors.reduce((acc, item) => {
+      const result = vendors.data.reduce((acc, item) => {
         if (!setObj.has(item.VendorId)) {
           setObj.add(item.VendorId, item);
           acc.push(item);
@@ -1784,7 +1812,7 @@ class OrganisationController {
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Campaign Vendors.',
-        result
+        vendors
       );
       return Response.send(res);
     } catch (error) {
@@ -2346,6 +2374,8 @@ class OrganisationController {
   static async createVendor(req, res) {
     try {
       const {user, organisation} = req;
+      console.log('user', user);
+      console.log('organisation', organisation);
       const data = SanitizeObject(req.body, [
         'first_name',
         'last_name',
@@ -2360,10 +2390,12 @@ class OrganisationController {
         data,
         user
       );
+      await QueueService.createWallet(vendor.id, 'user');
+
       Response.setSuccess(201, 'Vendor Account Created.', vendor);
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(500, `Internal server error. Contact support.` + error);
       return Response.send(res);
     }
   }
@@ -2455,18 +2487,22 @@ class OrganisationController {
         organisation.id
       );
       const Transactions = await VendorService.organisationVendorsTransactions(
-        organisation.id
+        organisation.id,
+        req.query
       );
       Response.setSuccess(200, 'Organisation vendors Summary', {
         organisation,
         vendors_count,
         previous_stat,
         today_stat,
-        Transactions
+        Transactions: Transactions.data
       });
       return Response.send(res);
     } catch (error) {
-      Response.setError(500, `Internal server error. Contact support.`);
+      Response.setError(
+        500,
+        `Internal server error. Contact support. ${error}`
+      );
       return Response.send(res);
     }
   }
@@ -2514,7 +2550,8 @@ class OrganisationController {
       const isOrgMember = await OrganisationService.isMemberUser(req.user.id);
       const isOrganisationCamp = await CampaignService.getAllCampaigns({
         OrganisationId: isOrgMember.OrganisationId,
-        is_funded: true
+        is_funded: true,
+        ...req.query
       });
       const isOrganisationCampWallet =
         await WalletService.findOrganisationCampaignWallets(

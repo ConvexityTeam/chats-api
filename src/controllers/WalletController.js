@@ -8,7 +8,8 @@ const {
   OrderService,
   BlockchainService,
   CampaignService,
-  CurrencyServices
+  CurrencyServices,
+  OrganisationService
 } = require('../services');
 const {Logger, Response} = require('../libs');
 const {HttpStatusCode, SanitizeObject} = require('../utils');
@@ -53,10 +54,17 @@ class WalletController {
             req.query
           );
         for (let tran of transactions.data) {
+          if (tran.narration === 'crypto funding') {
+            tran.dataValues.funded_with = 'Crypto';
+          } else tran.dataValues.funded_with = 'Fiat';
+
           if (tran.CampaignId) {
-            const hash = await BlockchainService.getTransactionDetails(
-              tran.transaction_hash
-            );
+            let hash = null;
+            if (tran.transaction_hash) {
+              hash = await BlockchainService.getTransactionDetails(
+                tran.transaction_hash
+              );
+            }
             const campaign = await CampaignService.getCampaignById(
               tran.CampaignId
             );
@@ -65,7 +73,6 @@ class WalletController {
 
             tran.dataValues.transaction_hash = hash;
             tran.dataValues.campaign_name = campaign.title;
-            tran.dataValues.funded_with = null;
           }
         }
 
@@ -109,7 +116,7 @@ class WalletController {
       console.log(error);
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Server Error: Unexpected error occured.'
+        'Server Error: Unexpected error occured.' + error
       );
       return Response.send(res);
     }
@@ -125,7 +132,7 @@ class WalletController {
       const OrganisationId = req.organisation.id;
       let usersCurrency = req.user.currency;
       let exchangeRate = 0.0;
-      let currencyData = {};
+      // let currencyData = {};
       const uuid = req.params.wallet_id;
       if (uuid) {
         return WalletController._handleSingleWallet(res, {
@@ -178,10 +185,10 @@ class WalletController {
 
       console.log('ExchangeRate: ' + exchangeRate);
       //set the users currency
-      currencyData = {
-        users_currency: usersCurrency,
-        currency_symbol: '$'
-      };
+      // currencyData = {
+      //   users_currency: usersCurrency,
+      //   currency_symbol: '$'
+      // };
 
       const wallet = await WalletService.findMainOrganisationWallet(
         OrganisationId
@@ -191,24 +198,24 @@ class WalletController {
       }
       if (wallet) {
         const MainWallet = wallet.toObject();
-        total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
-        spend_for_campaign =
-          (spend_for_campaign * exchangeRate).toFixed(2) || 0;
-        MainWallet.balance = (balance * exchangeRate).toFixed(2);
-        MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
-        MainWallet.address = user.address;
-        /*  
+        // total_deposit = (total_deposit * exchangeRate).toFixed(2) || 0;
+        // spend_for_campaign =
+        //   (spend_for_campaign * exchangeRate).toFixed(2) || 0;
+        // MainWallet.balance = (balance * exchangeRate).toFixed(2);
+        // MainWallet.fiat_balance = (balance * exchangeRate).toFixed(2);
+        // MainWallet.address = user.address;
+
         total_deposit = total_deposit || 0;
         spend_for_campaign = spend_for_campaign || 0;
         MainWallet.balance = balance;
         MainWallet.fiat_balance = balance;
         MainWallet.address = user.address;
-  */
+
         Response.setSuccess(HttpStatusCode.STATUS_OK, 'Main wallet deatils', {
           MainWallet,
           total_deposit,
-          spend_for_campaign,
-          currencyData
+          spend_for_campaign
+          // currencyData
         });
         return Response.send(res);
       } else {
@@ -280,8 +287,11 @@ class WalletController {
       const {organisation_id} = req.params;
       if (!data.currency) data.currency = 'NGN';
       const CampaignId = req.body.CampaignId ? req.body.CampaignId : null;
-      const organisation = req.organisation;
-      organisation.dataValues.email = req.user.email;
+      const organisation = await OrganisationService.checkExistEmail(
+        req.user.email
+      );
+      // organisation.dataValues.email = req.user.email;
+
       const wallet = await WalletService.findMainOrganisationWallet(
         organisation_id
       );

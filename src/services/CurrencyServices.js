@@ -1,26 +1,64 @@
 require('dotenv').config();
 const {default: axios} = require('axios');
+const {exchangeRate} = require('../config');
+const currencySymbolMap = require('currency-symbol-map');
+const currencyCodes = require('currency-codes');
 
-class CurrencyServices {
+class CurrencyServices { 
   httpService;
   appId;
   exchangeData;
   constructor() {
     // this.httpService = 'https://openexchangerates.org/api';
     // this.appId = process.env.OPEN_EXCHANGE_APP;
-    this.exchangeData = this.getExchangeRate();
+    // this.exchangeData = this.getExchangeRate();
   }
 
-  // static async getExchangeRate() {
-  //   return await this.getExchangeRate();
-  // }
-  static async getExchangeRate() {
-    // const appId = process.env.OPEN_EXCHANGE_APP;
-    // console.log(appId);
-    const url = `https://openexchangerates.org/api/latest.json?app_id=da41a176c0874c4498594d728d2aa4ca`;
-    const exchange = await axios.get(url);
-    this.exchangeData = exchange.data.rates;
-    return this.exchangeData;
+  async getCurrencySymbol(currencyCode) {
+    const symbol = currencySymbolMap(currencyCode);
+    return symbol ? symbol : currencyCode;
+  }
+
+  async getExchangeRate() {
+    return await this.getExchangeRate();
+  }
+  async getExchangeRate() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}`;
+        const exchange = await axios.get(url);
+        this.exchangeData = exchange.data.rates;
+        resolve(this.exchangeData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  async getSpecificCurrencyExchangeRate(currencyCode) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const baseCurrency = 'USD';
+        const usdUrl = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=NGN`;
+        const url = `${exchangeRate.baseUrl}/latest.json?app_id=${exchangeRate.appId}&base=${baseCurrency}&symbols=${currencyCode}`;
+        const exchangeRateDataUSD = await axios.get(usdUrl);
+        const rateDataUSD = exchangeRateDataUSD.data.rates;
+        const usdBase = rateDataUSD['NGN'];
+
+        const exchangeRateData = await axios.get(url);
+        const rateData = exchangeRateData.data.rates;
+        const rate = rateData[currencyCode];
+        const currencySymbol = await this.getCurrencySymbol(currencyCode);
+        resolve({
+          usdBase,
+          currencyCode,
+          currencySymbol,
+          rate
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   static async convertCurrency(fromCurrency, toCurrency, amount) {

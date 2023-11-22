@@ -1,7 +1,7 @@
 class Pagination {
   static async getPagination(page, size) {
-    const limit = size ? +size : 1;
-    const offset = page ? page * limit : 0;
+    const limit = size;
+    const offset = size * (page - 1);
 
     return {limit, offset};
   }
@@ -9,8 +9,7 @@ class Pagination {
     const {count: totalItems, rows: data} = details;
     const currentPage = page ? +page : 0;
     const totalPages = Math.ceil(totalItems / limit);
-
-    return {totalItems, data, totalPages, currentPage};
+    return {totalItems, data, totalPages: totalPages || 0, currentPage};
   }
 }
 module.exports = Pagination;

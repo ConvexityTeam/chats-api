@@ -208,5 +208,11 @@ router.post(
   BeneficiaryValidator.IsCampaignBeneficiary,
   OrderController.approveBeneficiaryToSpend
 );
+router.get(
+  '/:campaign_id/approve-status/:beneficiary_id',
+  VendorBeneficiaryAuth,
+  BeneficiaryValidator.IsCampaignBeneficiary,
+  OrderController.approveStatus
+);
 
 module.exports = router;

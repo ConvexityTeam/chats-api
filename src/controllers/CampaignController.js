@@ -10,7 +10,9 @@ const {
   TaskService,
   BlockchainService,
   AwsService,
-  TransactionService
+  TransactionService,
+  CurrencyServices,
+  ProductService
 } = require('../services');
 const Validator = require('validatorjs');
 const db = require('../models');
@@ -24,8 +26,10 @@ const {
   generateQrcodeURL,
   GenearteVendorId,
   GenearteSMSToken,
+  GenerateSecrete,
   AclRoles,
-  generateTransactionRef
+  generateTransactionRef,
+  generateProductRef
 } = require('../utils');
 
 const amqp_1 = require('../libs/RabbitMQ/Connection');
@@ -121,9 +125,9 @@ class CampaignController {
       });
 
       await Promise.all(
-        allCampaign.map(async campaign => {
-          campaign.dataValues.ck8 =
-            (await AwsService.getMnemonic(campaign.id)) || null;
+        allCampaign?.data.map(async campaign => {
+          //(await AwsService.getMnemonic(campaign.id)) || null;
+          campaign.dataValues.ck8 = GenerateSecrete();
         })
       );
 
@@ -136,7 +140,7 @@ class CampaignController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Internal error occured. Please try again.'
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -407,13 +411,13 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (!(campaign.start_date >= Date.now())) {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign must start after today'
-        );
-        return Response.send(res);
-      }
+      // if (!(campaign.start_date >= Date.now())) {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign must start after today'
+      //   );
+      //   return Response.send(res);
+      // }
 
       for (let user of realBeneficiaries) {
         user.dataValues.formAnswer = null;
@@ -468,8 +472,12 @@ class CampaignController {
       const organisation = await OrganisationService.getOrganisationWallet(
         organisation_id
       );
+
+      Logger.info(`Campaign: ${JSON.stringify(campaign)}`);
       const campaignWallet = campaign.Wallet;
+      Logger.info(`Campaign Wallet: ${JSON.stringify(campaignWallet)}`);
       const OrgWallet = organisation.Wallet;
+      Logger.info(`Organisation Wallet: ${JSON.stringify(OrgWallet)}`);
       if (campaign.status == 'completed') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -484,16 +492,18 @@ class CampaignController {
         );
         return Response.send(res);
       }
-      if (campaign.status == 'ongoing') {
-        Response.setError(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign already ongoing'
-        );
-        return Response.send(res);
-      }
-      await QueueService.fundCampaignWithCrypto(
+      // if (campaign.status == 'ongoing') {
+      //   Response.setError(
+      //     HttpStatusCode.STATUS_BAD_REQUEST,
+      //     'Campaign already ongoing'
+      //   );
+      //   return Response.send(res);
+      // }
+      const rate = await CurrencyServices.convertCurrency('USD', 'NGN', amount);
+
+      const transaction = await QueueService.fundCampaignWithCrypto(
         campaign,
-        amount,
+        rate,
         campaignWallet,
         OrgWallet
       );
@@ -502,6 +512,7 @@ class CampaignController {
         `Campaign fund with ${amount} is Processing.`,
         transaction
       );
+      return Response.send(res);
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
@@ -529,6 +540,20 @@ class CampaignController {
 
       const OrgWallet = organisation.Wallet;
 
+      if (campaign.fund_status == 'in_progress') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign fund is already in progress.'
+        );
+        return Response.send(res);
+      }
+      if (campaign.fund_status == 'processing') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign fund is already processing.'
+        );
+        return Response.send(res);
+      }
       if (campaign.status == 'completed') {
         Response.setError(
           HttpStatusCode.STATUS_BAD_REQUEST,
@@ -581,6 +606,7 @@ class CampaignController {
           OrgWallet
         );
       }
+      campaign.update({fund_status: 'in_progress'});
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         `Organisation fund to campaign is Processing.`
@@ -599,7 +625,164 @@ class CampaignController {
       return Response.send(res);
     }
   }
+  static async fundStatus(req, res) {
+    try {
+      const {campaign_id} = req.params;
+      const campaign = await CampaignService.getCampaign(campaign_id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Campaign fund status fetched successfully.`,
+        campaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        error.message
+      );
+      return Response.send(res);
+    }
+  }
+  static async getProposalRequests(req, res) {
+    const {proposal_id} = req.params;
+    try {
+      const vendors = await CampaignService.fetchRequest(proposal_id);
 
+      // const campaign = await CampaignService.getCampaignById(proposal_id);
+      const org_proposal = await CampaignService.fetchProposalRequest(
+        proposal_id
+      );
+      const campaign = await CampaignService.getCampaignById(
+        org_proposal.campaign_id
+      );
+
+      const data = {vendors, campaign};
+      data.campaign = campaign;
+      data.total_request = vendors.length;
+      for (let request of data.vendors) {
+        const products = await ProductService.findProduct({
+          proposal_id: request.proposalOwner.proposal_id
+        });
+        request.dataValues.proposal_products = products;
+      }
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Proposal Requests fetched successfully.`,
+        data
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support!..' + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async fetchProposalRequests(req, res) {
+    try {
+      const {organisation_id} = req.params;
+      const proposals = await CampaignService.fetchProposalRequests(
+        organisation_id,
+        req.query
+      );
+
+      for (let proposal of proposals.data) {
+        const category = await ProductService.findCategoryById(
+          proposals.category_id
+        );
+        proposal.dataValues.category_type = category?.name || null;
+        const submittedProposal = await ProductService.vendorProposals(
+          proposal.id
+        );
+        proposal.dataValues.proposal_received = submittedProposal.length;
+        const products = await ProductService.findProduct({
+          proposal_id: proposal.id
+        });
+        for (let product of products) {
+          const category_type = await ProductService.findCategoryById(
+            product.category_id
+          );
+          product.dataValues.product_category_type = category_type;
+          proposal.dataValues.product = products;
+        }
+      }
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        `Proposal Requests fetched successfully.`,
+        proposals
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR + error,
+        'Internal Server Error. Contact Support!..'
+      );
+      return Response.send(res);
+    }
+  }
+  static async proposalRequest(req, res) {
+    const data = req.body;
+    const request = {};
+    const {organisation_id, campaign_id} = req.params;
+    try {
+      const rules = {
+        '.*.category_id': 'required|numeric',
+        '.*.tag': 'required|string',
+        '.*.type': 'required|string,in:product,service',
+        '.*.cost': 'required|numeric',
+        '.*.quantity': 'required|numeric'
+      };
+
+      const validation = new Validator(data, rules);
+
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+
+      const campaignProduct = await ProductService.findCampaignProducts(
+        campaign_id
+      );
+      const find = campaignProduct.filter(a => data.find(b => b.tag === a.tag));
+      if (find.length > 0) {
+        Response.setError(
+          HttpStatusCode.STATUS_UNPROCESSABLE_ENTITY,
+          `Product with tag: ${find[0].tag} already exists`
+        );
+        return Response.send(res);
+      }
+
+      request.category_id = data.category_id;
+      request.organisation_id = organisation_id;
+      request.campaign_id = campaign_id;
+      const createdProposal = await CampaignService.proposalRequest(request);
+      const products = await Promise.all(
+        data.map(async product => {
+          product.product_ref = generateProductRef();
+          product.CampaignId = campaign_id;
+          product.proposal_id = createdProposal.id;
+          const createdProduct = await ProductService.addSingleProduct(product);
+          return createdProduct;
+        })
+      );
+      createdProposal.dataValues.products = products;
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Proposal Request Created Successfully',
+        createdProposal
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR + error,
+        'Internal Server Error. Contact Support!..'
+      );
+      return Response.send(res);
+    }
+  }
   static async rejectSubmission(req, res) {
     const {taskAssignmentId} = req.params;
     try {
@@ -651,6 +834,13 @@ class CampaignController {
       const task_assignment = await db.TaskAssignment.findByPk(
         taskAssignmentId
       );
+      if (task_assignment.status === 'disbursed') {
+        Response.setError(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Task already disbursed'
+        );
+        return Response.send(res);
+      }
       const task = await db.Task.findOne({where: {id: task_assignment.TaskId}});
 
       const amount_disburse = task.amount / task.assignment_count;
@@ -677,6 +867,7 @@ class CampaignController {
         task_assignment,
         amount_disburse
       );
+
       Response.setSuccess(HttpStatusCode.STATUS_OK, `Transaction Processing`);
       return Response.send(res);
     } catch (error) {
@@ -738,21 +929,27 @@ class CampaignController {
       organisationId: OrganisationId,
       campaignId: campaign_id
     };
-    const {limit, offset} = await Pagination.getPagination(
-      req.query.page,
-      req.query.size
-    );
+
+    const {page, size} = req.query;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
     try {
       const tokencount = await db.VoucherToken.findAndCountAll({
         where,
-        limit,
-        offset
+        ...options
       });
+      const response = await Pagination.getPagingData(tokencount, page, limit);
       const user = await UserService.getAllUsers();
       const campaign = await CampaignService.getAllCampaigns({OrganisationId});
       const singleCampaign = await CampaignService.getCampaignById(campaign_id);
 
-      for (let data of tokencount.data) {
+      for (let data of response.data) {
         if (singleCampaign.type !== 'item') {
           const campaignAddress = await BlockchainService.setUserKeypair(
             `campaign_${campaign_id}`
@@ -773,15 +970,15 @@ class CampaignController {
         data.dataValues.Beneficiary = filteredKeywords[0];
       }
 
-      tokens.forEach(data => {
+      response.data.forEach(data => {
         var filteredKeywords = user.filter(
           user => user.id === data.beneficiaryId
         );
         data.dataValues.Beneficiary = filteredKeywords[0];
       });
 
-      tokens.forEach(data => {
-        var filteredKeywords = campaign.filter(
+      response.data.forEach(data => {
+        var filteredKeywords = campaign.data.filter(
           camp => camp.id === data.campaignId
         );
 
@@ -790,8 +987,8 @@ class CampaignController {
 
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
-        `Found ${tokens.length} ${token_type}.`,
-        {tokens, page_count: pages}
+        `Found ${response.data.length} ${token_type}.`,
+        response
       );
       return Response.send(res);
     } catch (error) {
@@ -932,7 +1129,7 @@ class CampaignController {
 
   static async deleteCampaign(req, res) {
     const {id} = req.params;
-    if (!Number(id)) {
+    if (!id) {
       Response.setError(400, 'Please provide a numeric value');
       return Response.send(res);
     }
@@ -1228,7 +1425,7 @@ class CampaignController {
     const {campaign_id, replicaCampaignId} = req.params;
     try {
       const {source, type} = SanitizeObject(req.body, ['source', 'type']);
-
+      const campaign = await CampaignService.getCampaign(campaign_id);
       const replicaCampaign = await CampaignService.getACampaignWithReplica(
         replicaCampaignId,
         type
@@ -1244,6 +1441,7 @@ class CampaignController {
       //   );
       //   return Response.send(res);
       // }
+      let count = 0;
       await Promise.all(
         replicaCampaign.Beneficiaries.map(async (beneficiary, index) => {
           setTimeout(async () => {
@@ -1252,7 +1450,12 @@ class CampaignController {
               beneficiary.id,
               source
             );
+            count++;
             onboard.push(res);
+            campaign.update({
+              total_imported: count,
+              total_beneficiaries: replicaCampaign.Beneficiaries.length
+            });
           }, index * 5000);
         })
       );
@@ -1265,6 +1468,25 @@ class CampaignController {
             : 'beneficiary'
         } to campaign is processing`,
         onboard
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        `Internal server error. Contact support.`
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async importStatus(req, res) {
+    try {
+      const campaign_id = req.params.campaign_id;
+      const campaign = await CampaignService.getCampaign(campaign_id);
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign Status',
+        campaign
       );
       return Response.send(res);
     } catch (error) {

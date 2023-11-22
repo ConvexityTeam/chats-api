@@ -38,31 +38,38 @@ CHATS(Convexity Humanitarian Aid Transfer Solution), enables the transparent tra
     -run `docker-compose up --build` to build and start all services
 
 
-
-# Convexity Humanitarian Aid Transfer Solution (CHATS) Starting Guide
-
-Create a New Branch:
-
+## Contribution Guide
+**Create a New Branch:**
 Create a new branch on your local machine.
 
-Make Changes:
-
+**Make Changes:**
 Implement your desired changes or additions to the codebase.
 Ensure that your code follows the project's coding conventions and style guidelines.
 
-Test Your Changes:
-
+**Test Your Changes:**
 Before submitting your contribution, make sure to test your changes thoroughly.
 
-Commit and Push:
-
+**Commit and Push:**
 Commit your changes with clear and descriptive commit messages.
 Push your commits to the branch you created on your forked repository.
 
-
-Create a Merge Request (MR):
-
+**Create a Merge Request (MR):**
 Go to the original repository and locate the "Merge Requests" section.
 Click on "New merge request" to create a new merge request from your branch to the original repository's main branch.
 Provide a descriptive title and detailed description of your changes in the merge request.
 
+## License
+Copyright (C) 2023  Convexity CVA Inc.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.

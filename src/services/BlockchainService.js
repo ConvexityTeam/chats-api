@@ -558,6 +558,7 @@ class BlockchainService {
     message,
     type
   ) {
+    Logger.info(`Approving to spend: ${ownerPassword} ${spenderAdd} ${amount}`);
     return new Promise(async (resolve, reject) => {
       try {
         Logger.info('approving to spend');
@@ -586,6 +587,9 @@ class BlockchainService {
           }
           if (type === 'multiple') {
             await QueueService.increaseAllowance(keys, message);
+          }
+          if (type === 'refund_beneficiary') {
+            await QueueService.increaseGasForRefund(keys, message);
           }
         }
 
@@ -634,13 +638,16 @@ class BlockchainService {
           const keys = {
             password: senderPass,
             receiverAdd,
-            amount
+            amount: amount.toString()
           };
           if (type === 'fundCampaign') {
             await QueueService.increaseTransferCampaignGas(keys, message);
           }
-          if (type === 'BFundB') {
-            await QueueService.increaseTransferBeneficiaryGas(keys, message);
+          if (type === 'PBFundB') {
+            await QueueService.increaseTransferPersonalBeneficiaryGas(
+              keys,
+              message
+            );
           }
           if (type === 'withHoldFunds') {
             await QueueService.increaseGasWithHoldFunds(keys, message);
@@ -669,9 +676,9 @@ class BlockchainService {
         resolve(data);
       } catch (error) {
         Logger.info(
-          `Error transferring funds from:  ${
-            error.response ? JSON.stringify(error.response.data) : error
-          } `
+          `Error transferring funds from:  ${JSON.stringify(
+            error.response.data
+          )}`
         );
 
         if (

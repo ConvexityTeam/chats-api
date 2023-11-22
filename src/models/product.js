@@ -24,17 +24,23 @@ module.exports = (sequelize, DataTypes) => {
         as: 'ProductBeneficiaries',
         through: 'ProductBeneficiary'
       });
-
+      // Product.belongsTo(models.VendorProposal, {
+      //   foreignKey: 'proposal_id',
+      //   as: 'proposal_product'
+      // });
       //Product.hasMany(models.OrderProduct, { foreignKey: 'ProductId', as: 'Product' });
     }
   }
   Product.init(
     {
       type: DataTypes.ENUM('product', 'service'),
-      product_category: DataTypes.STRING,
+      category_id: DataTypes.INTEGER,
+      proposal_id: DataTypes.INTEGER,
+      vendor_proposal_id: DataTypes.INTEGER,
       tag: DataTypes.STRING,
       cost: DataTypes.FLOAT,
       product_ref: DataTypes.STRING,
+      quantity: DataTypes.INTEGER,
       //MarketId: DataTypes.INTEGER,
       CampaignId: DataTypes.INTEGER
     },

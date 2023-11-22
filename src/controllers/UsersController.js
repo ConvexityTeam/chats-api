@@ -1,4 +1,6 @@
 const util = require('../libs/Utils');
+
+const fs = require('fs');
 const {Op} = require('sequelize');
 const {
   compareHash,
@@ -7,7 +9,8 @@ const {
   HttpStatusCode,
   AclRoles,
   generateRandom,
-  GenearteVendorId
+  GenearteVendorId,
+  GenerateUserId
 } = require('../utils');
 const db = require('../models');
 const formidable = require('formidable');
@@ -23,7 +26,8 @@ const {
   WalletService,
   SmsService,
   MailerService,
-  CampaignService
+  CampaignService,
+  CurrencyServices
 } = require('../services');
 const {Response, Logger} = require('../libs');
 
@@ -127,8 +131,8 @@ class UsersController {
       await MailerService.verify(
         email,
         first_name + ' ' + last_name,
-        rawPassword,
-        vendor_id
+        vendor_id,
+        rawPassword
       );
       await QueueService.createWallet(createdVendor.id, 'user');
 
@@ -199,6 +203,7 @@ class UsersController {
         }
         representative.RoleId = AclRoles.Beneficiary;
         representative.password = createHash('0000');
+        representative.pin = createHash('0000');
         const parent = await db.User.create(representative, {transaction: t});
         await db.Beneficiary.create(
           {
@@ -235,6 +240,99 @@ class UsersController {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
         'Internal Server Error. Contact Support' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async FieldUploadImage(req, res) {
+    try {
+      var form = new formidable.IncomingForm();
+      form.parse(req, async (err, fields, files) => {
+        if (err) {
+          Response.setError(
+            HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+            'Internal Server Error. Contact Support'
+          );
+          return Response.send(res);
+        }
+        if (!files.profile_pic) {
+          Response.setError(
+            HttpStatusCode.STATUS_BAD_REQUEST,
+            'Please provide a profile picture'
+          );
+          return Response.send(res);
+        }
+        const extension = files.profile_pic.name.substring(
+          files.profile_pic.name.lastIndexOf('.') + 1
+        );
+        const profile_pic = await uploadFile(
+          files.profile_pic,
+          'u-' + environ + '-' + GenerateUserId() + '-i.' + extension,
+          'convexity-profile-images'
+        );
+        Response.setSuccess(
+          HttpStatusCode.STATUS_CREATED,
+          'Profile picture uploaded',
+          profile_pic
+        );
+        return Response.send(res);
+      });
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal Server Error. Contact Support' + error
+      );
+      return Response.send(res);
+    }
+  }
+  static async verifyNin(req, res) {
+    const data = req.body;
+    try {
+      const rules = {
+        vnin: 'required|size:16',
+        country: 'string',
+        user_id: 'required|numeric'
+      };
+      const validation = new Validator(data, rules);
+      if (validation.fails()) {
+        Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+        return Response.send(res);
+      }
+      const user = await UserService.getAUser(data.user_id);
+      if (!user) {
+        Response.setError(404, 'User not found');
+        return Response.send(res);
+      }
+      if (data.vnin && process.env.ENVIRONMENT !== 'staging') {
+        const hash = createHash(data.vnin);
+
+        const nin = await UserService.nin_verification(
+          {number: data.vnin},
+          data.country || 'Nigeria'
+        );
+        if (!nin.status) {
+          Response.setError(
+            HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+            'Not a Valid NIN'
+          );
+          return Response.send(res);
+        }
+        data.is_verified = true;
+        data.is_nin_verified = true;
+        data.nin = hash;
+        await user.update(data);
+      }
+      data.is_verified = true;
+      data.is_nin_verified = true;
+      data.nin = hash;
+      await user.update(data);
+      Response.setSuccess(HttpStatusCode.STATUS_CREATED, 'NIN Verified');
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
       );
       return Response.send(res);
     }
@@ -297,10 +395,100 @@ class UsersController {
     }
   }
 
+  static async liveness(req, res) {
+    try {
+      const rules = {
+        first_name: 'required|alpha',
+        surname: 'alpha',
+        phone: ['regex:/^([0|+[0-9]{1,5})?([7-9][0-9]{9})$/'],
+        nin_photo_url: 'required|string',
+        email: 'email',
+        dob: 'date'
+      };
+      var form = new formidable.IncomingForm();
+      form.parse(req, async (err, fields, files) => {
+        const validation = new Validator(fields, rules);
+        if (validation.fails()) {
+          Response.setError(422, Object.values(validation.errors.errors)[0][0]);
+          return Response.send(res);
+        }
+
+        const user = await UserService.findSingleUser({id: req.user.id});
+        if (!user) {
+          Response.setError(404, 'User not found');
+          return Response.send(res);
+        }
+        if (!files.liveness_capture) {
+          Response.setError(422, 'Liveness Capture Required');
+          return Response.send(res);
+        }
+        const outputFilePath = 'image.png';
+        const base64Image = fields.nin_photo_url.replace(
+          /^data:image\/\w+;base64,/,
+          ''
+        );
+        const imageBuffer = Buffer.from(base64Image, 'base64');
+
+        fs.writeFileSync(outputFilePath, imageBuffer);
+        const fileContent = fs.readFileSync(outputFilePath);
+        const extension = files.liveness_capture.name.substring(
+          files.liveness_capture.name.lastIndexOf('.') + 1
+        );
+        const [nin_photo_url, liveness_capture] = await Promise.all([
+          uploadFile(
+            fileContent,
+            'u-' + environ + '-' + req.user.id + '-' + '-i.' + new Date(),
+            'convexity-profile-images'
+          ),
+          uploadFile(
+            files.liveness_capture,
+            'u-' +
+              environ +
+              '-' +
+              req.user.id +
+              '-i.' +
+              extension +
+              '-' +
+              new Date(),
+            'convexity-profile-images'
+          )
+        ]);
+
+        await fs.promises.unlink(outputFilePath);
+
+        const existLiveness = await UserService.findLiveness(req.user.id);
+        if (existLiveness) {
+          existLiveness.update(fields);
+          Response.setSuccess(
+            HttpStatusCode.STATUS_OK,
+            'Liveness Updated',
+            existLiveness
+          );
+          return Response.send(res);
+        }
+        fields.liveness_capture = liveness_capture;
+        fields.nin_photo_url = nin_photo_url;
+        fields.authorized_by = req.user.id;
+
+        const liveness = await UserService.createLiveness(fields);
+        Response.setSuccess(
+          HttpStatusCode.STATUS_CREATED,
+          'Liveness',
+          liveness
+        );
+        return Response.send(res);
+      });
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Server Error. Please retry.'
+      );
+      return Response.send(res);
+    }
+  }
   static async updateProfile(req, res) {
     try {
       const data = req.body;
-      const location = JSON.parse(req.user.location);
       const rules = {
         first_name: 'required|alpha',
         last_name: 'required|alpha',
@@ -333,6 +521,9 @@ class UsersController {
         }
       }
 
+      const currencyData =
+        await CurrencyServices.getSpecificCurrencyExchangeRate(data.currency);
+
       if (data.nin && process.env.ENVIRONMENT !== 'staging') {
         const hash = createHash(data.nin);
         const isExist = await UserService.findSingleUser({nin: data.nin});
@@ -343,21 +534,29 @@ class UsersController {
           );
           return Response.send(res);
         }
-        const nin = await UserService.nin_verification(
-          {number: data.nin},
-          location.country
-        );
-        if (!nin.status) {
-          Response.setError(
-            HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
-            'Not a Valid NIN'
+        if (!data.country) {
+          const nin = await UserService.nin_verification(
+            {number: data.nin},
+            JSON.parse(req.user.location).country
           );
-          return Response.send(res);
+          if (!nin.status) {
+            Response.setError(
+              HttpStatusCode.STATUS_RESOURCE_NOT_FOUND,
+              'Not a Valid NIN'
+            );
+            return Response.send(res);
+          }
         }
         data.is_verified = true;
         data.is_nin_verified = true;
         data.nin = hash;
         await req.user.update(data);
+
+        const userObject = req.user.toObject();
+
+        if (req.user.RoleId === AclRoles.NgoAdmin) {
+          userObject.currencyData = currencyData;
+        }
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
           'Profile Updated',
@@ -368,10 +567,15 @@ class UsersController {
       data.is_nin_verified = true;
       data.is_verified = true;
       await req.user.update(data);
+      const userObject = req.user.toObject();
+
+      if (req.user.RoleId === AclRoles.NgoAdmin) {
+        userObject.currencyData = currencyData;
+      }
       Response.setSuccess(
         HttpStatusCode.STATUS_OK,
         'Profile Updated',
-        req.user.toObject()
+        userObject
       );
       return Response.send(res);
     } catch (error) {

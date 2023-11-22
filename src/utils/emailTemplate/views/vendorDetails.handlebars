@@ -1,0 +1,13 @@
+<h1 class="title">Vendor Invitation </h1>
+<p class="text"> <b>Hello, {{name}}</b></p>
+<br/>
+{{#unless password}}
+<p><b> Kindly download the CHATS Vendor application and login with the following credential:</b> </p>
+<p><b> CHATS account ID is: {{vendor_id}}</b> </p>
+{{else}}
+<p><b> Kindly download the CHATS Vendor application and login with the following credentials:</b> </p>
+<p><b> CHATS account ID is: {{vendor_id}} and password is {{password}}</b> </p>
+{{/unless}}
+<br/>
+<p class="text"> <b> Best,</b></p>
+<p class="text"> <b>CHATS - Convexity</b></p>

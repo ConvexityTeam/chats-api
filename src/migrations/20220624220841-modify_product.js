@@ -8,16 +8,9 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.addColumn('Campaigns', 'formId', {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-      references: {
-        model: {
-          tableName: 'CampaignForms'
-        },
-        key: 'id'
-      }
-    });
+
+    
+    //queryInterface.removeColumn('Products', 'MarketId');
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -27,6 +20,8 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable('Campaigns');
+    // queryInterface.dr('Tasks', 'isCompleted');
+    //await queryInterface.dropTable('Products');
+    
   }
 };

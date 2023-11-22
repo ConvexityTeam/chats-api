@@ -4,28 +4,30 @@ const {Op} = require('sequelize');
 const Pagination = require('../utils/pagination');
 
 class TransactionService {
-  static async findOrgnaisationTransactions(
-    OrganisationId,
-    extraClause = null
-  ) {
-    const {page, size} = extraClause;
+  static async findOrgnaisationTransactions(OrganisationId, extraClause = {}) {
+    const page = extraClause.page;
+    const size = extraClause.size;
     const {limit, offset} = await Pagination.getPagination(page, size);
-    const where = extraClause;
-    delete where.page;
-    delete where.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const queryOptions = {};
+    if (page && size) {
+      queryOptions.offset = offset;
+      queryOptions.limit = limit;
+    }
     const transaction = await Transaction.findAndCountAll({
-      limit,
-      offset,
-      where: {
-        ...where,
-        OrganisationId
-      },
+      distinct: true,
+      where: {OrganisationId},
+      ...queryOptions,
       attributes: [
+        'OrganisationId',
+        'CampaignId',
         'reference',
         'amount',
         'status',
         'transaction_hash',
         'transaction_type',
+        'narration',
         'createdAt',
         'updatedAt'
       ],
@@ -60,7 +62,8 @@ class TransactionService {
       ],
       order: [['createdAt', 'DESC']]
     });
-    return await Pagination.getPagingData(transaction, page, limit);
+    const response = await Pagination.getPagingData(transaction, page, limit);
+    return response;
   }
 
   static async findTransactions(where) {
