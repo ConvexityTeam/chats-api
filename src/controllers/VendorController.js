@@ -907,6 +907,21 @@ class VendorController {
     }
   }
 
+  static async getVendorAppProductByStore(req, res) {
+    const products = await db.Products.findAll({
+      where: {
+        MarketId: req.params.storeId
+      }
+    });
+    if (products) {
+      util.setSuccess(200, 'Product Retrieved', products);
+      return util.send(res);
+    } else {
+      util.setSuccess(200, 'Store has no products registered');
+      return util.send(res);
+    }
+  }
+
   static async addProduct(req, res) {
     const data = req.body;
     const rules = {

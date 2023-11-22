@@ -117,6 +117,28 @@ class CampaignController {
     }
   }
 
+  static async getBeneficiaryAppCampaigns(req, res) {
+    try {
+      const filter = SanitizeObject(req.query, ['status', 'type']);
+      const campaigns = await CampaignService.beneficiaryAppCampaigns(
+        req.user.id,
+        filter
+      );
+      Response.setSuccess(
+        HttpStatusCode.STATUS_CREATED,
+        'Campaigns.',
+        campaigns
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.'
+      );
+      return Response.send(res);
+    }
+  }
+
   static async getFieldAgentCampaigns(req, res) {
     try {
       const query = SanitizeObject(req.query, ['type']);
@@ -150,6 +172,36 @@ class CampaignController {
     try {
       const query = SanitizeObject(req.query, ['type']);
       const allCampaign = await CampaignService.getAllCampaigns({
+        ...query,
+        status: 'active'
+      });
+
+      await Promise.all(
+        allCampaign?.data.map(async campaign => {
+          //(await AwsService.getMnemonic(campaign.id)) || null;
+          campaign.dataValues.ck8 = GenerateSecrete();
+        })
+      );
+
+      Response.setSuccess(
+        HttpStatusCode.STATUS_OK,
+        'Campaign retrieved',
+        allCampaign
+      );
+      return Response.send(res);
+    } catch (error) {
+      Response.setError(
+        HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
+        'Internal error occured. Please try again.' + error
+      );
+      return Response.send(res);
+    }
+  }
+
+  static async getAllBeneficiaryCampaigns(req, res) {
+    try {
+      const query = SanitizeObject(req.query, ['type']);
+      const allCampaign = await CampaignService.getAllBeneficiaryCampaigns({
         ...query,
         status: 'active'
       });

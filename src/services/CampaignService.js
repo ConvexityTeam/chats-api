@@ -431,6 +431,24 @@ class CampaignService {
     });
   }
 
+  static beneficiaryAppCampaigns(UserId, extraClasue = null) {
+    return Beneficiary.findAll({
+      where: {
+        UserId
+      },
+      include: [
+        {
+          model: Campaign,
+          where: {
+            ...extraClasue
+          },
+          as: 'Campaign',
+          include: ['Organisation']
+        }
+      ]
+    });
+  }
+
   static beneficiaryCampaingsAdmin(UserId) {
     return Beneficiary.findAll({
       where: {
@@ -845,6 +863,30 @@ class CampaignService {
   //   });
   // }
   static async getAllCampaigns(extraClause = null) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const campaign = await Campaign.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      distinct: true,
+      ...options,
+      where: {
+        ...extraClause
+      },
+      include: ['Organisation']
+    });
+    const response = await Pagination.getPagingData(campaign, page, limit);
+    return response;
+  }
+  static async getAllBeneficiaryCampaigns(extraClause = null) {
     const page = extraClause.page;
     const size = extraClause.size;
     delete extraClause.page;

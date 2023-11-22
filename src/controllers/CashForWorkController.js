@@ -763,6 +763,30 @@ class CashForWorkController {
       return util.send(res);
     }
   }
+  static async viewBeneficiaryCashForWorkRefractor(req, res) {
+    try {
+      const beneficiary = await db.TaskAssignment.findAll({
+        where: {UserId: req.user.id},
+        include: [
+          {
+            model: db.TaskAssignmentEvidence,
+            as: 'SubmittedEvidences'
+          }
+        ]
+      });
+
+      if (beneficiary) {
+        util.setSuccess(200, 'Task Assignment Retrieved', beneficiary);
+      } else {
+        util.setSuccess(200, 'Task Assignment Not Recieved', beneficiary);
+      }
+      return util.send(res);
+    } catch (error) {
+      console.log(error.message);
+      util.setError(500, 'Internal Server Error' + error);
+      return util.send(res);
+    }
+  }
 
   static async viewCashForWorkRefractorFieldApp(req, res) {
     const {beneficiaryId} = req.params;
@@ -1360,6 +1384,22 @@ class CashForWorkController {
   }
 
   static async getAllCashForWorkTask(req, res) {
+    const {campaignId} = req.params;
+    try {
+      const tasks = await CampaignService.cash4work(req.user.id, campaignId);
+      if (!tasks) {
+        Response.setError(404, `No task retrieved`, tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(200, `Cash for work task retrieved`, tasks);
+      return Response.send(res);
+    } catch (error) {
+      util.setError(500, 'Internal Server Error' + error);
+      return util.send(res);
+    }
+  }
+
+  static async getAllBeneficiaryCashForWorkTask(req, res) {
     const {campaignId} = req.params;
     try {
       const tasks = await CampaignService.cash4work(req.user.id, campaignId);
