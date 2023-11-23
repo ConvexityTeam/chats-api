@@ -17,7 +17,7 @@
 #     - name: Build the Docker image
 #       run: docker build . --file Dockerfile --tag staging-chatsapi:$(date +%s)
 
-name: Build and Deploy to EC2
+name: Build and Deploy
 
 on:
   push:
