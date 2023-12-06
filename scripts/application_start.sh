@@ -3,4 +3,4 @@
 set -e
 
 # Restart Docker Compose services (if needed)
-docker-compose up -d backend
+docker-compose -f ./docker-compose.yml up -d 
