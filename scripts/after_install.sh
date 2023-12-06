@@ -3,4 +3,4 @@
 set -e
 
 # Build and start Docker Compose services
-docker-compose up -f ./docker-compose.yml -d --build
+docker-compose -f ./docker-compose.yml --build
