@@ -2,5 +2,8 @@
 
 set -e
 
+cd /var/www/app
+
 # Restart Docker Compose services (if needed)
-# docker-compose restart
+docker volume prune -f
+docker image prune -f
