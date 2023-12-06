@@ -4,7 +4,6 @@ phases:
   build:
     commands:
        - docker build -t  chatsapi:latest .
-    
   # post_build:
   #   commands:
   #     - echo Uploading build artifact to S3 bucket...
