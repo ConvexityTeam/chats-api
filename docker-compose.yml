@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: registry.gitlab.com/convexityteam/chats-api/api:latest
     container_name: backend
     volumes: 
     - /home:/app
@@ -30,10 +29,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.Consumer
-    image: registry.gitlab.com/convexityteam/chats-api/consumer:latest
     container_name: consumer
     volumes: 
-    - /vhome:/app
+    - /home:/app
     environment:
       - PORT=8080
       - NODE_ENV=production
