@@ -7,7 +7,7 @@ FROM node:18.10.0
 # RUN apt-get install --yes nodejs
 # RUN apt-get install --yes build-essential
 
-WORKDIR /
+WORKDIR /app
 COPY package.json ./
 RUN npm i
 COPY . .
