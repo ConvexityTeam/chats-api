@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: backend
     volumes: 
-    - /home:/app
+    - /home:/var/www/app
     environment:
       - PORT=8080
       - NODE_ENV=production
@@ -31,7 +31,7 @@ services:
       dockerfile: Dockerfile.Consumer
     container_name: consumer
     volumes: 
-    - /home:/app
+    - /home:/var/www/app
     environment:
       - PORT=8080
       - NODE_ENV=production
