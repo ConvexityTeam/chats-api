@@ -16,7 +16,6 @@ services:
       - 8080
     networks:
       - gateway
-      # - postgres
       - rabbitmq
     restart: unless-stopped
     command: npm run start
