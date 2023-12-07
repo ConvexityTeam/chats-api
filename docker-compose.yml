@@ -16,7 +16,7 @@ services:
       - 8080
     networks:
       - gateway
-      # - rabbitmq
+      - rabbitmq
     restart: unless-stopped
     command: npm run start
     # security_opt:
