@@ -10,7 +10,7 @@ const {
   Product
 } = require('../models');
 
-const Op = Sequelize.Op;
+// const Op = Sequelize.Op;
 
 const QueueService = require('./QueueService');
 const {ProductService} = require('.');

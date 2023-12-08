@@ -30,6 +30,12 @@ router.get(
   CashForWorkController.viewCashForWorkRefractor
 );
 router.get(
+  '/beneficiary/cash-for-work/tasks',
+  BeneficiaryAuth,
+  CashForWorkController.viewBeneficiaryCashForWorkRefractor
+);
+
+router.get(
   '/field-app/cash-for-work/tasks/:beneficiaryId',
   FieldAgentBeneficiaryAuth,
   CashForWorkController.viewCashForWorkRefractorFieldApp
@@ -49,6 +55,11 @@ router.get(
   '/cash-for-work/:campaignId',
   FieldAgentBeneficiaryAuth,
   CashForWorkController.getAllCashForWorkTask
+);
+router.get(
+  '/beneficiary/cash-for-work/:campaignId',
+  BeneficiaryAuth,
+  CashForWorkController.getAllBeneficiaryCashForWorkTask
 );
 router.post(
   '/:campaignId/pay-for-product-service/:vendorId/:productId',
@@ -158,7 +169,7 @@ router.post(
 );
 router
   .route('/campaigns')
-  .get(BeneficiaryAuth, CampaignController.getBeneficiaryCampaigns);
+  .get(BeneficiaryAuth, CampaignController.getBeneficiaryAppCampaigns);
 router.post(
   '/campaigns/:campaign_id/join',
   FieldAgentBeneficiaryAuth,

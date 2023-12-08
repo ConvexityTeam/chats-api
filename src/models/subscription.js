@@ -10,17 +10,22 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Subscription.belongsTo(models.Plan, {
-        foreignKey: 'PlanId',
+        foreignKey: 'planId',
         as: 'Plan'
       });
       Subscription.belongsTo(models.Organisation, {
-        foreignKey: 'OrganisationId',
+        foreignKey: 'organisationId',
         as: 'Organisation'
       });
     }
   }
   Subscription.init(
     {
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
+      uuid: DataTypes.UUID,
       isActive: DataTypes.BOOLEAN,
       planId: DataTypes.INTEGER,
       organisationId: DataTypes.INTEGER,

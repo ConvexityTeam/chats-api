@@ -581,8 +581,8 @@ class QueueService {
   ) {
     const transaction = await Transaction.create({
       reference: generateTransactionRef(),
-      BeneficiaryId: beneficiary.id,
-      CampaignId: campaign.id,
+      BeneficiaryId: beneficiary.UserId,
+      CampaignId: beneficiary.CampaignId,
       amount,
       status: 'processing',
       is_approved: false,
@@ -600,7 +600,7 @@ class QueueService {
       beneficiary,
       transactionId: transaction.uuid
     };
-
+    await beneficiary.update({status: 'in_progress'});
     approveOneBeneficiary.send(
       new Message(payload, {
         contentType: 'application/json'

@@ -12,9 +12,10 @@ const {
   sequelize
 } = require('../models');
 const {Op, Sequelize} = require('sequelize');
-const {userConst, walletConst} = require('../constants');
+const {userConst, userConstFilter, walletConst} = require('../constants');
 const moment = require('moment');
 const Pagination = require('../utils/pagination');
+const {Logger} = require('../libs');
 
 class BeneficiariesService {
   static capitalizeFirstLetter(str) {
@@ -221,8 +222,23 @@ class BeneficiariesService {
     });
   }
 
-  static async organisationBeneficiaryDetails(id, OrganisationId) {
-    return User.findOne({
+  static async organisationBeneficiaryDetails(
+    id,
+    OrganisationId,
+    extraClause = null
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause.page;
+    delete extraClause.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const user = await User.findOne({
       where: {
         id
       },
@@ -244,6 +260,18 @@ class BeneficiariesService {
         }
       ]
     });
+    if (page && size) {
+      const startIndex = (page - 1) * size;
+      const endIndex = startIndex + size;
+      user.Campaigns = user.Campaigns.slice(startIndex, endIndex);
+    }
+
+    const response = await Pagination.getPagingData(
+      {count: user.Campaigns.length, rows: user.Campaigns},
+      page,
+      limit
+    );
+    return {user, response};
   }
 
   static async beneficiaryDetails(id, extraClause = null) {
@@ -349,29 +377,78 @@ class BeneficiariesService {
   static async findOrgnaisationBeneficiaries(OrganisationId, extraClause = {}) {
     const page = extraClause.page;
     const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
     delete extraClause.page;
     delete extraClause.size;
-    const {limit, offset} = await Pagination.getPagination(page, size);
-
-    let options = {};
+    let queryOptions = {};
     if (page && size) {
-      options.limit = limit;
-      options.offset = offset;
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
     }
     const users = await User.findAndCountAll({
       distinct: true,
-      ...options,
-      where: {
-        OrganisationId: Sequelize.where(
-          Sequelize.col('Campaigns.OrganisationId'),
-          OrganisationId
-        )
-      },
+      ...queryOptions,
+      // where: {
+      //   OrganisationId: Sequelize.where(
+      //     Sequelize.col('Campaigns.OrganisationId'),
+      //     OrganisationId
+      //   )
+      // },
       attributes: userConst.publicAttr,
       include: [
         {
           model: Campaign,
           as: 'Campaigns',
+          where: {
+            OrganisationId
+          },
+          through: {
+            where: {
+              approved: true
+            }
+          },
+          attributes: [],
+          require: true
+        },
+        {model: Group, as: 'members'}
+      ]
+    });
+    const response = await Pagination.getPagingData(users, page, limit);
+    return response;
+  }
+  static async findFieldAppOrgnaisationBeneficiaries(
+    OrganisationId,
+    extraClause = {}
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+
+    const {limit, offset} = await Pagination.getPagination(page, size);
+    delete extraClause.page;
+    delete extraClause.size;
+    let queryOptions = {};
+    if (page && size) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const users = await User.findAndCountAll({
+      distinct: true,
+      ...queryOptions,
+      // where: {
+      //   OrganisationId: Sequelize.where(
+      //     Sequelize.col('Campaigns.OrganisationId'),
+      //     OrganisationId
+      //   )
+      // },
+      attributes: userConst.publicAttr,
+      include: [
+        {
+          model: Campaign,
+          as: 'Campaigns',
+          where: {
+            OrganisationId
+          },
           through: {
             where: {
               approved: true
@@ -448,7 +525,47 @@ class BeneficiariesService {
         {
           model: User,
           as: 'User',
-          attributes: userConst.publicAttr,
+          attributes: userConstFilter.publicAttr,
+          include: [
+            {
+              model: FormAnswer,
+              as: 'Answers'
+            },
+            {model: Group, as: 'members', include: ['group_members']}
+          ]
+        }
+      ]
+    });
+    const response = await Pagination.getPagingData(beneficiaries, page, limit);
+    return response;
+  }
+  static async findFieldAppCampaignBeneficiaries(
+    CampaignId,
+    extraClause = null
+  ) {
+    const page = extraClause.page;
+    const size = extraClause.size;
+    delete extraClause?.page;
+    delete extraClause?.size;
+    const {limit, offset} = await Pagination.getPagination(page, size);
+
+    let options = {};
+    if (page && size) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const beneficiaries = await Beneficiary.findAndCountAll({
+      distinct: true,
+      ...options,
+      where: {
+        ...extraClause,
+        CampaignId
+      },
+      include: [
+        {
+          model: User,
+          as: 'User',
+          attributes: userConstFilter.publicAttr,
           include: [
             {
               model: FormAnswer,
@@ -692,6 +809,29 @@ class BeneficiariesService {
         CampaignId,
         UserId,
         approved: true
+      }
+    });
+  }
+
+  static async spendingStatus(CampaignId, UserId, data) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const find = await Beneficiary.findOne({
+          where: {
+            CampaignId,
+            UserId,
+            approved: true
+          }
+        });
+        if (!find) {
+          return resolve(null);
+        }
+        await find.update(data);
+        Logger.info(`Beneficiary spending status: ${find.status}`);
+        resolve(find);
+      } catch (error) {
+        Logger.error(`Error Beneficiary spending status: ${error}`);
+        reject(error);
       }
     });
   }

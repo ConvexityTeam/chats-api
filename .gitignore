@@ -1,6 +1,7 @@
 node_modules
 =======
 # Logs
+rdsCert.pem
 logs
 id_rsa
 id_rsa.pub

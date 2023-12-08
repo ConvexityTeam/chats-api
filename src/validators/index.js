@@ -14,8 +14,10 @@ const TaskValidator = require('./TaskValidator');
 const ParamValidator = require('./ParamValidator');
 const OrderValidator = require('./OrderValidator');
 const UtilValidator = require('./UtilValidator');
+const KoraPayValidator = require('./KoraPayValidator');
 
 module.exports = {
+  KoraPayValidator,
   AuthValidator,
   CommonValidator,
   NgoValidator,
@@ -32,4 +34,4 @@ module.exports = {
   ParamValidator,
   OrderValidator,
   UtilValidator
-}
+};

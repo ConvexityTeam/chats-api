@@ -8,6 +8,16 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
+    await queryInterface.addColumn('Campaigns', 'formId', {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'CampaignForms'
+        },
+        key: 'id'
+      }
+    });
     await queryInterface.addColumn('Campaigns', 'category_id', {
       type: Sequelize.INTEGER,
       allowNull: true,

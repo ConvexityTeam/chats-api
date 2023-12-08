@@ -17,6 +17,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   RequestFund.init(
     {
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
+      uuid: DataTypes.UUID,
       donor_organisation_id: DataTypes.INTEGER,
       campaign_id: DataTypes.INTEGER,
       reason: DataTypes.STRING,
