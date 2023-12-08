@@ -11,7 +11,6 @@ set -e
 
 
 cd /var/www/app
-
 aws s3 cp s3://chats-docker/backend.tar .
 aws s3 cp s3://chats-docker/consumer.tar .
 
