@@ -16,7 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes: 
-    - ./:/app
+    - /home:/var/www/app
     environment:
       - PORT=8080
       - NODE_ENV=production
@@ -43,7 +43,7 @@ services:
       context: .
       dockerfile: Dockerfile.Consumer
     volumes: 
-    - ./:/app
+    - /home:/var/www/app
     environment:
       - PORT=8080
       - NODE_ENV=production
