@@ -9,7 +9,6 @@ set -e
 # aws s3 cp s3://chats-docker/consumer.tar.gz /var/www/app/consumer.tar.gz
 aws s3 cp s3://chats-docker/chatsapi.tar /var/www/app/chatsapi.tar
 
-
 # cd /var/www/app
 # aws s3 cp s3://chats-docker/backend.tar .
 # aws s3 cp s3://chats-docker/consumer.tar .
