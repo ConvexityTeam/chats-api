@@ -1,17 +1,14 @@
 version: "3.3"
 services:
-  rabbitmq:
-    image: "rabbitmq:3.8.14-alpine"
-    container_name: rabbitmq
-    user: "ubuntu:docker"
-    networks:
-      - rabbitmq
-    restart: unless-stopped
+  # rabbitmq:
+  #   image: "rabbitmq:3.8.14-alpine"
+  #   container_name: rabbitmq
+  #   user: "ubuntu:docker"
+  #   networks:
+  #     - rabbitmq
+  #   restart: unless-stopped
 
   backend:
-    depends_on:
-      # - postgres
-      - rabbitmq
     container_name: backend
     build:
       context: .
@@ -27,8 +24,6 @@ services:
       - 8080
     networks:
       - gateway
-      # - postgres
-      - rabbitmq
     restart: unless-stopped
     command: npm run start
     # security_opt:
@@ -36,8 +31,6 @@ services:
 
   consumer:
     depends_on:
-      # - postgres
-      - rabbitmq
       - backend
     container_name: consumer
     build:
@@ -50,8 +43,6 @@ services:
       - NODE_ENV=production
     networks:
       - gateway
-      # - postgres
-      - rabbitmq
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -60,9 +51,7 @@ services:
 networks:
   gateway:
     driver: bridge
-    # name: gateway
-  rabbitmq:
-    internal: true
+    name: gateway
   # postgres:
   #   internal: true
 
