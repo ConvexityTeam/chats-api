@@ -3,6 +3,7 @@ services:
   rabbitmq:
     image: "rabbitmq:3.8.14-alpine"
     container_name: rabbitmq
+    user: "ubuntu:docker"
     networks:
       - rabbitmq
     restart: unless-stopped
