@@ -1,14 +1,18 @@
 version: 0.2
+
 phases:
   build:
     commands:
-       - docker build -t  chatsapi:latest .
-  # post_build:
-  #   commands:
-  #     - echo Uploading build artifact to S3 bucket...
-  #     - zip chatsapi.zip /codebuild/output/
-  #     - aws s3 cp chatsapi.zip s3://chats-docker/
+      # - docker build -t  chatsapi:latest .
+      - docker compose build backend:latest .
+    
+  post_build:
+    commands:
+      - echo Uploading build artifact to S3 bucket...
+      - docker save backend:latest | gzip > chatsapi.tar.gz
+      - aws s3 cp chatsapi.tar.gz s3://chats-docker/chatsapi.tar.gz
       
 artifacts:
   files:
     - '**/*'
+    - chatsapi.tar.zip
