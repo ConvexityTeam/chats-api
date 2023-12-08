@@ -12,4 +12,4 @@ aws s3 cp s3://chats-docker/chatsapi.tar.gz /var/www/app/chatsapi.tar.gz
 
 # Load Docker image
 docker load -i chatsapi.tar.gz
-docker-compose up -d chatsapi
+docker run -d chatsapi
