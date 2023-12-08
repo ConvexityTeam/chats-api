@@ -103,6 +103,26 @@ class CashForWorkController {
     }
   }
 
+  static async getFieldAppTasks(req, res) {
+    try {
+      const campaignId = req.params.campaignId;
+      const campaignExist = await db.Campaign.findOne({
+        where: {id: campaignId, type: 'cash-for-work'},
+        include: {
+          model: db.Tasks,
+          as: 'Jobs',
+          attributes: {exclude: ['CampaignId']}
+        }
+      });
+
+      util.setSuccess(200, 'Tasks', {tasks: campaignExist.Jobs});
+      return util.send(res);
+    } catch (error) {
+      util.setError(404, 'Invalid Campaign');
+      return util.send(res);
+    }
+  }
+
   static async getAllCashForWork(req, res) {
     const cashforworks = await db.Campaign.findAll({
       where: {
@@ -209,6 +229,71 @@ class CashForWorkController {
     }
   }
 
+  static async getFieldAppTask(req, res) {
+    try {
+      const taskId = req.params.taskId;
+
+      const task = await db.Tasks.findOne({
+        where: {
+          id: taskId
+        },
+        attributes: {exclude: ['CampaignId']},
+        include: [
+          {
+            model: db.Campaign,
+            as: 'Campaign'
+          },
+          {
+            model: db.TaskUsers,
+            as: 'AssociatedWorkers',
+            attributes: {exclude: ['TaskId']},
+            include: [
+              {
+                model: db.User,
+                as: 'Worker',
+                attributes: {
+                  exclude: [
+                    'nfc',
+                    'password',
+                    'dob',
+                    'profile_pic',
+                    'location',
+                    'is_email_verified',
+                    'is_phone_verified',
+                    'is_bvn_verified',
+                    'is_self_signup',
+                    'is_public',
+                    'is_tfa_enabled',
+                    'last_login',
+                    'tfa_secret',
+                    'bvn',
+                    'nin',
+                    'pin'
+                  ]
+                }
+              },
+              {
+                model: db.TaskProgress,
+                as: 'CompletionRequest',
+                include: {
+                  model: db.TaskProgressEvidence,
+                  as: 'Evidences'
+                }
+              }
+            ]
+          }
+        ]
+      });
+
+      util.setSuccess(200, 'Task Retrieved', {task});
+      return util.send(res);
+    } catch (error) {
+      console.log(error.message);
+
+      util.setError(404, 'Invalid Task Id');
+      return util.send(res);
+    }
+  }
   static async getTask(req, res) {
     try {
       const taskId = req.params.taskId;
@@ -678,6 +763,30 @@ class CashForWorkController {
       return util.send(res);
     }
   }
+  static async viewBeneficiaryCashForWorkRefractor(req, res) {
+    try {
+      const beneficiary = await db.TaskAssignment.findAll({
+        where: {UserId: req.user.id},
+        include: [
+          {
+            model: db.TaskAssignmentEvidence,
+            as: 'SubmittedEvidences'
+          }
+        ]
+      });
+
+      if (beneficiary) {
+        util.setSuccess(200, 'Task Assignment Retrieved', beneficiary);
+      } else {
+        util.setSuccess(200, 'Task Assignment Not Recieved', beneficiary);
+      }
+      return util.send(res);
+    } catch (error) {
+      console.log(error.message);
+      util.setError(500, 'Internal Server Error' + error);
+      return util.send(res);
+    }
+  }
 
   static async viewCashForWorkRefractorFieldApp(req, res) {
     const {beneficiaryId} = req.params;
@@ -1098,7 +1207,8 @@ class CashForWorkController {
     const {taskId} = req.body;
 
     try {
-      const tasks = await CampaignService.cashForWorkCampaignByApprovedBeneficiary;
+      const tasks =
+        await CampaignService.cashForWorkCampaignByApprovedBeneficiary;
       if (tasks.length <= 0) {
         Response.setSuccess(200, 'No Task Recieved', tasks);
         return Response.send(res);
@@ -1274,6 +1384,22 @@ class CashForWorkController {
   }
 
   static async getAllCashForWorkTask(req, res) {
+    const {campaignId} = req.params;
+    try {
+      const tasks = await CampaignService.cash4work(req.user.id, campaignId);
+      if (!tasks) {
+        Response.setError(404, `No task retrieved`, tasks);
+        return Response.send(res);
+      }
+      Response.setSuccess(200, `Cash for work task retrieved`, tasks);
+      return Response.send(res);
+    } catch (error) {
+      util.setError(500, 'Internal Server Error' + error);
+      return util.send(res);
+    }
+  }
+
+  static async getAllBeneficiaryCashForWorkTask(req, res) {
     const {campaignId} = req.params;
     try {
       const tasks = await CampaignService.cash4work(req.user.id, campaignId);

@@ -19,7 +19,7 @@ const VendorValidator = require('../validators/VendorValidator');
 
 router.get('/', VendorController.getAllVendors);
 router.get('/chart/:period', VendorAuth, VendorController.vendorChart);
-router.post('/add-account', VendorController.addAccount);
+router.post('/add-account', VendorAuth, VendorController.addAccount);
 router.get('/stores/all', VendorController.getAllStores);
 router.get('/store/:id', VendorController.getVendorStore);
 router.get('/accounts/all', VendorController.getAccounts);
@@ -34,7 +34,15 @@ router.post('/product', VendorController.addProduct);
 router.get('/products/single/:id', VendorController.singleProduct);
 router.get('/products/value', VendorController.getProductsValue);
 router.get('/products/sold/value', VendorController.getSoldProductValue);
-router.get('/store/products/:storeId', VendorController.getProductByStore);
+router.get(
+  '/vendor-app/store/products/:storeId',
+  VendorController.getProductByStore
+);
+router.get(
+  '/store/products/:storeId',
+  VendorAuth,
+  VendorController.getVendorAppProductByStore
+);
 router.get('/summary/:id', VendorController.getSummary);
 router.post('/auth/login', AuthController.signInVendor);
 router.get('/proposals', VendorAuth, VendorController.ProposalRequests);

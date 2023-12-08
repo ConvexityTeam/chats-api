@@ -1,19 +1,17 @@
 const path = require('path');
-const {Op} = require('sequelize');
 const {
   AclRoles,
   OrgRoles,
   createHash,
   HttpStatusCode,
-  generateOrganisationId,
-  encryptData
+  generateOrganisationId
 } = require('../utils');
 const {Message} = require('@droidsolutions-oss/amqp-ts');
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const {Response, Logger, Axios} = require('../libs');
-const {Beneficiary, Invites} = require('../models');
+const {Beneficiary, User, Invites} = require('../models');
 const Validator = require('validatorjs');
 const formidable = require('formidable');
 const uploadFile = require('./AmazonController');
@@ -211,29 +209,26 @@ class AuthController {
                   });
                   // .then(async user => {
                   await QueueService.createWallet(user.id, 'user');
-                  if (campaignExist.type === 'campaign') {
+                  // if (campaignExist.type === 'campaign') {
                     const res = await CampaignService.addBeneficiary(
                       campaignExist.id,
                       user.id,
                       'web app'
                     );
-                  }
-
-                  createdSuccess.push(beneficiary.email); //add to success list
-                  // })
-                  // .catch(err => {
-                  //   Response.setError(
-                  //     HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-                  //     err
-                  //   );
-                  //   // return Response.send(res);
-                  //   createdFailed.push(beneficiary.email);
-                  // });
+                  // }
                 });
               });
             } else {
               //include the email in the existing list
-              existingEmails.push(beneficiary.email);
+              // existingEmails.push(beneficiary.email);
+              await QueueService.createWallet(user_exist.id, 'user');
+              // if (campaignExist.type === 'campaign') {
+                const res = await CampaignService.addBeneficiary(
+                  campaignExist.id,
+                  user_exist.id,
+                  'web app'
+                );
+
             }
           }, index * 10000);
         });
@@ -410,15 +405,12 @@ class AuthController {
           return Response.send(res);
         } else {
           const password = createHash(req.body.password);
-
           const extension = req.file.mimetype.split('/').pop();
-
           const profile_pic = await uploadFile(
             files,
             'u-' + environ + '-' + email + '-i.' + extension,
             'convexity-profile-images'
           );
-
           const user = await UserService.addUser({
             RoleId,
             phone,
@@ -772,8 +764,8 @@ class AuthController {
     let user = null;
     const data = req.body;
     const rules = {
-      first_name: 'alpha',
-      last_name: 'alpha',
+      first_name: 'string',
+      last_name: 'string',
       organisation_name: 'string',
       registration_id: 'string',
       email: 'required|email',
@@ -785,7 +777,7 @@ class AuthController {
       url: 'Only valid url with https or http allowed'
     });
     if (validation.fails()) {
-      Response.setError(400, validation.errors);
+      Response.setError(422, Object.values(validation.errors.errors)[0][0]);
       return Response.send(res);
     } else {
       const email = data.email;
@@ -963,8 +955,9 @@ class AuthController {
           //update users status to verified
           db.User.update(
             {
-              // status: 'activated', 
-              is_email_verified: true},
+              // status: 'activated',
+              is_email_verified: true
+            },
             {where: {email: payload.email}}
           )
             .then(() => {
@@ -1083,7 +1076,7 @@ class AuthController {
 
   static async signIn(req, res) {
     try {
-      const user = await db.User.findOne({
+      const user = await User.findOne({
         where: {
           email: req.body.email
         },
@@ -1096,7 +1089,6 @@ class AuthController {
           }
         }
       });
-
       const data = await AuthService.login(user, req.body.password.trim());
       Response.setSuccess(200, 'Login Successful.', data);
       return Response.send(res);
@@ -1125,6 +1117,13 @@ class AuthController {
         }
       });
 
+      if (!user) {
+        Response.setError(
+          HttpStatusCode.STATUS_UNAUTHORIZED,
+          'Invalid credentials'
+        );
+        return Response.send(res);
+      }
       if (user && user.is_email_verified === false) {
         Response.setError(
           HttpStatusCode.STATUS_UNAUTHORIZED,

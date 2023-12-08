@@ -136,7 +136,8 @@ class CampaignValidator extends BaseValidator {
         return;
       }
       const existing = await CampaignService.searchCampaignTitle(
-        req.body.title
+        req.body.title,
+        {OrganisationId: req.params.organisation_id}
       );
       if (existing) {
         Response.setError(
@@ -233,7 +234,7 @@ class CampaignValidator extends BaseValidator {
         return Response.send(res);
       }
       req.campaign = campaign;
-      req.organisationId =  organisationId;
+      req.organisationId = organisationId;
       next();
     } catch (error) {
       Response.setError(

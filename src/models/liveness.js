@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   Liveness.init(
     {
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
+      uuid: DataTypes.UUID,
       first_name: DataTypes.STRING,
       surname: DataTypes.STRING,
       email: DataTypes.STRING,

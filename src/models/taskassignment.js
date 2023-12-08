@@ -1,7 +1,5 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class TaskAssignment extends Model {
     /**
@@ -28,26 +26,37 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'id',
         targetKey: 'approved_by',
         constraints: false
-      })
+      });
     }
-  };
-  TaskAssignment.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true
+  }
+  TaskAssignment.init(
+    {
+      uuid: DataTypes.UUID,
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true
+      },
+      TaskId: DataTypes.INTEGER,
+      UserId: DataTypes.INTEGER,
+      uploaded_evidence: DataTypes.BOOLEAN,
+      approved_by_agent: DataTypes.BOOLEAN,
+      approved_by_vendor: DataTypes.BOOLEAN,
+      approved: DataTypes.BOOLEAN,
+      approved_by: DataTypes.INTEGER,
+      approved_at: DataTypes.DATE,
+      status: DataTypes.ENUM(
+        'pending',
+        'in progress',
+        'rejected',
+        'disbursed',
+        'approved',
+        'completed'
+      ) //approved -> recieved approval from NGO admin | completed -> paid
     },
-    TaskId: DataTypes.INTEGER,
-    UserId: DataTypes.INTEGER,
-    uploaded_evidence: DataTypes.BOOLEAN,
-    approved_by_agent: DataTypes.BOOLEAN,
-    approved_by_vendor: DataTypes.BOOLEAN,
-    approved: DataTypes.BOOLEAN,
-    approved_by: DataTypes.INTEGER,
-    approved_at: DataTypes.DATE,
-    status: DataTypes.ENUM('pending','in progress', 'rejected', 'disbursed', 'approved', 'completed'), //approved -> recieved approval from NGO admin | completed -> paid
-  }, {
-    sequelize,
-    modelName: 'TaskAssignment',
-  });
+    {
+      sequelize,
+      modelName: 'TaskAssignment'
+    }
+  );
   return TaskAssignment;
 };

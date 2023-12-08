@@ -58,7 +58,13 @@ router.get('/', CashForWorkController.getAllCashForWork);
 router.post('/newTask', CashForWorkController.newTask);
 router.get('/:cashforworkid', CashForWorkController.getCashForWork);
 router.get('/tasks/:campaignId', CashForWorkController.getTasks);
+router.get(
+  '/field-agent/tasks/:campaignId',
+  CashForWorkController.getFieldAppTasks
+);
 router.get('/task/:taskId', CashForWorkController.getTask);
+router.get('/field-agent/task/:taskId', CashForWorkController.getFieldAppTask);
+
 router.post('/task/addWorkers', CashForWorkController.addWorkersToTask);
 router.post('/task/submit-progress', CashForWorkController.submitProgress);
 router.post('/task/progress/confirm', CashForWorkController.approveProgress);

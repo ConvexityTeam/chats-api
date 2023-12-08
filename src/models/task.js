@@ -1,5 +1,5 @@
-"use strict";
-const { Model } = require("sequelize");
+'use strict';
+const {Model} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Task extends Model {
     /**
@@ -9,22 +9,25 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Task.belongsToMany(models.User, { 
-        as: "AssignedWorkers",
-        foreignKey: "TaskId",
+      Task.belongsToMany(models.User, {
+        as: 'AssignedWorkers',
+        foreignKey: 'TaskId',
         through: models.TaskAssignment,
-        constraints: false,
+        constraints: false
       });
       Task.belongsTo(models.Campaign, {
-        foreignKey: "CampaignId",
-        as: "Campaign",
+        foreignKey: 'CampaignId',
+        as: 'Campaign'
       });
-
-      
     }
   }
   Task.init(
     {
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
+      uuid: DataTypes.UUID,
       CampaignId: DataTypes.INTEGER,
       name: DataTypes.STRING,
       description: DataTypes.STRING,
@@ -35,11 +38,11 @@ module.exports = (sequelize, DataTypes) => {
       assigned: DataTypes.INTEGER,
       require_vendor_approval: DataTypes.INTEGER,
       require_agent_approval: DataTypes.INTEGER,
-      require_evidence: DataTypes.INTEGER,
+      require_evidence: DataTypes.INTEGER
     },
     {
       sequelize,
-      modelName: "Task",
+      modelName: 'Task'
     }
   );
   return Task;

@@ -39,43 +39,42 @@ class AwsUploadService {
       );
     });
   }
-  static async createSecret(id) {
-    let params = {
-      Name: awsConfig.campaignSecretName + id,
-      Description: 'Unique secrete for each campaign',
-      SecretString: GenerateSecrete()
-    };
-    //xOC&*wPo3jgCcDVkd)rdQAN
-    try {
-      const secret = client.createSecret(params, (err, data) => {
-        if (!err) return data;
-        throw new Error(err.stack);
-      });
-      return secret;
-    } catch (error) {
-      console.log(error);
-      throw new Error(error);
-    }
-  }
-  static async describeSecret(id) {
-    let params = {
-      SecretId: `Unique Campaign Secret ID`
-    };
-    try {
-      const secret = client.createSecret(params, (error, data) => {
-        if (!error) {
-          return data;
-        } else {
-          throw new Error(error.stack);
-        }
-      });
-    } catch (error) {}
-  }
-  static async getMnemonic(id) {
+  // static async createSecret(id) {
+  //   let params = {
+  //     Name: awsConfig.campaignSecretName + id,
+  //     Description: 'Unique secrete for each campaign',
+  //     SecretString: GenerateSecrete()
+  //   };
+  //   //xOC&*wPo3jgCcDVkd)rdQAN
+  //   try {
+  //     const secret = client.createSecret(params, (err, data) => {
+  //       if (!err) return data;
+  //       throw new Error(err.stack);
+  //     });
+  //     return secret;
+  //   } catch (error) {
+  //     console.log(error);
+  //     throw new Error(error);
+  //   }
+  // }
+  // static async describeSecret(id) {
+  //   let params = {
+  //     SecretId: `Unique Campaign Secret ID`
+  //   };
+  //   try {
+  //     const secret = client.createSecret(params, (error, data) => {
+  //       if (!error) {
+  //         return data;
+  //       } else {
+  //         throw new Error(error.stack);
+  //       }
+  //     });
+  //   } catch (error) {}
+  // }
+  static async getMnemonic(rotationKey) {
     // const { SecretsManager } = AWS;
-    var secretName = id
-        ? awsConfig.campaignSecretName + id
-        : awsConfig.secreteName,
+    // id  ? awsConfig.campaignSecretName + id
+    var secretName = awsConfig.secreteName,
       secret,
       decodedBinarySecret;
     // Create a Secrets Manager client
@@ -85,7 +84,7 @@ class AwsUploadService {
     // We rethrow the exception by default.
     try {
       const data = await client
-        .getSecretValue({SecretId: secretName})
+        .getSecretValue({SecretId: rotationKey || secretName})
         .promise()
         .then(data => {
           if ('SecretString' in data) {
@@ -97,6 +96,9 @@ class AwsUploadService {
             return decodedBinarySecret;
           }
         });
+      if (rotationKey && data) {
+        process.env.DB_PASSWORD_ROTATION_KEY = data.password;
+      }
       return data;
     } catch (err) {
       if (err.code === 'DecryptionFailureException') {
@@ -117,9 +119,7 @@ class AwsUploadService {
         throw err;
       } else if (err.code === 'ResourceNotFoundException') {
         Logger.error(`We can't find the resource that you asked for.`);
-        if (id) {
-          this.createSecret(id);
-        } else throw err;
+        throw err;
       }
       Logger.error(`Error decrypting : ${err}`);
     }
@@ -127,3 +127,12 @@ class AwsUploadService {
 }
 
 module.exports = AwsUploadService;
+// async function getPassword() {
+//   const mnemonic = await AwsUploadService.getMnemonic(
+//     process.env.DB_PASSWORD_ROTATION_KEY
+//   );
+//   //
+//   const secretObject = JSON.parse(mnemonic);
+//   process.env.DB_PASSWORD = secretObject.password;
+//   console.log(secretObject.password);
+// }

@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   SwitchToken.init(
     {
+      // id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true
+      // },
+      uuid: DataTypes.UUID,
       accessToken: DataTypes.TEXT,
       expires: DataTypes.DATE
     },

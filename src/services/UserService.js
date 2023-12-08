@@ -127,6 +127,7 @@ class UserService {
         email,
         ...extraClause
       },
+      attributes: userConst.publicAttr,
       include: ['liveness']
     });
   }

@@ -15,8 +15,10 @@ const UtilController = require('./UtilController');
 const PlanController = require('./PlanController');
 const SubscriptionController = require('./SubscriptionController');
 const ImpactReportController = require('./ImpactReportController');
+const KoraPayController = require('./KoraPayController');
 
 module.exports = {
+  KoraPayController,
   MarketController,
   OrderController,
   AuthController,
