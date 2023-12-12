@@ -10,9 +10,7 @@ services:
 
   backend:
     container_name: backend
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/convexityteam/chatsapi:staging
     volumes: 
     - /home:/var/www/app
     environment:
@@ -33,9 +31,7 @@ services:
     depends_on:
       - backend
     container_name: consumer
-    build:
-      context: .
-      dockerfile: Dockerfile.Consumer
+    image: ghcr.io/convexityteam/consumer:staging
     volumes: 
     - /home:/var/www/app
     environment:
