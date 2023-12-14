@@ -14,7 +14,7 @@ module.exports = {
     username: config.DB_USER,
     password: config.DB_PASSWORD,
     database: config.DB_NAME,
-    host: config.DB_HOST,
+    host: "staging-db.chats.cash,
     logging: config.DB_LOG,
     dialect: 'postgres'
   },
