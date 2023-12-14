@@ -6,7 +6,7 @@ FROM node:18.10.0
 # RUN curl --silent --location https://deb.nodesource.com/setup_4.x | sudo bash -
 # RUN apt-get install --yes nodejs
 # RUN apt-get install --yes build-essential
-LABEL org.opencontainers.image.source https://github.com/ConvexityTeam/chats-api
+LABEL org.opencontainers.image.source = "https://github.com/ConvexityTeam/chats-api"
 
 WORKDIR /app
 COPY package.json ./
