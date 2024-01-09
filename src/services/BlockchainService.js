@@ -52,7 +52,6 @@ class BlockchainService {
         Logger.error(
           `Error increasing gas price: ${JSON.stringify(error?.response?.data)}`
         );
-
         reject(error);
       }
     });
@@ -81,7 +80,7 @@ class BlockchainService {
           error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
           error.response.data.message.code === 'INSUFFICIENT_FUNDS'
         ) {
-          await QueueService.increaseGasApproveSpending(
+          await QueueService.increaseGasForTransfer(
             senderPrivateKey,
             sender,
             receiver,
@@ -210,7 +209,8 @@ class BlockchainService {
     tokenOwnerPass,
     operator,
     tokenId,
-    index
+    index,
+    params
   ) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -226,6 +226,19 @@ class BlockchainService {
             error.response.data
           )}`
         );
+        if (
+          error.response.data.message.code === 'REPLACEMENT_UNDERPRICED' ||
+          error.response.data.message.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+          error.response.data.message.code === 'INSUFFICIENT_FUNDS'
+        ) {
+          await QueueService.increaseGasApproveSpending(
+            tokenOwnerPass,
+            operator,
+            tokenId,
+            index,
+            params
+          );
+        }
         reject(error);
       }
     });
@@ -258,7 +271,6 @@ class BlockchainService {
     return new Promise(async (resolve, reject) => {
       try {
         const token = await SwitchToken.findByPk(1);
-        console.log(token);
         if (!token || moment().isAfter(token.expires)) {
           await this.signInSwitchWallet();
         }

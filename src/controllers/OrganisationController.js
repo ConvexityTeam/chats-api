@@ -1,4 +1,5 @@
 const {Op} = require('sequelize');
+const uuid = require('uuid');
 const {
   HttpStatusCode,
   SanitizeObject,
@@ -461,7 +462,7 @@ class OrganisationController {
         //   `campaignSecret=${data.id}`
         // );
         // (await AwsService.getMnemonic(campaign.id)) || null;
-        data.dataValues.ck8 = GenerateSecrete()
+        data.dataValues.ck8 = GenerateSecrete();
         //campaignSecret?.data?.data?.secretKey || null;
         //
         //(await AwsService.getMnemonic(data.id)) || null;
@@ -840,10 +841,10 @@ class OrganisationController {
         return Response.send(res);
       }
       data.is_processing = false;
-      const campaign_secret =
-        process.env.development !== 'development' ? campaign.uuid : campaign.id;
+
       CampaignService.addCampaign({
         ...data,
+        uuid: uuid.v4(),
         spending,
         OrganisationId,
         status: 'pending'

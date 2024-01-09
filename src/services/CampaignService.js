@@ -24,6 +24,7 @@ const QueueService = require('./QueueService');
 const {generateTransactionRef, AclRoles} = require('../utils');
 const Pagination = require('../utils/pagination');
 const {Logger} = require('../libs');
+const {createWallet} = require('../utils/createWallet');
 
 class CampaignService {
   static async findStoreByName(store_name) {
@@ -197,7 +198,8 @@ class CampaignService {
           UserId,
           source
         });
-        await QueueService.createWallet(UserId, 'user', CampaignId);
+
+        await createWallet(UserId, 'user', CampaignId);
         return resolve(newBeneficiary);
       } catch (error) {
         return reject(error);

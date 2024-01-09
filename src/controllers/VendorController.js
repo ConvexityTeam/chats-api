@@ -1076,12 +1076,13 @@ class VendorController {
   static async vendorCampaigns(req, res) {
     try {
       const campaigns = await CampaignService.getVendorCampaigns(req.user.id);
-
+      console.log(campaigns.length, 'length');
       var dataArr = campaigns.map(campaign => {
         return [campaign.CampaignId, campaign];
       }); // creates array of array
       var maparr = new Map(dataArr); // create key value pair from array of array
       var result = [...maparr.values()]; //converting back to array from mapobject
+      console.log(result.length, 'length');
       Response.setSuccess(HttpStatusCode.STATUS_OK, 'Vendor campaigns', result);
       return Response.send(res);
     } catch (error) {

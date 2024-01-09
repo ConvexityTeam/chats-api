@@ -69,6 +69,22 @@ class OrderController {
           id: data.beneficiary_id
         })
       ]);
+      if (!user) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Beneficiary not found'
+        );
+        Logger.error('Beneficiary not found');
+        return Response.send(res);
+      }
+      if (!campaign) {
+        Response.errors(
+          HttpStatusCode.STATUS_BAD_REQUEST,
+          'Campaign not found'
+        );
+        Logger.error('Campaign not found');
+        return Response.send(res);
+      }
       if (approvedBeneficiary.status === 'processing') {
         Response.setSuccess(
           HttpStatusCode.STATUS_OK,
@@ -102,30 +118,19 @@ class OrderController {
           approvedBeneficiary
         );
       }
-
-      if (campaign.type === 'item' && !beneficiaryWallet.was_funded) {
+      // console.log(
+      //   JSON.stringify(beneficiaryWallet.was_funded),
+      //   'approvedBeneficiary'
+      // );
+      if (campaign.type === 'item') {
+        Logger.info('Approve spending for item processing.');
         await QueueService.approveNFTSpending(
           data.beneficiary_id,
-          data.campaign_id,
-          campaign
+          campaign,
+          campaign.minting_limit / approvedBeneficiaries.length,
+          approvedBeneficiary
         );
-      }
-
-      if (!user) {
-        Response.errors(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Beneficiary not found'
-        );
-        Logger.error('Beneficiary not found');
-        return Response.send(res);
-      }
-      if (!campaign) {
-        Response.errors(
-          HttpStatusCode.STATUS_BAD_REQUEST,
-          'Campaign not found'
-        );
-        Logger.error('Campaign not found');
-        return Response.send(res);
+        Logger.info('Approve spending for item sent for processing.');
       }
 
       Response.setSuccess(

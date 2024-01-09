@@ -31,6 +31,7 @@ module.exports = {
   CONFIRM_AND_GENERATE_TOKEN: 'confirmAndGenerateToken,',
   LOOP_ITEM_BENEFICIARY: 'loopItemBeneficiary',
   TRANSFER_MINT_TO_VENDOR: 'transferMintToVendor',
+  INCREASE_GAS_NFT_TRANSFER: 'increaseGasNFTTransfer',
   CONFIRM_AND_PAY_VENDOR: 'confirmAndPayVendor',
   REDEEM_BENEFICIARY_ONCE: 'redeemBeneficiaryOnce',
   CONFIRM_NGO_FUNDING: 'confirmNGOfunding',

@@ -108,11 +108,6 @@ const processCampaignFund = RabbitMq['default'].declareQueue(
   }
 );
 
-const processPaystack = RabbitMq['default'].declareQueue(PAYSTACK_DEPOSIT, {
-  durable: true,
-  prefetch: 1
-});
-
 const processBeneficiaryPaystackWithdrawal = RabbitMq['default'].declareQueue(
   PAYSTACK_BENEFICIARY_WITHDRAW,
   {

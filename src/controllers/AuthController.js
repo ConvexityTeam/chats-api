@@ -1317,37 +1317,37 @@ class AuthController {
         return Response.send(res);
       }
 
-      const beneficiaryWallets = await WalletService.findUserWallets(user.id);
+      // const beneficiaryWallets = await WalletService.findUserWallets(user.id);
 
-      for (let wallet of beneficiaryWallets) {
-        const campaign = await CampaignService.getCampaignById(
-          wallet.CampaignId
-        );
-        if (
-          wallet.CampaignId &&
-          campaign.type === 'campaign' &&
-          !wallet.was_funded
-        ) {
-          const [campaign_token, beneficiary_token, campaignBeneficiary] =
-            await Promise.all([
-              BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
-              BlockchainService.setUserKeypair(
-                `user_${user.id}campaign_${wallet.CampaignId}`
-              ),
-              BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
-            ]);
+      // for (let wallet of beneficiaryWallets) {
+      //   const campaign = await CampaignService.getCampaignById(
+      //     wallet.CampaignId
+      //   );
+      //   if (
+      //     wallet.CampaignId &&
+      //     campaign.type === 'campaign' &&
+      //     !wallet.was_funded
+      //   ) {
+      //     const [campaign_token, beneficiary_token, campaignBeneficiary] =
+      //       await Promise.all([
+      //         BlockchainService.setUserKeypair(`campaign_${wallet.CampaignId}`),
+      //         BlockchainService.setUserKeypair(
+      //           `user_${user.id}campaign_${wallet.CampaignId}`
+      //         ),
+      //         BeneficiariesService.getApprovedBeneficiaries(wallet.CampaignId)
+      //       ]);
 
-          let amount = campaign.budget / campaignBeneficiary.length;
-          await QueueService.approveOneBeneficiary(
-            campaign_token.privateKey,
-            beneficiary_token.address,
-            amount,
-            wallet.uuid,
-            campaign,
-            user
-          );
-        }
-      }
+      //     let amount = campaign.budget / campaignBeneficiary.length;
+      //     await QueueService.approveOneBeneficiary(
+      //       campaign_token.privateKey,
+      //       beneficiary_token.address,
+      //       amount,
+      //       wallet.uuid,
+      //       campaign,
+      //       user
+      //     );
+      //   }
+      // }
 
       const data = await AuthService.login(user, req.body.password);
       Response.setSuccess(200, 'Login Successful.', data);

@@ -21,7 +21,8 @@ const {
   INCREASE_GAS_FOR_NEW_COLLECTION,
   INCREASE_GAS_FOR_MINTING_LIMIT,
   INCREASE_GAS_MINT_NFT,
-  APPROVE_NFT_SPENDING
+  APPROVE_NFT_SPENDING,
+  INCREASE_GAS_NFT_TRANSFER
 } = require('../constants/queues.constant');
 const {RabbitMq, Logger} = require('../libs');
 const {
@@ -30,7 +31,8 @@ const {
   CampaignService,
   WalletService,
   SmsService,
-  OrganisationService
+  OrganisationService,
+  BeneficiaryService
 } = require('../services');
 const {
   Sequelize,
@@ -104,8 +106,8 @@ const approveNFTSpending = RabbitMq['default'].declareQueue(
   }
 );
 
-const confirmAndGenerateToken = RabbitMq['default'].declareQueue(
-  CONFIRM_AND_GENERATE_TOKEN,
+const increaseGasTransfer = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_NFT_TRANSFER,
   {
     durable: true,
     prefetch: 1
@@ -657,10 +659,8 @@ RabbitMq['default']
       });
     approveNFTSpending
       .activateConsumer(async msg => {
-        const {beneficiaryId, campaignId} = msg.getContent();
-        const find = await Beneficiary.findOne({
-          UserId: beneficiaryId
-        });
+        const {beneficiaryId, campaignId, amount} = msg.getContent();
+
         const [beneficiaryAddress, campaignAddress, wallet, campaign] =
           await Promise.all([
             BlockchainService.setUserKeypair(
@@ -676,7 +676,8 @@ RabbitMq['default']
         const confirmTransaction = await BlockchainService.confirmTransaction(
           campaign.collection_hash
         );
-
+        console.log(campaignAddress, 'campaignAddress');
+        console.log(beneficiaryAddress, 'beneficiaryAddress');
         if (!confirmTransaction) {
           msg.nack();
           return;
@@ -684,21 +685,45 @@ RabbitMq['default']
         const collectionAddress = await BlockchainService.getCollectionAddress(
           confirmTransaction
         );
-
-        Logger.info(JSON.stringify(wallet), 'wallet');
-        for (let i = 0; i < wallet.tokenId.length; i++) {
-          await BlockchainService.nftTransfer(
+        await BeneficiaryService.spendingStatus(campaignId, beneficiaryId, {
+          status: 'processing'
+        });
+        const lastIndex = Object.values(wallet.tokenIds).length - 1;
+        Logger.info(`lastIndex: ${lastIndex}`);
+        const lastItem = Object.values(wallet.tokenIds)[lastIndex];
+        Logger.info(`lastItem: ${lastItem}`);
+        Logger.info(
+          `compare: ${
+            Object.values(wallet.tokenIds).indexOf(lastItem) === lastIndex
+          }`
+        );
+        for (let i = 0; i < Object.values(wallet.tokenIds).length; i++) {
+          const approve = await BlockchainService.createNFTApproveToSpend(
             campaignAddress.privateKey,
-            campaignAddress.address,
             beneficiaryAddress.address,
-            wallet.tokenId[i],
-            collectionAddress
+            wallet.tokenIds[i],
+            collectionAddress,
+            {
+              lastItem:
+                Object.values(wallet.tokenIds).indexOf(lastItem) === lastIndex
+                  ? lastItem
+                  : null,
+              campaignId,
+              beneficiaryId
+            }
           );
+
+          if (!approve) {
+            msg.nack();
+            return;
+          }
         }
-        await find.update({status: 'success'});
+        await BeneficiaryService.spendingStatus(campaignId, beneficiaryId, {
+          status: 'success'
+        });
 
         Logger.info(`Approve Beneficiary NFT Spending`);
-        msg.nack();
+        msg.ack();
       })
       .then(() => {
         Logger.info('Running Process For Approving NFT Spending');
@@ -709,24 +734,37 @@ RabbitMq['default']
     increaseGasApprove.activateConsumer(async msg => {
       const {
         campaignPrivateKey,
-        campaignAddress,
         beneficiaryAddress,
         tokenId,
-        collectionAddress
+        collectionAddress,
+        params
       } = msg.getContent();
 
-      const gasFee = await BlockchainService.reRunContract('NFTtransferFrom_', {
+      Logger.info(
+        `campaignPrivateKey: ${campaignPrivateKey}, tokenId: ${tokenId}, collectionAddress: ${collectionAddress}, beneficiaryAddress: ${beneficiaryAddress},   params: ${JSON.stringify(
+          params
+        )}`
+      );
+
+      const gasFee = await BlockchainService.reRunContract('approve_', {
         password: campaignPrivateKey,
-        sender: campaignAddress,
         receiver: beneficiaryAddress,
-        contractIndex: collectionAddress,
-        tokenId
+        tokenId,
+        contractIndex: collectionAddress
       });
 
       if (!gasFee) {
         msg.nack();
         return;
       }
+      params.lastItem &&
+        (await BeneficiaryService.spendingStatus(
+          params.campaignId,
+          params.beneficiaryId,
+          {
+            status: 'success'
+          }
+        ));
     });
     transferMintToVendor
       .activateConsumer(async msg => {
@@ -757,6 +795,9 @@ RabbitMq['default']
           msg.nack();
           return;
         }
+        const campaignKeyPair = await BlockchainService.setUserKeypair(
+          `campaign_${campaignWallet.CampaignId}`
+        );
         const collectionAddress = await BlockchainService.getCollectionAddress(
           confirmTransaction
         );
@@ -774,19 +815,18 @@ RabbitMq['default']
           remain = beneficiaryWallet.tokenIds.slice(amount[i] + 1);
           approveNFT = await BlockchainService.nftTransfer(
             beneficiaryAddress.privateKey,
-            beneficiaryAddress.address,
+            campaignKeyPair.address,
             vendorWallet.address,
             spend,
             collectionAddress
           );
-
-          await BlockchainService.nftBurn(
-            vendorAddress.privateKey,
-            collectionAddress,
-            spend
-          );
         }
 
+        await BlockchainService.nftBurn(
+          vendorAddress.privateKey,
+          collectionAddress,
+          spend
+        );
         if (!approveNFT) {
           msg.nack();
           return;
@@ -830,6 +870,21 @@ RabbitMq['default']
           `Collection of Item Consumer Error: ${JSON.stringify(error)}`
         );
       });
+    increaseGasTransfer.activateConsumer(async msg => {
+      const {senderPrivateKey, sender, receiver, tokenId, collectionAddress} =
+        msg.getContent();
+
+      await BlockchainService.reRunContract('transferFrom_', {
+        password: senderPrivateKey,
+        sender: sender,
+        receiver: receiver,
+        amount: tokenId,
+        contractIndex: collectionAddress
+      });
+    });
+  })
+  .then(() => {
+    Logger.info('Running Process For NFT Transfer');
   })
 
   .catch(error => {
