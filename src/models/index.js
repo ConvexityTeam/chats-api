@@ -14,6 +14,7 @@ const config = {
   database: process.env.DB_NAME,
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
+  logging: false,
   // aws_region: process.env.AWS_DB_REGION,
   dialectOptions: {
     ssl: {

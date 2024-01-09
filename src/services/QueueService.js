@@ -58,6 +58,7 @@ const {
   INCREASE_GAS_FOR_MINTING_LIMIT,
   INCREASE_GAS_MINT_NFT,
   ESCROW_HASH,
+  INCREASE_GAS_NFT_TRANSFER,
   APPROVE_NFT_SPENDING,
   INCREASE_GAS_APPROVE_SPENDING,
   CONFIRM_WITHHOLDING_FUND,
@@ -72,6 +73,7 @@ const {
 const WalletService = require('./WalletService');
 const CampaignService = require('./CampaignService');
 const OrganisationService = require('./OrganisationService');
+const {BeneficiaryService} = require('.');
 
 const fundBeneficiaries = RabbitMq['default'].declareQueue(FUND_BENEFICIARIES, {
   durable: true
@@ -328,6 +330,12 @@ const increaseGasForRefund = RabbitMq['default'].declareQueue(
     durable: true
   }
 );
+const increaseGasForTransfer = RabbitMq['default'].declareQueue(
+  INCREASE_GAS_NFT_TRANSFER,
+  {
+    durable: true
+  }
+);
 
 const confirmRefundBeneficiary = RabbitMq['default'].declareQueue(
   CONFIRM_RE_FUND_BENEFICIARIES,
@@ -493,17 +501,17 @@ class QueueService {
   }
   static async increaseGasApproveSpending(
     campaignPrivateKey,
-    campaignAddress,
     beneficiaryAddress,
     tokenId,
-    collectionAddress
+    collectionAddress,
+    params
   ) {
     const payload = {
       campaignPrivateKey,
-      campaignAddress,
       beneficiaryAddress,
       tokenId,
-      collectionAddress
+      collectionAddress,
+      params
     };
     increaseGasApproveSpending.send(
       new Message(payload, {
@@ -546,13 +554,18 @@ class QueueService {
     );
   }
 
-  static async approveNFTSpending(beneficiaryId, campaignId, campaign) {
+  static async approveNFTSpending(
+    beneficiaryId,
+    campaign,
+    amount,
+    beneficiary
+  ) {
     const transaction = await Transaction.create({
       reference: generateTransactionRef(),
       BeneficiaryId: beneficiaryId,
-      CampaignId: campaignId,
-      amount,
+      CampaignId: campaign.id,
       status: 'processing',
+      amount,
       is_approved: false,
       OrganisationId: campaign.OrganisationId,
       transaction_type: 'approval',
@@ -561,8 +574,10 @@ class QueueService {
     });
     const payload = {
       beneficiaryId,
-      campaignId,
-      transactionId: transaction.uuid
+      campaignId: campaign.id,
+      transactionId: transaction.uuid,
+      amount,
+      beneficiary
     };
 
     approveNFTSpending.send(
@@ -570,6 +585,9 @@ class QueueService {
         contentType: 'application/json'
       })
     );
+    // await BeneficiaryService.spendingStatus(campaign.id, beneficiaryId, {
+    //   status: 'in_progress'
+    // });
   }
   static async approveOneBeneficiary(
     campaignPrivateKey,
@@ -683,6 +701,27 @@ class QueueService {
   static async increaseGasForRefund(keys, message) {
     const payload = {keys, message};
     increaseGasForRefund.send(
+      new Message(payload, {
+        contentType: 'application/json'
+      })
+    );
+  }
+
+  static async increaseGasForTransfer(
+    senderPrivateKey,
+    sender,
+    receiver,
+    tokenId,
+    collectionAddress
+  ) {
+    const payload = {
+      senderPrivateKey,
+      sender,
+      receiver,
+      tokenId,
+      collectionAddress
+    };
+    increaseGasForTransfer.send(
       new Message(payload, {
         contentType: 'application/json'
       })

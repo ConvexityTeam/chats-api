@@ -385,7 +385,7 @@ class BeneficiariesController {
     } catch (error) {
       Response.setError(
         HttpStatusCode.STATUS_INTERNAL_SERVER_ERROR,
-        'Request failed. Please try again.'
+        'Request failed. Please try again.' + error
       );
       return Response.send(res);
     }

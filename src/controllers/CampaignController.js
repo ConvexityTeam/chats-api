@@ -658,8 +658,6 @@ class CampaignController {
         return Response.send(res);
       }
 
-      console.log(campaign.budget, 'budget');
-      console.log(balance, 'balance');
       if (
         (campaign.type !== 'item' && campaign.budget > balance) ||
         (campaign.type !== 'item' && balance == 0)
